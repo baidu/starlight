@@ -253,6 +253,14 @@ public class CustomInterceptor implements Interceptor {
 * 在初始化RpcClient、RpcServer时，传入interceptors列表。
 
 ## Spring集成支持
+#### 引入maven依赖
+```xml
+<dependency>
+    <groupId>com.baidu</groupId>
+    <artifactId>brpc-java-spring</artifactId>
+    <version>2.0.0</version>
+</dependency>
+```
 ### 接口声明跟非Spring用法一样。
 ### xml配置（Client/Server都需要）
 ```xml
