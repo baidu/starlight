@@ -1,9 +1,8 @@
 # 项目名称
-brpc-java是baidu rpc的java版本实现。
-主要用于java系统中的rpc交互（包括baidu rpc、nshead、sofa、hulu、baidu json rpc等协议）。
+brpc-java是baidu rpc的java版本实现，主要用于java系统中的rpc交互，支持baidu rpc、nshead、sofa、hulu、http等协议。
 
 # 核心功能点
-* 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+mcpack/protobuf协议、http+protobuf/json协议、baidu json rpc协议。
+* 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议。
 * 可以灵活自定义任意协议，只需要实现Protocol接口，客户端和服务端可以分开实现。
 * 支持使用POJO替代protobuf生成的类来进行序列化（基于jprotobuf实现）。
 * 支持多种naming服务，比如HTTP、File、List等，可以灵活扩展支持zookeeper、etcd、nacos、eureka等。
