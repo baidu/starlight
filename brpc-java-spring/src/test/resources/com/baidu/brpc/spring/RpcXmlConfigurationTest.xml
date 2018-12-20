@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:util="http://www.springframework.org/schema/util"
+	xsi:schemaLocation="
+			http://www.springframework.org/schema/beans 
+			http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+			http://www.springframework.org/schema/context
+            http://www.springframework.org/schema/context/spring-context-3.0.xsd
+            http://www.springframework.org/schema/util 
+            http://www.springframework.org/schema/util/spring-util-3.0.xsd">
+
+	<bean id="echoService" class="com.baidu.brpc.spring.EchoServiceImpl"></bean>
+
+
+	<bean class="com.baidu.brpc.spring.RpcServiceExporter">
+		<property name="servicePort" value="1031"></property>
+		<property name="registerServices">
+			<list>
+				<ref local="echoService" />
+			</list>
+		</property>
+	</bean>
+
+
+	<bean id="echoServiceProxy" class="com.baidu.brpc.spring.RpcProxyFactoryBean">
+		<property name="serviceInterface" value="com.baidu.brpc.spring.EchoService"></property>
+		<property name="serviceUrl" value="list://127.0.0.1:1031"></property>
+	</bean>
+	
+</beans>
