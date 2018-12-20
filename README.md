@@ -19,7 +19,7 @@ java 6+ && netty 4 && protobuf 2.5.0
 ### 引入maven依赖
 ```xml
 <dependency>
-    <groupId>io.brpc</groupId>
+    <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
     <version>2.0.0</version>
 </dependency>
