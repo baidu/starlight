@@ -22,7 +22,7 @@ java 6+ && netty 4 && protobuf 2.5.0
 <dependency>
     <groupId>io.brpc</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>1.8.4</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 ### 定义请求和响应的protobuf message结构
