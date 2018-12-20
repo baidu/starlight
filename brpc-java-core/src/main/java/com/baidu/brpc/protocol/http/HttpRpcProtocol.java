@@ -23,19 +23,14 @@ import com.baidu.brpc.protocol.BrpcMeta;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.RpcMethodInfo;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.baidu.gson.Gson;
-import com.baidu.gson.GsonBuilder;
-import com.baidu.gson.JsonArray;
-import com.baidu.gson.JsonCompactFormatter;
-import com.baidu.gson.JsonElement;
-import com.baidu.gson.JsonFormatter;
-import com.baidu.gson.JsonObject;
-import com.baidu.gson.JsonParser;
-import com.baidu.mcpack.Mcpack;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.exceptions.RpcException;
@@ -57,15 +52,11 @@ import io.netty.handler.codec.http.HttpVersion;
 
 /**
  * 处理http rpc协议，包括四种序列化格式：
- * 1、http + mcpack
- * 2、http + baidu_json
- * 3、http + protoc
- * 4、http + json
+ * 1、http + protoc
+ * 2、http + json
  */
 public class HttpRpcProtocol extends AbstractProtocol {
     private static final Logger LOG = LoggerFactory.getLogger(HttpRpcProtocol.class);
-    private static final String CONTENT_TYPE_MCPACK = "application/baidu.mcpack-rpc";
-    private static final String CONTENT_TYPE_BAIDU_JSON = "application/baidu.json-rpc";
     private static final String CONTENT_TYPE_JSON = "application/json";
     private static final String CONTENT_TYPE_PROTOBUF = "application/proto";
     /**
@@ -77,8 +68,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
             .disableHtmlEscaping()
             .serializeSpecialFloatingPointValues()
             .create();
-    private static final Mcpack mcpack = new Mcpack();
-    private static final JsonFormatter jsonFormatter = new JsonCompactFormatter(false);
     private static final JsonParser jsonParser = new JsonParser();
 
     private int protocolType;
@@ -199,11 +188,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
         byteBuf.readBytes(requestBytes, 0, bodyLen);
 
         Object body = decodeBody(protocolType, encoding, requestBytes);
-        if (protocolType == Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_MCPACK_VALUE
-                || protocolType == Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_JSON_VALUE) {
-            JsonObject bodyObject = (JsonObject) body;
-            logId = bodyObject.get("id").getAsLong();
-        }
         rpcRequest.setLogId(logId);
 
         String serviceName = null;
@@ -248,7 +232,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
         FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
         addHttpHeaders(httpResponse.headers(), rpcRequest);
-        Object body = makeResponse(rpcRequest, rpcResponse, rpcRequest.getLogId());
+        Object body = rpcResponse.getResult();
 
         byte[] responseBytes = null;
         try {
@@ -272,11 +256,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
 
     public static int parseProtocolType(String contentType) {
         String contentType2 = contentType.toLowerCase();
-        if (contentType2.equals(HttpRpcProtocol.CONTENT_TYPE_MCPACK)) {
-            return Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_MCPACK_VALUE;
-        } else if (contentType2.equals(HttpRpcProtocol.CONTENT_TYPE_BAIDU_JSON)) {
-            return Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_JSON_VALUE;
-        } else if (contentType2.equals(HttpRpcProtocol.CONTENT_TYPE_JSON)) {
+        if (contentType2.equals(HttpRpcProtocol.CONTENT_TYPE_JSON)) {
             return Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE;
         } else if (contentType2.equals(HttpRpcProtocol.CONTENT_TYPE_PROTOBUF)) {
             return Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE;
@@ -289,14 +269,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
     public static String getContentType(Integer protocolType) {
         String contentType;
         switch (protocolType) {
-            case Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_MCPACK_VALUE: {
-                contentType = HttpRpcProtocol.CONTENT_TYPE_MCPACK;
-                break;
-            }
-            case Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_JSON_VALUE: {
-                contentType = HttpRpcProtocol.CONTENT_TYPE_BAIDU_JSON;
-                break;
-            }
             case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE: {
                 contentType = HttpRpcProtocol.CONTENT_TYPE_JSON;
                 break;
@@ -317,16 +289,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
         byte[] bodyBytes;
         try {
             switch (protocolType) {
-                case Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_MCPACK_VALUE: {
-                    bodyBytes = mcpack.toMcpack(encoding, (JsonElement) body);
-                    break;
-                }
-                case Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_JSON_VALUE: {
-                    StringBuilder builder = new StringBuilder();
-                    jsonFormatter.format((JsonElement) body, builder, true);
-                    bodyBytes = builder.toString().getBytes(encoding);
-                    break;
-                }
                 case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE: {
                     String bodyJson = gson.toJson(body);
                     bodyBytes = bodyJson.getBytes(encoding);
@@ -356,15 +318,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
         Object body = null;
         try {
             switch (protocolType) {
-                case Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_MCPACK_VALUE: {
-                    body = mcpack.toJsonElement(encoding, bytes);
-                    break;
-                }
-                case Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_JSON_VALUE: {
-                    String json = new String(bytes, encoding);
-                    body = jsonParser.parse(json);
-                    break;
-                }
                 case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE: {
                     String json = new String(bytes, encoding);
                     body = jsonParser.parse(json);
@@ -428,39 +381,9 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
-    protected Object makeResponse(RpcRequest rpcRequest, RpcResponse rpcResponse, Long id) {
-        if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-            return rpcResponse.getResult();
-        } else if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE) {
-            return rpcResponse.getResult();
-        } else {
-            JsonObject res = new JsonObject();
-            JsonElement result = gson.toJsonElement(
-                    rpcResponse.getResult(), rpcRequest.getTargetMethod().getReturnType());
-            res.addProperty("jsonrpc", "2.0");
-            if (result != null) {
-                res.add("result", result);
-            } else {
-                res.addProperty("error", "bad request");
-            }
-            if (id != null) {
-                res.addProperty("id", id.intValue());
-            }
-
-            return res;
-        }
-    }
-
     protected String buildHttpUri(String serviceName, String methodName) {
         // uri格式为 /serviceName/methodName
-        if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE
-                || protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE) {
-
-            return "/" + serviceName + "/" + methodName;
-
-        } else {
-            return serviceName;
-        }
+        return "/" + serviceName + "/" + methodName;
     }
 
     // 解析log_id
@@ -486,9 +409,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "parse protobuf error");
             }
         } else {
-            JsonObject jsonObject = (JsonObject) body;
-            JsonElement result = jsonObject.get("result");
-            response = gson.fromJson(result, rpcMethodInfo.getOutputClass());
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "unknown protocol");
         }
 
         return response;
@@ -513,16 +434,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             }
             args[0] = requestMessage;
         } else {
-            JsonObject jsonObject = (JsonObject) body;
-            JsonArray jsonArray = jsonObject.getAsJsonArray("params");
-            int jsonSize = jsonArray.size();
-            if (jsonSize != args.length) {
-                LOG.warn("bad params");
-                return null;
-            }
-            for (int i = 0; i < jsonSize; i++) {
-                args[i] = gson.fromJson(jsonArray.get(i), rpcMethodInfo.getInputClasses()[i]);
-            }
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "unknown protocol");
         }
 
         return args;

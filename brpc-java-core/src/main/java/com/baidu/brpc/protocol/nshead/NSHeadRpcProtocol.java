@@ -16,64 +16,43 @@
 
 package com.baidu.brpc.protocol.nshead;
 
-import java.io.IOException;
-import java.nio.ByteOrder;
-import java.util.Map;
-
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
+import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.exceptions.BadSchemaException;
+import com.baidu.brpc.exceptions.NotEnoughDataException;
+import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.AbstractProtocol;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
-import com.baidu.brpc.exceptions.BadSchemaException;
-import com.baidu.brpc.exceptions.NotEnoughDataException;
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.baidu.gson.Gson;
-import com.baidu.gson.GsonBuilder;
-import com.baidu.gson.JsonElement;
-import com.baidu.mcpack.Mcpack;
-import com.baidu.mcpack.McpackException;
-
-import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.server.ServiceManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import struct.JavaStruct;
 import struct.StructException;
 
+import java.io.IOException;
+import java.nio.ByteOrder;
+import java.util.Map;
+
 /**
- * 处理nshead协议，序列化使用
- * <ol>
- *     <li>mcpack</li>
- *     <li>protobuf</li>
- * </ol>
+ * 处理nshead协议，序列化使用protobuf
  */
 @SuppressWarnings("unchecked")
 public class NSHeadRpcProtocol extends AbstractProtocol {
     private static final Logger LOG = LoggerFactory.getLogger(NSHeadRpcProtocol.class);
 
-    private static final Gson gson = (new GsonBuilder())
-            .disableHtmlEscaping()
-            .serializeSpecialFloatingPointValues()
-            .create();
-    private static final Mcpack mcpack = new Mcpack();
-
     private int protocol;
-    private String encoding = "utf-8";
 
     public NSHeadRpcProtocol(int protocol, String encoding) {
         this.protocol = protocol;
-        if (encoding != null) {
-            this.encoding = encoding;
-        }
     }
 
     @Override
@@ -153,7 +132,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
 
         Object body = decodeBody(packet.getBodyBuf(), rpcMethodInfo);
         request.setTarget(rpcMethodInfo.getTarget());
-        request.setArgs(new Object[] {body});
+        request.setArgs(new Object[]{body});
         request.setTargetMethod(rpcMethodInfo.getMethod());
         return;
     }
@@ -178,15 +157,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
         Validate.notNull(body, "body must not be empty");
 
         byte[] bytes;
-        if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_MCPACK_VALUE) {
-            JsonElement json = gson.toJsonElement(body);
-            try {
-                bytes = mcpack.toMcpack(this.encoding, json);
-            } catch (McpackException e) {
-                LOG.error("can not serialize object using mcpack", e);
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
-            }
-        } else if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE) {
+        if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE) {
             try {
                 if (rpcMethodInfo.getTarget() != null) {
                     // server端，所以是encode response
@@ -256,23 +227,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     private Object decodeBody(ByteBuf bodyBuf, RpcMethodInfo rpcMethodInfo) {
         try {
             Object result;
-            if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_MCPACK_VALUE) {
-                try {
-                    int readableBytes = bodyBuf.readableBytes();
-                    byte[] bodyBytes = new byte[readableBytes];
-                    bodyBuf.readBytes(bodyBytes);
-                    JsonElement json = mcpack.toJsonElement(this.encoding, bodyBytes);
-                    if (rpcMethodInfo.getTarget() != null) {
-                        // server端
-                        result = gson.fromJson(json, rpcMethodInfo.getInputClasses()[0]);
-                    } else {
-                        result = gson.fromJson(json, rpcMethodInfo.getOutputClass());
-                    }
-                } catch (McpackException e) {
-                    LOG.error("can not deserialize object", e);
-                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
-                }
-            } else if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE) {
+            if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE) {
                 try {
                     if (rpcMethodInfo.getTarget() != null) {
                         // server端，所以是decode request
