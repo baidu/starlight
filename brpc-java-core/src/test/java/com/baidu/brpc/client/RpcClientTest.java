@@ -43,7 +43,7 @@ public class RpcClientTest {
 
     @Test
     public void testRpcClient() {
-        RpcClient rpcClient = new RpcClient("127.0.0.1:8000");
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000");
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         Echo.EchoResponse response = echoService.echo(request);
@@ -53,7 +53,7 @@ public class RpcClientTest {
 
     @Test
     public void testRpcClientWithOptions() {
-        RpcClient rpcClient = new RpcClient("127.0.0.1:8000", new RpcClientOptions());
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000", new RpcClientOptions());
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         Echo.EchoResponse response = echoService.echo(request);

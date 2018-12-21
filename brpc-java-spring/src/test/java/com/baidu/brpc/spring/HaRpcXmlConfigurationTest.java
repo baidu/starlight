@@ -86,7 +86,7 @@ public class HaRpcXmlConfigurationTest extends RpcXmlConfigurationTestBase {
             rpcServiceExporter1.afterPropertiesSet();
         }
 
-        Thread.sleep(2500);
+        Thread.sleep(5000);
         // server1 recover should test ok
         super.internalRpcRequestAndResponse(echoService);
         
