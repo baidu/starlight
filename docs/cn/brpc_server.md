@@ -1,12 +1,12 @@
 ## 标准协议/hulu协议/sofa协议
 
-示例程序
+### 示例程序
 
 ```java
 brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java
 ```
 
-定义请求和响应结构proto
+### 定义请求和响应结构proto
 
 ```java
 package example;
@@ -31,7 +31,7 @@ service EchoService {
 src/test/java/io/brpc/example/jprotobuf
 ```
 
-定义java接口
+### 定义java接口
 
 ```java
 public interface EchoService {
@@ -52,7 +52,7 @@ BrpcMeta注解标记在接口类方法上，使用场景是 当java与c++通信�
 
 如果是java client和java server通信，BrpcMeta可以不填。当BrpcMeta不设置时，框架使用接口全名作为serviceName，方法名作为methodName。
 
-接口实现类
+### 接口实现类
 
 ```java
 public class EchoServiceImpl implements EchoService {
