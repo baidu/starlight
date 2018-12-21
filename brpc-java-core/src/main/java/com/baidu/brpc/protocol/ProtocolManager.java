@@ -59,16 +59,10 @@ public class ProtocolManager {
             protocolMap.put(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE, new BaiduRpcProtocol());
             protocolMap.put(Options.ProtocolType.PROTOCOL_SOFA_PBRPC_VALUE, new SofaRpcProtocol());
             protocolMap.put(Options.ProtocolType.PROTOCOL_HULU_PBRPC_VALUE, new HuluRpcProtocol());
-            protocolMap.put(Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_MCPACK_VALUE,
-                    new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_MCPACK_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_JSON_VALUE,
-                    new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_BAIDU_JSON_RPC_JSON_VALUE, encoding));
             protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE,
                     new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE, encoding));
             protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE,
                     new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_MCPACK_VALUE,
-                    new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_MCPACK_VALUE, encoding));
             protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE,
                     new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE, encoding));
             protocols.addAll(protocolMap.values());
