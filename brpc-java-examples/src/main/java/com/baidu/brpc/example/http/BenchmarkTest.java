@@ -22,7 +22,7 @@ public class BenchmarkTest {
 
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.out.println("usage: BenchmarkTest 127.0.0.1:8080 threadNum");
+            System.out.println("usage: BenchmarkTest list://127.0.0.1:8080 threadNum");
             System.exit(-1);
         }
         RpcClientOptions options = new RpcClientOptions();
