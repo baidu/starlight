@@ -1,10 +1,11 @@
-### 示例程序
-    brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcClientTest.java
-
-### 接口类定义
+## 示例程序
+```java
+brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcClientTest.java
+```
+## 接口类定义
 同server端，请见server.md
 
-### 初始化RpcClient
+## 初始化RpcClient
 RpcClient可传入四个参数：
 
 - 服务端地址：必选，支持多种naming方式，包括list://,bns://,file://,http://
@@ -18,50 +19,58 @@ RpcClient可传入四个参数：
 
 RpcClient是线程安全的。
 
-### 生成接口代理类
+## 生成接口代理类
 
-    EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
+```java
+EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
+```
 
 接口代理类是线程安全的，只需要在系统初始化时，创建一个全局实例即可。
 
 有了接口类后，就可以像普通函数调用一样，进行rpc调用。
 
-### 异步调用
-#### 1、定义异步callback
+## 异步调用
+### 1、定义异步callback
 
 通过实现RpcCallback接口的success/fail方法进行异步回调。
 
 如果协议支持二进制attachment字段，需要在release ResponseBinaryAttachment。
 
-    RpcCallback callback = new RpcCallback<Echo.EchoResponse>() {
-        @Override
-        public void success(Echo.EchoResponse response) {
-            System.out.printf("async call EchoService.echo success, response=%s\n",
-                    response.getMessage());
-            if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
-                System.out.println("attachment="
-                        + new String(RpcContext.getContext().getResponseBinaryAttachment().array()));
-                ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
-            }
+```java
+RpcCallback callback = new RpcCallback<Echo.EchoResponse>() {
+    @Override
+    public void success(Echo.EchoResponse response) {
+        System.out.printf("async call EchoService.echo success, response=%s\n",
+                response.getMessage());
+        if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
+            System.out.println("attachment="
+                    + new String(RpcContext.getContext().getResponseBinaryAttachment().array()));
+            ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
         }
-     
-        @Override
-        public void fail(Throwable e) {
-            System.out.printf("async call EchoService.echo failed, %s\n", e.getMessage());
-        }
-    };
-
-#### 2、定义异步接口类
-    public interface EchoServiceAsync extends EchoService {
-        Future<Echo.EchoResponse> echo(Echo.EchoRequest request, RpcCallback<Echo.EchoResponse> callback);
     }
-    
+ 
+    @Override
+    public void fail(Throwable e) {
+        System.out.printf("async call EchoService.echo failed, %s\n", e.getMessage());
+    }
+};
+```
+
+### 2、定义异步接口类
+```java
+public interface EchoServiceAsync extends EchoService {
+    Future<Echo.EchoResponse> echo(Echo.EchoRequest request, RpcCallback<Echo.EchoResponse> callback);
+}
+```
+ 
 异步接口类继承同步接口类，方法名要跟同步方法名一样，但比同步方法多一个callback参数。
 
 异步接口类只需在client端定义，server端不需要。
 
-#### 3、生成异步接口代理类
-    EchoServiceAsync asyncEchoService = RpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
+### 3、生成异步接口代理类
+```java
+EchoServiceAsync asyncEchoService = RpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
+```
 
 异步和同步可共用一个RpcClient实例。
 
@@ -69,29 +78,32 @@ RpcClient是线程安全的。
 
 如果使用场景是，同时发送多个异步请求出去，然后要等待所有server都返回后，再执行后续业务；这时候可以通过future.get()完成。
 
-### 连接方式
+## 连接方式
 
 默认是使用连接池。但如果业务觉得连接池比较慢或者因业务需求想使用固定连接，可以通过如下方式手动设置连接：
-    
-    channel = rpcClient.selectChannel();
-    RpcContext.getContext().setChannel(channel);
+```java
+channel = rpcClient.selectChannel();
+RpcContext.getContext().setChannel(channel);
+```
 
 对于手动设置的channel，需要业务自己去归还。正常归还时，调用
-    
-    rpcClient.returnChannel(channel);
+```java
+rpcClient.returnChannel(channel);
+```
 
 出错时，调用
-    
-    rpcClient.removeChannel(channel);
+```java
+rpcClient.removeChannel(channel);
+```
 
-### 负载均衡
+## 负载均衡
 支持以下几种负载均衡：
 - RANDOM：随机
 - ROUND_ROBIN：轮询
 - WEIGHT：基于权重的负载均衡，该负载均衡会记录server实例的成功、失败次数，尽量选择失败次数较少的实例。
 - FAIR：基于响应时间的负载均衡，该负载均衡会记录server实例平均响应时间，尽量选择响应时间端的实例，具体算法请参考GST fair 负载均衡策略
 
-### Naming方式
+## Naming方式
 支持以下几种naming方式：
 - LIST：格式如"list://127.0.0.1:8002"
 - BNS：格式如"bns://test.bj"
