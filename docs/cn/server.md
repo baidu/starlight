@@ -1,14 +1,14 @@
 ## 示例程序
 
-- 标准协议/hulu协议/sofa协议：RpcServerTest.java
-- nshead协议：RpcServerOfProtobufTest.java
-- http协议：RpcServerTest.java
+- [标准协议/hulu协议/sofa协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java)
+- [nshead协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/nshead/RpcServerTest.java)
+- [http协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/http/proto/RpcServerTest.java)
 
 ## 定义接口类以及实现类
 
-- 标准协议/hulu协议/sofa协议
-- nshead协议
-- http协议（包括baidu json rpc协议）
+- [标准协议/hulu协议/sofa协议](https://github.com/baidu/brpc-java/blob/master/docs/cn/brpc_server.md)
+- [nshead协议](https://github.com/baidu/brpc-java/blob/master/docs/cn/nshead_server.md)
+- [http协议](https://github.com/baidu/brpc-java/blob/master/docs/cn/http_server.md)
 
 ## 定义Main类
 server端启动主要分两步：
@@ -48,10 +48,10 @@ public class RpcServerTest {
 ## 限流
 server通过CurrentLimitInterceptor实现限流，目前支持两种限流算法：
 
-- 计数器算法：CounterCurrentLimiter.java
-- 令牌桶算法：TokenBucketCurrentLimiter.java
+- [计数器算法](https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/server/currentlimit/CounterCurrentLimiter.java)
+- [令牌桶算法](https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/server/currentlimit/TokenBucketCurrentLimiter.java)
 
-如果不能满足需求，业务也可以实现自己的限流算法，只需实现CurrentLimiter.java这个接口即可。
+如果不能满足需求，业务也可以实现自己的限流算法，只需实现[CurrentLimiter.java](https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/server/currentlimit/CurrentLimiter.java)这个接口即可。
 
 启用限流功能代码示例：
 

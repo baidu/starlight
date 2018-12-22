@@ -1,17 +1,13 @@
 ## 标准协议/hulu协议/sofa协议
 
 ### 示例程序
-
-```java
-brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java
-```
+[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java)
 
 ### 定义请求和响应结构proto
-
 ```java
 package example;
 option cc_generic_services = true;
-option java_package="io.brpc.example.standard";
+option java_package="com.baidu.brpc.example.standard";
 option java_outer_classname="Echo";
  
 message EchoRequest {
@@ -24,24 +20,18 @@ service EchoService {
       rpc Echo(EchoRequest) returns (EchoResponse);
 };
 ```
-    
-也支持使用jprotobuf方式定义的普通java类作为request/response，具体使用例子请见:
 
-```java
-src/test/java/io/brpc/example/jprotobuf
-```
+也支持使用jprotobuf方式定义的普通java类作为request/response，具体使用例子请见:
+[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/jprotobuf/RpcServerTest.java)
 
 ### 定义java接口
-
 ```java
 public interface EchoService {
     @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
     Echo.EchoResponse echo(Echo.EchoRequest request);
 }
 ```
-    
 在java实现中，接口类并没有使用proto生成的EchoService，而是由业务自己去定义接口类，原因有两点：
-
 - 为了多协议统一而做的通用设计，比如非proto协议场景。
 - 自定义的接口类，不用依赖controller对象，更符合RPC习惯。
 
@@ -79,5 +69,5 @@ ByteBuf attachment = rpcContext.getRequestBinaryAttachment();
 // 设置response attachment方法
 rpcContext.setResponseBinaryAttachment("hello".getBytes());
 ```
- 
+
 server端request attachment和response attachment的byteBuf由框架去release，业务不需要手动释放。

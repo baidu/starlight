@@ -1,9 +1,7 @@
 ## 示例程序
-```java
-brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcClientTest.java
-```
+[RpcClientTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcClientTest.java)
 ## 接口类定义
-同server端，请见server.md
+同server端，请见[server.md](https://github.com/baidu/brpc-java/blob/master/docs/cn/server.md)
 
 ## 初始化RpcClient
 RpcClient可传入四个参数：
@@ -106,6 +104,5 @@ rpcClient.removeChannel(channel);
 ## Naming方式
 支持以下几种naming方式：
 - LIST：格式如"list://127.0.0.1:8002"
-- BNS：格式如"bns://test.bj"
 - FILE：格式如"file://conf/server_list.conf"，文件内容是一行一个ip:port
-- HTTP：格式如"http://test.baidu.com/server/list"，http返回内容是一行一个ip:port
+- DNS：格式如"dns://test.baidu.com"
