@@ -50,6 +50,9 @@ Spring环境：
 * [新增拦截器](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
 * [新增限流算法](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
 
+### 核心设计
+* [DynamicCompositeByteBuf](https://github.com/baidu/brpc-java/blob/master/docs/cn/composite_buffer.md)
+
 ## 压力测试数据
 ### 部署环境：
 * Client/Server机器配置：cpu 12核，内存132G，千兆网卡。
