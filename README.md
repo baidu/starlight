@@ -71,7 +71,7 @@ https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/
 * Client/Server机器配置：cpu 12核，内存132G，千兆网卡。
 * [压测代码](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/BenchmarkTest.java)
 ### 压力测试结果：
-| 数量量 | 5 byte | 1k byte | 2k byte | 4k byte |
+| 数据量 | 5 byte | 1k byte | 2k byte | 4k byte |
 |:-----:| :-----: | :-------: | :-------: | :-------: |
 |qps    | 22w   |    10w  |  5.3w   |   2.7w  |
 
