@@ -35,11 +35,8 @@ import io.netty.channel.ChannelHandlerContext;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import struct.JavaStruct;
-import struct.StructException;
 
 import java.io.IOException;
-import java.nio.ByteOrder;
 import java.util.Map;
 
 /**
@@ -70,7 +67,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
             nsHead = new NSHead((int) request.getLogId(), bodyBytes.length);
         }
 
-        byte[] nsHeadBytes = encodeNSHead(nsHead);
+        byte[] nsHeadBytes = nsHead.toBytes();
         return Unpooled.wrappedBuffer(nsHeadBytes, bodyBytes);
     }
 
@@ -103,7 +100,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     public ByteBuf encodeResponse(RpcResponse rpcResponse) throws Exception {
         byte[] bodyBytes = encodeBody(rpcResponse.getResult(), rpcResponse.getRpcMethodInfo());
         NSHead nsHead = new NSHead((int) rpcResponse.getLogId(), bodyBytes.length);
-        byte[] headBytes = encodeNSHead(nsHead);
+        byte[] headBytes = nsHead.toBytes();
         return Unpooled.wrappedBuffer(headBytes, bodyBytes);
     }
 
@@ -142,17 +139,6 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
         return false;
     }
 
-    private byte[] encodeNSHead(NSHead nsHead) {
-        Validate.notNull(nsHead, "nsHead can not be null");
-        try {
-            return JavaStruct.pack(nsHead, ByteOrder.LITTLE_ENDIAN);
-        } catch (StructException e) {
-            LOG.error("encode nshead error,", e);
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
-        }
-    }
-
-
     private byte[] encodeBody(Object body, RpcMethodInfo rpcMethodInfo) {
         Validate.notNull(body, "body must not be empty");
 
@@ -184,9 +170,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
         NSHeadPacket packet = new NSHeadPacket();
         ByteBuf fixHeaderBuf = in.retainedSlice(NSHead.NSHEAD_LENGTH);
         try {
-            byte[] header = new byte[NSHead.NSHEAD_LENGTH];
-            fixHeaderBuf.readBytes(header);
-            NSHead nsHead = decodeNSHead(header);
+            NSHead nsHead = NSHead.fromByteBuf(fixHeaderBuf);
             packet.setNsHead(nsHead);
             int bodyLength = nsHead.bodyLength;
 
@@ -208,20 +192,6 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
         } finally {
             fixHeaderBuf.release();
         }
-    }
-
-    private NSHead decodeNSHead(byte[] bytes) throws BadSchemaException {
-        Validate.notNull(bytes);
-        Validate.isTrue(bytes.length == NSHead.NSHEAD_LENGTH, "bytes length: expected 36, "
-                + bytes.length + " actually");
-        NSHead head = new NSHead();
-        try {
-            JavaStruct.unpack(head, bytes, ByteOrder.LITTLE_ENDIAN);
-        } catch (StructException e) {
-            LOG.warn("decode NSHead error, ex :", e);
-            throw new BadSchemaException("decode NSHead error", e);
-        }
-        return head;
     }
 
     private Object decodeBody(ByteBuf bodyBuf, RpcMethodInfo rpcMethodInfo) {

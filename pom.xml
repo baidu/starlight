@@ -174,13 +174,9 @@
             </dependency>
             <dependency>
                 <groupId>javax.servlet</groupId>
-                <artifactId>servlet-api</artifactId>
-                <version>3.1</version>
-            </dependency>
-            <dependency>
-                <groupId>javastruct</groupId>
-                <artifactId>javastruct</artifactId>
-                <version>0.1</version>
+                <artifactId>javax.servlet-api</artifactId>
+                <version>3.1.0</version>
+                <scope>provided</scope>
             </dependency>
             <dependency>
                 <groupId>org.xerial.snappy</groupId>

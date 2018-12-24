@@ -485,7 +485,7 @@ public class RpcClient {
                         while (iter.hasNext()) {
                             BrpcChannelGroup instance = iter.next();
                             boolean isHealthy = isInstanceHealthy(instance.getIp(), instance.getPort());
-                            if (isHealthy) {
+                            if (!isHealthy) {
                                 newUnhealthyInstances.add(instance);
                             }
                         }

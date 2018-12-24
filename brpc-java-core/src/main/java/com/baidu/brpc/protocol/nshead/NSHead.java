@@ -16,12 +16,14 @@
 
 package com.baidu.brpc.protocol.nshead;
 
+import com.baidu.brpc.exceptions.BadSchemaException;
+import io.netty.buffer.ByteBuf;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
-import struct.CString;
-import struct.StructClass;
-import struct.StructField;
+
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  * * ns产品线网络交互统一的包头，注释包含为(M)的为必须遵循的规范
@@ -42,44 +44,38 @@ import struct.StructField;
  *         unsigned int   body_len;
  *     } nshead_t
  * </pre>
- *
+ * <p>
  * 2+2+4+16+4+4+4=36 byte in total.
- *
  */
-@StructClass
 public class NSHead {
 
     public static final int NSHEAD_LENGTH = 36;
+    public static final int NSHEAD_MAGIC_NUM = 0xfb709394;
     public static final int PROVIDER_LENGTH = 16;
 
-    @StructField(order = 0)
+    private static final byte[] ZEROS = new byte[PROVIDER_LENGTH];
+
     public short id = 0x00;
 
-    @StructField(order = 1)
     public short version = 0x01;
 
-    @StructField(order = 2)
     public int logId;
 
-    // CHECKSTYLE:OFF
-    @StructField(order = 3)
-    public CString provider = new CString("", 16);
+    public String provider = "";
 
-    @StructField(order = 4)
-    public int magicNumber = 0xfb709394;
+    public int magicNumber = NSHEAD_MAGIC_NUM;
 
-    @StructField(order = 5)
     public int reserved = 0;
 
-    @StructField(order = 6)
     public int bodyLength = 0;
-    // CHECKSTYLE:ON
 
     public NSHead(int logId, short id, short version, String provider, int bodyLength) {
         this.logId = logId;
         this.id = id;
         this.version = version;
-        this.provider = new CString(provider, PROVIDER_LENGTH);
+        if (provider != null) {
+            this.provider = provider;
+        }
         this.bodyLength = bodyLength;
     }
 
@@ -88,8 +84,51 @@ public class NSHead {
         this.bodyLength = bodyLength;
     }
 
-    public NSHead() {
+    NSHead() {
 
+    }
+
+    public static NSHead fromByteBuf(ByteBuf buf) throws BadSchemaException {
+        NSHead head = new NSHead();
+        if (buf.readableBytes() < NSHEAD_LENGTH) {
+            throw new IllegalArgumentException("not enough bytes to read");
+        }
+        head.id = buf.readShortLE();
+        head.version = buf.readShortLE();
+        head.logId = buf.readIntLE();
+        byte[] bytes = new byte[PROVIDER_LENGTH];
+        buf.readBytes(bytes);
+        int n = 0;
+        while (n < bytes.length && bytes[n] != 0) {
+            n++;
+        }
+        head.provider = new String(bytes, 0, n);
+        head.magicNumber = buf.readIntLE();
+        if (head.magicNumber != NSHEAD_MAGIC_NUM) {
+            throw new BadSchemaException("nshead magic number does not match");
+        }
+        head.reserved = buf.readIntLE();
+        head.bodyLength = buf.readIntLE();
+        return head;
+    }
+
+    public byte[] toBytes() {
+        ByteBuffer buf = ByteBuffer.allocate(NSHEAD_LENGTH);
+        buf.order(ByteOrder.LITTLE_ENDIAN);
+        buf.putShort(id);
+        buf.putShort(version);
+        buf.putInt(logId);
+        byte[] providerBytes = provider.getBytes();
+        if (providerBytes.length >= PROVIDER_LENGTH) {
+            buf.put(providerBytes, 0, PROVIDER_LENGTH);
+        } else {
+            buf.put(providerBytes, 0, providerBytes.length);
+            buf.put(ZEROS, 0, PROVIDER_LENGTH - providerBytes.length);
+        }
+        buf.putInt(magicNumber);
+        buf.putInt(reserved);
+        buf.putInt(bodyLength);
+        return buf.array();
     }
 
     @Override

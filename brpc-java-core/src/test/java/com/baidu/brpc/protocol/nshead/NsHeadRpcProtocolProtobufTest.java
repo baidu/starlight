@@ -52,13 +52,10 @@ public class NsHeadRpcProtocolProtobufTest {
 
         ByteBuf byteBuf = protocol.encodeRequest(rpcRequest);
 
-        byte[] nshead = new byte[NSHead.NSHEAD_LENGTH];
-        byteBuf.readBytes(nshead);
-
-        NSHead nsHead = decodeNshead(nshead);
+        NSHead nsHead = NSHead.fromByteBuf(byteBuf);
 
         assertEquals(3, nsHead.logId);
-        assertEquals("", nsHead.provider.toString());
+        assertEquals("", nsHead.provider);
         assertEquals(byteBuf.readableBytes(), nsHead.bodyLength);
     }
 
@@ -97,26 +94,11 @@ public class NsHeadRpcProtocolProtobufTest {
 
         ByteBuf byteBuf = protocol.encodeResponse(rpcResponse);
 
-        byte[] nshead = new byte[NSHead.NSHEAD_LENGTH];
-        byteBuf.readBytes(nshead);
-
-        NSHead nsHead = decodeNshead(nshead);
+        NSHead nsHead = NSHead.fromByteBuf(byteBuf);
 
         assertEquals(4, nsHead.logId);
         assertEquals(byteBuf.readableBytes(), nsHead.bodyLength);
     }
-
-
-
-    private NSHead decodeNshead(byte[] bytes) throws Exception {
-        Method method = protocol.getClass().getDeclaredMethod("decodeNSHead", bytes.getClass());
-        method.setAccessible(true);
-        Object r = method.invoke(protocol, bytes);
-
-        return (NSHead) r;
-    }
-
-
 
     private byte[] encodeBody(Object body, Method invokeMethod) throws Exception {
 
@@ -126,6 +108,4 @@ public class NsHeadRpcProtocolProtobufTest {
 
         return (byte[]) r;
     }
-
-
 }
