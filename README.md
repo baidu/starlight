@@ -42,6 +42,9 @@ Spring环境：
 ### Client端使用
 * [client端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/client.md)
 
+### 与Spring集成
+* [Spring集成使用](https://github.com/baidu/brpc-java/blob/master/docs/cn/spring.md)
+
 ### 扩展
 * [新增协议](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
 * [新增服务发现](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
