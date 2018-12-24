@@ -203,7 +203,7 @@ public class RpcServer {
                     port = Integer.valueOf(System.getenv(rpcServerOptions.getJarvisPortName()));
                 }
             }
-            ChannelFuture channelFuture = bootstrap.bind("0.0.0.0", port);
+            ChannelFuture channelFuture = bootstrap.bind(port);
             channelFuture.sync();
             if (namingService != null) {
                 for (RegisterInfo registerInfo : registerInfoList) {
