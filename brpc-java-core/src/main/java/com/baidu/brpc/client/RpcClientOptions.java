@@ -62,7 +62,7 @@ public class RpcClientOptions {
     // service version
     private String namingServiceVersion = "";
 
-    private int healthyCheckIntervalMillis = 60000;
+    private int healthyCheckIntervalMillis = 3000;
 
     // The keep alive
     private boolean keepAlive = true;
