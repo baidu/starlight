@@ -1,5 +1,6 @@
 [![Build Status](https://travis-ci.org/baidu/brpc-java.svg?branch=master)](https://travis-ci.org/baidu/brpc-java) 
 ![license](https://img.shields.io/github/license/baidu/brpc-java.svg)
+![maven](https://img.shields.io/maven-central/v/com.baidu/brpc-java.svg)
 
 # 项目名称
 brpc-java是baidu rpc的java版本实现，主要用于java系统中的rpc交互，支持baidu rpc、nshead、sofa、hulu、http等协议。
