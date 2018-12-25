@@ -30,8 +30,7 @@ public class FastFutureStoreTest {
 
     @Test
     public void testPutAndRemove() {
-        round(10);
-        round(5);
+        round(100);
     }
 
     @Test

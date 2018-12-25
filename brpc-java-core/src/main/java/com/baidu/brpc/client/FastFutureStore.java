@@ -16,15 +16,17 @@
 
 package com.baidu.brpc.client;
 
-import com.baidu.brpc.exceptions.RpcException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
 /**
- * A lock-free datastructure faster than #{@link java.util.concurrent.ConcurrentHashMap} in certain circumstance
+ * A lock-free datastructure faster than #{@link java.util.concurrent.ConcurrentHashMap} in certain circumstance.
+ * When the underlying array runs out of space, FastFutureStore will downgrade to #{@link ConcurrentHashMap}
  *
  * Created by wanghongfei on 2018/11/19.
  */
@@ -52,6 +54,20 @@ public class FastFutureStore {
      * Capacity of the internal array
      */
     private int cap;
+
+    /**
+     * Downgrade to ConcurrentHashMap when array is exhausted
+     */
+    private Map<Long, RpcFuture> backupMap = new ConcurrentHashMap<Long, RpcFuture>();
+
+    /**
+     * The boundary between array-stored id and map-stored id.
+     * Binary format: 0100 0000 0000 0000 ... ... 0000(64 bits).
+     *
+     * Ids less than(01xx xxxx ... xxx) this value should be stored in array.
+     * Ids greater than(01xx xxxx ... xxx) this value should be stored in map.
+     */
+    private static long COUNTER_VALUE_BOUNDARY = (long) 0x1 << 62;
 
     /**
      * @param cap capacity of the internal array
@@ -90,11 +106,12 @@ public class FastFutureStore {
      */
     public long put(RpcFuture fut) {
         int loopCount = 0;
-        // loop until finding a empty slot
+
+        // loop until finding an empty slot
         while (true) {
             long currentCounter = slotCounter.getAndIncrement();
 
-            if (currentCounter < 0) {
+            if (currentCounter >= COUNTER_VALUE_BOUNDARY) {
                 slotCounter.getAndSet(0);
                 continue;
             }
@@ -108,12 +125,10 @@ public class FastFutureStore {
                 return currentCounter;
             }
 
-            // loopCount is bigger than capacity indicating FastFutureStore is short of space
-            // TODO: use ConcurrentHashMap when FutureStore exhausted.
-            if (++loopCount > cap) {
-                String errMsg = String.format("FutureStore exhausted, consider expanding capacity, current=%d", cap);
-                LOG.error(errMsg);
-                throw new RpcException(RpcException.SERVICE_EXCEPTION, errMsg);
+            // loopCount is bigger than capacity indicating FastFutureStore has ran out of space
+            if (++loopCount >= cap) {
+                LOG.debug("FutureStore exhausted, current=%d, store id in map", cap);
+                return storeInMap(currentCounter, fut);
             }
         }
     }
@@ -125,13 +140,13 @@ public class FastFutureStore {
      * @param id Identifier returned by #{@link #put(RpcFuture)}
      */
     public RpcFuture get(long id) {
-        int slot = mapSlot(id);
-        if (!rangeCheck(slot)) {
-            return null;
+        if (isStoredInMap(id)) {
+            return getFromMap(id);
         }
 
-        return futArray.get(slot);
+        return getFromArray(id);
     }
+
 
     /**
      * Retrieve and remove object identified by id
@@ -140,21 +155,13 @@ public class FastFutureStore {
      * @return null if nothing found
      */
     public RpcFuture getAndRemove(long id) {
-        int slot = mapSlot(id);
-        if (!rangeCheck(slot)) {
-            return null;
+        if (isStoredInMap(id)) {
+            return getAndRemoveMap(id);
         }
 
-        // get the old value
-        RpcFuture prev = futArray.get(slot);
-        // remove only when RpcFuture.logId is equal with current id
-        if (null != prev && prev.getLogId() == id) {
-            futArray.set(slot, null);
-            return prev;
-        }
-
-        return null;
+        return getAndRemoveArray(id);
     }
+
 
     /**
      * Return the count of the objects.
@@ -167,17 +174,7 @@ public class FastFutureStore {
             }
         }
 
-        return sum;
-    }
-
-    private boolean hasElements() {
-        for (int ix = 0; ix < cap; ++ix) {
-            if (null != futArray.get(ix)) {
-                return true;
-            }
-        }
-
-        return false;
+        return sum + backupMap.size();
     }
 
     /**
@@ -195,6 +192,7 @@ public class FastFutureStore {
             return;
         }
 
+        // traverse array
         for (int ix = 0; ix < cap; ++ix) {
             RpcFuture fut = futArray.get(ix);
             if (null == fut) {
@@ -210,7 +208,81 @@ public class FastFutureStore {
                 walker.actionAfterDelete(fut);
             }
         }
+
+        //  traverse map
+        for (Map.Entry<Long, RpcFuture> pair : backupMap.entrySet()) {
+            boolean keep = walker.visitElement(pair.getValue());
+            if (!keep) {
+                backupMap.remove(pair.getKey());
+                walker.actionAfterDelete(pair.getValue());
+            }
+        }
     }
+
+    private RpcFuture getAndRemoveMap(long id) {
+        return backupMap.remove(id);
+    }
+
+    private RpcFuture getAndRemoveArray(long id) {
+        int slot = mapSlot(id);
+        if (!rangeCheck(slot)) {
+            return null;
+        }
+
+        // get the old value
+        RpcFuture prev = futArray.get(slot);
+        // remove only when RpcFuture.logId is equal with current id
+        if (null != prev && prev.getLogId() == id) {
+            futArray.set(slot, null);
+            return prev;
+        }
+
+        return null;
+
+    }
+
+    private RpcFuture getFromMap(long id) {
+        return backupMap.get(id);
+    }
+
+    private RpcFuture getFromArray(long id) {
+        int slot = mapSlot(id);
+        if (!rangeCheck(slot)) {
+            return null;
+        }
+
+        return futArray.get(slot);
+    }
+
+    private long storeInMap(long id, RpcFuture fut) {
+        long mapId = markMapBit(id);
+        backupMap.put(mapId, fut);
+
+        return mapId;
+    }
+
+    private long markMapBit(long id) {
+        return id | COUNTER_VALUE_BOUNDARY;
+    }
+
+    private boolean isStoredInMap(long id) {
+        return id >= COUNTER_VALUE_BOUNDARY;
+    }
+
+    private boolean hasElements() {
+        boolean arrayNotEmpty = false;
+        for (int ix = 0; ix < cap; ++ix) {
+            if (null != futArray.get(ix)) {
+                arrayNotEmpty = true;
+                break;
+            }
+        }
+
+        boolean mapNotEmpty = !backupMap.isEmpty();
+
+        return arrayNotEmpty || mapNotEmpty;
+    }
+
 
     private int mapSlot(long id) {
         return (int) (id % cap);
