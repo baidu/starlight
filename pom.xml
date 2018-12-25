@@ -2,6 +2,12 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <parent>
+        <groupId>org.sonatype.oss</groupId>
+        <artifactId>oss-parent</artifactId>
+        <version>7</version>
+    </parent>
+
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-parent</artifactId>
     <version>2.0.1</version>
@@ -26,6 +32,15 @@
         <system>GitHub Issues</system>
         <url>https://github.com/baidu/brpc-java/issues</url>
     </issueManagement>
+
+    <developers>
+        <developer>
+            <id>baidu.com</id>
+            <name>The Brpc Java Project Contributors</name>
+            <email>ad-plt@baidu.com</email>
+            <url>http://www.baidu.com/</url>
+        </developer>
+    </developers>
 
     <scm>
         <connection>scm:git:git://github.com/baidu/brpc-java.git</connection>
@@ -110,7 +125,7 @@
                             </goals>
                             <configuration>
                                 <includes>
-                                    <include>io/brpc/**</include>
+                                    <include>com/baidu/brpc/**</include>
                                 </includes>
                             </configuration>
                         </execution>

@@ -40,5 +40,6 @@ public class FileNamingServiceTest extends BaseMockitoTest {
         assertThat(endPoints, hasItems(
                 new EndPoint("127.0.0.1", 8002)
         ));
+        namingService.unsubscribe(null);
     }
 }

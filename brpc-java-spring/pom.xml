@@ -16,6 +16,20 @@
         <spring-web.version>3.2.11.RELEASE</spring-web.version>
     </properties>
 
+    <profiles>
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 	<build>
 		<plugins>
 			<plugin>

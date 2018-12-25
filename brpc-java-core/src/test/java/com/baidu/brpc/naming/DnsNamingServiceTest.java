@@ -35,12 +35,14 @@ public class DnsNamingServiceTest extends BaseMockitoTest {
         assertThat(namingService.getHostPort(), is("127.0.0.1:8888"));
         List<EndPoint> endPoints = namingService.lookup(null);
         assertThat(endPoints, hasItems(new EndPoint("127.0.0.1", 8888)));
+        namingService.unsubscribe(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testEmptyServerList() {
         DnsNamingService namingService = new DnsNamingService(new BrpcURI(""));
         namingService.lookup(null);
+        namingService.unsubscribe(null);
     }
 
 }
