@@ -147,7 +147,7 @@ public class RpcClient {
         if (StringUtils.isNotBlank(options.getNamingServiceVersion())) {
             uri.addParameter(BrpcURI.VERSION, options.getNamingServiceVersion());
         }
-        uri.addParameter(BrpcURI.INTERVAL, options.getNamingServiceUpdateIntervalMillis());
+        uri.addParameter(BrpcURI.INTERVAL, String.valueOf(options.getNamingServiceUpdateIntervalMillis()));
         if (namingService != null) {
             this.namingService = namingService;
         } else {
