@@ -45,7 +45,6 @@ Spring环境：
 
 ### Client端使用
 * [client端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/client.md)
-* [FastFutureStore](https://github.com/baidu/brpc-java/blob/master/docs/cn/fastfuturestore.md)
 
 ### 与Spring集成
 * [Spring集成使用](https://github.com/baidu/brpc-java/blob/master/docs/cn/spring.md)
@@ -59,6 +58,8 @@ Spring环境：
 * [新增限流算法](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
 
 ### 一些设计
+* [FastFutureStore](https://github.com/baidu/brpc-java/blob/master/docs/cn/fastfuturestore.md)
+
 #### 网络模型
 采用netty的reactor网络模型，但跟常规用法有些不同：
 * 没有使用netty的ByteToMessageDecoder去解析协议，因为ByteToMessageDecoder内部会对buffer进行拷贝。
