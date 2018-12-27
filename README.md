@@ -58,8 +58,6 @@ Spring环境：
 * [新增限流算法](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
 
 ### 一些设计
-* [FastFutureStore](https://github.com/baidu/brpc-java/blob/master/docs/cn/fastfuturestore.md)
-
 #### 网络模型
 采用netty的reactor网络模型，但跟常规用法有些不同：
 * 没有使用netty的ByteToMessageDecoder去解析协议，因为ByteToMessageDecoder内部会对buffer进行拷贝。
@@ -74,6 +72,9 @@ Spring环境：
 * 我们调研过JDK的ThreadPoolExecutor、ConcurrentLinkedQueue以及Disruptor，最后还是使用了更高性能的[ThreadPool](
 https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/utils/ThreadPool.java)。
 * ThreadPool内部把生产者队列、消费者队列分开，用两个锁去控制同步，当consumer queue为空时，且producer queue不为空条件满足时，会交换两个队列。
+
+#### 比ConcurrentHashMap更快的FastFutureStore
+* [FastFutureStore](https://github.com/baidu/brpc-java/blob/master/docs/cn/fastfuturestore.md)
 
 ## 压力测试数据
 ### 部署环境：
