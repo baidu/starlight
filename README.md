@@ -73,6 +73,9 @@ Spring环境：
 https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/utils/ThreadPool.java)。
 * ThreadPool内部把生产者队列、消费者队列分开，用两个锁去控制同步，当consumer queue为空时，且producer queue不为空条件满足时，会交换两个队列。
 
+#### 比ConcurrentHashMap更快的FastFutureStore
+* [FastFutureStore](https://github.com/baidu/brpc-java/blob/master/docs/cn/fastfuturestore.md)
+
 ## 压力测试数据
 ### 部署环境：
 * Client/Server机器配置：cpu 12核，内存132G，千兆网卡。
