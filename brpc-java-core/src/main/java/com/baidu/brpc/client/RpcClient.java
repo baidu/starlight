@@ -402,10 +402,8 @@ public class RpcClient {
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex.getMessage());
         }
 
-        // 立即归还channel
-        if (!channelInfo.isFromRpcContext() && protocol.returnChannelBeforeResponse()) {
-            channelInfo.getChannelGroup().returnChannel(channel);
-        }
+        // return channel
+        channelInfo.handleRequestSuccess();
 
         return future;
     }
