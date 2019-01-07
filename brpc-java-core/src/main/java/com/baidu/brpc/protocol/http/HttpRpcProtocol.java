@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,7 +152,17 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 return rpcResponse;
             }
         }
-        rpcResponse.setResult(body == null ? null : parseHttpResponse(body, future.getRpcMethodInfo()));
+        if (body != null) {
+            try {
+                rpcResponse.setResult(parseHttpResponse(body, future.getRpcMethodInfo()));
+            } catch (Exception ex) {
+                LOG.error("failed to parse result from HTTP body");
+                rpcResponse.setException(ex);
+            }
+        } else {
+            rpcResponse.setResult(null);
+        }
+
         return rpcResponse;
     }
 
@@ -399,21 +409,24 @@ public class HttpRpcProtocol extends AbstractProtocol {
 
     protected Object parseHttpResponse(Object body, RpcMethodInfo rpcMethodInfo) {
         Object response;
-        if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-            response = gson.fromJson((JsonElement) body, rpcMethodInfo.getOutputClass());
-        } else if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE) {
-            try {
-                response = rpcMethodInfo.outputDecode((byte[]) body);
-            } catch (Exception e) {
-                LOG.error("parse protobuf error, ex : {}", e);
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "parse protobuf error");
+        try {
+            switch (protocolType) {
+                case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE:
+                    response = gson.fromJson((JsonElement) body, rpcMethodInfo.getOutputClass());
+                    break;
+                case Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE:
+                    response = rpcMethodInfo.outputDecode((byte[]) body);
+                    break;
+                default:
+                    LOG.warn("unknown protocolType={}", protocolType);
+                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION,
+                            "unknown protocolType=" + protocolType);
             }
-        } else {
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "unknown protocol");
+        } catch (Exception ex) {
+            LOG.error("parse rpc response error", ex);
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "parse rpc response error", ex);
         }
-
         return response;
-
     }
 
     protected Object[] parseRequestParam(Object body, RpcMethodInfo rpcMethodInfo) {
