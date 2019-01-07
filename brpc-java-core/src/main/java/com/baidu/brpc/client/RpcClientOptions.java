@@ -44,6 +44,9 @@ public class RpcClientOptions {
 
     private int maxTryTimes = 3;
 
+    // Maximum time for connection idle, testWhileIdle needs to be true
+    private long timeBetweenEvictionRunsMillis = 5 * 60 * 1000;
+
     private int loadBalanceType = LoadBalanceType.ROUND_ROBIN.getId();
 
     // for fair load balance strategy only

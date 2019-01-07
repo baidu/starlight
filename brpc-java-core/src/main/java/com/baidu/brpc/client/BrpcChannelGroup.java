@@ -79,7 +79,7 @@ public class BrpcChannelGroup {
         // Connect test when idle, start asynchronous evict thread for failure detection
         conf.setTestWhileIdle(true);
         // Maximum time for connection idle, testWhileIdle needs to be true
-        conf.setTimeBetweenEvictionRunsMillis(5 * 60 * 1000);
+        conf.setTimeBetweenEvictionRunsMillis(rpcClientOptions.getTimeBetweenEvictionRunsMillis());
         channelFuturePool = new GenericObjectPool<Channel>(
                 new ChannelPooledObjectFactory(this, ip, port), conf);
         try {
