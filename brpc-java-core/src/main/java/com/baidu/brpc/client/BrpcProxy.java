@@ -130,6 +130,7 @@ public class BrpcProxy implements MethodInterceptor {
 
         RpcRequest rpcRequest = null;
         RpcResponse rpcResponse = null;
+        RpcContext rpcContext = RpcContext.getContext();
         try {
             rpcRequest = new RpcRequest();
             rpcRequest.setCompressType(rpcClient.getRpcClientOptions().getCompressType().getNumber());
@@ -157,7 +158,6 @@ public class BrpcProxy implements MethodInterceptor {
             }
 
             // attachment
-            RpcContext rpcContext = RpcContext.getContext();
             rpcRequest.setKvAttachment(rpcContext.getRequestKvAttachment());
             rpcRequest.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
 
@@ -241,6 +241,9 @@ public class BrpcProxy implements MethodInterceptor {
             }
             if (rpcResponse != null) {
                 rpcResponse.delRefCntForClient();
+            }
+            if (rpcContext != null) {
+                rpcContext.reset();
             }
         }
     }
