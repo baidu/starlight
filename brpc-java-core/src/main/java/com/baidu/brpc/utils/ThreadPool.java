@@ -137,6 +137,13 @@ public final class ThreadPool {
 
     public void stop() {
         stopped = true;
+        producerLock.lock();
+        try {
+            isProducerNotEmptyCondition.signalAll();
+            isProducerNotFullCondition.signalAll();
+        } finally {
+            producerLock.unlock();
+        }
     }
 
     public void join() {
