@@ -28,6 +28,7 @@ import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.server.ServiceManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Method;
@@ -38,6 +39,13 @@ public class NsHeadRpcProtocolProtobufTest {
 
     private NSHeadRpcProtocol protocol = new NSHeadRpcProtocol(ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE,
             "utf-8");
+
+    @Before
+    public void init() {
+        if (ServiceManager.getInstance() != null) {
+            ServiceManager.getInstance().getServiceMap().clear();
+        }
+    }
 
     @Test
     public void testEncodeRequest() throws Exception {
