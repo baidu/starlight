@@ -17,7 +17,7 @@
 		<property name="servicePort" value="1031"></property>
 		<property name="registerServices">
 			<list>
-				<ref local="echoService" />
+				<ref bean="echoService" />
 			</list>
 		</property>
 	</bean>
