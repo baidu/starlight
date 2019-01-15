@@ -15,7 +15,7 @@
  */
 package com.baidu.brpc.naming;
 
-import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -23,12 +23,11 @@ import lombok.Setter;
  * POJO class of register info.
  * 
  * @author xiemalin
- * @since 2.27
  */
 @Setter
 @Getter
-@AllArgsConstructor
-public class RegisterInfo {
+@EqualsAndHashCode
+public class RegisterInfo extends NamingOptions {
 
     /** host info. */
     private String host;
@@ -36,16 +35,6 @@ public class RegisterInfo {
     /** The port. */
     private int port;
 
-    /** the unique mark for each service info. */
+    /** the interface class name. */
     private String service;
-
-    private String group;
-
-    private String version;
-
-    public RegisterInfo(String service, String group, String version) {
-        this.service = service;
-        this.group = group;
-        this.version = version;
-    }
 }

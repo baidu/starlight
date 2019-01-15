@@ -32,15 +32,11 @@ import java.util.concurrent.Future;
 @Setter
 @Getter
 public class EchoFacadeImpl implements EchoFacade {
-    @RpcProxy(serviceUrl = "list://127.0.0.1:8012",
-            lookupStubOnStartup = false,
-            rpcClientOptionsBeanName = "rpcClientOptions",
+    @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
             interceptorBeanName = "customInterceptor")
     private EchoService echoService;
 
-    @RpcProxy(serviceUrl = "list://127.0.0.1:8012",
-            lookupStubOnStartup = false,
-            rpcClientOptionsBeanName = "rpcClientOptions",
+    @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
             interceptorBeanName = "customInterceptor")
     private EchoService echoService2;
 
@@ -48,9 +44,7 @@ public class EchoFacadeImpl implements EchoFacade {
      * async service interface proxy will create new RpcClient,
      * not used RpcClient of sync interface proxy.
      */
-    @RpcProxy(serviceUrl = "list://127.0.0.1:8012",
-            lookupStubOnStartup = false,
-            rpcClientOptionsBeanName = "rpcClientOptions",
+    @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
             interceptorBeanName = "customInterceptor")
     private AsyncEchoService echoService3;
 

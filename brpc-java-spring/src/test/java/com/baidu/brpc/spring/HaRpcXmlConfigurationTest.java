@@ -72,7 +72,9 @@ public class HaRpcXmlConfigurationTest extends RpcXmlConfigurationTestBase {
         if (rpcServiceExporter3 != null) {
             rpcServiceExporter3.destroy();
         }
-        
+
+        Thread.sleep(5000);
+
         try {
             super.internalRpcRequestAndResponse(echoService);
             // should throw exception on no servers available

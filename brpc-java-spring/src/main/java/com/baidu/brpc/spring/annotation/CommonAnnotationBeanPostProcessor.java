@@ -216,8 +216,8 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
      * @return the actual property values to apply to to the given bean (can be the passed-in PropertyValues instance),
      *         or {@code null} to skip property population
      * @throws BeansException the beans exception
-     * @throws org.springframework.beans.BeansException in case of errors
-     * @see org.springframework.beans.MutablePropertyValues
+     * @throws BeansException in case of errors
+     * @see MutablePropertyValues
      */
     public PropertyValues postProcessPropertyValues(PropertyValues pvs, PropertyDescriptor[] pds, Object bean,
             String beanName) throws BeansException {

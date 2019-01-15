@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client;
+package com.baidu.brpc.client.endpoint;
 
+import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -29,6 +30,17 @@ public class EndPoint {
     public EndPoint(String ip, int port) {
         this.ip = ip;
         this.port = port;
+    }
+
+    /**
+     * @param hostPort format like "127.0.0.1:8002"
+     * @return {@link EndPoint}
+     */
+    public static EndPoint parseFrom(String hostPort) {
+        Validate.notEmpty(hostPort);
+        String[] splits = hostPort.split(":");
+        EndPoint endPoint = new EndPoint(splits[0], Integer.valueOf(splits[1]));
+        return endPoint;
     }
 
     @Override
@@ -50,6 +62,13 @@ public class EndPoint {
                     .isEquals();
         }
         return flag;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ip).append(":").append(port);
+        return sb.toString();
     }
 
     public String getIp() {

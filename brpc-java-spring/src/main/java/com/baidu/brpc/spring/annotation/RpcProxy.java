@@ -35,32 +35,44 @@ import java.lang.annotation.Target;
 public @interface RpcProxy {
 
     /**
-     * RPC server naming url to connect.
-     *
-     * @return the string
-     */
-    String serviceUrl();
-
-    /**
-     * bean name of {@link com.baidu.brpc.naming.NamingService}.
-     *
-     * @return the string
-     */
-    String namingServiceBeanName() default "";
-    
-    /**
      * bean name of RPC client options.  bean type must be {@link com.baidu.brpc.client.RpcClientOptions}
      *
      * @return the string
      */
     String rpcClientOptionsBeanName() default "";
-    
+
     /**
-     * try to connect to server on startup.
+     * RPC server naming url to connect.
      *
-     * @return true, if successful
+     * @return the string
      */
-    boolean lookupStubOnStartup() default true;
+    String namingServiceUrl() default "";
+
+    /**
+     * bean name of {@link com.baidu.brpc.naming.NamingServiceFactory}.
+     *
+     * @return the string
+     */
+    String namingServiceFactoryBeanName() default "";
+
+    /**
+     * group for naming service
+     *
+     */
+    String group() default "normal";
+
+    /**
+     * version for naming service
+     *
+     */
+    String version() default "1.0.0";
+
+    /**
+     * ignore it when failed to lookup/subscribe naming service
+     *
+     * @return true, ignore
+     */
+    boolean ignoreFailOfNamingService() default false;
     
     /**
      * bean name of RPC interceptor bean type must be {@link com.baidu.brpc.interceptor.Interceptor}.

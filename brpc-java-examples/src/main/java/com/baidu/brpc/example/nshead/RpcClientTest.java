@@ -23,7 +23,7 @@ public class RpcClientTest {
         // 高端口，在开发机上测试
         String serviceUrl = "list://localhost:8080";
 
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, null);
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption);
 
         // sync call
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);

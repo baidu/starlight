@@ -32,8 +32,7 @@ import com.baidu.brpc.spring.annotation.RpcProxy;
 @Setter
 public class AnnotationEchoServiceClient {
 
-    @RpcProxy(serviceUrl = "list://127.0.0.1:8012",
-            lookupStubOnStartup = false,
+    @RpcProxy(namingServiceUrl = "list://127.0.0.1:8012",
             rpcClientOptionsBeanName = "rpcClientOptions",
             interceptorBeanName = "customInterceptor")
     private EchoService echoService;

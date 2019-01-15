@@ -21,8 +21,11 @@
 	<bean
 		class="com.baidu.brpc.spring.annotation.CommonAnnotationBeanPostProcessor">
 		<property name="callback">
-			<bean
-				class="com.baidu.brpc.spring.annotation.RpcAnnotationResolver">
+			<bean class="com.baidu.brpc.spring.annotation.RpcAnnotationResolver">
+				<property name="namingServiceUrl" value="zookeeper://127.0.0.1:2181" />
+				<property name="namingServiceFactory">
+					<bean class="com.baidu.brpc.naming.zookeeper.ZookeeperNamingFactory" />
+				</property>
 			</bean>
 		</property>
 	</bean>

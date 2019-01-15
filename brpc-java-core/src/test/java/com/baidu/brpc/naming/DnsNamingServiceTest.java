@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.EndPoint;
+import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.test.BaseMockitoTest;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class DnsNamingServiceTest extends BaseMockitoTest {
     @Test
     public void testAll() {
         String serverList = "dns://127.0.0.1:8888";
-        DnsNamingService namingService = new DnsNamingService(new BrpcURI(serverList));
+        DnsNamingService namingService = new DnsNamingService(new BrpcURL(serverList));
         assertThat(namingService.getHostPort(), is("127.0.0.1:8888"));
         List<EndPoint> endPoints = namingService.lookup(null);
         assertThat(endPoints, hasItems(new EndPoint("127.0.0.1", 8888)));
@@ -40,7 +40,7 @@ public class DnsNamingServiceTest extends BaseMockitoTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testEmptyServerList() {
-        DnsNamingService namingService = new DnsNamingService(new BrpcURI(""));
+        DnsNamingService namingService = new DnsNamingService(new BrpcURL(""));
         namingService.lookup(null);
         namingService.unsubscribe(null);
     }

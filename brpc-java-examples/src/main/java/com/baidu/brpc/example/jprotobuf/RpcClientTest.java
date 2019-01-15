@@ -57,13 +57,13 @@ public class RpcClientTest {
 
         List<Interceptor> interceptors = new ArrayList<Interceptor>();;
         interceptors.add(new CustomInterceptor());
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
 
         // build request
         EchoRequest request = new EchoRequest();
         request.setMessage("hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
 
         // sync call
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Channel channel = null;
         try {
@@ -94,8 +94,10 @@ public class RpcClientTest {
             }
             RpcContext.removeContext();
         }
+        rpcClient.stop();
 
         // async call
+        rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         RpcCallback callback = new RpcCallback<EchoResponse>() {
             @Override
             public void success(EchoResponse response) {
