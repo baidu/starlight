@@ -19,10 +19,9 @@ package com.baidu.brpc.naming;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -31,52 +30,36 @@ import java.util.Map;
 @Setter
 @Getter
 @Slf4j
-public class BrpcURI {
-    public static final String GROUP = "group";
-    public static final String VERSION = "version";
-    // update timer interval for pull mode
-    public static final String INTERVAL = "interval";
-    public static final int DEFAULT_INTERVAL = 1000;
-
+public class BrpcURL {
     private String schema;
-    private List<String> hosts = new ArrayList<String>();
-    private List<String> ports = new ArrayList<String>();
+    /**
+     * we do not parse host and port,
+     * because different naming url has different formats:
+     * "127.0.0.1:8002,127.0.0.1:8003"
+     * "test.bj:portTag"
+     * "brpc.com"
+     * "127.0.0.1:8080"
+     */
+    private String hostPorts;
     private String path;
     private Map<String, Object> queryMap = new HashMap<String, Object>();
 
-    public BrpcURI(String uri) {
+    public BrpcURL(String uri) {
         // schema
         int index = uri.indexOf("://");
         if (index < 0) {
             throw new IllegalArgumentException("invalid uri:" + uri);
         }
         this.schema = uri.substring(0, index).toLowerCase();
-        // host:port
-        String hostPorts;
+        // hostPorts
         int index2 = uri.indexOf('/', index + 3);
         int index3 = uri.indexOf('?', index + 3);
         if (index2 > 0) {
-            hostPorts = uri.substring(index + 3, index2);
+            this.hostPorts = uri.substring(index + 3, index2);
         } else if (index3 > 0) {
-            hostPorts = uri.substring(index + 3, index3);
+            this.hostPorts = uri.substring(index + 3, index3);
         } else {
-            hostPorts = uri.substring(index + 3);
-        }
-        int len = hostPorts.length();
-        if (len > 0) {
-            String[] hostPortSplits = hostPorts.split(",");
-            for (String hostPort : hostPortSplits) {
-                String[] hostPortSplit = hostPort.split(":");
-                String host = hostPortSplit[0];
-                String port;
-                if (hostPortSplit.length == 2) {
-                    port = hostPortSplit[1];
-                } else {
-                    port = "";
-                }
-                this.hosts.add(host);
-                this.ports.add(port);
-            }
+            this.hostPorts = uri.substring(index + 3);
         }
 
         // path
@@ -124,5 +107,31 @@ public class BrpcURI {
         } else {
             return defaultValue;
         }
+    }
+
+    public String getStringParameter(String key, String defaultValue) {
+        Object value = queryMap.get(key);
+        if (value != null) {
+            return (String) value;
+        } else {
+            return defaultValue;
+        }
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(schema).append("://");
+        if (StringUtils.isNotBlank(hostPorts)) {
+            sb.append(hostPorts);
+        }
+        sb.append(path);
+        if (queryMap.size() > 0) {
+            sb.append("?");
+            for (Map.Entry<String, Object> entry : queryMap.entrySet()) {
+                sb.append(entry.getKey()).append("=").append(entry.getValue());
+            }
+        }
+        return sb.toString();
     }
 }

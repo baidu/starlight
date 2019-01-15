@@ -20,13 +20,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.BrpcURL;
+import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
 import lombok.Getter;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -91,7 +95,7 @@ public class RpcServer {
     public RpcServer(int port,
                      final RpcServerOptions options,
                      List<Interceptor> interceptors,
-                     NamingService namingService) {
+                     NamingServiceFactory namingServiceFactory) {
         this.port = port;
         if (options != null) {
             try {
@@ -103,7 +107,11 @@ public class RpcServer {
         if (interceptors != null) {
             this.interceptors = interceptors;
         }
-        this.namingService = namingService;
+        if (namingServiceFactory != null
+                && StringUtils.isNotBlank(rpcServerOptions.getNamingServiceUrl())) {
+            BrpcURL url = new BrpcURL(rpcServerOptions.getNamingServiceUrl());
+            this.namingService = namingServiceFactory.createNamingService(url);
+        }
         // init protocol
         ProtocolManager.instance().init(this.rpcServerOptions.getEncoding());
         if (rpcServerOptions.getProtocolType() != null) {
@@ -183,15 +191,22 @@ public class RpcServer {
     }
 
     public void registerService(Object service) {
+        registerService(service, null);
+    }
+
+    public void registerService(Object service, NamingOptions namingOptions) {
         ServiceManager serviceManager = ServiceManager.getInstance();
         serviceManager.registerService(service);
         serviceList.add(service);
-        RegisterInfo registerInfo = new RegisterInfo(
-                NetUtils.getLocalAddress().getHostAddress(),
-                port,
-                service.getClass().getName(),
-                rpcServerOptions.getNamingServiceGroup(),
-                rpcServerOptions.getNamingServiceVersion());
+        RegisterInfo registerInfo = new RegisterInfo();
+        registerInfo.setService(service.getClass().getInterfaces()[0].getName());
+        registerInfo.setHost(NetUtils.getLocalAddress().getHostAddress());
+        registerInfo.setPort(port);
+        if (namingOptions != null) {
+            registerInfo.setGroup(namingOptions.getGroup());
+            registerInfo.setVersion(namingOptions.getVersion());
+            registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
+        }
         registerInfoList.add(registerInfo);
     }
 

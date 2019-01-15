@@ -53,7 +53,7 @@ public class RpcProxyTest {
         // setup client
         rpcProxyFactoryBean = new RpcProxyFactoryBean();
         rpcProxyFactoryBean.setServiceInterface(EchoService.class);
-        rpcProxyFactoryBean.setServiceUrl("list://127.0.0.1:" + servicePort);
+        rpcProxyFactoryBean.setNamingServiceUrl("list://127.0.0.1:" + servicePort);
         rpcProxyFactoryBean.afterPropertiesSet();
         
     }

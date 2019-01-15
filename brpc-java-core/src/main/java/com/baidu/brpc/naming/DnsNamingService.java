@@ -16,14 +16,13 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.EndPoint;
+import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 
 import java.net.InetAddress;
@@ -34,7 +33,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class DnsNamingService implements NamingService {
-    private BrpcURI namingUrl;
+    private BrpcURL namingUrl;
     private String host;
     private int port;
     private String hostPort;
@@ -42,25 +41,26 @@ public class DnsNamingService implements NamingService {
     private Timer namingServiceTimer;
     private int updateInterval;
 
-    public DnsNamingService(BrpcURI namingUrl) {
+    public DnsNamingService(BrpcURL namingUrl) {
         Validate.notNull(namingUrl);
-        Validate.notEmpty(namingUrl.getHosts());
+        Validate.notEmpty(namingUrl.getHostPorts());
         this.namingUrl = namingUrl;
-        this.host = namingUrl.getHosts().get(0);
-        String portString = namingUrl.getPorts().get(0);
-        if (StringUtils.isNotBlank(portString)) {
-            this.port = Integer.valueOf(portString);
+
+        String[] splits = namingUrl.getHostPorts().split(":");
+        this.host = splits[0];
+        if (splits.length == 2) {
+            this.port = Integer.valueOf(splits[1]);
         } else {
             this.port = 80;
         }
         this.hostPort = this.host + ":" + this.port;
         this.updateInterval = namingUrl.getIntParameter(
-                BrpcURI.INTERVAL, BrpcURI.DEFAULT_INTERVAL);
+                Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
         namingServiceTimer = new HashedWheelTimer(new CustomThreadFactory("namingService-timer-thread"));
     }
 
     @Override
-    public List<EndPoint> lookup(RegisterInfo registerInfo) {
+    public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
         InetAddress[] addresses;
         try {
             addresses = InetAddress.getAllByName(host);
@@ -78,7 +78,7 @@ public class DnsNamingService implements NamingService {
     }
 
     @Override
-    public void subscribe(RegisterInfo registerInfo, final NotifyListener listener) {
+    public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
         namingServiceTimer.newTimeout(
                 new TimerTask() {
                     @Override
@@ -101,16 +101,16 @@ public class DnsNamingService implements NamingService {
     }
 
     @Override
-    public void unsubscribe(RegisterInfo registerInfo) {
+    public void unsubscribe(SubscribeInfo subscribeInfo) {
         namingServiceTimer.stop();
     }
 
     @Override
-    public void register(RegisterInfo url) {
+    public void register(RegisterInfo registerInfo) {
     }
 
     @Override
-    public void unregister(RegisterInfo url) {
+    public void unregister(RegisterInfo registerInfo) {
     }
 
     public String getHostPort() {

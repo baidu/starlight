@@ -41,7 +41,7 @@ public class RpcXmlConfigurationTest extends RpcXmlConfigurationTestBase {
     
     @Test
     public void testRpcRequestAndResponse() {
-        EchoService echoService = (EchoService) context.getBean("echoServiceProxy", EchoService.class);
+        EchoService echoService = context.getBean("echoServiceProxy", EchoService.class);
         super.internalRpcRequestAndResponse(echoService);
     }
 }
