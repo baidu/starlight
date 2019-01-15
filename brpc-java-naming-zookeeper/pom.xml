@@ -4,11 +4,11 @@
 
     <parent>
         <groupId>com.baidu</groupId>
-        <artifactId>brpc-java-parent-icode</artifactId>
+        <artifactId>brpc-java-parent</artifactId>
         <version>2.1.1-SNAPSHOT</version>
     </parent>
 
-    <artifactId>brpc-java-naming-zookeeper-icode</artifactId>
+    <artifactId>brpc-java-naming-zookeeper</artifactId>
     <packaging>jar</packaging>
 
     <name>brpc-java</name>
@@ -35,7 +35,7 @@
     <dependencies>
         <dependency>
             <groupId>com.baidu</groupId>
-            <artifactId>brpc-java-icode</artifactId>
+            <artifactId>brpc-java</artifactId>
         </dependency>
         <dependency>
             <groupId>org.apache.curator</groupId>
