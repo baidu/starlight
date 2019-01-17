@@ -14,18 +14,16 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.protocol.hulu;
+package com.baidu.brpc.protocol.nshead;
 
+import com.baidu.brpc.protocol.Packet;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * Created by huwenwei on 2017/9/23.
- */
 @Setter
 @Getter
-public class HuluRpcDecodePacket {
-    private ByteBuf metaBuf;
-    private ByteBuf protoAndAttachmentBuf;
+public class NSHeadBasePacket extends Packet {
+    private NSHead nsHead; // nsHead请求头
+    private ByteBuf bodyBuf; // body
 }

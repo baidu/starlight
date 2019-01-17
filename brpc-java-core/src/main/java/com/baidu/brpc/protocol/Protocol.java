@@ -29,7 +29,7 @@ import io.netty.handler.codec.http.FullHttpResponse;
  * rpc协议接口，业务如果想实现一个自定义协议，需要实现该接口。
  * Created by huwenwei on 2017/9/22.
  */
-public interface Protocol {
+public interface Protocol<P extends Packet> {
 
     /**
      * 客户端/服务端解析请求包成header+body buffer
@@ -39,7 +39,7 @@ public interface Protocol {
      * @throws TooBigDataException body太大
      * @throws NotEnoughDataException 可读长度不够，由于粘包拆包问题。
      */
-    Object decode(DynamicCompositeByteBuf in)
+    P decode(DynamicCompositeByteBuf in)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException;
 
     /**************** 以下3个函数是TCP客户端需要实现的。 *******************/
@@ -56,7 +56,7 @@ public interface Protocol {
      * @param ctx netty channel context
      * @throws Exception 反序列化异常
      */
-    RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception;
+    RpcResponse decodeResponse(P packet, ChannelHandlerContext ctx) throws Exception;
 
     /**
      * 连接被归还入池的时机
@@ -71,7 +71,7 @@ public interface Protocol {
      * @param packet header & body的buf
      * @return 输出对象
      */
-    void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception;
+    void decodeRequest(P packet, RpcRequest rpcRequest) throws Exception;
 
     /**
      * 服务端序列化返回结果。

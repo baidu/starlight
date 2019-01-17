@@ -75,7 +75,7 @@ public class NsHeadRpcProtocolProtobufTest {
         Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
                 .setMessage("hello").build();
 
-        NSHeadPacket packet = new NSHeadPacket();
+        NSHeadBasePacket packet = new NSHeadBasePacket();
         byte[] body = encodeBody(response, EchoService.class.getMethods()[0]);
         packet.setNsHead(new NSHead(1, body.length));
         packet.setBodyBuf(Unpooled.wrappedBuffer(body));

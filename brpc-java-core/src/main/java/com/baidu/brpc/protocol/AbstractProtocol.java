@@ -25,22 +25,22 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 
-public abstract class AbstractProtocol implements Protocol {
+public abstract class AbstractProtocol<P extends Packet> implements Protocol<P> {
     public ByteBuf encodeRequest(RpcRequest rpcRequest) throws Exception {
         return null;
     }
 
-    public Object decode(DynamicCompositeByteBuf in)
+    public P decode(DynamicCompositeByteBuf in)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
         return null;
     }
 
-    public RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception {
+    public RpcResponse decodeResponse(P packet, ChannelHandlerContext ctx) throws Exception {
         return null;
     }
 
 
-    public void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception {
+    public void decodeRequest(P packet, RpcRequest rpcRequest) throws Exception {
         return;
     }
 

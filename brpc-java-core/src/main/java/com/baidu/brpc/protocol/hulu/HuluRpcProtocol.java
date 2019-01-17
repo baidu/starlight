@@ -61,7 +61,7 @@ import io.netty.channel.ChannelHandlerContext;
  *     </li>
  * </ul>
  */
-public class HuluRpcProtocol extends AbstractProtocol {
+public class HuluRpcProtocol extends AbstractProtocol<HuluRpcDecodeBasePacket> {
     private static final Logger LOG = LoggerFactory.getLogger(HuluRpcProtocol.class);
     private static final byte[] MAGIC_HEAD = "HULU".getBytes();
     private static final int FIXED_LEN = 12;
@@ -111,10 +111,9 @@ public class HuluRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception {
-        HuluRpcDecodePacket responsePacket = (HuluRpcDecodePacket) packet;
-        ByteBuf metaBuf = responsePacket.getMetaBuf();
-        ByteBuf protoAndAttachmentBuf = responsePacket.getProtoAndAttachmentBuf();
+    public RpcResponse decodeResponse(HuluRpcDecodeBasePacket packet, ChannelHandlerContext ctx) throws Exception {
+        ByteBuf metaBuf = packet.getMetaBuf();
+        ByteBuf protoAndAttachmentBuf = packet.getProtoAndAttachmentBuf();
         ByteBuf protoBuf = null;
         try {
             RpcResponse rpcResponse = new RpcResponse();
@@ -147,7 +146,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
                     // attachment
                     if (responseMeta.getUserMessageSize() > 0) {
                         rpcResponse.setBinaryAttachment(protoAndAttachmentBuf);
-                        responsePacket.setProtoAndAttachmentBuf(null);
+                        packet.setProtoAndAttachmentBuf(null);
                     }
                 } else {
                     rpcResponse.setException(new RpcException(
@@ -159,21 +158,20 @@ public class HuluRpcProtocol extends AbstractProtocol {
             }
             return rpcResponse;
         } finally {
-            if (responsePacket.getMetaBuf() != null) {
-                responsePacket.getMetaBuf().release();
+            if (packet.getMetaBuf() != null) {
+                packet.getMetaBuf().release();
             }
-            if (responsePacket.getProtoAndAttachmentBuf() != null) {
-                responsePacket.getProtoAndAttachmentBuf().release();
+            if (packet.getProtoAndAttachmentBuf() != null) {
+                packet.getProtoAndAttachmentBuf().release();
             }
         }
 
     }
 
     @Override
-    public void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception {
-        HuluRpcDecodePacket requestPacket = (HuluRpcDecodePacket) packet;
-        ByteBuf metaBuf = requestPacket.getMetaBuf();
-        ByteBuf protoAndAttachmentBuf = requestPacket.getProtoAndAttachmentBuf();
+    public void decodeRequest(HuluRpcDecodeBasePacket packet, RpcRequest rpcRequest) throws Exception {
+        ByteBuf metaBuf = packet.getMetaBuf();
+        ByteBuf protoAndAttachmentBuf = packet.getProtoAndAttachmentBuf();
         ByteBuf protoBuf = null;
         try {
             HuluRpcProto.HuluRpcRequestMeta requestMeta = (HuluRpcProto.HuluRpcRequestMeta) ProtobufUtils.parseFrom(
@@ -302,7 +300,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
         }
     }
 
-    public HuluRpcDecodePacket decode(DynamicCompositeByteBuf in)
+    public HuluRpcDecodeBasePacket decode(DynamicCompositeByteBuf in)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
         if (in.readableBytes() < FIXED_LEN) {
             throw new NotEnoughDataException("readable bytes less than 12 for hulu:" + in.readableBytes());
@@ -327,7 +325,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
             }
 
             in.skipBytes(FIXED_LEN);
-            HuluRpcDecodePacket packet = new HuluRpcDecodePacket();
+            HuluRpcDecodeBasePacket packet = new HuluRpcDecodeBasePacket();
             try {
                 // meta
                 ByteBuf metaBuf = in.readRetainedSlice(metaSize);

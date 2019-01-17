@@ -55,7 +55,7 @@ import io.netty.handler.codec.http.HttpVersion;
  * 1、http + protoc
  * 2、http + json
  */
-public class HttpRpcProtocol extends AbstractProtocol {
+public class HttpRpcProtocol extends AbstractProtocol<HttpBasePacket> {
     private static final Logger LOG = LoggerFactory.getLogger(HttpRpcProtocol.class);
     private static final String CONTENT_TYPE_JSON = "application/json";
     private static final String CONTENT_TYPE_PROTOBUF = "application/proto";

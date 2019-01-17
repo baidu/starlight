@@ -43,7 +43,7 @@ import java.util.Map;
  * 处理nshead协议，序列化使用protobuf
  */
 @SuppressWarnings("unchecked")
-public class NSHeadRpcProtocol extends AbstractProtocol {
+public class NSHeadRpcProtocol extends AbstractProtocol<NSHeadBasePacket> {
     private static final Logger LOG = LoggerFactory.getLogger(NSHeadRpcProtocol.class);
 
     private int protocol;
@@ -72,8 +72,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public RpcResponse decodeResponse(Object in, ChannelHandlerContext ctx) throws Exception {
-        NSHeadPacket packet = (NSHeadPacket) in;
+    public RpcResponse decodeResponse(NSHeadBasePacket packet, ChannelHandlerContext ctx) throws Exception {
         RpcResponse rpcResponse = new RpcResponse();
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
         Long logId = channelInfo.getLogId();
@@ -106,7 +105,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
 
     @Override
     public void decodeRequest(Object in, RpcRequest request) throws Exception {
-        NSHeadPacket packet = (NSHeadPacket) in;
+        NSHeadBasePacket packet = (NSHeadBasePacket) in;
         request.setLogId((long) packet.getNsHead().logId);
 
         ServiceManager serviceManager = ServiceManager.getInstance();
@@ -162,12 +161,12 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public NSHeadPacket decode(DynamicCompositeByteBuf in)
+    public NSHeadBasePacket decode(DynamicCompositeByteBuf in)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
         if (in.readableBytes() < NSHead.NSHEAD_LENGTH) {
             throw new NotEnoughDataException("readable bytes less than 12 for nshead:" + in.readableBytes());
         }
-        NSHeadPacket packet = new NSHeadPacket();
+        NSHeadBasePacket packet = new NSHeadBasePacket();
         ByteBuf fixHeaderBuf = in.retainedSlice(NSHead.NSHEAD_LENGTH);
         try {
             NSHead nsHead = NSHead.fromByteBuf(fixHeaderBuf);
