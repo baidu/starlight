@@ -16,11 +16,12 @@
 
 package com.baidu.brpc.client.handler;
 
-import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.protocol.Packet;
+import com.baidu.brpc.protocol.Protocol;
+import com.baidu.brpc.protocol.RpcResponse;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpResponse;
 import lombok.AllArgsConstructor;
@@ -44,7 +45,7 @@ public class ClientWorkTask implements Runnable {
         if (!rpcClient.getRpcClientOptions().isHttp()) {
             ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
             try {
-                rpcResponse = channelInfo.getProtocol().decodeResponse(packet, ctx);
+                rpcResponse = channelInfo.getProtocol().decodeResponse((Packet)packet, ctx);
             } catch (Exception ex) {
                 log.warn("decode response failed:", ex);
                 return;

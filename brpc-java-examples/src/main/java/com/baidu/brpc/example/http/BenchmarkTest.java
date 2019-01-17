@@ -9,11 +9,9 @@ import com.baidu.brpc.example.standard.Echo;
 import com.baidu.brpc.example.standard.Echo.EchoRequest;
 import com.baidu.brpc.example.standard.Echo.EchoResponse;
 import com.baidu.brpc.example.standard.EchoServiceAsync;
-import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.Options.ProtocolType;
 
 public class BenchmarkTest {
-
 
     private static volatile int successRequestNum = 0;
     private static volatile int failRequestNum = 0;
@@ -34,10 +32,11 @@ public class BenchmarkTest {
         options.setReadTimeoutMillis(5000);
         options.setConnectTimeoutMillis(1000);
         RpcClient rpcClient = new RpcClient(args[0], options, null);
+        EchoServiceAsync echoServiceAsync = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
         int threadNum = Integer.parseInt(args[1]);
         Thread[] threads = new Thread[threadNum];
         for (int i = 0; i < threadNum; i++) {
-            threads[i] = new Thread(new ThreadTask(rpcClient), "work-thread-" + i);
+            threads[i] = new Thread(new ThreadTask(echoServiceAsync), "work-thread-" + i);
             threads[i].start();
         }
         Thread qpsThread = new Thread(new Runnable() {
@@ -105,19 +104,17 @@ public class BenchmarkTest {
 
     public static class ThreadTask implements Runnable {
 
-        private RpcClient rpcClient;
+        private EchoServiceAsync echoServiceAsync;
 
-        public ThreadTask(RpcClient rpcClient) {
-            this.rpcClient = rpcClient;
+        public ThreadTask(EchoServiceAsync echoServiceAsync) {
+            this.echoServiceAsync = echoServiceAsync;
         }
 
         public void run() {
-            EchoServiceAsync echoServiceAsync = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
             while (!stop) {
                 try {
                     // build request
                     EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
-
                     echoServiceAsync.echo(request, new EchoCallback(System.nanoTime()));
                 } catch (Exception ex) {
                     System.out.println("send exception:" + ex.getMessage());

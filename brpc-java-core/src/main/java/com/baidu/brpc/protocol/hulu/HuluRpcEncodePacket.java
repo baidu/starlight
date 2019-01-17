@@ -16,13 +16,14 @@
 
 package com.baidu.brpc.protocol.hulu;
 
+import com.baidu.brpc.protocol.Packet;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
 @Setter
 @Getter
-public class HuluRpcEncodePacket {
+public class HuluRpcEncodePacket implements Packet {
     private HuluRpcProto.HuluRpcRequestMeta requestMeta;
     private HuluRpcProto.HuluRpcResponseMeta responseMeta;
     private ByteBuf proto;

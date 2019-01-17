@@ -104,8 +104,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol<NSHeadBasePacket> {
     }
 
     @Override
-    public void decodeRequest(Object in, RpcRequest request) throws Exception {
-        NSHeadBasePacket packet = (NSHeadBasePacket) in;
+    public void decodeRequest(NSHeadBasePacket packet, RpcRequest request) throws Exception {
         request.setLogId((long) packet.getNsHead().logId);
 
         ServiceManager serviceManager = ServiceManager.getInstance();

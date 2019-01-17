@@ -26,7 +26,7 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-public class HuluRpcDecodeBasePacket extends Packet {
+public class HuluRpcDecodeBasePacket implements Packet {
     private ByteBuf metaBuf;
     private ByteBuf protoAndAttachmentBuf;
 }

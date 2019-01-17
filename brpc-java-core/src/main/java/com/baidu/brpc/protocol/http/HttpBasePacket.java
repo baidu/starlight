@@ -7,6 +7,6 @@ import com.baidu.brpc.protocol.Packet;
  * @version v0.1
  * @date 2019年01月13日 9:56 AM
  */
-public class HttpBasePacket extends Packet {
+public class HttpBasePacket implements Packet {
     // Do nothing
 }

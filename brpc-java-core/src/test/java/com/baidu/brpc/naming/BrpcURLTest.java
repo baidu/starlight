@@ -19,39 +19,37 @@ package com.baidu.brpc.naming;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class BrpcURITest {
+public class BrpcURLTest {
     @Test
     public void testBns() {
         String bns = "bns://test.com";
-        BrpcURI uri = new BrpcURI(bns);
+        BrpcURL uri = new BrpcURL(bns);
         Assert.assertTrue(uri.getSchema().equals("bns"));
-        Assert.assertTrue(uri.getHosts().get(0).equals("test.com"));
+        Assert.assertTrue(uri.getHostPorts().equals("test.com"));
     }
 
     @Test
     public void testList() {
         String serviceUrl = "list://127.0.0.1:8002,127.0.0.1:8003";
-        BrpcURI uri = new BrpcURI(serviceUrl);
+        BrpcURL uri = new BrpcURL(serviceUrl);
         Assert.assertTrue(uri.getSchema().equals("list"));
-        Assert.assertTrue(uri.getHosts().get(0).equals("127.0.0.1"));
-        Assert.assertTrue(uri.getPorts().get(0).equals("8002"));
+        Assert.assertTrue(uri.getHostPorts().equals("127.0.0.1:8002,127.0.0.1:8003"));
     }
 
     @Test
     public void testFile() {
         String serviceUrl = "file:///home/ubuntu/test.config";
-        BrpcURI uri = new BrpcURI(serviceUrl);
+        BrpcURL uri = new BrpcURL(serviceUrl);
         Assert.assertTrue(uri.getSchema().equals("file"));
-        Assert.assertTrue(uri.getHosts().size() == 0);
+        Assert.assertTrue(uri.getHostPorts().equals(""));
         Assert.assertTrue(uri.getPath().equals("/home/ubuntu/test.config"));
     }
 
     @Test
     public void testDns() {
         String serviceUrl = "dns://weibo.com";
-        BrpcURI uri = new BrpcURI(serviceUrl);
+        BrpcURL uri = new BrpcURL(serviceUrl);
         Assert.assertTrue(uri.getSchema().equals("dns"));
-        Assert.assertTrue(uri.getHosts().size() == 1);
-        Assert.assertTrue(uri.getHosts().get(0).equals("weibo.com"));
+        Assert.assertTrue(uri.getHostPorts().equals("weibo.com"));
     }
 }

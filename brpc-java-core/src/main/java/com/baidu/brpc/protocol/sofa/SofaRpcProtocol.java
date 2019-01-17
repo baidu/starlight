@@ -58,7 +58,7 @@ import io.netty.channel.ChannelHandlerContext;
  *     <li> sofa-pbrpc does not support attachment. </li>
  * </ul>
  */
-public class SofaRpcProtocol extends AbstractProtocol {
+public class SofaRpcProtocol extends AbstractProtocol<SofaRpcDecodePacket> {
 
     private static final Logger LOG = LoggerFactory.getLogger(SofaRpcProtocol.class);
     private final static byte[] MAGIC_HEAD = "SOFA".getBytes();
@@ -139,10 +139,9 @@ public class SofaRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception {
-        SofaRpcDecodePacket responsePacket = (SofaRpcDecodePacket) packet;
-        ByteBuf metaBuf = responsePacket.getMetaBuf();
-        ByteBuf protoBuf = responsePacket.getProtoBuf();
+    public RpcResponse decodeResponse(SofaRpcDecodePacket packet, ChannelHandlerContext ctx) throws Exception {
+        ByteBuf metaBuf = packet.getMetaBuf();
+        ByteBuf protoBuf = packet.getProtoBuf();
         try {
             RpcResponse rpcResponse = new RpcResponse();
             SofaRpcProto.SofaRpcMeta responseMeta = (SofaRpcProto.SofaRpcMeta) ProtobufUtils.parseFrom(
@@ -185,13 +184,12 @@ public class SofaRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception {
-        SofaRpcDecodePacket requestPacket = (SofaRpcDecodePacket) packet;
-        if (requestPacket == null) {
+    public void decodeRequest(SofaRpcDecodePacket packet, RpcRequest rpcRequest) throws Exception {
+        if (packet == null) {
             return;
         }
-        ByteBuf metaBuf = requestPacket.getMetaBuf();
-        ByteBuf protoBuf = requestPacket.getProtoBuf();
+        ByteBuf metaBuf = packet.getMetaBuf();
+        ByteBuf protoBuf = packet.getProtoBuf();
         try {
             SofaRpcProto.SofaRpcMeta requestMeta = (SofaRpcProto.SofaRpcMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcMetaInstance);
@@ -221,7 +219,6 @@ public class SofaRpcProtocol extends AbstractProtocol {
                 LOG.error(errorMsg);
                 throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
             }
-            return;
         } finally {
             if (metaBuf != null) {
                 metaBuf.release();

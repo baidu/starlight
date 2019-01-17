@@ -34,19 +34,22 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.client.handler.RpcClientHandler;
 import com.baidu.brpc.client.loadbalance.FairStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.client.loadbalance.RandomStrategy;
-import com.baidu.brpc.naming.BrpcURI;
+import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.DefaultNamingServiceFactory;
 import com.baidu.brpc.naming.DnsNamingService;
+import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.NotifyListener;
-import com.baidu.brpc.naming.RegisterInfo;
+import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.RpcContext;
@@ -56,7 +59,6 @@ import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ThreadPool;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +102,7 @@ public class RpcClient {
     private NamingService namingService;
     private ThreadPool threadPool;
     private Class serviceInterface;
-    private RegisterInfo registerInfo;
+    private SubscribeInfo subscribeInfo;
     private AtomicBoolean isStop = new AtomicBoolean(false);
 
     /**
@@ -135,23 +137,16 @@ public class RpcClient {
     public RpcClient(String serviceUrl,
                      final RpcClientOptions options,
                      List<Interceptor> interceptors,
-                     NamingService namingService) {
+                     NamingServiceFactory namingServiceFactory) {
         Validate.notEmpty(serviceUrl);
         Validate.notNull(options);
         this.init(options, interceptors);
         // parse naming
-        BrpcURI uri = new BrpcURI(serviceUrl);
-        if (StringUtils.isNotBlank(options.getNamingServiceGroup())) {
-            uri.addParameter(BrpcURI.GROUP, options.getNamingServiceGroup());
-        }
-        if (StringUtils.isNotBlank(options.getNamingServiceVersion())) {
-            uri.addParameter(BrpcURI.VERSION, options.getNamingServiceVersion());
-        }
-        uri.addParameter(BrpcURI.INTERVAL, String.valueOf(options.getNamingServiceUpdateIntervalMillis()));
-        if (namingService != null) {
-            this.namingService = namingService;
+        BrpcURL url = new BrpcURL(serviceUrl);
+        if (namingServiceFactory != null) {
+            this.namingService = namingServiceFactory.createNamingService(url);
         } else {
-            this.namingService = new DefaultNamingServiceFactory().newNamingService(uri);
+            this.namingService = new DefaultNamingServiceFactory().createNamingService(url);
         }
     }
 
@@ -176,19 +171,38 @@ public class RpcClient {
     }
 
     public void setServiceInterface(Class clazz) {
-        this.serviceInterface = clazz;
-        registerInfo = new RegisterInfo(serviceInterface.getName(),
-                rpcClientOptions.getNamingServiceGroup(),
-                rpcClientOptions.getNamingServiceVersion());
-        List<EndPoint> endPoints = this.namingService.lookup(registerInfo);
-        addEndPoints(endPoints);
-        this.namingService.subscribe(registerInfo, new NotifyListener() {
-            @Override
-            public void notify(Collection<EndPoint> addList, Collection<EndPoint> deleteList) {
-                addEndPoints(addList);
-                deleteEndPoints(deleteList);
+        setServiceInterface(clazz, null);
+    }
+
+    public void setServiceInterface(Class clazz, NamingOptions namingOptions) {
+        if (this.serviceInterface != null) {
+            throw new RpcException("serviceInterface must not be set repeatedly, please use another RpcClient");
+        }
+        if (clazz.getInterfaces().length == 0) {
+            this.serviceInterface = clazz;
+        } else {
+            // if it is async interface, we should subscribe the sync interface
+            this.serviceInterface = clazz.getInterfaces()[0];
+        }
+
+        if (namingService != null) {
+            subscribeInfo = new SubscribeInfo();
+            subscribeInfo.setService(serviceInterface.getName());
+            if (namingOptions != null) {
+                subscribeInfo.setGroup(namingOptions.getGroup());
+                subscribeInfo.setVersion(namingOptions.getVersion());
+                subscribeInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
             }
-        });
+            List<EndPoint> endPoints = this.namingService.lookup(subscribeInfo);
+            addEndPoints(endPoints);
+            this.namingService.subscribe(subscribeInfo, new NotifyListener() {
+                @Override
+                public void notify(Collection<EndPoint> addList, Collection<EndPoint> deleteList) {
+                    addEndPoints(addList);
+                    deleteEndPoints(deleteList);
+                }
+            });
+        }
     }
 
     public void stop() {
@@ -208,7 +222,7 @@ public class RpcClient {
                 timeoutTimer.stop();
             }
             if (namingService != null) {
-                namingService.unsubscribe(registerInfo);
+                namingService.unsubscribe(subscribeInfo);
             }
             if (healthCheckTimer != null) {
                 healthCheckTimer.stop();

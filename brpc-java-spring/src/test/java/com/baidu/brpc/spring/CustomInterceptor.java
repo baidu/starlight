@@ -16,11 +16,12 @@
 
 package com.baidu.brpc.spring;
 
-import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.baidu.brpc.interceptor.Interceptor;
 
 public class CustomInterceptor implements Interceptor {
     private static final Logger LOG = LoggerFactory.getLogger(CustomInterceptor.class);

@@ -60,6 +60,7 @@ public class BenchmarkTest {
 //        options.setWorkThreadNum(2);
         // options.setFutureBufferSize(10000);
         RpcClient rpcClient = new RpcClient(args[0], options);
+        EchoServiceAsync echoService = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
         int threadNum = Integer.parseInt(args[1]);
 
         byte[] messageBytes = null;
@@ -78,7 +79,8 @@ public class BenchmarkTest {
         Thread[] threads = new Thread[threadNum];
         for (int i = 0; i < threadNum; i++) {
             sendInfos[i] = new SendInfo();
-            threads[i] = new Thread(new ThreadTask(rpcClient, messageBytes, sendInfos[i]), "work-thread-" + i);
+            threads[i] = new Thread(new ThreadTask(rpcClient, echoService, messageBytes, sendInfos[i]),
+                    "work-thread-" + i);
             threads[i].start();
         }
 
@@ -169,11 +171,13 @@ public class BenchmarkTest {
     public static class ThreadTask implements Runnable {
 
         private RpcClient rpcClient;
+        private EchoServiceAsync echoService;
         private byte[] messageBytes;
         private SendInfo sendInfo;
 
-        public ThreadTask(RpcClient rpcClient, byte[] messageBytes, SendInfo sendInfo) {
+        public ThreadTask(RpcClient rpcClient, EchoServiceAsync echoService, byte[] messageBytes, SendInfo sendInfo) {
             this.rpcClient = rpcClient;
+            this.echoService = echoService;
             this.messageBytes = messageBytes;
             this.sendInfo = sendInfo;
         }
@@ -184,7 +188,6 @@ public class BenchmarkTest {
                     .setMessage(new String(messageBytes))
                     .build();
             byte[] attachment = "hello".getBytes();
-            EchoServiceAsync echoService = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
             Channel channel = rpcClient.selectChannel();
             while (!stop) {
                 try {

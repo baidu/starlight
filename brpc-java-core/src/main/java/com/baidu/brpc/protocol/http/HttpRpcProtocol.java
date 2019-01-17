@@ -63,7 +63,7 @@ public class HttpRpcProtocol extends AbstractProtocol<HttpBasePacket> {
      * 请求的唯一标识id
      */
     private static final String LOG_ID = "log-id";
-    private static final Gson gson = (new GsonBuilder())
+    private static final Gson GSON = (new GsonBuilder())
             .serializeNulls()
             .disableHtmlEscaping()
             .serializeSpecialFloatingPointValues()
@@ -300,7 +300,7 @@ public class HttpRpcProtocol extends AbstractProtocol<HttpBasePacket> {
         try {
             switch (protocolType) {
                 case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE: {
-                    String bodyJson = gson.toJson(body);
+                    String bodyJson = GSON.toJson(body);
                     bodyBytes = bodyJson.getBytes(encoding);
                     break;
                 }
@@ -387,7 +387,7 @@ public class HttpRpcProtocol extends AbstractProtocol<HttpBasePacket> {
             }
 
             map.put("id", "" + id);
-            return gson.toJsonTree(map);
+            return GSON.toJsonTree(map);
         }
     }
 
@@ -412,7 +412,7 @@ public class HttpRpcProtocol extends AbstractProtocol<HttpBasePacket> {
         try {
             switch (protocolType) {
                 case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE:
-                    response = gson.fromJson((JsonElement) body, rpcMethodInfo.getOutputClass());
+                    response = GSON.fromJson((JsonElement) body, rpcMethodInfo.getOutputClass());
                     break;
                 case Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE:
                     response = rpcMethodInfo.outputDecode((byte[]) body);
@@ -436,7 +436,7 @@ public class HttpRpcProtocol extends AbstractProtocol<HttpBasePacket> {
 
         Object[] args = new Object[rpcMethodInfo.getMethod().getGenericParameterTypes().length];
         if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-            args[0] = gson.fromJson((JsonElement) body, rpcMethodInfo.getInputClasses()[0]);
+            args[0] = GSON.fromJson((JsonElement) body, rpcMethodInfo.getInputClasses()[0]);
         } else if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE) {
             Object requestMessage = null;
             try {

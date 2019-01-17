@@ -32,10 +32,9 @@ public class RpcClientTest {
 
         List<Interceptor> interceptors = new ArrayList<Interceptor>();;
         interceptors.add(new CustomInterceptor());
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-
 
         // sync call
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         try {
             String response = echoService.hello("okok");
@@ -43,8 +42,10 @@ public class RpcClientTest {
         } catch (RpcException ex) {
             System.out.println("sync call failed, msg=" + ex.getMessage());
         }
+        rpcClient.stop();
 
         // async call
+        rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         RpcCallback callback = new RpcCallback<String>() {
             @Override
             public void success(String response) {

@@ -61,7 +61,7 @@ import io.netty.channel.ChannelHandlerContext;
  * </ul>
  * Created by huwenwei on 2017/9/22.
  */
-public class BaiduRpcProtocol extends AbstractProtocol {
+public class BaiduRpcProtocol extends AbstractProtocol<BaiduRpcDecodePacket> {
 
     private static final Logger LOG = LoggerFactory.getLogger(BaiduRpcProtocol.class);
     private static final byte[] MAGIC_HEAD = "PRPC".getBytes();
@@ -103,10 +103,9 @@ public class BaiduRpcProtocol extends AbstractProtocol {
         return requestBuf;
     }
 
-    public RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception {
-        BaiduRpcDecodePacket responsePacket = (BaiduRpcDecodePacket) packet;
-        ByteBuf metaBuf = responsePacket.getMetaBuf();
-        ByteBuf protoAndAttachmentBuf = responsePacket.getProtoAndAttachmentBuf();
+    public RpcResponse decodeResponse(BaiduRpcDecodePacket packet, ChannelHandlerContext ctx) throws Exception {
+        ByteBuf metaBuf = packet.getMetaBuf();
+        ByteBuf protoAndAttachmentBuf = packet.getProtoAndAttachmentBuf();
         try {
             BaiduRpcProto.RpcMeta rpcMeta = (BaiduRpcProto.RpcMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcMetaInstance);
@@ -203,10 +202,9 @@ public class BaiduRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception {
-        BaiduRpcDecodePacket requestPacket = (BaiduRpcDecodePacket) packet;
-        ByteBuf metaBuf = requestPacket.getMetaBuf();
-        ByteBuf protoAndAttachmentBuf = requestPacket.getProtoAndAttachmentBuf();
+    public void decodeRequest(BaiduRpcDecodePacket packet, RpcRequest rpcRequest) throws Exception {
+        ByteBuf metaBuf = packet.getMetaBuf();
+        ByteBuf protoAndAttachmentBuf = packet.getProtoAndAttachmentBuf();
         BaiduRpcProto.RpcMeta rpcMeta;
         try {
             rpcMeta = (BaiduRpcProto.RpcMeta) ProtobufUtils.parseFrom(

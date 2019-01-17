@@ -23,7 +23,7 @@ import lombok.Setter;
 
 @Setter
 @Getter
-public class NSHeadBasePacket extends Packet {
+public class NSHeadBasePacket implements Packet {
     private NSHead nsHead; // nsHead请求头
     private ByteBuf bodyBuf; // body
 }

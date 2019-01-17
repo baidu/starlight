@@ -18,7 +18,8 @@ package com.baidu.brpc.spring;
 import java.util.List;
 
 import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import lombok.Getter;
@@ -45,7 +46,22 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
     private int servicePort;
 
     /** The registry center service. */
-    private NamingService registryCenterService;
+    private NamingServiceFactory namingServiceFactory;
+
+    /**
+     * identify different service implementation for the same interface.
+     */
+    private String group = "normal";
+
+    /**
+     * identify service version.
+     */
+    private String version = "1.0.0";
+
+    /**
+     * if true, naming service will throw exception when register/subscribe exceptions.
+     */
+    private boolean ignoreFailOfNamingService = false;
     
     /** The register services. */
     private List<Object> registerServices;
@@ -71,9 +87,13 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
         Assert.isTrue(servicePort > 0, "invalid service port: " + servicePort);
         Assert.isTrue(!CollectionUtils.isEmpty(registerServices), "No register service specified.");
         
-        prRpcServer = new RpcServer(servicePort, this, interceptors, registryCenterService);
+        prRpcServer = new RpcServer(servicePort, this, interceptors, namingServiceFactory);
+        NamingOptions namingOptions = new NamingOptions();
+        namingOptions.setGroup(group);
+        namingOptions.setVersion(version);
+        namingOptions.setIgnoreFailOfNamingService(ignoreFailOfNamingService);
         for (Object service : registerServices) {
-            prRpcServer.registerService(service);
+            prRpcServer.registerService(service, namingOptions);
         }
         prRpcServer.start();
     }

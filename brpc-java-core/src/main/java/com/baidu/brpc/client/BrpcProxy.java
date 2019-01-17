@@ -20,6 +20,7 @@ import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
@@ -111,7 +112,11 @@ public class BrpcProxy implements MethodInterceptor {
     }
 
     public static <T> T getProxy(RpcClient rpcClient, Class clazz) {
-        rpcClient.setServiceInterface(clazz);
+        return getProxy(rpcClient, clazz, null);
+    }
+
+    public static <T> T getProxy(RpcClient rpcClient, Class clazz, NamingOptions namingOptions) {
+        rpcClient.setServiceInterface(clazz, namingOptions);
         Enhancer en = new Enhancer();
         en.setSuperclass(clazz);
         en.setCallback(new BrpcProxy(rpcClient, clazz));

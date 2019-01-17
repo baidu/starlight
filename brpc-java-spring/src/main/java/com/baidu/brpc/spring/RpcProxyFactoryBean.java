@@ -19,7 +19,8 @@ import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.naming.NamingServiceFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.DisposableBean;
@@ -32,7 +33,7 @@ import java.util.List;
  * {@link FactoryBean} for PbRpc proxies.
  *
  * @author xiemalin
- * @since 2.17
+ * @since 2.0.2
  */
 @Setter
 @Getter
@@ -43,50 +44,34 @@ public class RpcProxyFactoryBean extends RpcClientOptions
     private Class serviceInterface;
 
     /** naming service url */
-    private String serviceUrl;
+    private String namingServiceUrl;
 
-    private NamingService namingService;
-    
-    /** The service proxy. */
-    private Object serviceProxy;
-    
-    /** The rpc client. */
-    private RpcClient rpcClient;
-    
-    /** The lookup stub on startup. */
-    private boolean lookupStubOnStartup = true;
+    /* naming service factory */
+    private NamingServiceFactory namingServiceFactory;
+
+    /**
+     * identify different service implementation for the same interface.
+     */
+    private String group = "normal";
+
+    /**
+     * identify service version.
+     */
+    private String version = "1.0.0";
+
+    /**
+     * if true, naming service will throw exception when register/subscribe exceptions.
+     */
+    private boolean ignoreFailOfNamingService = false;
     
 	/** The interceptors. */
 	private List<Interceptor> interceptors;
-	
-	/**
-	 * Sets the interceptor.
-	 *
-	 * @param interceptors the new interceptor
-	 */
-    public void setInterceptors(List<Interceptor> interceptors) {
-        this.interceptors = interceptors;
-    }
 
-    /**
-     * Checks if is lookup stub on startup.
-     *
-     * @return true, if is lookup stub on startup
-     */
-    public boolean isLookupStubOnStartup() {
-        return lookupStubOnStartup;
-    }
+    /** The service proxy. */
+    private Object serviceProxy;
 
-    /**
-     * Sets the lookup stub on startup.
-     *
-     * @param lookupStubOnStartup the new lookup stub on startup
-     */
-    public void setLookupStubOnStartup(boolean lookupStubOnStartup) {
-        this.lookupStubOnStartup = lookupStubOnStartup;
-    }
-
-
+    /** The rpc client. */
+    private RpcClient rpcClient;
 
     /**
      * Sets the service interface.
@@ -145,9 +130,13 @@ public class RpcProxyFactoryBean extends RpcClientOptions
     @Override
     public void afterPropertiesSet() throws Exception {
         if (rpcClient == null) {
-            rpcClient = new RpcClient(serviceUrl, this, interceptors, namingService);
+            rpcClient = new RpcClient(namingServiceUrl, this, interceptors, namingServiceFactory);
         }
-        this.serviceProxy = BrpcProxy.getProxy(rpcClient, serviceInterface);
+        NamingOptions namingOptions = new NamingOptions();
+        namingOptions.setGroup(group);
+        namingOptions.setVersion(version);
+        namingOptions.setIgnoreFailOfNamingService(ignoreFailOfNamingService);
+        this.serviceProxy = BrpcProxy.getProxy(rpcClient, serviceInterface, namingOptions);
     }
 
     /* (non-Javadoc)

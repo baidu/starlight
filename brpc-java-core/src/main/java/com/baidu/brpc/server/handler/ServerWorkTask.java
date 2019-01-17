@@ -16,31 +16,32 @@
 
 package com.baidu.brpc.server.handler;
 
+import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.protocol.Packet;
 import com.baidu.brpc.protocol.Protocol;
+import com.baidu.brpc.protocol.ProtocolManager;
+import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.server.RpcServer;
-import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.protocol.ProtocolManager;
-import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.server.ServerStatus;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.HttpVersion;
 import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpVersion;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -75,7 +76,7 @@ public class ServerWorkTask implements Runnable {
         if (!isHttp) {
             try {
                 if (protocol != null) {
-                    protocol.decodeRequest(packet, rpcRequest);
+                    protocol.decodeRequest((Packet)packet, rpcRequest);
                 }
             } catch (Exception ex) {
                 // throw request

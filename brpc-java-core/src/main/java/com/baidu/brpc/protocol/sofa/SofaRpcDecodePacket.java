@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.protocol.sofa;
 
+import com.baidu.brpc.protocol.Packet;
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
@@ -25,7 +26,7 @@ import lombok.Setter;
  */
 @Setter
 @Getter
-public class SofaRpcDecodePacket {
+public class SofaRpcDecodePacket implements Packet {
     private ByteBuf metaBuf;
     private ByteBuf protoBuf;
 }

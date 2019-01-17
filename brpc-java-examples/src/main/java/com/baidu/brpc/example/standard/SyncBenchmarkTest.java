@@ -56,7 +56,8 @@ public class SyncBenchmarkTest {
         options.setWriteTimeoutMillis(1000);
         options.setReadTimeoutMillis(1000);
         options.setTcpNoDelay(false);
-        RpcClient rpcClient = new RpcClient(args[0], options, null);
+        RpcClient rpcClient = new RpcClient(args[0], options);
+        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         int threadNum = Integer.parseInt(args[1]);
 
         InputStream inputStream = Thread.currentThread().getClass()
@@ -70,7 +71,8 @@ public class SyncBenchmarkTest {
         Thread[] threads = new Thread[threadNum];
         for (int i = 0; i < threadNum; i++) {
             sendInfos[i] = new SendInfo();
-            threads[i] = new Thread(new ThreadTask(rpcClient, messageBytes, sendInfos[i]), "work-thread-" + i);
+            threads[i] = new Thread(new ThreadTask(rpcClient, echoService, messageBytes, sendInfos[i]),
+                    "work-thread-" + i);
             threads[i].start();
         }
 
@@ -108,13 +110,14 @@ public class SyncBenchmarkTest {
     }
 
     public static class ThreadTask implements Runnable {
-
         private RpcClient rpcClient;
+        private EchoService echoService;
         private byte[] messageBytes;
         private SendInfo sendInfo;
 
-        public ThreadTask(RpcClient rpcClient, byte[] messageBytes, SendInfo sendInfo) {
+        public ThreadTask(RpcClient rpcClient, EchoService echoService, byte[] messageBytes, SendInfo sendInfo) {
             this.rpcClient = rpcClient;
+            this.echoService = echoService;
             this.messageBytes = messageBytes;
             this.sendInfo = sendInfo;
         }
@@ -124,7 +127,6 @@ public class SyncBenchmarkTest {
             Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
                     .setMessage("hello")
                     .build();
-            EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
             Channel channel = rpcClient.selectChannel();
             while (true) {
                 try {
