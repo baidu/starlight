@@ -16,6 +16,52 @@
 
 package com.baidu.brpc.client;
 
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.handler.RpcClientHandler;
+import com.baidu.brpc.client.loadbalance.FairStrategy;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
+import com.baidu.brpc.client.loadbalance.LoadBalanceType;
+import com.baidu.brpc.client.loadbalance.RandomStrategy;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.BrpcURL;
+import com.baidu.brpc.naming.DefaultNamingServiceFactory;
+import com.baidu.brpc.naming.DnsNamingService;
+import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NamingServiceFactory;
+import com.baidu.brpc.naming.NotifyListener;
+import com.baidu.brpc.naming.SubscribeInfo;
+import com.baidu.brpc.protocol.Protocol;
+import com.baidu.brpc.protocol.ProtocolManager;
+import com.baidu.brpc.protocol.RpcContext;
+import com.baidu.brpc.protocol.RpcRequest;
+import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.utils.CustomThreadFactory;
+import com.baidu.brpc.utils.ThreadPool;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.codec.http.HttpClientCodec;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.net.Socket;
@@ -33,53 +79,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.baidu.brpc.client.endpoint.EndPoint;
-import com.baidu.brpc.client.handler.RpcClientHandler;
-import com.baidu.brpc.client.loadbalance.FairStrategy;
-import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
-import com.baidu.brpc.client.loadbalance.RandomStrategy;
-import com.baidu.brpc.naming.BrpcURL;
-import com.baidu.brpc.naming.DefaultNamingServiceFactory;
-import com.baidu.brpc.naming.DnsNamingService;
-import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.NamingService;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingServiceFactory;
-import com.baidu.brpc.naming.NotifyListener;
-import com.baidu.brpc.naming.SubscribeInfo;
-import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.ProtocolManager;
-import com.baidu.brpc.protocol.RpcContext;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.utils.CustomThreadFactory;
-import com.baidu.brpc.utils.ThreadPool;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.baidu.brpc.ChannelInfo;
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.nio.NioEventLoopGroup;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
 
 
 /**
@@ -316,7 +315,7 @@ public class RpcClient {
 
     public <T> Future<T> sendRequest(
             final RpcRequest rpcRequest,
-            Type responseType, RpcCallback<T> callback) {
+            Type responseType, final RpcCallback<T> callback, RpcFuture rpcFuture, final boolean isFinalTry) {
         // 如果业务在RpcContext中设置了channel，则不再通过负载均衡选择channel
         final RpcContext rpcContext = RpcContext.getContext();
         Channel channel = rpcContext.getChannel();
@@ -344,6 +343,12 @@ public class RpcClient {
         Timeout timeout = timeoutTimer.newTimeout(new TimerTask() {
             @Override
             public void run(Timeout timeout) throws Exception {
+                // do cleaning job only at the final retry
+                boolean canExecute = canExecuteTimer();
+                if (!canExecute) {
+                    return;
+                }
+
                 RpcFuture rpcFuture = channelInfo.removeRpcFuture(rpcRequest.getLogId());
                 if (rpcFuture != null) {
                     String ip = rpcFuture.getChannelInfo().getChannelGroup().getIp();
@@ -357,12 +362,19 @@ public class RpcClient {
                     rpcFuture.handleResponse(rpcResponse);
                 }
             }
+
+            private boolean canExecuteTimer() {
+                return callback != null || rpcContext.getChannel() != null || isFinalTry;
+            }
         }, readTimeout, TimeUnit.MILLISECONDS);
-        RpcFuture future = new RpcFuture(timeout, rpcRequest.getRpcMethodInfo(), callback, channelInfo, this);
+
         try {
-            long logId = channelInfo.addRpcFuture(future);
-            rpcRequest.setLogId(logId);
-            channelInfo.setLogId(logId);
+            // set the missing parameters
+            rpcFuture.setTimeout(timeout);
+            rpcFuture.setChannelInfo(channelInfo);
+            rpcFuture.setRpcClient(this);
+
+            channelInfo.setLogId(rpcFuture.getLogId());
 
             if (rpcClientOptions.isHttp()) {
                 try {
@@ -419,7 +431,7 @@ public class RpcClient {
         // return channel
         channelInfo.handleRequestSuccess();
 
-        return future;
+        return rpcFuture;
     }
 
     public void triggerCallback(Runnable runnable) {
