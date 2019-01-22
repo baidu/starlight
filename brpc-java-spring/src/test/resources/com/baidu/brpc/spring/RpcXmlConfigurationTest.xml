@@ -17,7 +17,7 @@
 		<property name="servicePort" value="1031"></property>
 		<property name="registerServices">
 			<list>
-				<ref local="echoService" />
+				<ref bean="echoService" />
 			</list>
 		</property>
 	</bean>
@@ -25,7 +25,7 @@
 
 	<bean id="echoServiceProxy" class="com.baidu.brpc.spring.RpcProxyFactoryBean">
 		<property name="serviceInterface" value="com.baidu.brpc.spring.EchoService"></property>
-		<property name="serviceUrl" value="list://127.0.0.1:1031"></property>
+		<property name="namingServiceUrl" value="list://127.0.0.1:1031"></property>
 	</bean>
 	
 </beans>

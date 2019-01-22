@@ -93,10 +93,12 @@ public class RpcFuture<T> implements Future<RpcResponse> {
         this.endTime = System.currentTimeMillis();
         if (rpcResponse != null && rpcResponse.getResult() != null) {
             channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
+            channelInfo.handleResponseSuccess();
         } else {
             channelInfo.getChannelGroup().updateLatencyWithReadTimeOut();
+            channelInfo.handleResponseFail();
         }
-        channelInfo.handleResponseFail();
+
         RpcContext rpcContext = RpcContext.getContext();
         if (rpcResponse != null) {
             rpcContext.setResponseBinaryAttachment(rpcResponse.getBinaryAttachment());

@@ -16,8 +16,7 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.EndPoint;
-import org.apache.commons.lang3.StringUtils;
+import com.baidu.brpc.client.endpoint.EndPoint;
 import org.apache.commons.lang3.Validate;
 
 import java.util.ArrayList;
@@ -29,19 +28,19 @@ import java.util.List;
 public class ListNamingService implements NamingService {
     private List<EndPoint> endPoints;
 
-    public ListNamingService(BrpcURI namingUrl) {
+    public ListNamingService(BrpcURL namingUrl) {
         Validate.notNull(namingUrl);
-        Validate.notEmpty(namingUrl.getHosts());
-        Validate.notEmpty(namingUrl.getPorts());
-        int size = namingUrl.getHosts().size();
-        Validate.isTrue(size == namingUrl.getPorts().size());
-        this.endPoints = new ArrayList<EndPoint>(size);
-        for (int i = 0; i < size; i++) {
-            String host = namingUrl.getHosts().get(i);
-            String portString = namingUrl.getPorts().get(i);
+        Validate.notEmpty(namingUrl.getHostPorts());
+
+        String hostPorts = namingUrl.getHostPorts();
+        String[] hostPortSplits = hostPorts.split(",");
+        this.endPoints = new ArrayList<EndPoint>(hostPortSplits.length);
+        for (String hostPort : hostPortSplits) {
+            String[] hostPortSplit = hostPort.split(":");
+            String host = hostPortSplit[0];
             int port;
-            if (StringUtils.isNotBlank(portString)) {
-                port = Integer.valueOf(portString);
+            if (hostPortSplit.length == 2) {
+                port = Integer.valueOf(hostPortSplit[1]);
             } else {
                 port = 80;
             }
@@ -50,16 +49,16 @@ public class ListNamingService implements NamingService {
     }
 
     @Override
-    public List<EndPoint> lookup(RegisterInfo registerInfo) {
+    public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
         return endPoints;
     }
 
     @Override
-    public void subscribe(RegisterInfo registerInfo, final NotifyListener listener) {
+    public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
     }
 
     @Override
-    public void unsubscribe(RegisterInfo registerInfo) {
+    public void unsubscribe(SubscribeInfo subscribeInfo) {
     }
 
     @Override

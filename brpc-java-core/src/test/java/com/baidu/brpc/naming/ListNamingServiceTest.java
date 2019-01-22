@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.EndPoint;
+import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.test.BaseMockitoTest;
 import org.junit.Test;
 
@@ -31,7 +31,7 @@ public class ListNamingServiceTest extends BaseMockitoTest {
     @Test
     public void testUpdateServerList() {
         String serverList = "list://1.1.1.1:1111,2.2.2.2:2222";
-        ListNamingService namingService = new ListNamingService(new BrpcURI(serverList));
+        ListNamingService namingService = new ListNamingService(new BrpcURL(serverList));
         List<EndPoint> endPoints = namingService.lookup(null);
         assertThat(endPoints, hasItems(
                 new EndPoint("1.1.1.1", 1111),
@@ -42,13 +42,13 @@ public class ListNamingServiceTest extends BaseMockitoTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testUpdateServerListInvalid1() {
-        ListNamingService namingService = new ListNamingService(new BrpcURI(""));
+        ListNamingService namingService = new ListNamingService(new BrpcURL(""));
         namingService.lookup(null);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testUpdateServerListInvalid2() {
-        ListNamingService namingService = new ListNamingService(new BrpcURI("1.1.1.1,2.2.2.2"));
+        ListNamingService namingService = new ListNamingService(new BrpcURL("1.1.1.1,2.2.2.2"));
         namingService.lookup(null);
     }
 

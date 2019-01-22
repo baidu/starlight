@@ -5,7 +5,7 @@
  */
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.EndPoint;
+import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
@@ -30,24 +30,25 @@ import java.util.concurrent.TimeUnit;
  */
 public class FileNamingService implements NamingService {
     private static final Logger LOG = LoggerFactory.getLogger(FileNamingService.class);
-    private BrpcURI namingUrl;
+    private BrpcURL namingUrl;
     private String filePath;
     private List<EndPoint> lastEndPoints = new ArrayList<EndPoint>();
     private Timer namingServiceTimer;
     private long lastModified;
     private int updateInterval;
     
-    public FileNamingService(BrpcURI namingUrl) {
+    public FileNamingService(BrpcURL namingUrl) {
         Validate.notNull(namingUrl);
         Validate.notNull(namingUrl.getPath());
+        this.namingUrl = namingUrl;
         this.filePath = namingUrl.getPath();
         this.updateInterval = namingUrl.getIntParameter(
-                BrpcURI.INTERVAL, BrpcURI.DEFAULT_INTERVAL);
+                Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
         namingServiceTimer = new HashedWheelTimer(new CustomThreadFactory("namingService-timer-thread"));
     }
 
     @Override
-    public List<EndPoint> lookup(RegisterInfo registerInfo) {
+    public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
         List<EndPoint> list = new ArrayList<EndPoint>();
         int lineNum = 0;
         BufferedReader reader = null;
@@ -88,7 +89,7 @@ public class FileNamingService implements NamingService {
     }
 
     @Override
-    public void subscribe(RegisterInfo registerInfo, final NotifyListener listener) {
+    public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
         namingServiceTimer.newTimeout(
                 new TimerTask() {
                     @Override
@@ -115,7 +116,7 @@ public class FileNamingService implements NamingService {
     }
 
     @Override
-    public void unsubscribe(RegisterInfo registerInfo) {
+    public void unsubscribe(SubscribeInfo subscribeInfo) {
         namingServiceTimer.stop();
     }
 

@@ -96,25 +96,45 @@ public class ChannelInfo {
     }
 
     /**
-     * 请求失败时处理逻辑
+     * return channel when fail
      */
     public void handleRequestFail() {
         channelGroup.incFailedNum();
+        returnChannelAfterRequest();
+    }
+
+    /**
+     * return channel when success
+     */
+    public void handleRequestSuccess() {
+        returnChannelAfterRequest();
+    }
+
+    private void returnChannelAfterRequest() {
         if (isFromRpcContext()) {
             return;
         }
-        if (getPendingRpc().size() > 0) {
+        if (protocol.returnChannelBeforeResponse()) {
             channelGroup.returnChannel(channel);
-        } else {
-            channelGroup.removeChannel(channel);
         }
     }
 
     /**
-     * 获取响应失败时处理逻辑
+     * return channel when fail
      */
     public void handleResponseFail() {
         channelGroup.incFailedNum();
+        returnChannelAfterResponse();
+    }
+
+    /**
+     * return channel when success
+     */
+    public void handleResponseSuccess() {
+        returnChannelAfterResponse();
+    }
+
+    private void returnChannelAfterResponse() {
         if (isFromRpcContext()) {
             return;
         }
