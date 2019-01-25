@@ -18,6 +18,7 @@ package com.baidu.brpc.client;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.RpcResponse;

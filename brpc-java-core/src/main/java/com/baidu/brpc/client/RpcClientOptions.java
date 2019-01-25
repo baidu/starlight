@@ -101,4 +101,6 @@ public class RpcClientOptions {
     private String encoding = "utf-8";
 
     private Options.CompressType compressType = Options.CompressType.COMPRESS_TYPE_NONE;
+
+    private boolean isLongConnection = true;
 }

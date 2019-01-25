@@ -26,6 +26,9 @@ import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.protocol.Protocol;
+import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
+import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
+import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
 import lombok.Getter;
@@ -117,16 +120,18 @@ public class RpcServer {
         if (rpcServerOptions.getProtocolType() != null) {
             this.protocol = ProtocolManager.instance().getProtocol(rpcServerOptions.getProtocolType());
         }
-        this.threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
-                new CustomThreadFactory("server-work-thread"));
+        // shutDownManager init once
+        ShutDownManager.getInstance();
+
+        threadPool = BrpcWorkThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getWorkThreadNum());
+        workerGroup = BrpcIoThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getIoThreadNum());
+
         bootstrap = new ServerBootstrap();
         if (Epoll.isAvailable()) {
             bossGroup = new EpollEventLoopGroup(
                     rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
-            workerGroup = new EpollEventLoopGroup(
-                    rpcServerOptions.getIoThreadNum(),
-                    new CustomThreadFactory("server-io-thread"));
+
             ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
             ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(EpollServerSocketChannel.class);
@@ -137,9 +142,7 @@ public class RpcServer {
             bossGroup = new NioEventLoopGroup(
                     rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
-            workerGroup = new NioEventLoopGroup(
-                    rpcServerOptions.getIoThreadNum(),
-                    new CustomThreadFactory("server-io-thread"));
+
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(NioServerSocketChannel.class);
@@ -242,12 +245,6 @@ public class RpcServer {
         }
         if (bossGroup != null) {
             bossGroup.shutdownGracefully();
-        }
-        if (workerGroup != null) {
-            workerGroup.shutdownGracefully();
-        }
-        if (threadPool != null) {
-            threadPool.stop();
         }
         if (rpcServerOptions.getMetaHttpPort() > 0 && !rpcServerOptions.isHttp()) {
             metaHttpServer.shutdown();

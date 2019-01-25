@@ -14,21 +14,28 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client.loadbalance;
+package com.baidu.brpc.client.endpoint;
 
-import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * load balance strategy interface
- */
-public interface LoadBalanceStrategy {
+public interface EndPointProcessor {
 
-    void init(RpcClient rpcClient);
+    void addEndPoints(Collection<EndPoint> addList);
 
-    BrpcChannelGroup selectInstance(CopyOnWriteArrayList<BrpcChannelGroup> instances);
+    void deleteEndPoints(Collection<EndPoint> deleteList);
 
-    void destroy();
+    CopyOnWriteArrayList<BrpcChannelGroup> getHealthyInstances();
+
+    CopyOnWriteArrayList<BrpcChannelGroup> getUnHealthyInstances();
+
+    CopyOnWriteArrayList<EndPoint> getEndPoints();
+
+    void updateUnHealthyInstances(List<BrpcChannelGroup> channelGroups);
+
+    void stop();
+
 }
