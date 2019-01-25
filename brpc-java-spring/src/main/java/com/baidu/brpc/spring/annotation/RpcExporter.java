@@ -28,7 +28,7 @@ import com.baidu.brpc.spring.RpcServiceExporter;
  * Annotation publish for {@link RpcServiceExporter}.
  *
  * @author xiemalin
- * @since 2.17
+ * @since 2.0.2
  */
 @Target({ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
@@ -58,9 +58,28 @@ public @interface RpcExporter {
     String interceptorBeanName() default "";
 
     /**
-     * bean name of {@link com.baidu.brpc.naming.NamingService}.
+     * bean name of {@link com.baidu.brpc.naming.NamingServiceFactory}.
      *
      * @return the string
      */
-    String namingServiceBeanName() default "";
+    String namingServiceFactoryBeanName() default "";
+
+    /**
+     * group for naming service
+     *
+     */
+    String group() default "normal";
+
+    /**
+     * version for naming service
+     *
+     */
+    String version() default "1.0.0";
+
+    /**
+     * ignore it when failed to register naming service
+     *
+     * @return true, ignore
+     */
+    boolean ignoreFailOfNamingService() default false;
 }

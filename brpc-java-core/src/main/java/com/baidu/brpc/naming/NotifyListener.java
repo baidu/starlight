@@ -15,7 +15,7 @@
  */
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.EndPoint;
+import com.baidu.brpc.client.endpoint.EndPoint;
 
 import java.util.Collection;
 

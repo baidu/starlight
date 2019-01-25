@@ -57,7 +57,6 @@ public class RpcClientTest {
 
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
 
         // build request
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
@@ -65,6 +64,8 @@ public class RpcClientTest {
                 .build();
 
         // sync call
+//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Channel channel = null;
         try {
@@ -72,6 +73,7 @@ public class RpcClientTest {
             // 如果手动指定channel，则RpcClient使用该channel发送请求；
             // 手动指定的channel，由业务自己调用rpcClient.returnChannel归还；
             // 如果出错，由业务自己调用rpcClient.removeChannel从连接池删除。
+            // 默认不用手动调用。
             channel = rpcClient.selectChannel();
             RpcContext.getContext().setChannel(channel);
             System.out.println(channel);
@@ -95,8 +97,11 @@ public class RpcClientTest {
             }
             RpcContext.removeContext();
         }
+        rpcClient.stop();
 
         // async call
+//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
+        rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         RpcCallback callback = new RpcCallback<Echo.EchoResponse>() {
             @Override
             public void success(Echo.EchoResponse response) {

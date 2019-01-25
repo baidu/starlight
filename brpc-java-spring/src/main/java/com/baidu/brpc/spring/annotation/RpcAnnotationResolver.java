@@ -27,8 +27,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.DefaultNamingServiceFactory;
+import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.server.RpcServerOptions;
+import lombok.Getter;
+import lombok.Setter;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -51,8 +54,10 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
  * Supports annotation resolver for {@link RpcProxy} and {@link RpcExporter}.
  *
  * @author xiemalin
- * @since 2.17
+ * @since 2.0.0
  */
+@Setter
+@Getter
 public class RpcAnnotationResolver extends AbstractAnnotationParserCallback implements InitializingBean {
 
     /** log this class. */
@@ -70,17 +75,17 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     /** status to control start only once. */
     private AtomicBoolean started = new AtomicBoolean(false);
 
-    /** The registry center service. */
-    private NamingService registryCenterService;
+    /* the default naming service url */
+    private String namingServiceUrl;
 
-    /** The client interceptor. */
-    private Interceptor clientInterceptor;
+    /** The default registry center service for all service */
+    private NamingServiceFactory namingServiceFactory;
 
-    /** The protobuf rpc annotation ressolver listener. */
+    /** The default interceptor for all service */
+    private Interceptor interceptor;
+
+    /** The protobuf rpc annotation resolver listener. */
     private RpcAnnotationResolverListener protobufRpcAnnotationRessolverListener;
-
-    /** The server interceptor. */
-    private Interceptor serverInterceptor;
 
     @Override
     public Object annotationAtType(Annotation t, Object bean, String beanName,
@@ -109,22 +114,33 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         // convert to integer and throw exception on error
         int intPort = Integer.valueOf(port);
 
+        // if there are multi service on one port, the first service configs effect only.
         RpcServiceExporter rpcServiceExporter = portMappingExpoters.get(intPort);
         if (rpcServiceExporter == null) {
             rpcServiceExporter = new RpcServiceExporter();
-            // get RpcClientOptions
-            String rpcServerOptionsBeanName = parsePlaceholder(rpcExporter.rpcServerOptionsBeanName());
+            rpcServiceExporter.setServicePort(intPort);
 
+            // get RpcServerOptions
+            String rpcServerOptionsBeanName = parsePlaceholder(rpcExporter.rpcServerOptionsBeanName());
             RpcServerOptions rpcServerOptions;
             if (StringUtils.isBlank(rpcServerOptionsBeanName)) {
                 rpcServerOptions = new RpcServerOptions();
             } else {
                 // if not exist throw exception
-                rpcServerOptions =
-                        (RpcServerOptions) beanFactory.getBean(rpcServerOptionsBeanName, RpcServerOptions.class);
+                rpcServerOptions = beanFactory.getBean(rpcServerOptionsBeanName, RpcServerOptions.class);
+            }
+            // naming service url
+            if (StringUtils.isBlank(rpcServerOptions.getNamingServiceUrl())) {
+                rpcServerOptions.setNamingServiceUrl(namingServiceUrl);
             }
 
-            rpcServiceExporter = new RpcServiceExporter();
+            try {
+                BeanUtils.copyProperties(rpcServiceExporter, rpcServerOptions);
+            } catch (Exception ex) {
+                throw new RuntimeException("copy server options failed:", ex);
+            }
+
+            // interceptor
             String interceptorName = parsePlaceholder(rpcExporter.interceptorBeanName());
             if (!StringUtils.isBlank(interceptorName)) {
                 Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
@@ -132,21 +148,27 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
                 interceptors.add(interceptor);
                 rpcServiceExporter.setInterceptors(interceptors);
             } else {
-                if (serverInterceptor != null) {
+                if (interceptor != null) {
                     List<Interceptor> interceptors = new ArrayList<Interceptor>();
-                    interceptors.add(serverInterceptor);
+                    interceptors.add(interceptor);
                     rpcServiceExporter.setInterceptors(interceptors);
                 }
             }
 
-            rpcServiceExporter.setServicePort(intPort);
-            try {
-                BeanUtils.copyProperties(rpcServiceExporter, rpcServerOptions);
-            } catch (Exception ex) {
-                throw new RuntimeException("copy server options failed:", ex);
-            }
+            // naming service group/version
+            rpcServiceExporter.setGroup(rpcExporter.group());
+            rpcServiceExporter.setVersion(rpcExporter.version());
+            rpcServiceExporter.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
 
-            rpcServiceExporter.setRegistryCenterService(registryCenterService);
+            // namingServiceFactory
+            String namingServiceFactoryBeanName = parsePlaceholder(rpcExporter.namingServiceFactoryBeanName());
+            if (!StringUtils.isBlank(namingServiceFactoryBeanName)) {
+                NamingServiceFactory namingServiceFactory = beanFactory.getBean(
+                        namingServiceFactoryBeanName, NamingServiceFactory.class);
+                rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
+            } else {
+                rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
+            }
             portMappingExpoters.put(intPort, rpcServiceExporter);
         }
 
@@ -239,9 +261,16 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             rpcClientOptions = beanFactory.getBean(rpcClientOptionsBeanName, RpcClientOptions.class);
         }
 
-        String serviceUrl = parsePlaceholder(rpcProxy.serviceUrl());
-        rpcProxyFactoryBean =
-                createRpcProxyFactoryBean(rpcProxy, serviceInterface, beanFactory, rpcClientOptions, serviceUrl);
+        // naming service url
+        String actualNamingServiceUrl;
+        if (StringUtils.isNotBlank(rpcProxy.namingServiceUrl())) {
+            actualNamingServiceUrl = parsePlaceholder(rpcProxy.namingServiceUrl());
+        } else {
+            actualNamingServiceUrl = namingServiceUrl;
+        }
+
+        rpcProxyFactoryBean = createRpcProxyFactoryBean(rpcProxy, serviceInterface,
+                beanFactory, rpcClientOptions, actualNamingServiceUrl);
 
         rpcClients.add(rpcProxyFactoryBean);
         Object object = rpcProxyFactoryBean.getObject();
@@ -262,14 +291,14 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
      * @param rpcProxy the rpc proxy
      * @param beanFactory the bean factory
      * @param rpcClientOptions the rpc client options
-     * @param serviceUrl naming service url
+     * @param namingServiceUrl naming service url
      * @return the rpc proxy factory bean
      */
     protected RpcProxyFactoryBean createRpcProxyFactoryBean(RpcProxy rpcProxy,
                                                             Class serviceInterface,
                                                             DefaultListableBeanFactory beanFactory,
                                                             RpcClientOptions rpcClientOptions,
-                                                            String serviceUrl) {
+                                                            String namingServiceUrl) {
         GenericBeanDefinition beanDef = new GenericBeanDefinition();
         beanDef.setBeanClass(RpcProxyFactoryBean.class);
         MutablePropertyValues values = new MutablePropertyValues();
@@ -281,8 +310,24 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             }
         }
         values.addPropertyValue("serviceInterface", serviceInterface);
-        values.addPropertyValue("serviceUrl", serviceUrl);
-        values.addPropertyValue("lookupStubOnStartup", rpcProxy.lookupStubOnStartup());
+        values.addPropertyValue("namingServiceUrl", namingServiceUrl);
+        values.addPropertyValue("group", rpcProxy.group());
+        values.addPropertyValue("version", rpcProxy.version());
+        values.addPropertyValue("ignoreFailOfNamingService", rpcProxy.ignoreFailOfNamingService());
+
+        // namingServiceFactory
+        String namingServiceFactoryBeanName = parsePlaceholder(rpcProxy.namingServiceFactoryBeanName());
+        NamingServiceFactory actualNamingServiceFactory;
+        if (StringUtils.isNotBlank(namingServiceFactoryBeanName)) {
+            actualNamingServiceFactory = beanFactory.getBean(namingServiceFactoryBeanName, NamingServiceFactory.class);
+        } else if (namingServiceFactory != null) {
+            actualNamingServiceFactory = namingServiceFactory;
+        } else {
+            actualNamingServiceFactory = new DefaultNamingServiceFactory();
+        }
+        values.addPropertyValue("namingServiceFactory", actualNamingServiceFactory);
+
+        // interceptor
         String interceptorName = parsePlaceholder(rpcProxy.interceptorBeanName());
         if (!StringUtils.isBlank(interceptorName)) {
             Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
@@ -290,9 +335,9 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             interceptors.add(interceptor);
             values.addPropertyValue("interceptors", interceptors);
         } else {
-            if (clientInterceptor != null) {
+            if (interceptor != null) {
                 List<Interceptor> interceptors = new ArrayList<Interceptor>();
-                interceptors.add(clientInterceptor);
+                interceptors.add(interceptor);
                 values.addPropertyValue("interceptors", interceptors);
             }
         }

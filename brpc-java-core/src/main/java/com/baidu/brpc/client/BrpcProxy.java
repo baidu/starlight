@@ -18,13 +18,14 @@ package com.baidu.brpc.client;
 
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
+import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.utils.ProtobufUtils;
-import com.baidu.brpc.RpcMethodInfo;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -111,7 +112,11 @@ public class BrpcProxy implements MethodInterceptor {
     }
 
     public static <T> T getProxy(RpcClient rpcClient, Class clazz) {
-        rpcClient.setServiceInterface(clazz);
+        return getProxy(rpcClient, clazz, null);
+    }
+
+    public static <T> T getProxy(RpcClient rpcClient, Class clazz, NamingOptions namingOptions) {
+        rpcClient.setServiceInterface(clazz, namingOptions);
         Enhancer en = new Enhancer();
         en.setSuperclass(clazz);
         en.setCallback(new BrpcProxy(rpcClient, clazz));
@@ -161,6 +166,13 @@ public class BrpcProxy implements MethodInterceptor {
             rpcRequest.setKvAttachment(rpcContext.getRequestKvAttachment());
             rpcRequest.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
 
+            // create and add RpcFuture object to FastFutureStore in order to acquire the logId,
+            // which is required in interceptors;
+            // The missing parameters will be set in rpcClient.sendRequest() method
+            RpcFuture rpcFuture = new RpcFuture(null, rpcRequest.getRpcMethodInfo(), callback, null, null);
+            long logId = FastFutureStore.getInstance(0).put(rpcFuture);
+            rpcRequest.setLogId(logId);
+
             // 执行interceptor链
             if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
                 for (Interceptor interceptor : rpcClient.getInterceptors()) {
@@ -177,8 +189,10 @@ public class BrpcProxy implements MethodInterceptor {
             RpcException exception = null;
             Future future = null;
             while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes()) {
+                boolean isFinalTry = currentTryTimes == rpcClient.getRpcClientOptions().getMaxTryTimes();
+
                 try {
-                    future = rpcClient.sendRequest(rpcRequest, responseType, callback);
+                    future = rpcClient.sendRequest(rpcRequest, responseType, callback, rpcFuture, isFinalTry);
                     if (callback != null) {
                         break;
                     } else {
@@ -194,7 +208,9 @@ public class BrpcProxy implements MethodInterceptor {
                     }
                 } catch (RpcException ex) {
                     exception = ex;
-                    rpcClient.removeLogId(rpcRequest.getLogId());
+                    if (isFinalTry) {
+                        rpcClient.removeLogId(rpcRequest.getLogId());
+                    }
                 }
                 // if application set the channel, brpc-java will not do retrying.
                 // because application maybe send different request for different server instance.

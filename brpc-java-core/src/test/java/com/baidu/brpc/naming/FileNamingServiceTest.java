@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.EndPoint;
+import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.test.BaseMockitoTest;
 import org.junit.Test;
 
@@ -33,7 +33,7 @@ public class FileNamingServiceTest extends BaseMockitoTest {
     public void testAll() throws Exception {
         URL url = Thread.currentThread().getContextClassLoader().getResource("test_server_list.txt");
         String serverList = url.getFile();
-        FileNamingService namingService = new FileNamingService(new BrpcURI("file://" + serverList));
+        FileNamingService namingService = new FileNamingService(new BrpcURL("file://" + serverList));
 
         List<EndPoint> endPoints = namingService.lookup(null);
         assertThat(endPoints.size(), is(1));

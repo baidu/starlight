@@ -51,7 +51,7 @@ public interface AnnotationParserCallback {
      *             exceptions on spring beans create error.
      */
     Object annotationAtType(Annotation t, Object bean, String beanName,
-        ConfigurableListableBeanFactory beanFactory) throws BeansException;
+                            ConfigurableListableBeanFactory beanFactory) throws BeansException;
 
     /**
      * process all annotation on class type after spring containter started.
@@ -63,7 +63,7 @@ public interface AnnotationParserCallback {
      * @throws BeansException             exceptions on spring beans create error.
      */
     void annotationAtTypeAfterStarted(Annotation t, Object bean,
-        String beanName, ConfigurableListableBeanFactory beanFactory)
+                                      String beanName, ConfigurableListableBeanFactory beanFactory)
         throws BeansException;
 
     /**
@@ -86,8 +86,8 @@ public interface AnnotationParserCallback {
      *             exceptions on spring beans create error.
      */
     Object annotationAtField(Annotation t, Object value, String beanName,
-        PropertyValues pvs, DefaultListableBeanFactory beanFactory,
-        Field field) throws BeansException;
+                             PropertyValues pvs, DefaultListableBeanFactory beanFactory,
+                             Field field) throws BeansException;
 
     /**
      * process all annotation on class method.
@@ -109,8 +109,8 @@ public interface AnnotationParserCallback {
      *             exceptions on spring beans create error.
      */
     Object annotationAtMethod(Annotation t, Object bean, String beanName,
-        PropertyValues pvs, DefaultListableBeanFactory beanFactory,
-        Method method) throws BeansException;
+                              PropertyValues pvs, DefaultListableBeanFactory beanFactory,
+                              Method method) throws BeansException;
 
     /**
      * Gets the type annotation.
