@@ -343,13 +343,18 @@ public class RpcClient {
         Timeout timeout = timeoutTimer.newTimeout(new TimerTask() {
             @Override
             public void run(Timeout timeout) throws Exception {
-                // do cleaning job only at the final retry
-                boolean canExecute = canExecuteTimer();
-                if (!canExecute) {
-                    return;
+                boolean isSyncAndFinalRequest = isSyncAndFinalRequest();
+
+                RpcFuture rpcFuture;
+                if (isSyncAndFinalRequest) {
+                    // get and remove
+                    rpcFuture = channelInfo.removeRpcFuture(rpcRequest.getLogId());
+
+                } else {
+                    // get only
+                    rpcFuture = channelInfo.getRpcFuture(rpcRequest.getLogId());
                 }
 
-                RpcFuture rpcFuture = channelInfo.removeRpcFuture(rpcRequest.getLogId());
                 if (rpcFuture != null) {
                     String ip = rpcFuture.getChannelInfo().getChannelGroup().getIp();
                     int port = rpcFuture.getChannelInfo().getChannelGroup().getPort();
@@ -359,13 +364,20 @@ public class RpcClient {
                     LOG.info(errMsg);
                     RpcResponse rpcResponse = new RpcResponse();
                     rpcResponse.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
-                    rpcFuture.handleResponse(rpcResponse);
+
+                    if (isSyncAndFinalRequest) {
+                        rpcFuture.handleResponse(rpcResponse);
+
+                    } else {
+                        rpcFuture.processConnection(rpcResponse);
+                    }
                 }
             }
 
-            private boolean canExecuteTimer() {
+            private boolean isSyncAndFinalRequest() {
                 return callback != null || rpcContext.getChannel() != null || isFinalTry;
             }
+
         }, readTimeout, TimeUnit.MILLISECONDS);
 
         try {
