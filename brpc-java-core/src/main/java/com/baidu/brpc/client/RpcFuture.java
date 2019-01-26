@@ -92,12 +92,17 @@ public class RpcFuture<T> implements Future<RpcResponse> {
         this.rpcResponse = response;
         this.endTime = System.currentTimeMillis();
 
-        if (rpcResponse != null && rpcResponse.getResult() != null) {
-            channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
-            channelInfo.handleResponseSuccess();
+        // only long connection need to update channel group
+        if (rpcClient.isLongConnection()) {
+            if (response != null && response.getResult() != null) {
+                channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
+                channelInfo.handleResponseSuccess();
+            } else {
+                channelInfo.getChannelGroup().updateLatencyWithReadTimeOut();
+                channelInfo.handleResponseFail();
+            }
         } else {
-            channelInfo.getChannelGroup().updateLatencyWithReadTimeOut();
-            channelInfo.handleResponseFail();
+            channelInfo.getChannelGroup().close();
         }
     }
 

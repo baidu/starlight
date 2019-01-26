@@ -15,6 +15,8 @@
  */
 package com.baidu.brpc.client;
 
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcPooledChannel;
 import com.baidu.brpc.server.RpcServer;
 import io.netty.channel.Channel;
 import org.junit.After;
@@ -43,7 +45,7 @@ public class BrpcChannelGroupTest {
         options = new RpcClientOptions();
         options.setLatencyWindowSizeOfFairLoadBalance(2);
         rpcClient = new RpcClient("list://127.0.0.1:8000", options);
-        channelGroup = new BrpcChannelGroup("127.0.0.1", 8000, rpcClient);
+        channelGroup = new BrpcPooledChannel("127.0.0.1", 8000, rpcClient);
     }
 
     @After
