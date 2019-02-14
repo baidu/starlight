@@ -27,7 +27,7 @@ import com.baidu.brpc.client.channel.BrpcChannelGroup;
  */
 public class RandomStrategy implements LoadBalanceStrategy {
 
-    private Random random = new Random(System.currentTimeMillis());
+    private final Random random = new Random();
 
     @Override
     public void init(RpcClient rpcClient) {

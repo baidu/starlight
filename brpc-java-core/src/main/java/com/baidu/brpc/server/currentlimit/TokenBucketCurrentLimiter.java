@@ -21,6 +21,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.utils.CustomThreadFactory;
+
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -28,8 +29,7 @@ import io.netty.util.TimerTask;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Token bucket algorithm
- * Advantage: allow certain burst traffic, and flow control is smoother
+ * Token bucket algorithm Advantage: allow certain burst traffic, and flow control is smoother
  *
  * @author wangjiayin@baidu.com
  * @since 2018/11/26
@@ -68,13 +68,21 @@ public class TokenBucketCurrentLimiter implements CurrentLimiter {
     }
 
     /**
-     * get a token
-     * if there's no more token in the bucket, return immediately
+     * get a token if there's no more token in the bucket, return immediately
      *
      * @return if success
      */
     private boolean acquire() {
-        return currentToken.get() > 0 && currentToken.getAndDecrement() > 0;
+        while (true) {
+            int curToken = currentToken.get();
+            if (curToken <= 0) {
+                return false;
+            }
+            if (currentToken.compareAndSet(curToken, curToken - 1)) {
+                return true;
+            }
+
+        }
     }
 
     /**
