@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.server.currentlimit;
 
-import com.baidu.brpc.protocol.RpcRequest;
+import com.baidu.brpc.protocol.Request;
 
 /**
  * current limit interface in brpc server
@@ -28,6 +28,6 @@ import com.baidu.brpc.protocol.RpcRequest;
  */
 public interface CurrentLimiter {
 
-    boolean isAllowable(RpcRequest request);
+    boolean isAllowable(Request request);
 
 }

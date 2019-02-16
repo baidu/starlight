@@ -29,8 +29,6 @@ import lombok.ToString;
 @Getter
 @ToString
 public class RpcServerOptions {
-    // if http server, isHttp should be true.
-    private boolean isHttp = false;
 
     // The keep alive
     private boolean keepAlive = true;
@@ -89,18 +87,4 @@ public class RpcServerOptions {
     // naming service url
     private String namingServiceUrl = "";
 
-    // service group
-    private String namingServiceGroup = "";
-
-    // service version
-    private String namingServiceVersion = "";
-
-    /**
-     * if metaHttpPort > 0, brpc will open meta info function.
-     * if metaHttpPort > 0 && isHttp = false, brpc will start tcp server and http server,
-     * tcp port is from the parameter of RpcServer, and http port is from metaHttpPort.
-     * if metaHttpPort > 0 && isHttp = true, brpc will start one http server only,
-     * the http port will use the parameter of RpcServer, NOT the metaHttpPort.
-     */
-    private int metaHttpPort = 0;
 }

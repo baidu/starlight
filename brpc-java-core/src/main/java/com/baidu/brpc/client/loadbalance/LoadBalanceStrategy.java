@@ -16,10 +16,10 @@
 
 package com.baidu.brpc.client.loadbalance;
 
-import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
-
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.RpcClient;
 
 /**
  * load balance strategy interface

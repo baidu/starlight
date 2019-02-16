@@ -16,6 +16,12 @@
 
 package com.baidu.brpc.protocol.standard;
 
+import java.lang.reflect.Constructor;
+import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.BrpcProxy;
@@ -23,13 +29,9 @@ import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.utils.ByteBufUtils;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.lang.reflect.Constructor;
-import java.util.Map;
 
 public class BaiduRpcProtocolTest {
     @Test
@@ -51,7 +53,7 @@ public class BaiduRpcProtocolTest {
         Assert.assertTrue(buf.readableBytes() == compositeByteBuf.readableBytes());
         System.out.println(compositeByteBuf.toString());
 
-        BaiduRpcDecodePacket packet = (BaiduRpcDecodePacket) new BaiduRpcProtocol().decode(compositeByteBuf);
+        BaiduRpcDecodePacket packet =  new BaiduRpcProtocol().decode(null, compositeByteBuf, true);
         Assert.assertTrue(packet.getMetaBuf().readableBytes() > 0);
         System.out.println(packet.getMetaBuf());
         Assert.assertTrue(packet.getProtoAndAttachmentBuf().readableBytes() > 0);

@@ -16,6 +16,11 @@
 
 package com.baidu.brpc.client;
 
+import static org.junit.Assert.assertEquals;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.protocol.Options;
@@ -25,10 +30,6 @@ import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.server.ServiceManager;
-import org.junit.Before;
-import org.junit.Test;
-
-import static org.junit.Assert.assertEquals;
 
 public class RpcShortConnectionClientTest {
 
@@ -62,14 +63,12 @@ public class RpcShortConnectionClientTest {
     @Test
     public void testHttpProto() {
         RpcServerOptions serverOptions = new RpcServerOptions();
-        serverOptions.setHttp(true);
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         RpcServer rpcServer = new RpcServer(8001, serverOptions);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
         RpcClientOptions clientOptions = new RpcClientOptions();
-        clientOptions.setHttp(true);
         clientOptions.setProtocolType(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         clientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
         clientOptions.setLongConnection(false);

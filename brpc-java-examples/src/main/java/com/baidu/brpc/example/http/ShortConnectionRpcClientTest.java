@@ -1,5 +1,9 @@
 package com.baidu.brpc.example.http;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
+
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
@@ -13,15 +17,10 @@ import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options.ProtocolType;
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
-
 public class ShortConnectionRpcClientTest {
 
     public static void main(String[] args) {
         RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setHttp(true);
         clientOption.setProtocolType(ProtocolType.PROTOCOL_HTTP_JSON_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
         clientOption.setReadTimeoutMillis(5000);

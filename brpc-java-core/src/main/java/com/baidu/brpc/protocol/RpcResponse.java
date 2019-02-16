@@ -16,26 +16,20 @@
 
 package com.baidu.brpc.protocol;
 
-import com.baidu.brpc.client.RpcFuture;
-import com.baidu.brpc.RpcMethodInfo;
-import io.netty.buffer.ByteBuf;
-import io.netty.handler.codec.http.DefaultFullHttpResponse;
-import io.netty.handler.codec.http.HttpVersion;
-import io.netty.handler.codec.http.HttpResponseStatus;
-import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.util.concurrent.FastThreadLocal;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
- * 反序列化之后的返回信息。
+ * Bprc tcp response implementation, used for tcp protocols.
+ *
+ * @author wangjiayin@baidu.com
+ * @since 2018-12-26
  */
 @Setter
 @Getter
-public class RpcResponse extends DefaultFullHttpResponse {
+public class RpcResponse extends AbstractResponse {
+
     private static final FastThreadLocal<RpcResponse> CURRENT_RPC_RESPONSE = new FastThreadLocal<RpcResponse>() {
         @Override
         protected RpcResponse initialValue() {
@@ -47,66 +41,4 @@ public class RpcResponse extends DefaultFullHttpResponse {
         return CURRENT_RPC_RESPONSE.get();
     }
 
-    private long logId;
-    private Object result;
-    private Throwable exception;
-    private RpcMethodInfo rpcMethodInfo;
-    private RpcFuture rpcFuture;
-    private Map<String, String> kvAttachment = new HashMap<String, String>();
-    private ByteBuf binaryAttachment;
-    private int compressType;
-
-    public RpcResponse() {
-        super(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    }
-
-    /**
-     * http response引用计数交给rpc response管理。
-     * @param httpResponse http response
-     */
-    public RpcResponse(FullHttpResponse httpResponse) {
-        super(httpResponse.protocolVersion(), httpResponse.status(), httpResponse.content(),
-                httpResponse.headers().copy(), httpResponse.trailingHeaders().copy());
-        this.setDecoderResult(httpResponse.decoderResult());
-    }
-
-    public void setHttpResponse(FullHttpResponse httpResponse) {
-        setProtocolVersion(httpResponse.protocolVersion());
-        setStatus(httpResponse.status());
-        content().writeBytes(httpResponse.content());
-        headers().add(httpResponse.headers());
-        trailingHeaders().add(httpResponse.trailingHeaders());
-        setDecoderResult(httpResponse.decoderResult());
-    }
-
-    public void reset() {
-        logId = -1;
-        result = null;
-        exception = null;
-        rpcMethodInfo = null;
-        rpcFuture = null;
-        kvAttachment.clear();
-        delRefCntForServer();
-        compressType = 0;
-        setStatus(HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        content().clear();
-        headers().clear();
-        trailingHeaders().clear();
-    }
-
-    public void delRefCntForServer() {
-        if (binaryAttachment != null) {
-            int refCnt = binaryAttachment.refCnt();
-            if (refCnt > 0) {
-                binaryAttachment.release();
-            }
-            binaryAttachment = null;
-        }
-    }
-
-    public void delRefCntForClient() {
-        if (super.refCnt() > 0) {
-            super.release();
-        }
-    }
 }

@@ -16,28 +16,33 @@
 
 package com.baidu.brpc.protocol.http;
 
+import static org.junit.Assert.assertEquals;
+
+import java.lang.reflect.Method;
+
+import org.junit.Assert;
+import org.junit.Test;
+
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.protocol.HttpRequest;
+import com.baidu.brpc.protocol.HttpResponse;
 import com.baidu.brpc.protocol.Options.ProtocolType;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.utils.ByteBufUtils;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpVersion;
-import org.junit.Test;
-
-import java.lang.reflect.Method;
-
-import static org.junit.Assert.assertEquals;
 
 public class HttpProtoProtocolTest {
 
@@ -45,20 +50,16 @@ public class HttpProtoProtocolTest {
 
     @Test
     public void testEncodeHttpRequest() throws Exception {
-        RpcRequest rpcRequest = new RpcRequest();
-        rpcRequest.setTargetMethod(EchoService.class.getMethods()[0]);
-        rpcRequest.setArgs(new Object[] {Echo.EchoRequest.newBuilder().setMessage("hello").build()});
-        rpcRequest.setLogId(1L);
-        rpcRequest.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
-
-        FullHttpRequest response = protocol.encodeHttpRequest(rpcRequest);
-
-        assertEquals("/example.EchoService/Echo", response.getUri());
-        assertEquals(1, response.headers().getInt("log-id").intValue());
-        assertEquals("application/proto; charset=utf-8",
-                response.headers().getAsString(HttpHeaderNames.CONTENT_TYPE));
+        Request request = new HttpRequest();
+        request.setTargetMethod(EchoService.class.getMethods()[0]);
+        request.setArgs(new Object[] {Echo.EchoRequest.newBuilder().setMessage("hello").build()});
+        request.setLogId(1L);
+        request.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
+        ByteBuf buf = protocol.encodeRequest(request);
+        Assert.assertTrue(buf.readableBytes() > 0);
+        System.out.println(buf.readableBytes());
+        System.out.println(ByteBufUtils.byteBufToString(buf));
     }
-
 
     @Test
     public void testDecodeHttpRequest() throws Exception {
@@ -69,39 +70,35 @@ public class HttpProtoProtocolTest {
 
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET,
                 "/example.EchoService/Echo", content);
-        RpcRequest rpcRequest = new RpcRequest();
-        rpcRequest.headers().set("log-id", 1);
-        rpcRequest.setUri("/example.EchoService/Echo");
-        rpcRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/proto; charset=utf-8");
+        httpRequest.headers().set("log-id", 1);
+        httpRequest.setUri("/example.EchoService/Echo");
+        httpRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/proto; charset=utf-8");
 
-        protocol.decodeHttpRequest(httpRequest, rpcRequest);
+        Request request = protocol.decodeRequest(httpRequest);
 
-        assertEquals("example.EchoService",
-                rpcRequest.getRpcMethodInfo().getServiceName());
-        assertEquals("Echo", rpcRequest.getRpcMethodInfo().getMethodName());
-        assertEquals(EchoService.class.getMethods()[0], rpcRequest.getTargetMethod());
-        assertEquals(EchoServiceImpl.class, rpcRequest.getTarget().getClass());
+        assertEquals("example.EchoService", request.getRpcMethodInfo().getServiceName());
+        assertEquals("Echo", request.getRpcMethodInfo().getMethodName());
+        assertEquals(EchoService.class.getMethods()[0], request.getTargetMethod());
+        assertEquals(EchoServiceImpl.class, request.getTarget().getClass());
     }
 
     @Test
     public void testEncodeHttpResponse() throws Exception {
 
-        RpcRequest rpcRequest = new RpcRequest();
+        HttpRequest request = new HttpRequest();
         String contentType = "application/proto; charset=utf-8";
-        rpcRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
-        rpcRequest.headers().set(HttpHeaderNames.CONTENT_ENCODING, "utf-8");
-        rpcRequest.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
-        RpcResponse rpcResponse = new RpcResponse();
-        rpcResponse.setResult(Echo.EchoResponse.newBuilder().setMessage("hello").build());
+        request.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
+        request.headers().set(HttpHeaderNames.CONTENT_ENCODING, "utf-8");
+        request.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
+        Response response = new HttpResponse();
+        response.setResult(Echo.EchoResponse.newBuilder().setMessage("hello").build());
 
         ProtobufRpcMethodInfo methodInfo = new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]);
         methodInfo.setTarget(new EchoServiceImpl());
-        rpcResponse.setRpcMethodInfo(methodInfo);
+        response.setRpcMethodInfo(methodInfo);
 
-        FullHttpResponse response = protocol.encodeHttpResponse(rpcRequest, rpcResponse);
+        protocol.encodeResponse(request, response);
 
-        assertEquals(contentType, response.headers().get(HttpHeaderNames.CONTENT_TYPE));
-        assertEquals(encodeBody(rpcResponse.getResult()).length, response.content().readableBytes());
     }
 
     public byte[] encodeBody(Object body) throws Exception {
@@ -113,6 +110,5 @@ public class HttpProtoProtocolTest {
 
         return (byte[]) r;
     }
-
 
 }

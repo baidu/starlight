@@ -16,11 +16,11 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
-import com.baidu.brpc.test.BaseMockitoTest;
-import org.junit.Test;
-
 import java.util.List;
+
+import com.baidu.brpc.test.BaseMockitoTest;
+import com.baidu.brpc.client.endpoint.EndPoint;
+import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;

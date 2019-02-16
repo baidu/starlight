@@ -18,44 +18,47 @@ package com.baidu.brpc.protocol.sofa;
 
 import java.util.Arrays;
 
-import com.baidu.brpc.exceptions.TooBigDataException;
-import com.baidu.brpc.protocol.AbstractProtocol;
-import com.baidu.brpc.protocol.BaiduRpcErrno;
-import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
-import com.baidu.brpc.exceptions.BadSchemaException;
-import com.baidu.brpc.exceptions.NotEnoughDataException;
-import com.baidu.brpc.utils.ProtobufUtils;
-import io.netty.buffer.ByteBuf;
-import io.netty.buffer.Unpooled;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.compress.Compress;
 import com.baidu.brpc.compress.CompressManager;
+import com.baidu.brpc.exceptions.BadSchemaException;
+import com.baidu.brpc.exceptions.NotEnoughDataException;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.exceptions.TooBigDataException;
+import com.baidu.brpc.protocol.AbstractProtocol;
+import com.baidu.brpc.protocol.BaiduRpcErrno;
+import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.RpcRequest;
+import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.utils.ProtobufUtils;
 import com.baidu.brpc.utils.RpcMetaUtils;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
  * Notes on SOFA PBRPC Protocol:
  * <ul>
- *     <li> Header format is ["SOFA"][<code>meta_size</code>]
- *     [<code>body_size(64)</code>][<code>message_size(64)</code>],
- *     24 bytes in total
- *     </li>
- *     <li> {@code body_size} and {@code meta_size} are <b>NOT</b> in
- *     <b>network</b> byte order (little endian)
- *     </li>
- *     <li> meta of request and response are same, distinguished by SofaRpcMeta#type</li>
- *     <li> sofa-pbrpc does not conduct log_id. </li>
- *     <li> sofa-pbrpc does not support attachment. </li>
+ * <li> Header format is ["SOFA"][<code>meta_size</code>]
+ * [<code>body_size(64)</code>][<code>message_size(64)</code>],
+ * 24 bytes in total
+ * </li>
+ * <li> {@code body_size} and {@code meta_size} are <b>NOT</b> in
+ * <b>network</b> byte order (little endian)
+ * </li>
+ * <li> meta of request and response are same, distinguished by SofaRpcMeta#type</li>
+ * <li> sofa-pbrpc does not conduct log_id. </li>
+ * <li> sofa-pbrpc does not support attachment. </li>
  * </ul>
  */
 public class SofaRpcProtocol extends AbstractProtocol {
@@ -65,10 +68,10 @@ public class SofaRpcProtocol extends AbstractProtocol {
     private static final int FIXED_LEN = 24;
     private static final SofaRpcProto.SofaRpcMeta defaultRpcMetaInstance =
             SofaRpcProto.SofaRpcMeta.getDefaultInstance();
-    private static NotEnoughDataException notEnoughDataException = new NotEnoughDataException("not enough data");
     private static final CompressManager compressManager = CompressManager.getInstance();
 
-    public SofaRpcDecodePacket decode(DynamicCompositeByteBuf in)
+    @Override
+    public SofaRpcDecodePacket decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
         if (in.readableBytes() < FIXED_LEN) {
             throw notEnoughDataException;
@@ -117,25 +120,24 @@ public class SofaRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public ByteBuf encodeRequest(RpcRequest rpcRequest) throws Exception {
+    public ByteBuf encodeRequest(Request request) throws Exception {
         SofaRpcEncodePacket requestPacket = new SofaRpcEncodePacket();
         SofaRpcProto.SofaRpcMeta.Builder metaBuilder = SofaRpcProto.SofaRpcMeta.newBuilder();
         metaBuilder.setType(SofaRpcProto.SofaRpcMeta.Type.REQUEST);
-        metaBuilder.setSequenceId(rpcRequest.getLogId());
-        int compressType = rpcRequest.getCompressType();
+        metaBuilder.setSequenceId(request.getLogId());
+        int compressType = request.getCompressType();
         metaBuilder.setCompressType(getSofaCompressType(compressType));
 
-        RpcMetaUtils.RpcMetaInfo rpcMetaInfo = RpcMetaUtils.parseRpcMeta(rpcRequest.getTargetMethod());
+        RpcMetaUtils.RpcMetaInfo rpcMetaInfo = RpcMetaUtils.parseRpcMeta(request.getTargetMethod());
         metaBuilder.setMethod(rpcMetaInfo.getServiceName() + "." + rpcMetaInfo.getMethodName());
         requestPacket.setRpcMeta(metaBuilder.build());
 
-        Object proto = rpcRequest.getArgs()[0];
+        Object proto = request.getArgs()[0];
         Compress compress = compressManager.getCompress(compressType);
-        ByteBuf protoBuf = compress.compressInput(proto, rpcRequest.getRpcMethodInfo());
+        ByteBuf protoBuf = compress.compressInput(proto, request.getRpcMethodInfo());
         requestPacket.setProto(protoBuf);
 
-        ByteBuf outBuf = encode(requestPacket);
-        return outBuf;
+        return encode(requestPacket);
     }
 
     @Override
@@ -144,7 +146,8 @@ public class SofaRpcProtocol extends AbstractProtocol {
         ByteBuf metaBuf = responsePacket.getMetaBuf();
         ByteBuf protoBuf = responsePacket.getProtoBuf();
         try {
-            RpcResponse rpcResponse = new RpcResponse();
+            RpcResponse rpcResponse = RpcResponse.getRpcResponse();
+            rpcResponse.reset();
             SofaRpcProto.SofaRpcMeta responseMeta = (SofaRpcProto.SofaRpcMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcMetaInstance);
             Long logId = responseMeta.getSequenceId();
@@ -185,43 +188,42 @@ public class SofaRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception {
+    public Request decodeRequest(Object packet) throws Exception {
+        Request request = RpcRequest.getRpcRequest();
+        request.reset();
         SofaRpcDecodePacket requestPacket = (SofaRpcDecodePacket) packet;
-        if (requestPacket == null) {
-            return;
-        }
         ByteBuf metaBuf = requestPacket.getMetaBuf();
         ByteBuf protoBuf = requestPacket.getProtoBuf();
         try {
             SofaRpcProto.SofaRpcMeta requestMeta = (SofaRpcProto.SofaRpcMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcMetaInstance);
-            rpcRequest.setLogId(requestMeta.getSequenceId());
+            request.setLogId(requestMeta.getSequenceId());
 
             ServiceManager serviceManager = ServiceManager.getInstance();
             RpcMethodInfo rpcMethodInfo = serviceManager.getService(requestMeta.getMethod());
             if (rpcMethodInfo == null) {
                 String errorMsg = String.format("Fail to find method=%s", requestMeta.getMethod());
                 LOG.error(errorMsg);
-                rpcRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
-                return;
+                request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
+                return request;
             }
-            rpcRequest.setRpcMethodInfo(rpcMethodInfo);
-            rpcRequest.setTargetMethod(rpcMethodInfo.getMethod());
-            rpcRequest.setTarget(rpcMethodInfo.getTarget());
+            request.setRpcMethodInfo(rpcMethodInfo);
+            request.setTargetMethod(rpcMethodInfo.getMethod());
+            request.setTarget(rpcMethodInfo.getTarget());
 
             int compressType = getStandardCompressType(requestMeta.getCompressType());
-            rpcRequest.setCompressType(compressType);
+            request.setCompressType(compressType);
             Compress compress = compressManager.getCompress(compressType);
             try {
                 Object requestProto = compress.uncompressInput(
                         protoBuf, rpcMethodInfo);
-                rpcRequest.setArgs(new Object[] {requestProto});
+                request.setArgs(new Object[] {requestProto});
             } catch (Exception ex) {
                 String errorMsg = String.format("decode request failed, msg=%s", ex.getMessage());
                 LOG.error(errorMsg);
                 throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
             }
-            return;
+            return request;
         } finally {
             if (metaBuf != null) {
                 metaBuf.release();
@@ -233,29 +235,27 @@ public class SofaRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public ByteBuf encodeResponse(RpcResponse rpcResponse) throws Exception {
+    public ByteBuf encodeResponse(Request request, Response response) throws Exception {
         SofaRpcEncodePacket responsePacket = new SofaRpcEncodePacket();
         SofaRpcProto.SofaRpcMeta.Builder metaBuilder = SofaRpcProto.SofaRpcMeta.newBuilder();
         metaBuilder.setType(SofaRpcProto.SofaRpcMeta.Type.RESPONSE);
-        metaBuilder.setSequenceId(rpcResponse.getLogId());
-        int compressType = rpcResponse.getCompressType();
+        metaBuilder.setSequenceId(response.getLogId());
+        int compressType = response.getCompressType();
         metaBuilder.setCompressType(getSofaCompressType(compressType));
 
-        if (rpcResponse.getException() != null) {
+        if (response.getException() != null) {
             metaBuilder.setErrorCode(BaiduRpcErrno.Errno.ERESPONSE_VALUE);
-            String errorMsg = String.format("invoke method failed");
-            metaBuilder.setReason(errorMsg);
+            metaBuilder.setReason("invoke method failed");
             responsePacket.setRpcMeta(metaBuilder.build());
         } else {
-            Object responseBodyMessage = rpcResponse.getResult();
+            Object responseBodyMessage = response.getResult();
             Compress compress = compressManager.getCompress(compressType);
-            ByteBuf responseProtoBuf = compress.compressOutput(responseBodyMessage, rpcResponse.getRpcMethodInfo());
+            ByteBuf responseProtoBuf = compress.compressOutput(responseBodyMessage, response.getRpcMethodInfo());
             responsePacket.setProto(responseProtoBuf);
             metaBuilder.setErrorCode(0);
             responsePacket.setRpcMeta(metaBuilder.build());
         }
-        ByteBuf outBuf = encode(responsePacket);
-        return outBuf;
+        return encode(responsePacket);
     }
 
     protected ByteBuf encode(SofaRpcEncodePacket packet) throws Exception {

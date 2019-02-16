@@ -61,13 +61,7 @@ public class ServerStatus {
         ret.append("Server online: ").append(getOnlineDuration(startTime)).append(LINE_BREAK);
         ret.append("RPC port:").append(rpcServer.getPort()).append(LINE_BREAK);
 
-        int metaHttpPort;
-        if (rpcServer.getRpcServerOptions().isHttp()) {
-            metaHttpPort = rpcServer.getRpcServerOptions().getMetaHttpPort();
-        } else {
-            metaHttpPort = rpcServer.getPort();
-        }
-        ret.append("Http management port:").append(metaHttpPort).append(LINE_BREAK);
+        ret.append("Http management port:").append(rpcServer.getPort()).append(LINE_BREAK);
         ret.append("Compress enabled(Gzip Snappy)").append(LINE_BREAK);
         ret.append("Attachment enabled").append(LINE_BREAK);
 

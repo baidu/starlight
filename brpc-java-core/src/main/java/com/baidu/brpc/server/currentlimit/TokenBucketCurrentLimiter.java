@@ -19,7 +19,7 @@ package com.baidu.brpc.server.currentlimit;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.baidu.brpc.protocol.RpcRequest;
+import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.utils.CustomThreadFactory;
 
 import io.netty.util.HashedWheelTimer;
@@ -96,7 +96,7 @@ public class TokenBucketCurrentLimiter implements CurrentLimiter {
     }
 
     @Override
-    public boolean isAllowable(RpcRequest request) {
+    public boolean isAllowable(Request request) {
         return this.acquire();
     }
 

@@ -16,17 +16,18 @@
 
 package com.baidu.brpc.interceptor;
 
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.server.RpcServer;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class InterceptorTest {
 
@@ -38,13 +39,13 @@ public class InterceptorTest {
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.getInterceptors().add(new Interceptor() {
             @Override
-            public boolean handleRequest(RpcRequest rpcRequest) {
+            public boolean handleRequest(Request request) {
                 System.out.println("server handleRequest");
                 return true;
             }
 
             @Override
-            public void handleResponse(RpcResponse response) {
+            public void handleResponse(Response response) {
                 System.out.println("server handleResponse");
             }
         });
@@ -63,13 +64,13 @@ public class InterceptorTest {
         RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000");
         rpcClient.getInterceptors().add(new Interceptor() {
             @Override
-            public boolean handleRequest(RpcRequest rpcRequest) {
+            public boolean handleRequest(Request request) {
                 System.out.println("client handleRequest");
                 return true;
             }
 
             @Override
-            public void handleResponse(RpcResponse response) {
+            public void handleResponse(Response response) {
                 System.out.println("client handleResponse");
             }
         });

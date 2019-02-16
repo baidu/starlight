@@ -22,7 +22,8 @@ import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.protocol.Response;
+
 import io.netty.channel.Channel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -45,6 +46,10 @@ public class ChannelInfo {
     private long logId;
     private FastFutureStore pendingRpc;
     private DynamicCompositeByteBuf recvBuf = new DynamicCompositeByteBuf(16);
+
+    public void setProtocol(Protocol protocol) {
+        this.protocol = protocol;
+    }
 
     public static ChannelInfo getOrCreateClientChannelInfo(Channel channel) {
         Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.CLIENT_CHANNEL_KEY);
@@ -105,6 +110,7 @@ public class ChannelInfo {
         } else {
             channelGroup.close();
         }
+
     }
 
     /**
@@ -154,8 +160,9 @@ public class ChannelInfo {
         if (isFromRpcContext()) {
             return;
         }
-        channelGroup.removeChannel(channel);
-
+        if (channelGroup != null) {
+            channelGroup.removeChannel(channel);
+        }
         // 遍历并删除当前channel下所有RpcFuture
         pendingRpc.traverse(new ChannelErrorStoreWalker(channel, ex));
     }
@@ -193,9 +200,9 @@ public class ChannelInfo {
 
         @Override
         public void actionAfterDelete(RpcFuture fut) {
-            RpcResponse rpcResponse = new RpcResponse();
-            rpcResponse.setException(exception);
-            fut.handleResponse(rpcResponse);
+            Response response = fut.getRpcClient().getProtocol().createResponse();
+            response.setException(exception);
+            fut.handleResponse(response);
         }
     }
 }

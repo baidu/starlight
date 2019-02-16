@@ -16,12 +16,12 @@
 
 package com.baidu.brpc.compress;
 
-import com.baidu.brpc.JprotobufRpcMethodInfo;
-import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.protocol.jprotobuf.EchoRequest;
 import com.baidu.brpc.protocol.jprotobuf.EchoResponse;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
+import com.baidu.brpc.JprotobufRpcMethodInfo;
+import com.baidu.brpc.ProtobufRpcMethodInfo;
 import io.netty.buffer.ByteBuf;
 import org.junit.BeforeClass;
 import org.junit.Test;

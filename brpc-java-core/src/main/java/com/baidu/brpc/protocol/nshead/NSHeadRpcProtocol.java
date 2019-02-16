@@ -16,6 +16,13 @@
 
 package com.baidu.brpc.protocol.nshead;
 
+import java.io.IOException;
+import java.util.Map;
+
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
@@ -26,18 +33,15 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.AbstractProtocol;
 import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.server.ServiceManager;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.Map;
 
 /**
  * 处理nshead协议，序列化使用protobuf
@@ -47,21 +51,25 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     private static final Logger LOG = LoggerFactory.getLogger(NSHeadRpcProtocol.class);
 
     private int protocol;
+    private String encoding = "utf-8";
 
     public NSHeadRpcProtocol(int protocol, String encoding) {
         this.protocol = protocol;
+        if (encoding != null) {
+            this.encoding = encoding;
+        }
     }
 
     @Override
-    public ByteBuf encodeRequest(RpcRequest request) throws Exception {
+    public ByteBuf encodeRequest(Request request) throws Exception {
         Validate.notEmpty(request.getArgs(), "args must not be empty");
-
+        NSHeadMeta nsHeadMeta = request.getNsHeadMeta();
         byte[] bodyBytes = encodeBody(request.getArgs()[0], request.getRpcMethodInfo());
         NSHead nsHead;
-        if (request.getNsHeadMeta() != null) {
-            String provider = request.getNsHeadMeta().provider();
-            short id = request.getNsHeadMeta().id();
-            short version = request.getNsHeadMeta().version();
+        if (nsHeadMeta != null) {
+            String provider = nsHeadMeta.provider();
+            short id = nsHeadMeta.id();
+            short version = nsHeadMeta.version();
             nsHead = new NSHead((int) request.getLogId(), id, version, provider, bodyBytes.length);
         } else {
             nsHead = new NSHead((int) request.getLogId(), bodyBytes.length);
@@ -72,9 +80,10 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public RpcResponse decodeResponse(Object in, ChannelHandlerContext ctx) throws Exception {
+    public Response decodeResponse(Object in, ChannelHandlerContext ctx) throws Exception {
         NSHeadPacket packet = (NSHeadPacket) in;
-        RpcResponse rpcResponse = new RpcResponse();
+        RpcResponse rpcResponse = RpcResponse.getRpcResponse();
+        rpcResponse.reset();
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
         Long logId = channelInfo.getLogId();
         if (packet.getNsHead().logId != 0) {
@@ -97,17 +106,19 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public ByteBuf encodeResponse(RpcResponse rpcResponse) throws Exception {
-        byte[] bodyBytes = encodeBody(rpcResponse.getResult(), rpcResponse.getRpcMethodInfo());
-        NSHead nsHead = new NSHead((int) rpcResponse.getLogId(), bodyBytes.length);
+    public ByteBuf encodeResponse(Request request, Response response) throws Exception {
+        byte[] bodyBytes = encodeBody(response.getResult(), response.getRpcMethodInfo());
+        NSHead nsHead = new NSHead((int) response.getLogId(), bodyBytes.length);
         byte[] headBytes = nsHead.toBytes();
         return Unpooled.wrappedBuffer(headBytes, bodyBytes);
     }
 
     @Override
-    public void decodeRequest(Object in, RpcRequest request) throws Exception {
-        NSHeadPacket packet = (NSHeadPacket) in;
-        request.setLogId((long) packet.getNsHead().logId);
+    public Request decodeRequest(Object packet) throws Exception {
+        Request request = RpcRequest.getRpcRequest();
+        request.reset();
+        NSHeadPacket nsHeadPacket = (NSHeadPacket) packet;
+        request.setLogId((long) nsHeadPacket.getNsHead().logId);
 
         ServiceManager serviceManager = ServiceManager.getInstance();
         Map<String, RpcMethodInfo> serviceInfoMap = serviceManager.getServiceMap();
@@ -115,7 +126,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
             String errMsg = "serviceInfoMap == 0";
             LOG.error(errMsg);
             request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
-            return;
+            return request;
         }
         // 因为nshead的服务只会有一个接口，一个方法，所以这里只需要取第一个方法即可
         RpcMethodInfo rpcMethodInfo = serviceInfoMap.entrySet().iterator().next().getValue();
@@ -123,15 +134,15 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
             String errMsg = "serviceInfo is null in server";
             LOG.error(errMsg);
             request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
-            return;
+            return request;
         }
         request.setRpcMethodInfo(rpcMethodInfo);
 
-        Object body = decodeBody(packet.getBodyBuf(), rpcMethodInfo);
+        Object body = decodeBody(nsHeadPacket.getBodyBuf(), rpcMethodInfo);
         request.setTarget(rpcMethodInfo.getTarget());
-        request.setArgs(new Object[]{body});
+        request.setArgs(new Object[] {body});
         request.setTargetMethod(rpcMethodInfo.getMethod());
-        return;
+        return request;
     }
 
     @Override
@@ -162,10 +173,10 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public NSHeadPacket decode(DynamicCompositeByteBuf in)
+    public NSHeadPacket decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
         if (in.readableBytes() < NSHead.NSHEAD_LENGTH) {
-            throw new NotEnoughDataException("readable bytes less than 12 for nshead:" + in.readableBytes());
+            throw notEnoughDataException;
         }
         NSHeadPacket packet = new NSHeadPacket();
         ByteBuf fixHeaderBuf = in.retainedSlice(NSHead.NSHEAD_LENGTH);
@@ -180,9 +191,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
             }
 
             if (in.readableBytes() < NSHead.NSHEAD_LENGTH + bodyLength) {
-                String errMsg = String.format("readable bytes=%d, actualSize=%d",
-                        in.readableBytes(), NSHead.NSHEAD_LENGTH + bodyLength);
-                throw new NotEnoughDataException(errMsg);
+                throw notEnoughDataException;
             }
 
             in.skipBytes(NSHead.NSHEAD_LENGTH);

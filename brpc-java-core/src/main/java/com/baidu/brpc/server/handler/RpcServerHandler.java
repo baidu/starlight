@@ -16,27 +16,25 @@
 
 package com.baidu.brpc.server.handler;
 
+import java.io.IOException;
+import java.util.List;
+
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.server.RpcServer;
-import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.protocol.ProtocolManager;
+import com.baidu.brpc.server.RpcServer;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.channel.unix.Errors;
-import io.netty.handler.codec.http.FullHttpRequest;
 import lombok.extern.slf4j.Slf4j;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.util.List;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -44,15 +42,11 @@ import java.util.List;
 @ChannelHandler.Sharable
 @Slf4j
 public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
-    private static final Logger LOG = LoggerFactory.getLogger(RpcServerHandler.class);
+
     private RpcServer rpcServer;
-    private boolean isHttp;
-    private boolean isOpenMeta;
 
     public RpcServerHandler(RpcServer rpcServer) {
         this.rpcServer = rpcServer;
-        this.isHttp = rpcServer.getRpcServerOptions().isHttp();
-        this.isOpenMeta = rpcServer.getRpcServerOptions().getMetaHttpPort() > 0;
     }
 
     @Override
@@ -62,43 +56,35 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx,
-                             Object in) throws Exception {
-        if (!isHttp) {
-            ChannelInfo channelInfo = ChannelInfo.getServerChannelInfo(ctx.channel());
-            ByteBuf msg = (ByteBuf) in;
-            int len = msg.readableBytes();
-            if (len > 0) {
-                channelInfo.getRecvBuf().addBuffer(msg.retain());
-                ServerWorkTask[] tasks = new ServerWorkTask[64];
-                int i = 0;
-                while (channelInfo.getRecvBuf().readableBytes() > 0) {
-                    try {
-                        Object packet = decodeHeader(channelInfo, channelInfo.getRecvBuf());
-                        ServerWorkTask task = new ServerWorkTask(rpcServer, packet, channelInfo.getProtocol(),
-                                ctx, isHttp, isOpenMeta);
-                        tasks[i++] = task;
-                        if (i == 64) {
-                            rpcServer.getThreadPool().submit(tasks, 0, i);
-                            i = 0;
-                        }
-                    } catch (NotEnoughDataException ex1) {
-                        break;
-                    } catch (TooBigDataException ex2) {
-                        throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex2);
-                    } catch (BadSchemaException ex3) {
-                        throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex3);
+    public void channelRead0(ChannelHandlerContext ctx, Object in) throws Exception {
+        ChannelInfo channelInfo = ChannelInfo.getServerChannelInfo(ctx.channel());
+        ByteBuf msg = (ByteBuf) in;
+        int len = msg.readableBytes();
+        if (len > 0) {
+            channelInfo.getRecvBuf().addBuffer(msg.retain());
+            ServerWorkTask[] tasks = new ServerWorkTask[64];
+            int i = 0;
+            while (channelInfo.getRecvBuf().readableBytes() > 0) {
+                try {
+                    Object packet = decodeHeader(ctx, channelInfo, channelInfo.getRecvBuf());
+                    ServerWorkTask task = new ServerWorkTask(rpcServer, packet, channelInfo.getProtocol(),
+                            ctx);
+                    tasks[i++] = task;
+                    if (i == 64) {
+                        rpcServer.getThreadPool().submit(tasks, 0, i);
+                        i = 0;
                     }
-                }
-                if (i > 0) {
-                    rpcServer.getThreadPool().submit(tasks, 0, i);
+                } catch (NotEnoughDataException ex1) {
+                    break;
+                } catch (TooBigDataException ex2) {
+                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex2);
+                } catch (BadSchemaException ex3) {
+                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex3);
                 }
             }
-        } else {
-            FullHttpRequest fullHttpRequest = (FullHttpRequest) in;
-            fullHttpRequest.retain();
-            ServerWorkTask task = new ServerWorkTask(rpcServer, in, null, ctx, isHttp, isOpenMeta);
-            rpcServer.getThreadPool().submit(task);
+            if (i > 0) {
+                rpcServer.getThreadPool().submit(tasks, 0, i);
+            }
         }
     }
 
@@ -107,7 +93,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
         if (ctx.channel().isActive()
                 && !(cause instanceof Errors.NativeIoException)
                 && !(cause instanceof IOException)) {
-            LOG.info("service exception, ex={}", cause.getMessage());
+            log.info("service exception, ex={}", cause.getMessage());
         }
         ctx.close();
     }
@@ -116,18 +102,23 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
      * 尝试用各个协议解析header。
      * 目前所有的协议至少都需要12字节，所以第一个协议抛出not enough data异常后，就不重试剩余协议了。
      * 只要有一个协议抛too big data异常，就不再重试剩余协议。
-     * @param channelInfo channel信息，包含protocol
+     *
+     * @param channelInfo      channel信息，包含protocol
      * @param compositeByteBuf 输入buffer
+     *
      * @return 反序列化后packet
+     *
      * @throws NotEnoughDataException
      * @throws TooBigDataException
      * @throws BadSchemaException
      */
-    private Object decodeHeader(ChannelInfo channelInfo, DynamicCompositeByteBuf compositeByteBuf)
+    private Object decodeHeader(ChannelHandlerContext ctx,
+                                ChannelInfo channelInfo,
+                                DynamicCompositeByteBuf compositeByteBuf)
             throws NotEnoughDataException, TooBigDataException, BadSchemaException {
         Protocol protocol = channelInfo.getProtocol();
         if (protocol != null) {
-            return protocol.decode(compositeByteBuf);
+            return protocol.decode(ctx, compositeByteBuf, true);
         }
         ProtocolManager protocolManager = ProtocolManager.instance();
         List<Protocol> protocols = protocolManager.getProtocols();
@@ -135,7 +126,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
         for (int i = 0; i < protocolNum; i++) {
             Protocol protocol1 = protocols.get(i);
             try {
-                Object packet = protocol1.decode(compositeByteBuf);
+                Object packet = protocol1.decode(ctx, compositeByteBuf, true);
                 channelInfo.setProtocol(protocol1);
                 return packet;
             } catch (BadSchemaException ex3) {

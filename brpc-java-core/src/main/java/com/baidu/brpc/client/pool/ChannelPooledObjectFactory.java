@@ -16,12 +16,12 @@
 
 package com.baidu.brpc.client.pool;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import org.apache.commons.pool2.BasePooledObjectFactory;
 import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
 import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 

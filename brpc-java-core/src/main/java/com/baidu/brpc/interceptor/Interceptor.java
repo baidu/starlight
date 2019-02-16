@@ -16,8 +16,8 @@
 
 package com.baidu.brpc.interceptor;
 
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
 
 /**
  * The client or server intercepts the interface.
@@ -29,11 +29,11 @@ public interface Interceptor {
      * This method is called in two scenarios:
      * Before the client sends the request;
      * Before the server processes the request.
-     * @param rpcRequest request content, when the business is implemented, it needs to be converted into the type
+     * @param request request content, when the business is implemented, it needs to be converted into the type
      *                   required by the specific protocol.
      * @return True means continue execution, false means stop execution and return
      */
-    boolean handleRequest(RpcRequest rpcRequest);
+    boolean handleRequest(Request request);
 
     /**
      * This method is called in two scenarios:
@@ -41,5 +41,5 @@ public interface Interceptor {
      * After the client receives the response.
      * @param response server response content, when the business is implemented, it needs to be converted into the type
      */
-    void handleResponse(RpcResponse response);
+    void handleResponse(Response response);
 }
