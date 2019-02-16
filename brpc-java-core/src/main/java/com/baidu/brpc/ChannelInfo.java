@@ -17,9 +17,9 @@
 package com.baidu.brpc;
 
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
-import com.baidu.brpc.client.BrpcChannelGroup;
 import com.baidu.brpc.client.FastFutureStore;
 import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.RpcResponse;
@@ -98,9 +98,13 @@ public class ChannelInfo {
     /**
      * return channel when fail
      */
-    public void handleRequestFail() {
-        channelGroup.incFailedNum();
-        returnChannelAfterRequest();
+    public void handleRequestFail(boolean isLongConnection) {
+        if (isLongConnection) {
+            channelGroup.incFailedNum();
+            returnChannelAfterRequest();
+        } else {
+            channelGroup.close();
+        }
     }
 
     /**
@@ -174,7 +178,12 @@ public class ChannelInfo {
         @Override
         public boolean visitElement(RpcFuture fut) {
             // 与当前channel相同则删除
-            if (currentChannel == fut.getChannelInfo().channel) {
+            ChannelInfo chanInfo = fut.getChannelInfo();
+            if (null == chanInfo) {
+                return true;
+            }
+
+            if (currentChannel == chanInfo.channel) {
                 return false;
             }
 

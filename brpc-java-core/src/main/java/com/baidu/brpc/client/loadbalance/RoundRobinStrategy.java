@@ -19,8 +19,8 @@ package com.baidu.brpc.client.loadbalance;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
-import com.baidu.brpc.client.BrpcChannelGroup;
 import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
 
 /**
  * Round-robin load balance strategy implementation

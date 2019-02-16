@@ -16,11 +16,11 @@
 
 package com.baidu.brpc.client;
 
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.RpcMethodInfo;
 import io.netty.buffer.ByteBuf;
 import io.netty.util.Timeout;
 import lombok.Getter;
@@ -88,16 +88,26 @@ public class RpcFuture<T> implements Future<RpcResponse> {
         this.rpcClient = rpcClient;
     }
 
-    public void handleResponse(RpcResponse rpcResponse) {
-        this.rpcResponse = rpcResponse;
+    protected void processConnection(RpcResponse response) {
+        this.rpcResponse = response;
         this.endTime = System.currentTimeMillis();
-        if (rpcResponse != null && rpcResponse.getResult() != null) {
-            channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
-            channelInfo.handleResponseSuccess();
+
+        // only long connection need to update channel group
+        if (rpcClient.isLongConnection()) {
+            if (response != null && response.getResult() != null) {
+                channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
+                channelInfo.handleResponseSuccess();
+            } else {
+                channelInfo.getChannelGroup().updateLatencyWithReadTimeOut();
+                channelInfo.handleResponseFail();
+            }
         } else {
-            channelInfo.getChannelGroup().updateLatencyWithReadTimeOut();
-            channelInfo.handleResponseFail();
+            channelInfo.getChannelGroup().close();
         }
+    }
+
+    public void handleResponse(RpcResponse rpcResponse) {
+        processConnection(rpcResponse);
 
         RpcContext rpcContext = RpcContext.getContext();
         if (rpcResponse != null) {

@@ -15,7 +15,7 @@
  */
 package com.baidu.brpc.client.pool;
 
-import com.baidu.brpc.client.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import io.netty.channel.Channel;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;

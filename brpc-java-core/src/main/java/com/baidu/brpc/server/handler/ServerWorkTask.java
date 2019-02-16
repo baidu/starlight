@@ -138,76 +138,82 @@ public class ServerWorkTask implements Runnable {
         rpcRequest.setChannel(ctx.channel());
 
         RpcContext rpcContext = RpcContext.getContext();
-        rpcContext.reset();
-        rpcContext.setChannelForServer(ctx.channel());
-        ByteBuf binaryAttachment = rpcRequest.getBinaryAttachment();
-        if (binaryAttachment != null) {
-            rpcContext.setRequestBinaryAttachment(binaryAttachment);
-        }
 
-        rpcResponse.setLogId(rpcRequest.getLogId());
-        rpcResponse.setCompressType(rpcRequest.getCompressType());
-        rpcResponse.setException(rpcRequest.getException());
-        rpcResponse.setRpcMethodInfo(rpcRequest.getRpcMethodInfo());
+        try {
+            rpcContext.setChannelForServer(ctx.channel());
+            ByteBuf binaryAttachment = rpcRequest.getBinaryAttachment();
+            if (binaryAttachment != null) {
+                rpcContext.setRequestBinaryAttachment(binaryAttachment);
+            }
 
-        // 处理请求前拦截
-        if (rpcResponse.getException() == null
-                && CollectionUtils.isNotEmpty(rpcServer.getInterceptors())) {
-            for (Interceptor interceptor : rpcServer.getInterceptors()) {
-                if (!interceptor.handleRequest(rpcRequest)) {
-                    rpcResponse.setException(new RpcException(
-                            RpcException.FORBIDDEN_EXCEPTION, "intercepted"));
-                    break;
+            rpcResponse.setLogId(rpcRequest.getLogId());
+            rpcResponse.setCompressType(rpcRequest.getCompressType());
+            rpcResponse.setException(rpcRequest.getException());
+            rpcResponse.setRpcMethodInfo(rpcRequest.getRpcMethodInfo());
+
+            // 处理请求前拦截
+            if (rpcResponse.getException() == null
+                    && CollectionUtils.isNotEmpty(rpcServer.getInterceptors())) {
+                for (Interceptor interceptor : rpcServer.getInterceptors()) {
+                    if (!interceptor.handleRequest(rpcRequest)) {
+                        rpcResponse.setException(new RpcException(
+                                RpcException.FORBIDDEN_EXCEPTION, "intercepted"));
+                        break;
+                    }
                 }
             }
-        }
 
-        if (rpcResponse.getException() == null) {
-            try {
-                Object result = rpcRequest.getTargetMethod().invoke(
-                        rpcRequest.getTarget(), rpcRequest.getArgs()[0]);
-                rpcResponse.setResult(result);
-                if (rpcContext.getResponseBinaryAttachment() != null
-                        && rpcContext.getResponseBinaryAttachment().isReadable()) {
-                    rpcResponse.setBinaryAttachment(rpcContext.getResponseBinaryAttachment());
+            if (rpcResponse.getException() == null) {
+                try {
+                    Object result = rpcRequest.getTargetMethod().invoke(
+                            rpcRequest.getTarget(), rpcRequest.getArgs()[0]);
+                    rpcResponse.setResult(result);
+                    if (rpcContext.getResponseBinaryAttachment() != null
+                            && rpcContext.getResponseBinaryAttachment().isReadable()) {
+                        rpcResponse.setBinaryAttachment(rpcContext.getResponseBinaryAttachment());
+                    }
+                } catch (Exception ex) {
+                    String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
+                    log.warn(errorMsg, ex);
+                    rpcResponse.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
                 }
-            } catch (Exception ex) {
-                String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
-                log.warn(errorMsg, ex);
-                rpcResponse.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
             }
-        }
 
-        // 处理响应后拦截
-        if (CollectionUtils.isNotEmpty(rpcServer.getInterceptors())) {
-            int length = rpcServer.getInterceptors().size();
-            for (int i = length - 1; i >= 0; i--) {
-                rpcServer.getInterceptors().get(i).handleResponse(rpcResponse);
+            // 处理响应后拦截
+            if (CollectionUtils.isNotEmpty(rpcServer.getInterceptors())) {
+                int length = rpcServer.getInterceptors().size();
+                for (int i = length - 1; i >= 0; i--) {
+                    rpcServer.getInterceptors().get(i).handleResponse(rpcResponse);
+                }
             }
-        }
 
-        // http请求
-        if (rpcServer.getRpcServerOptions().isHttp()) {
-            FullHttpResponse httpResponse;
-            if (protocol != null) {
-                httpResponse = protocol.encodeHttpResponse(rpcRequest, rpcResponse);
-            } else {
-                httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
-                        HttpResponseStatus.INTERNAL_SERVER_ERROR);
-            }
-            ChannelFuture f = ctx.channel().writeAndFlush(httpResponse);
-            if (!HttpUtil.isKeepAlive(rpcRequest)) {
-                f.addListener(ChannelFutureListener.CLOSE);
-            }
-        } else {
-            try {
+            // http请求
+            if (rpcServer.getRpcServerOptions().isHttp()) {
+                FullHttpResponse httpResponse;
                 if (protocol != null) {
-                    ByteBuf outBuf = protocol.encodeResponse(rpcResponse);
-                    ctx.channel().writeAndFlush(outBuf);
+                    httpResponse = protocol.encodeHttpResponse(rpcRequest, rpcResponse);
+                } else {
+                    httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1,
+                            HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 }
-            } catch (Exception ex) {
-                log.warn("send response failed:", ex);
+                ChannelFuture f = ctx.channel().writeAndFlush(httpResponse);
+                if (!HttpUtil.isKeepAlive(rpcRequest)) {
+                    f.addListener(ChannelFutureListener.CLOSE);
+                }
+            } else {
+                try {
+                    if (protocol != null) {
+                        ByteBuf outBuf = protocol.encodeResponse(rpcResponse);
+                        ctx.channel().writeAndFlush(outBuf);
+                    }
+                } catch (Exception ex) {
+                    log.warn("send response failed:", ex);
+                }
             }
+
+        } finally {
+            rpcContext.reset();
         }
+
     }
 }
