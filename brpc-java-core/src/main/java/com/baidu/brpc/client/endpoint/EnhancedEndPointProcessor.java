@@ -16,8 +16,8 @@
 
 package com.baidu.brpc.client.endpoint;
 
-import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcPooledChannel;
 import com.baidu.brpc.client.loadbalance.FairStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;

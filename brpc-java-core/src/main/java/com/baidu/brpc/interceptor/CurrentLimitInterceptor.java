@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.interceptor;
 
-import com.baidu.brpc.protocol.RpcRequest;
+import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.server.currentlimit.CurrentLimiter;
 
 /**
@@ -35,7 +35,7 @@ public class CurrentLimitInterceptor extends AbstractInterceptor {
     }
 
     @Override
-    public boolean handleRequest(RpcRequest request) {
+    public boolean handleRequest(Request request) {
         return limiter.isAllowable(request);
     }
 

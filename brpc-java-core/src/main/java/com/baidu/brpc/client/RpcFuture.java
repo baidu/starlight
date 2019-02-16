@@ -16,28 +16,30 @@
 
 package com.baidu.brpc.client;
 
-import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.protocol.RpcContext;
-import com.baidu.brpc.protocol.RpcResponse;
-import io.netty.buffer.ByteBuf;
-import io.netty.util.Timeout;
-import lombok.Getter;
-import lombok.Setter;
-import org.apache.commons.collections.CollectionUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.RpcContext;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.util.Timeout;
+import lombok.Getter;
+import lombok.Setter;
+
 @SuppressWarnings("unchecked")
 @Setter
 @Getter
-public class RpcFuture<T> implements Future<RpcResponse> {
+public class RpcFuture<T> implements Future<Response> {
     private static final Logger LOG = LoggerFactory.getLogger(RpcFuture.class);
 
     private CountDownLatch latch;
@@ -47,7 +49,7 @@ public class RpcFuture<T> implements Future<RpcResponse> {
     private RpcClient rpcClient;
     private RpcMethodInfo rpcMethodInfo;
 
-    private RpcResponse rpcResponse;
+    private Response response;
     private Map<String, String> kvAttachment;
     private ByteBuf binaryAttachment;
     private boolean isDone;
@@ -88,8 +90,8 @@ public class RpcFuture<T> implements Future<RpcResponse> {
         this.rpcClient = rpcClient;
     }
 
-    protected void processConnection(RpcResponse response) {
-        this.rpcResponse = response;
+    protected void processConnection(Response response) {
+        this.response = response;
         this.endTime = System.currentTimeMillis();
 
         // only long connection need to update channel group
@@ -104,18 +106,21 @@ public class RpcFuture<T> implements Future<RpcResponse> {
         } else {
             channelInfo.getChannelGroup().close();
         }
+
+
     }
 
-    public void handleResponse(RpcResponse rpcResponse) {
-        processConnection(rpcResponse);
+    public void handleResponse(Response response) {
+        processConnection(response);
 
         RpcContext rpcContext = RpcContext.getContext();
-        if (rpcResponse != null) {
-            rpcContext.setResponseBinaryAttachment(rpcResponse.getBinaryAttachment());
-            rpcContext.setResponseKvAttachment(rpcResponse.getKvAttachment());
-            this.kvAttachment = rpcResponse.getKvAttachment();
-            this.binaryAttachment = rpcResponse.getBinaryAttachment();
+        if (response != null) {
+            rpcContext.setResponseBinaryAttachment(response.getBinaryAttachment());
+            rpcContext.setResponseKvAttachment(response.getKvAttachment());
+            this.kvAttachment = response.getKvAttachment();
+            this.binaryAttachment = response.getBinaryAttachment();
         }
+
         try {
             timeout.cancel();
             latch.countDown();
@@ -126,22 +131,22 @@ public class RpcFuture<T> implements Future<RpcResponse> {
                 if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
                     int length = rpcClient.getInterceptors().size();
                     for (int i = length - 1; i >= 0; i--) {
-                        rpcClient.getInterceptors().get(i).handleResponse(rpcResponse);
+                        rpcClient.getInterceptors().get(i).handleResponse(response);
                     }
                 }
-                if (rpcResponse == null) {
+                if (response == null) {
                     callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
-                } else if (rpcResponse.getResult() != null) {
-                    callback.success((T) rpcResponse.getResult());
+                } else if (response.getResult() != null) {
+                    callback.success((T) response.getResult());
                 } else {
-                    callback.fail(rpcResponse.getException());
+                    callback.fail(response.getException());
                 }
             }
             isDone = true;
         } finally {
             // in case of async invocation, response will be released in callback thread
-            if (callback != null && rpcResponse != null) {
-                rpcResponse.delRefCntForClient();
+            if (callback != null && response != null) {
+                response.delRefCntForClient();
             }
             RpcContext.removeContext();
         }
@@ -163,34 +168,39 @@ public class RpcFuture<T> implements Future<RpcResponse> {
     }
 
     @Override
-    public RpcResponse get() throws InterruptedException {
+    public Response get() throws InterruptedException {
         latch.await();
         RpcContext rpcContext = RpcContext.getContext();
         rpcContext.setResponseBinaryAttachment(binaryAttachment);
         rpcContext.setRequestKvAttachment(kvAttachment);
-        return rpcResponse;
+        return response;
     }
 
     @Override
-    public RpcResponse get(long timeout, TimeUnit unit) {
+    public Response get(long timeout, TimeUnit unit) {
         try {
             if (latch.await(timeout, unit)) {
                 RpcContext rpcContext = RpcContext.getContext();
                 rpcContext.setResponseBinaryAttachment(binaryAttachment);
                 rpcContext.setRequestKvAttachment(kvAttachment);
-                return rpcResponse;
+                return response;
             } else {
                 LOG.warn("sync call time out");
-                RpcResponse rpcResponse = new RpcResponse();
-                rpcResponse.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, "timeout"));
-                return rpcResponse;
+                Response response = rpcClient.getProtocol().createResponse();
+                response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, "timeout"));
+                return response;
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             LOG.warn("sync call is interrupted, {}", e);
-            RpcResponse rpcResponse = new RpcResponse();
-            rpcResponse.setException(new RpcException(RpcException.UNKNOWN_EXCEPTION, "sync call is interrupted"));
-            return rpcResponse;
+            Response response = rpcClient.getProtocol().createResponse();
+            response.setException(new RpcException(RpcException.UNKNOWN_EXCEPTION, "sync call is interrupted"));
+            return response;
         }
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + "@logId = " + logId;
     }
 }

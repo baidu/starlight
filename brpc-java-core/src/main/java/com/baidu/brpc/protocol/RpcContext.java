@@ -127,7 +127,7 @@ public class RpcContext {
             if (channelInfo != null) {
                 channelInfo.setFromRpcContext(true);
             }
-       }
+        }
     }
 
     public void setChannelForServer(Channel channel) {

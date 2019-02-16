@@ -35,7 +35,7 @@ public class RpcServerTest {
 //        options.setWorkThreadNum(80);
         options.setReceiveBufferSize(64 * 1024 * 1024);
         options.setSendBufferSize(64 * 1024 * 1024);
-        RpcServer rpcServer = new RpcServer(port, options, null);
+        RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 

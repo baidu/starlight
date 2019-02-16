@@ -12,8 +12,7 @@ public class RpcServerTest {
         }
 
         RpcServerOptions options = new RpcServerOptions();
-        options.setHttp(true);
-        RpcServer rpcServer = new RpcServer(port, options, null);
+        RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 

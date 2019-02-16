@@ -16,20 +16,21 @@
 
 package com.baidu.brpc.client.loadbalance;
 
-import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.RpcClientOptions;
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.protocol.standard.Echo;
-import com.baidu.brpc.protocol.standard.EchoService;
-import com.baidu.brpc.server.RpcServer;
+import java.util.Random;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.Random;
+import com.baidu.brpc.client.BrpcProxy;
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.standard.Echo;
+import com.baidu.brpc.protocol.standard.EchoService;
+import com.baidu.brpc.server.RpcServer;
 
 public class LoadBalanceTest {
 
@@ -114,7 +115,7 @@ public class LoadBalanceTest {
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, null);
         final Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         final EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
-        for (int i = 0; i < 50; i++) {
+        for (int i = 0; i < 20; i++) {
             echoService.echo(request);
         }
         rpcClient.stop();
@@ -152,13 +153,13 @@ public class LoadBalanceTest {
         }
 
         @Override
-        public boolean handleRequest(RpcRequest rpcRequest) {
+        public boolean handleRequest(Request request) {
             System.out.println("------" + serverId + " called------");
             return true;
         }
 
         @Override
-        public void handleResponse(RpcResponse response) {
+        public void handleResponse(Response response) {
 
         }
     }
