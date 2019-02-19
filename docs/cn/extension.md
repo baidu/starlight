@@ -28,6 +28,7 @@ ByteBuf encodeRequest(Request request) throws Exception;
  * @throws Exception 反序列化异常
  */
 RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception;
+```
 
 ## 新增TCP协议server端实现
 ```java
