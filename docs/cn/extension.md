@@ -30,7 +30,7 @@ ByteBuf encodeRequest(Request request) throws Exception;
 RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception;
 ```
 
-## 新增TCP协议server端实现
+## 新增协议server端实现
 ```java
 /**
   * 客户端/服务端解析请求包成header+body buffer
