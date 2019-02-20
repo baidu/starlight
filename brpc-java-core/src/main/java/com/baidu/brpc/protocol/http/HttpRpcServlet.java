@@ -88,6 +88,8 @@ public class HttpRpcServlet extends HttpServlet {
             request = protocol.decodeRequest(httpRequest);
             Object result = request.getTargetMethod().invoke(request.getTarget(), request.getArgs()[0]);
             response.setResult(result);
+            response.setRpcMethodInfo(request.getRpcMethodInfo());
+            response.setLogId(request.getLogId());
             protocol.encodeResponse(request, response);
         } catch (Exception ex) {
             errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
