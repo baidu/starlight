@@ -16,8 +16,6 @@
 
 package com.baidu.brpc.protocol.http;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -84,6 +82,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
      * 请求的唯一标识id
      */
     private static final String LOG_ID = "log-id";
+    private static final String PROTOCOL_TYPE = "protocol-type";
     private static final Gson gson = (new GsonBuilder())
             .serializeNulls()
             .disableHtmlEscaping()
@@ -107,6 +106,13 @@ public class HttpRpcProtocol extends AbstractProtocol {
     @Override
     public Response createResponse() {
         return new HttpResponse();
+    }
+
+    @Override
+    public Request getRequest() {
+        Request request = HttpRequest.getHttpRequest();
+        request.reset();
+        return request;
     }
 
     @Override
@@ -141,17 +147,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
             throw notEnoughDataException;
         }
 
-        String contentTypeAndEncoding = httpMessage.headers().get(CONTENT_TYPE);
-        if (contentTypeAndEncoding != null) {
-            contentTypeAndEncoding = contentTypeAndEncoding.toLowerCase();
-            String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
-            int protocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
-            if (protocolType != this.protocolType) {
-                throw new BadSchemaException();
-            }
-        } else {
-            throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "unknown content-type");
-        }
         return httpMessage;
     }
 
@@ -281,8 +276,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
     @Override
     public Request decodeRequest(Object packet) {
         try {
-            HttpRequest httpRequest = HttpRequest.getHttpRequest();
-            httpRequest.reset();
+            HttpRequest httpRequest = (HttpRequest) this.getRequest();
             httpRequest.setMsg(packet);
             long logId = parseLogId(httpRequest.headers().get(LOG_ID), null);
             httpRequest.setLogId(logId);
@@ -298,6 +292,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
                     encoding = split.substring("charset=".length());
                 }
             }
+            httpRequest.headers().set(PROTOCOL_TYPE, protocolType);
             httpRequest.headers().set(HttpHeaderNames.CONTENT_ENCODING, encoding);
 
             ByteBuf byteBuf = httpRequest.content();
@@ -344,7 +339,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             httpRequest.setRpcMethodInfo(rpcMethodInfo);
             httpRequest.setTargetMethod(rpcMethodInfo.getMethod());
             httpRequest.setTarget(rpcMethodInfo.getTarget());
-            httpRequest.setArgs(parseRequestParam(body, rpcMethodInfo));
+            httpRequest.setArgs(parseRequestParam(protocolType, body, rpcMethodInfo));
             return httpRequest;
         } finally {
             ((FullHttpRequest) packet).release();
@@ -363,7 +358,8 @@ public class HttpRpcProtocol extends AbstractProtocol {
             } else {
                 httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
                 addHttpHeaders(httpResponse.headers(), httpRequest);
-                Object body = makeResponse(response);
+                int protocolType = Integer.parseInt(httpRequest.headers().get(PROTOCOL_TYPE));
+                Object body = makeResponse(protocolType, response);
                 // encode body
                 try {
                     byte[] responseBytes = encodeBody(protocolType,
@@ -399,9 +395,9 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
-    public byte[] encodeResponseBody(Request request, Response response) {
+    public byte[] encodeResponseBody(int protocolType, Request request, Response response) {
         FullHttpRequest httpRequest = (FullHttpRequest) request.getMsg();
-        Object body = makeResponse(response);
+        Object body = makeResponse(protocolType, response);
         return encodeBody(protocolType,
                 httpRequest.headers().get(HttpHeaderNames.CONTENT_ENCODING),
                 body, response.getRpcMethodInfo());
@@ -539,7 +535,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
-    protected Object makeResponse(Response response) {
+    protected Object makeResponse(int protocolType, Response response) {
         Long id = response.getLogId();
         if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
             return response.getResult();
@@ -601,7 +597,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return response;
     }
 
-    protected Object[] parseRequestParam(Object body, RpcMethodInfo rpcMethodInfo) {
+    protected Object[] parseRequestParam(int protocolType, Object body, RpcMethodInfo rpcMethodInfo) {
         if (body == null) {
             return null;
         }

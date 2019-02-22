@@ -28,7 +28,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.protocol.HttpRequest;
 import com.baidu.brpc.protocol.HttpResponse;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
@@ -81,12 +80,12 @@ public class HttpRpcServlet extends HttpServlet {
         httpRequest.content().writeBytes(bytes);
         int protocolType = HttpRpcProtocol.parseProtocolType(contentType);
         Protocol protocol = ProtocolManager.instance().init(null).getProtocol(protocolType);
-        Request request = new HttpRequest();
+        Request request = null;
         Response response = new HttpResponse();
         String errorMsg = null;
         try {
             request = protocol.decodeRequest(httpRequest);
-            Object result = request.getTargetMethod().invoke(request.getTarget(), request.getArgs()[0]);
+            Object result = request.getTargetMethod().invoke(request.getTarget(), request.getArgs());
             response.setResult(result);
             response.setRpcMethodInfo(request.getRpcMethodInfo());
             response.setLogId(request.getLogId());
@@ -100,7 +99,7 @@ public class HttpRpcServlet extends HttpServlet {
         resp.setContentType(contentType);
         resp.setCharacterEncoding(encoding);
         if (errorMsg == null) {
-            byte[] content = ((HttpRpcProtocol) protocol).encodeResponseBody(request, response);
+            byte[] content = ((HttpRpcProtocol) protocol).encodeResponseBody(protocolType, request, response);
             resp.setContentLength(content.length);
             resp.getOutputStream().write(content);
         } else {
@@ -109,13 +108,16 @@ public class HttpRpcServlet extends HttpServlet {
             resp.getOutputStream().write(content);
         }
 
-        long endTime = System.nanoTime();
-        LOG.debug("uri={} logId={} service={} method={} elapseNs={}",
-                requestUri,
-                request.getLogId(),
-                request.getTarget().getClass().getSimpleName(),
-                request.getTargetMethod().getName(),
-                endTime - startTime);
+        if (request != null) {
+            long endTime = System.nanoTime();
+            LOG.debug("uri={} logId={} service={} method={} elapseNs={}",
+                    requestUri,
+                    request.getLogId(),
+                    request.getTarget().getClass().getSimpleName(),
+                    request.getTargetMethod().getName(),
+                    endTime - startTime);
+        }
+
     }
 
     private byte[] readStream(InputStream input, int length) throws IOException {

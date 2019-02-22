@@ -189,8 +189,7 @@ public class SofaRpcProtocol extends AbstractProtocol {
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
-        Request request = RpcRequest.getRpcRequest();
-        request.reset();
+        Request request = this.getRequest();
         SofaRpcDecodePacket requestPacket = (SofaRpcDecodePacket) packet;
         ByteBuf metaBuf = requestPacket.getMetaBuf();
         ByteBuf protoBuf = requestPacket.getProtoBuf();
