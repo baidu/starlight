@@ -174,8 +174,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
-        Request request = RpcRequest.getRpcRequest();
-        request.reset();
+        Request request = this.getRequest();
         HuluRpcDecodePacket requestPacket = (HuluRpcDecodePacket) packet;
         ByteBuf metaBuf = requestPacket.getMetaBuf();
         ByteBuf protoAndAttachmentBuf = requestPacket.getProtoAndAttachmentBuf();
