@@ -38,7 +38,7 @@ public class RpcMethodInfo {
     protected Method method;
     protected String serviceName;
     protected String methodName;
-    protected Class[] inputClasses;
+    protected Type[] inputClasses;
     protected Type outputClass;
     protected NSHeadMeta nsHeadMeta;
     // instance of interface which method belongs to
@@ -49,7 +49,7 @@ public class RpcMethodInfo {
         this.serviceName = metaInfo.getServiceName();
         this.methodName = metaInfo.getMethodName();
         this.method = method;
-        this.inputClasses = method.getParameterTypes();
+        this.inputClasses = method.getGenericParameterTypes();
         this.outputClass = method.getGenericReturnType();
         this.nsHeadMeta = method.getAnnotation(NSHeadMeta.class);
     }
