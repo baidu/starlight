@@ -42,9 +42,9 @@ public class ProtobufRpcMethodInfo extends RpcMethodInfo {
     public ProtobufRpcMethodInfo(Method method) {
         super(method);
         try {
-            this.inputGetDefaultInstanceMethod = inputClasses[0].getMethod("getDefaultInstance");
+            this.inputGetDefaultInstanceMethod = ((Class) inputClasses[0]).getMethod("getDefaultInstance");
             this.inputInstance = (Message) inputGetDefaultInstanceMethod.invoke(null);
-            this.inputParseFromMethod = inputClasses[0].getMethod("parseFrom", byte[].class);
+            this.inputParseFromMethod = ((Class) inputClasses[0]).getMethod("parseFrom", byte[].class);
 
             this.outputGetDefaultInstanceMethod = ((Class) outputClass).getMethod("getDefaultInstance");
             this.outputInstance = (Message) outputGetDefaultInstanceMethod.invoke(null);
