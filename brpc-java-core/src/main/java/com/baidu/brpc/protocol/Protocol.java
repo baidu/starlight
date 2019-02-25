@@ -37,6 +37,8 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public interface Protocol {
 
+    /**************** 以下5个函数是客户端、服务端都要实现的。 *******************/
+
     /**
      * create a new request instance
      */
@@ -46,6 +48,12 @@ public interface Protocol {
      * create a new response instance
      */
     Response createResponse();
+
+    /**
+     * get a reusable request instance from threadLocal or pool
+     * the request instance must be reset before reuse
+     */
+    Request getRequest();
 
     /**
      * get a reusable response instance from threadLocal or pool

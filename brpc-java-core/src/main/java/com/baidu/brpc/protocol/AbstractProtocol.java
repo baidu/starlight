@@ -27,6 +27,11 @@ import com.baidu.brpc.exceptions.NotEnoughDataException;
 
 import io.netty.channel.ChannelFuture;
 
+/**
+ * An abstract protocol used to simplify tcp protocol implementations.
+ * Http protocol implementations extended this class need to override most methods,
+ * or implements {@link Protocol} interface directly.
+ */
 public abstract class AbstractProtocol implements Protocol {
 
     protected static NotEnoughDataException notEnoughDataException = new NotEnoughDataException();
@@ -41,6 +46,14 @@ public abstract class AbstractProtocol implements Protocol {
     public Response createResponse() {
         // tcp protocol implementation, http protocols should override this method
         return new RpcResponse();
+    }
+
+    @Override
+    public Request getRequest() {
+        // tcp protocol implementation, http protocols should override this method
+        Request request = RpcRequest.getRpcRequest();
+        request.reset();
+        return request;
     }
 
     @Override
