@@ -46,7 +46,7 @@ public class RpcClientTest {
         clientOption.setReadTimeoutMillis(1000);
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
-//        clientOption.setIoThreadNum(40);
+        // clientOption.setIoThreadNum(40);
         clientOption.setLoadBalanceType(LoadBalanceType.FAIR.getId());
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
@@ -64,7 +64,7 @@ public class RpcClientTest {
                 .build();
 
         // sync call
-//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
+        // RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Channel channel = null;
@@ -100,7 +100,7 @@ public class RpcClientTest {
         rpcClient.stop();
 
         // async call
-//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
+        // RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         RpcCallback callback = new RpcCallback<Echo.EchoResponse>() {
             @Override
