@@ -17,7 +17,6 @@
 package com.baidu.brpc.protocol.standard;
 
 import com.baidu.brpc.client.RpcCallback;
-
 import java.util.concurrent.Future;
 
 /**

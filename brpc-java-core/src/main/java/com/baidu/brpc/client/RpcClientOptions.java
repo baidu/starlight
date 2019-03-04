@@ -18,6 +18,7 @@ package com.baidu.brpc.client;
 
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.protocol.Options;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,8 +28,6 @@ import lombok.Setter;
 @Setter
 @Getter
 public class RpcClientOptions {
-
-    private boolean isHttp = false;
 
     private int protocolType = Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE;
 
@@ -56,14 +55,6 @@ public class RpcClientOptions {
     // the ratio of activeInstancesNum/totalInstancesNum in brpc client, if this ratio not reached,
     // fair load balance will not start, just use random load balance strategy
     private float activeInstancesRatioOfFairLoadBalance = 0.5f;
-
-    private int namingServiceUpdateIntervalMillis = 1000;
-
-    // service group
-    private String namingServiceGroup = "";
-
-    // service version
-    private String namingServiceVersion = "";
 
     private int healthyCheckIntervalMillis = 3000;
 
@@ -101,4 +92,6 @@ public class RpcClientOptions {
     private String encoding = "utf-8";
 
     private Options.CompressType compressType = Options.CompressType.COMPRESS_TYPE_NONE;
+
+    private boolean isLongConnection = true;
 }

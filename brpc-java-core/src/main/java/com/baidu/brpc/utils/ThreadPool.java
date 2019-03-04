@@ -180,9 +180,9 @@ public final class ThreadPool {
                 int toProduce = Math.min(produced.remainingCapacity(),
                         end - cur);
                 if (toProduce > 0) {
-                    boolean wasEmtpy = produced.isEmpty();
+                    boolean wasEmpty = produced.isEmpty();
                     produced.addAll(tasks, cur, toProduce);
-                    if (wasEmtpy) {
+                    if (wasEmpty) {
                         isProducerNotEmptyCondition.signalAll();
                     }
                 }

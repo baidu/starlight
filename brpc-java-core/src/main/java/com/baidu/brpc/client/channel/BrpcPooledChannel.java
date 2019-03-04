@@ -14,39 +14,32 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client;
+package com.baidu.brpc.client.channel;
 
-import java.net.InetSocketAddress;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.baidu.brpc.client.pool.ChannelPooledObjectFactory;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.protocol.Protocol;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
-import io.netty.bootstrap.Bootstrap;
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.pool.ChannelPooledObjectFactory;
+
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * BrpcChannelGroup class keeps fixed connections with one server
+ * BrpcPooledChannelGroup class keeps fixed connections with one server
  * Created by wenweihu86 on 2017/9/29.
  */
+
 @Slf4j
-@Getter
-@Setter
-public class BrpcChannelGroup {
-    private String ip;
-    private int port;
+public class BrpcPooledChannel extends AbstractBrpcChannelGroup {
+
     private GenericObjectPool<Channel> channelFuturePool;
     private volatile long failedNum;
     private int readTimeOut;
@@ -56,14 +49,12 @@ public class BrpcChannelGroup {
      * This is for the fair load balance algorithm.
      */
     private Queue<Integer> latencyWindow;
-    private Bootstrap bootstrap;
     private RpcClientOptions rpcClientOptions;
-    private Protocol protocol;
 
-    public BrpcChannelGroup(String ip, int port, RpcClient rpcClient) {
-        this.ip = ip;
-        this.port = port;
-        this.bootstrap = rpcClient.getBootstrap();
+    public BrpcPooledChannel(String ip, int port, RpcClient rpcClient) {
+
+        super(ip, port, rpcClient.getBootstrap(), rpcClient.getProtocol());
+
         this.protocol = rpcClient.getProtocol();
         this.rpcClientOptions = rpcClient.getRpcClientOptions();
         this.readTimeOut = rpcClientOptions.getReadTimeoutMillis();
@@ -89,10 +80,12 @@ public class BrpcChannelGroup {
         }
     }
 
+    @Override
     public Channel getChannel() throws Exception, NoSuchElementException, IllegalStateException {
         return channelFuturePool.borrowObject();
     }
 
+    @Override
     public void returnChannel(Channel channel) {
         try {
             channelFuturePool.returnObject(channel);
@@ -101,6 +94,7 @@ public class BrpcChannelGroup {
         }
     }
 
+    @Override
     public void removeChannel(Channel channel) {
         try {
             channelFuturePool.invalidateObject(channel);
@@ -109,32 +103,9 @@ public class BrpcChannelGroup {
         }
     }
 
+    @Override
     public void close() {
         channelFuturePool.close();
-    }
-
-    public Channel connect(final String ip, final int port) {
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
-        future.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(ChannelFuture channelFuture) throws Exception {
-                if (channelFuture.isSuccess()) {
-                    log.debug("future callback, connect to {}:{} success, channel={}",
-                            ip, port, channelFuture.channel());
-                } else {
-                    log.debug("future callback, connect to {}:{} failed due to {}",
-                            ip, port, channelFuture.cause().getMessage());
-                }
-            }
-        });
-        future.syncUninterruptibly();
-        if (future.isSuccess()) {
-            return future.channel();
-        } else {
-            // throw exception when connect failed to the connection pool acquirer
-            log.warn("connect to {}:{} failed, msg={}", ip, port, future.cause().getMessage());
-            throw new RpcException(future.cause());
-        }
     }
 
     @Override
@@ -158,26 +129,22 @@ public class BrpcChannelGroup {
                 .toHashCode();
     }
 
-    public String getIp() {
-        return ip;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
+    @Override
     public long getFailedNum() {
         return failedNum;
     }
 
+    @Override
     public void incFailedNum() {
         this.failedNum++;
     }
 
+    @Override
     public Queue<Integer> getLatencyWindow() {
         return latencyWindow;
     }
 
+    @Override
     public void updateLatency(int latency) {
         latencyWindow.add(latency);
         if (latencyWindow.size() > latencyWindowSize) {
@@ -185,6 +152,30 @@ public class BrpcChannelGroup {
         }
     }
 
+    @Override
+    public void updateMaxConnection(int num) {
+
+        channelFuturePool.setMaxTotal(num);
+        channelFuturePool.setMaxIdle(num);
+
+    }
+
+    @Override
+    public int getCurrentMaxConnection() {
+        return channelFuturePool.getMaxTotal();
+    }
+
+    @Override
+    public int getActiveConnectionNum() {
+        return channelFuturePool.getNumActive();
+    }
+
+    @Override
+    public int getIdleConnectionNum() {
+        return channelFuturePool.getNumIdle();
+    }
+
+    @Override
     public void updateLatencyWithReadTimeOut() {
         updateLatency(readTimeOut);
     }

@@ -19,7 +19,7 @@ package com.baidu.brpc.client.loadbalance;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.baidu.brpc.client.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.client.RpcClient;
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,43 +19,62 @@ package com.baidu.brpc.protocol.http;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.baidu.brpc.protocol.BrpcMeta;
-import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.RpcMethodInfo;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
+import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.exceptions.BadSchemaException;
+import com.baidu.brpc.exceptions.NotEnoughDataException;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.exceptions.TooBigDataException;
+import com.baidu.brpc.naming.DnsNamingService;
+import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.protocol.AbstractProtocol;
-import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.protocol.BrpcMeta;
+import com.baidu.brpc.protocol.HttpRequest;
+import com.baidu.brpc.protocol.HttpResponse;
+import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.ServiceManager;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+
 import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpUtil;
 import io.netty.handler.codec.http.HttpVersion;
 
 /**
  * 处理http rpc协议，包括四种序列化格式：
- * 1、http + protoc
- * 2、http + json
+ * 1、http + mcpack
+ * 2、http + baidu_json
+ * 3、http + protoc
+ * 4、http + json
  */
 public class HttpRpcProtocol extends AbstractProtocol {
+
     private static final Logger LOG = LoggerFactory.getLogger(HttpRpcProtocol.class);
     private static final String CONTENT_TYPE_JSON = "application/json";
     private static final String CONTENT_TYPE_PROTOBUF = "application/proto";
@@ -63,6 +82,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
      * 请求的唯一标识id
      */
     private static final String LOG_ID = "log-id";
+    private static final String PROTOCOL_TYPE = "protocol-type";
     private static final Gson gson = (new GsonBuilder())
             .serializeNulls()
             .disableHtmlEscaping()
@@ -79,184 +99,308 @@ public class HttpRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public FullHttpRequest encodeHttpRequest(RpcRequest rpcRequest) throws Exception {
-        String serviceName = rpcRequest.getTargetMethod().getDeclaringClass().getSimpleName();
-        String methodName = rpcRequest.getTargetMethod().getName();
-        BrpcMeta rpcMeta = rpcRequest.getTargetMethod().getAnnotation(BrpcMeta.class);
+    public Request createRequest() {
+        return new HttpRequest();
+    }
+
+    @Override
+    public Response createResponse() {
+        return new HttpResponse();
+    }
+
+    @Override
+    public Request getRequest() {
+        Request request = HttpRequest.getHttpRequest();
+        request.reset();
+        return request;
+    }
+
+    @Override
+    public Response getResponse() {
+        Response response = HttpResponse.getHttpResponse();
+        response.reset();
+        return response;
+    }
+
+    @Override
+    public Object decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
+            throws BadSchemaException, TooBigDataException, NotEnoughDataException {
+
+        HttpMessage httpMessage = null;
+        // I don't know the length of http header, so here copy all readable bytes to decode
+        ByteBuf byteBuf = in.retainedSlice(in.readableBytes());
+
+        try {
+            httpMessage = (HttpMessage) BrpcHttpObjectDecoder.getDecoder(isDecodingRequest).decode(ctx, byteBuf);
+        } catch (Exception e) {
+            throw new BadSchemaException();
+        } finally {
+            if (httpMessage != null) {
+                // decode success
+                in.skipBytes(byteBuf.readerIndex());
+            }
+            byteBuf.release();
+        }
+
+        if (httpMessage == null) {
+            // decode next time
+            throw notEnoughDataException;
+        }
+
+        return httpMessage;
+    }
+
+    @Override
+    public ByteBuf encodeRequest(Request request) throws Exception {
+        HttpRequest httpRequest = (HttpRequest) request;
+        String serviceName = httpRequest.getTargetMethod().getDeclaringClass().getSimpleName();
+        String methodName = httpRequest.getTargetMethod().getName();
+        BrpcMeta rpcMeta = httpRequest.getTargetMethod().getAnnotation(BrpcMeta.class);
         if (rpcMeta != null) {
             serviceName = rpcMeta.serviceName();
             methodName = rpcMeta.methodName();
         }
         LOG.debug("serviceName={}, methodName={}", serviceName, methodName);
 
-        Object requestBody = makeRequest((int) rpcRequest.getLogId(), methodName, rpcRequest.getArgs());
-        byte[] requestBodyBytes = encodeBody(protocolType, encoding, requestBody, rpcRequest.getRpcMethodInfo());
+        Object httpRequestBody = makeRequest((int) httpRequest.getLogId(), methodName, httpRequest.getArgs());
+        byte[] httpRequestBodyBytes =
+                encodeBody(protocolType, encoding, httpRequestBody, httpRequest.getRpcMethodInfo());
 
-        rpcRequest.setUri(buildHttpUri(serviceName, methodName));
-        if (requestBodyBytes != null) {
-            rpcRequest.content().writeBytes(requestBodyBytes);
-        }
-        String contentType = HttpRpcProtocol.getContentType(protocolType);
-        rpcRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType + "; charset=" + encoding);
-        rpcRequest.headers().set(HttpHeaderNames.CONTENT_LENGTH, requestBodyBytes == null
-                ? 0 : requestBodyBytes.length);
-        rpcRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-        rpcRequest.headers().set(LOG_ID, rpcRequest.getLogId());
-        return rpcRequest;
-    }
-
-    @Override
-    public RpcResponse decodeHttpResponse(
-            FullHttpResponse httpResponse,
-            ChannelHandlerContext ctx) {
-        ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        Long logId = parseLogId(httpResponse.headers().get(LOG_ID), channelInfo.getLogId());
-        RpcResponse rpcResponse = new RpcResponse(httpResponse);
-        rpcResponse.setLogId(logId);
-        RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
-        if (future == null) {
-            return rpcResponse;
-        }
-        rpcResponse.setRpcFuture(future);
-
-        if (!httpResponse.status().equals(HttpResponseStatus.OK)) {
-            LOG.warn("status={}", httpResponse.status());
-            rpcResponse.setException(new RpcException(RpcException.SERVICE_EXCEPTION,
-                    "http status=" + httpResponse.status()));
-            return rpcResponse;
-        }
-
-        int bodyLen = httpResponse.content().readableBytes();
-        byte[] bytes = new byte[bodyLen];
-        httpResponse.content().readBytes(bytes);
-
-        String contentTypeAndEncoding = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
-        String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
-        int protocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
-        String encoding = this.encoding;
-        // 由于uc服务返回的encoding是错误的，所以这里以client端设置的encoding为准。
-        //        for (String split : splits) {
-        //            split = split.trim();
-        //            if (split.startsWith("charset=")) {
-        //                encoding = split.substring("charset=".length());
-        //            }
-        //        }
-
-        Object body = null;
-        if (bodyLen != 0) {
-            try {
-                body = decodeBody(protocolType, encoding, bytes);
-            } catch (Exception ex) {
-                LOG.error("decode response body failed");
-                rpcResponse.setException(ex);
-                return rpcResponse;
-            }
-        }
-        if (body != null) {
-            try {
-                rpcResponse.setResult(parseHttpResponse(body, future.getRpcMethodInfo()));
-            } catch (Exception ex) {
-                LOG.error("failed to parse result from HTTP body");
-                rpcResponse.setException(ex);
-            }
-        } else {
-            rpcResponse.setResult(null);
-        }
-
-        return rpcResponse;
-    }
-
-    @Override
-    public void decodeHttpRequest(FullHttpRequest httpRequest, RpcRequest rpcRequest) {
-        rpcRequest.setHttpRequest(httpRequest);
-        httpRequest.release();
-        long logId = parseLogId(rpcRequest.headers().get(LOG_ID), null);
-        rpcRequest.setLogId(logId);
-
-        String uri = rpcRequest.uri();
-        String contentTypeAndEncoding = rpcRequest.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
-        String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
-        int protocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
-        String encoding = this.encoding;
-        for (String split : splits) {
-            split = split.trim();
-            if (split.startsWith("charset=")) {
-                encoding = split.substring("charset=".length());
-            }
-        }
-        rpcRequest.headers().set(HttpHeaderNames.CONTENT_ENCODING, encoding);
-
-        ByteBuf byteBuf = rpcRequest.content();
-        int bodyLen = byteBuf.readableBytes();
-        if (bodyLen == 0) {
-            String errMsg = String.format("body should not be null, uri:%s", uri);
-            LOG.warn(errMsg);
-            rpcRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
-            return;
-        }
-        byte[] requestBytes = new byte[bodyLen];
-        byteBuf.readBytes(requestBytes, 0, bodyLen);
-
-        Object body = decodeBody(protocolType, encoding, requestBytes);
-        rpcRequest.setLogId(logId);
-
-        String serviceName = null;
-        String methodName = null;
-        if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
-                || protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-            String[] uriSplit = uri.split("/");
-            if (uriSplit.length < 3) {
-                String errMsg = String.format("url format is error, uri:%s", uri);
-                LOG.warn(errMsg);
-                rpcRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
-                return;
-            }
-            serviceName = uriSplit[uriSplit.length - 2];
-            methodName = uriSplit[uriSplit.length - 1];
-        } else {
-            JsonObject bodyObject = (JsonObject) body;
-            methodName = bodyObject.get("method").getAsString();
-            serviceName = uri;
-
-        }
-        ServiceManager serviceManager = ServiceManager.getInstance();
-        RpcMethodInfo rpcMethodInfo = serviceManager.getService(serviceName, methodName);
-        if (rpcMethodInfo == null) {
-            String errMsg = String.format("Fail to find path=%s", uri);
-            LOG.warn(errMsg);
-            rpcRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
-            return;
-        }
-        rpcRequest.setRpcMethodInfo(rpcMethodInfo);
-        rpcRequest.setTargetMethod(rpcMethodInfo.getMethod());
-        rpcRequest.setTarget(rpcMethodInfo.getTarget());
-
-        rpcRequest.setArgs(parseRequestParam(body, rpcMethodInfo));
-        return;
-    }
-
-    @Override
-    public FullHttpResponse encodeHttpResponse(RpcRequest rpcRequest, RpcResponse rpcResponse) {
-        if (rpcResponse == null || rpcResponse.getException() != null) {
-            return new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
-        }
-        FullHttpResponse httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-        addHttpHeaders(httpResponse.headers(), rpcRequest);
-        Object body = rpcResponse.getResult();
-
-        byte[] responseBytes = null;
+        FullHttpRequest nettyHttpRequest = null;
         try {
-            responseBytes = encodeBody(protocolType,
-                    rpcRequest.headers().get(HttpHeaderNames.CONTENT_ENCODING),
-                    body, rpcResponse.getRpcMethodInfo());
-        } catch (Exception ex3) {
-            LOG.warn("encode response failed");
-            return null;
+            nettyHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, HttpMethod.POST, "");
+            nettyHttpRequest.setUri(buildHttpUri(serviceName, methodName));
+            if (httpRequestBodyBytes != null) {
+                nettyHttpRequest.content().writeBytes(httpRequestBodyBytes);
+            }
+            String contentType = HttpRpcProtocol.getContentType(protocolType);
+            nettyHttpRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType + "; charset=" + encoding);
+            nettyHttpRequest.headers().set(HttpHeaderNames.CONTENT_LENGTH, httpRequestBodyBytes == null
+                    ? 0 : httpRequestBodyBytes.length);
+            nettyHttpRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+            nettyHttpRequest.headers().set(LOG_ID, httpRequest.getLogId());
+            BrpcHttpRequestEncoder encoder = new BrpcHttpRequestEncoder();
+            return encoder.encode(nettyHttpRequest);
+        } finally {
+            if (nettyHttpRequest != null) {
+                nettyHttpRequest.release();
+            }
         }
-        httpResponse.content().writeBytes(responseBytes);
-        httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, responseBytes.length);
+    }
 
-        return httpResponse;
+    @Override
+    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannelGroup channelGroup) {
+        String hostPort;
+        HttpRequest httpRequest = (HttpRequest) request;
+        NamingService namingService = rpcClient.getNamingService();
+        if (!httpRequest.headers().contains(HttpHeaderNames.HOST)) {
+            if (namingService != null && namingService instanceof DnsNamingService) {
+                // 从 DnsNamingService 获取原始的 host
+                hostPort = ((DnsNamingService) namingService).getHostPort();
+            } else {
+                // 默认获取当前链接的 host:port 即可
+                hostPort = channelGroup.getIp() + ":" + channelGroup.getPort();
+            }
+            // some http server decide what to do by the 'host' param in request header
+            httpRequest.headers().set(HttpHeaderNames.HOST, hostPort);
+        }
+    }
+
+    @Override
+    public Response decodeResponse(Object msg, ChannelHandlerContext ctx) {
+        FullHttpResponse httpResponse = (FullHttpResponse) msg;
+        try {
+            ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
+            Long logId = parseLogId(httpResponse.headers().get(LOG_ID), channelInfo.getLogId());
+            HttpResponse response = HttpResponse.getHttpResponse();
+            response.reset();
+            response.setLogId(logId);
+            RpcFuture future = channelInfo.removeRpcFuture(response.getLogId());
+            if (future == null) {
+                return response;
+            }
+            response.setRpcFuture(future);
+
+            if (!httpResponse.status().equals(HttpResponseStatus.OK)) {
+                LOG.warn("status={}", httpResponse.status());
+                response.setException(new RpcException(RpcException.SERVICE_EXCEPTION,
+                        "http status=" + httpResponse.status()));
+                return response;
+            }
+
+            int bodyLen = httpResponse.content().readableBytes();
+            byte[] bytes = new byte[bodyLen];
+            httpResponse.content().readBytes(bytes);
+
+            String contentTypeAndEncoding = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
+            String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
+            int protocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
+            String encoding = this.encoding;
+            // 由于uc服务返回的encoding是错误的，所以这里以client端设置的encoding为准。
+            //        for (String split : splits) {
+            //            split = split.trim();
+            //            if (split.startsWith("charset=")) {
+            //                encoding = split.substring("charset=".length());
+            //            }
+            //        }
+
+            Object body = null;
+            if (bodyLen != 0) {
+                try {
+                    body = decodeBody(protocolType, encoding, bytes);
+                } catch (Exception ex) {
+                    LOG.error("decode response body failed");
+                    response.setException(ex);
+                    return response;
+                }
+            }
+
+            if (body != null) {
+                try {
+                    response.setResult(parseHttpResponse(body, future.getRpcMethodInfo()));
+                } catch (Exception ex) {
+                    LOG.error("failed to parse result from HTTP body");
+                    response.setException(ex);
+                }
+            } else {
+                response.setResult(null);
+            }
+
+            return response;
+        } finally {
+            httpResponse.release();
+        }
+
+    }
+
+    @Override
+    public Request decodeRequest(Object packet) {
+        try {
+            HttpRequest httpRequest = (HttpRequest) this.getRequest();
+            httpRequest.setMsg(packet);
+            long logId = parseLogId(httpRequest.headers().get(LOG_ID), null);
+            httpRequest.setLogId(logId);
+
+            String uri = httpRequest.uri();
+            String contentTypeAndEncoding = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
+            String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
+            int protocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
+            String encoding = this.encoding;
+            for (String split : splits) {
+                split = split.trim();
+                if (split.startsWith("charset=")) {
+                    encoding = split.substring("charset=".length());
+                }
+            }
+            httpRequest.headers().set(PROTOCOL_TYPE, protocolType);
+            httpRequest.headers().set(HttpHeaderNames.CONTENT_ENCODING, encoding);
+
+            ByteBuf byteBuf = httpRequest.content();
+            int bodyLen = byteBuf.readableBytes();
+            if (bodyLen == 0) {
+                String errMsg = String.format("body should not be null, uri:%s", uri);
+                LOG.warn(errMsg);
+                httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
+                return httpRequest;
+            }
+            byte[] requestBytes = new byte[bodyLen];
+            byteBuf.readBytes(requestBytes, 0, bodyLen);
+
+            Object body = decodeBody(protocolType, encoding, requestBytes);
+            httpRequest.setLogId(logId);
+
+            String serviceName = null;
+            String methodName = null;
+            if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
+                    || protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
+                String[] uriSplit = uri.split("/");
+                if (uriSplit.length < 3) {
+                    String errMsg = String.format("url format is error, uri:%s", uri);
+                    LOG.warn(errMsg);
+                    httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
+                    return httpRequest;
+                }
+                serviceName = uriSplit[uriSplit.length - 2];
+                methodName = uriSplit[uriSplit.length - 1];
+            } else {
+                JsonObject bodyObject = (JsonObject) body;
+                methodName = bodyObject.get("method").getAsString();
+                serviceName = uri;
+
+            }
+            ServiceManager serviceManager = ServiceManager.getInstance();
+            RpcMethodInfo rpcMethodInfo = serviceManager.getService(serviceName, methodName);
+            if (rpcMethodInfo == null) {
+                String errMsg = String.format("Fail to find path=%s", uri);
+                LOG.warn(errMsg);
+                httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
+                return httpRequest;
+            }
+            httpRequest.setRpcMethodInfo(rpcMethodInfo);
+            httpRequest.setTargetMethod(rpcMethodInfo.getMethod());
+            httpRequest.setTarget(rpcMethodInfo.getTarget());
+            httpRequest.setArgs(parseRequestParam(protocolType, body, rpcMethodInfo));
+            return httpRequest;
+        } finally {
+            ((FullHttpRequest) packet).release();
+        }
+    }
+
+    @Override
+    public ByteBuf encodeResponse(Request request, Response response) {
+        FullHttpRequest httpRequest = (FullHttpRequest) request.getMsg();
+        FullHttpResponse httpResponse = null;
+
+        try {
+            if (response.getException() != null) {
+                httpResponse =
+                        new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+            } else {
+                httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
+                addHttpHeaders(httpResponse.headers(), httpRequest);
+                int protocolType = Integer.parseInt(httpRequest.headers().get(PROTOCOL_TYPE));
+                Object body = makeResponse(protocolType, response);
+                // encode body
+                try {
+                    byte[] responseBytes = encodeBody(protocolType,
+                            httpRequest.headers().get(HttpHeaderNames.CONTENT_ENCODING),
+                            body, response.getRpcMethodInfo());
+                    httpResponse.content().writeBytes(responseBytes);
+                    httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, responseBytes.length);
+                } catch (Exception e) {
+                    LOG.warn("encode response failed", e);
+                    response.setException(e);
+                    httpResponse =
+                            new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                }
+            }
+            // encode full http response
+            BrpcHttpResponseEncoder encoder = new BrpcHttpResponseEncoder();
+            return encoder.encode(httpResponse);
+        } catch (Exception e) {
+            LOG.warn("encode response failed", e);
+            response.setException(e);
+            return null;
+        } finally {
+            if (httpResponse != null) {
+                httpResponse.release();
+            }
+        }
+    }
+
+    @Override
+    public void afterResponseSent(Request request, Response response, ChannelFuture channelFuture) {
+        if (!HttpUtil.isKeepAlive(((HttpRequest) request).getNettyHttpRequest())) {
+            channelFuture.addListener(ChannelFutureListener.CLOSE);
+        }
+    }
+
+    public byte[] encodeResponseBody(int protocolType, Request request, Response response) {
+        FullHttpRequest httpRequest = (FullHttpRequest) request.getMsg();
+        Object body = makeResponse(protocolType, response);
+        return encodeBody(protocolType,
+                httpRequest.headers().get(HttpHeaderNames.CONTENT_ENCODING),
+                body, response.getRpcMethodInfo());
     }
 
     @Override
@@ -391,6 +535,30 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
+    protected Object makeResponse(int protocolType, Response response) {
+        Long id = response.getLogId();
+        if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
+            return response.getResult();
+        } else if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE) {
+            return response.getResult();
+        } else {
+            JsonObject res = new JsonObject();
+            JsonElement result = gson.toJsonTree(
+                    response.getResult(), response.getRpcMethodInfo().getMethod().getReturnType());
+            res.addProperty("jsonrpc", "2.0");
+            if (result != null) {
+                res.add("result", result);
+            } else {
+                res.addProperty("error", "bad request");
+            }
+            if (id != null) {
+                res.addProperty("id", id.intValue());
+            }
+
+            return res;
+        }
+    }
+
     protected String buildHttpUri(String serviceName, String methodName) {
         // uri格式为 /serviceName/methodName
         return "/" + serviceName + "/" + methodName;
@@ -429,7 +597,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return response;
     }
 
-    protected Object[] parseRequestParam(Object body, RpcMethodInfo rpcMethodInfo) {
+    protected Object[] parseRequestParam(int protocolType, Object body, RpcMethodInfo rpcMethodInfo) {
         if (body == null) {
             return null;
         }

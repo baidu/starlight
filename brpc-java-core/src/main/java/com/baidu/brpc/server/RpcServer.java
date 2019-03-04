@@ -19,6 +19,11 @@ package com.baidu.brpc.server;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NamingOptions;
@@ -26,18 +31,16 @@ import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.utils.NetUtils;
-import com.baidu.brpc.utils.ThreadPool;
-import lombok.Getter;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
 import com.baidu.brpc.server.handler.RpcServerHandler;
+import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
+import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
+import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.CustomThreadFactory;
+import com.baidu.brpc.utils.NetUtils;
+import com.baidu.brpc.utils.ThreadPool;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -52,9 +55,8 @@ import io.netty.channel.epoll.EpollServerSocketChannel;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
-import io.netty.handler.codec.http.HttpObjectAggregator;
-import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.timeout.IdleStateHandler;
+import lombok.Getter;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
@@ -78,10 +80,9 @@ public class RpcServer {
     private List<Object> serviceList = new ArrayList<Object>();
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
     private ServerStatus serverStatus;
-    private RpcServer metaHttpServer;
 
     public RpcServer(int port) {
-        this(port, new RpcServerOptions(), null);
+        this(port, new RpcServerOptions(), null, null);
     }
 
     public RpcServer(int port, RpcServerOptions options) {
@@ -90,6 +91,10 @@ public class RpcServer {
 
     public RpcServer(int port, RpcServerOptions options, List<Interceptor> interceptors) {
         this(port, options, interceptors, null);
+    }
+
+    public RpcServer(int port, RpcServerOptions options, NamingServiceFactory namingServiceFactory) {
+        this(port, options, null, namingServiceFactory);
     }
 
     public RpcServer(int port,
@@ -117,16 +122,20 @@ public class RpcServer {
         if (rpcServerOptions.getProtocolType() != null) {
             this.protocol = ProtocolManager.instance().getProtocol(rpcServerOptions.getProtocolType());
         }
-        this.threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
-                new CustomThreadFactory("server-work-thread"));
+
+        // shutDownManager init once
+        ShutDownManager.getInstance();
+
+        threadPool = BrpcWorkThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getWorkThreadNum());
+        workerGroup = BrpcIoThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getIoThreadNum());
+
         bootstrap = new ServerBootstrap();
+
         if (Epoll.isAvailable()) {
-            bossGroup = new EpollEventLoopGroup(
-                    rpcServerOptions.getAcceptorThreadNum(),
+
+            bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
-            workerGroup = new EpollEventLoopGroup(
-                    rpcServerOptions.getIoThreadNum(),
-                    new CustomThreadFactory("server-io-thread"));
+
             ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
             ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(EpollServerSocketChannel.class);
@@ -134,17 +143,16 @@ public class RpcServer {
             bootstrap.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
             LOG.info("use epoll edge trigger mode");
         } else {
-            bossGroup = new NioEventLoopGroup(
-                    rpcServerOptions.getAcceptorThreadNum(),
+
+            bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
-            workerGroup = new NioEventLoopGroup(
-                    rpcServerOptions.getIoThreadNum(),
-                    new CustomThreadFactory("server-io-thread"));
+
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(NioServerSocketChannel.class);
             LOG.info("use normal mode");
         }
+
         bootstrap.option(ChannelOption.SO_BACKLOG, rpcServerOptions.getBacklog());
         bootstrap.childOption(ChannelOption.SO_KEEPALIVE, rpcServerOptions.isKeepAlive());
         bootstrap.childOption(ChannelOption.TCP_NODELAY, rpcServerOptions.isTcpNoDelay());
@@ -163,31 +171,12 @@ public class RpcServer {
                                 rpcServerOptions.getWriterIdleTime(),
                                 rpcServerOptions.getKeepAliveTime()));
                 ch.pipeline().addLast("idle", new RpcServerChannelIdleHandler());
-                if (rpcServerOptions.isHttp()) {
-                    ch.pipeline().addLast(new HttpServerCodec());
-                    ch.pipeline().addLast(new HttpObjectAggregator(10 * 1024 * 1024));
-                }
                 ch.pipeline().addLast(rpcServerHandler);
             }
         };
         bootstrap.group(bossGroup, workerGroup).childHandler(initializer);
 
-        if (this.rpcServerOptions.getMetaHttpPort() > 0) {
-            this.serverStatus = new ServerStatus(this);
-            if (!this.rpcServerOptions.isHttp()) {
-                RpcServerOptions httpOptions = new RpcServerOptions();
-                try {
-                    BeanUtils.copyProperties(httpOptions, this.rpcServerOptions);
-                } catch (Exception ex) {
-                    LOG.warn("copy rpc server options failed");
-                }
-                httpOptions.setHttp(true);
-                httpOptions.setWorkThreadNum(1);
-                httpOptions.setIoThreadNum(1);
-                int metaHttpPort = this.rpcServerOptions.getMetaHttpPort();
-                metaHttpServer = new RpcServer(metaHttpPort, httpOptions);
-            }
-        }
+        this.serverStatus = new ServerStatus(this);
     }
 
     public void registerService(Object service) {
@@ -225,9 +214,6 @@ public class RpcServer {
                     namingService.register(registerInfo);
                 }
             }
-            if (rpcServerOptions.getMetaHttpPort() > 0 && !rpcServerOptions.isHttp()) {
-                metaHttpServer.start();
-            }
         } catch (InterruptedException e) {
             LOG.error("server failed to start, {}", e.getMessage());
         }
@@ -242,15 +228,6 @@ public class RpcServer {
         }
         if (bossGroup != null) {
             bossGroup.shutdownGracefully();
-        }
-        if (workerGroup != null) {
-            workerGroup.shutdownGracefully();
-        }
-        if (threadPool != null) {
-            threadPool.stop();
-        }
-        if (rpcServerOptions.getMetaHttpPort() > 0 && !rpcServerOptions.isHttp()) {
-            metaHttpServer.shutdown();
         }
     }
 

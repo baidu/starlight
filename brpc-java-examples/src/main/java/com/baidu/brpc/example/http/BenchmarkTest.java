@@ -24,7 +24,6 @@ public class BenchmarkTest {
             System.exit(-1);
         }
         RpcClientOptions options = new RpcClientOptions();
-        options.setHttp(true);
         options.setProtocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         options.setLoadBalanceType(LoadBalanceType.FAIR.getId());
         options.setMaxTotalConnections(1000000);

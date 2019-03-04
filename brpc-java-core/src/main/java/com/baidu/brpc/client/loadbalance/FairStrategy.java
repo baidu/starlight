@@ -25,9 +25,10 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.collections.CollectionUtils;
 
-import com.baidu.brpc.client.BrpcChannelGroup;
 import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.utils.CustomThreadFactory;
+
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
@@ -151,7 +152,7 @@ public class FairStrategy implements LoadBalanceStrategy {
         this.invalidInstances.addAll(instances);
     }
 
-    private BrpcChannelGroup randomSelect(CopyOnWriteArrayList<BrpcChannelGroup> instances) {
+    protected BrpcChannelGroup randomSelect(CopyOnWriteArrayList<BrpcChannelGroup> instances) {
         long instanceNum = instances.size();
         if (instanceNum == 0) {
             return null;
@@ -160,7 +161,7 @@ public class FairStrategy implements LoadBalanceStrategy {
         return instances.get(index);
     }
 
-    private long getRandomLong() {
+    protected long getRandomLong() {
         long randomIndex = random.nextLong();
         if (randomIndex < 0) {
             randomIndex = 0 - randomIndex;
@@ -168,14 +169,14 @@ public class FairStrategy implements LoadBalanceStrategy {
         return randomIndex;
     }
 
-    private BrpcChannelGroup fairSelect(Node root) {
+    protected BrpcChannelGroup fairSelect(Node root) {
         int max = root.weight;
         int randomWeight = random.nextInt(max);
         Node selectNode = searchNode(root, randomWeight);
         return selectNode.server;
     }
 
-    private Node searchNode(Node parent, int weight) {
+    protected Node searchNode(Node parent, int weight) {
 
         if (parent.left == null) {
             return parent;
@@ -188,7 +189,7 @@ public class FairStrategy implements LoadBalanceStrategy {
         if (parent.left.weight >= weight) {
             return searchNode(parent.left, weight);
         } else {
-            return searchNode(parent.right, weight);
+            return searchNode(parent.right, weight - parent.left.weight);
         }
 
     }
@@ -197,7 +198,7 @@ public class FairStrategy implements LoadBalanceStrategy {
      * Update weight of each node of the tree.
      * By create a new tree and insert into the head of the {@link #treeContainer}
      */
-    private void updateWeightTree() {
+    protected void updateWeightTree() {
 
         log.debug("begin to updateWeightTree...");
 
@@ -258,7 +259,7 @@ public class FairStrategy implements LoadBalanceStrategy {
      *
      * @return Weight num
      */
-    private int calculateWeight(BrpcChannelGroup group, int timeOut) {
+    protected int calculateWeight(BrpcChannelGroup group, int timeOut) {
         Queue<Integer> window = group.getLatencyWindow();
         int avgLatency = 0;
         for (int latency : window) {
@@ -282,7 +283,7 @@ public class FairStrategy implements LoadBalanceStrategy {
      *
      * @return the root node of the tree
      */
-    private Node generateWeightTreeByLeafNodes(Queue<Node> leafNodes) {
+    protected Node generateWeightTreeByLeafNodes(Queue<Node> leafNodes) {
 
         Queue<Node> nodes = new LinkedList<Node>(leafNodes);
         if (leafNodes.size() % 2 == 1) {

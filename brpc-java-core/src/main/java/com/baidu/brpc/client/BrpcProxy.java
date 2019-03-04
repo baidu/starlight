@@ -16,22 +16,6 @@
 
 package com.baidu.brpc.client;
 
-import com.baidu.brpc.JprotobufRpcMethodInfo;
-import com.baidu.brpc.ProtobufRpcMethodInfo;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.protocol.RpcContext;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.utils.ProtobufUtils;
-import com.baidu.brpc.RpcMethodInfo;
-import lombok.extern.slf4j.Slf4j;
-import net.sf.cglib.proxy.Enhancer;
-import net.sf.cglib.proxy.MethodInterceptor;
-import net.sf.cglib.proxy.MethodProxy;
-import org.apache.commons.collections.CollectionUtils;
-
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.HashMap;
@@ -40,6 +24,24 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.collections.CollectionUtils;
+
+import com.baidu.brpc.JprotobufRpcMethodInfo;
+import com.baidu.brpc.ProtobufRpcMethodInfo;
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.RpcContext;
+import com.baidu.brpc.utils.ProtobufUtils;
+
+import lombok.extern.slf4j.Slf4j;
+import net.sf.cglib.proxy.Enhancer;
+import net.sf.cglib.proxy.MethodInterceptor;
+import net.sf.cglib.proxy.MethodProxy;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -66,8 +68,9 @@ public class BrpcProxy implements MethodInterceptor {
 
     /**
      * 初始化时提前解析好method信息，在rpc交互时会更快。
+     *
      * @param rpcClient rpc client对象
-     * @param clazz rpc接口类
+     * @param clazz     rpc接口类
      */
     protected BrpcProxy(RpcClient rpcClient, Class clazz) {
         this.rpcClient = rpcClient;
@@ -133,45 +136,42 @@ public class BrpcProxy implements MethodInterceptor {
             return proxy.invokeSuper(obj, args);
         }
 
-        RpcRequest rpcRequest = null;
-        RpcResponse rpcResponse = null;
-        RpcContext rpcContext = RpcContext.getContext();
+        Request request = null;
+        Response response = null;
+        RpcContext rpcContext = null;
+
         try {
-            rpcRequest = new RpcRequest();
-            rpcRequest.setCompressType(rpcClient.getRpcClientOptions().getCompressType().getNumber());
-            rpcRequest.setTarget(obj);
-            rpcRequest.setRpcMethodInfo(rpcMethodInfo);
-            rpcRequest.setTargetMethod(rpcMethodInfo.getMethod());
-            rpcRequest.setServiceName(rpcMethodInfo.getServiceName());
-            rpcRequest.setMethodName(rpcMethodInfo.getMethodName());
-            rpcRequest.setNsHeadMeta(rpcMethodInfo.getNsHeadMeta());
-            RpcCallback callback;
+
+            request = rpcClient.getProtocol().initRequest(rpcClient, rpcMethodMap, obj, method, args);
+            RpcCallback callback = null;
             int argLength = args.length;
             if (argLength > 1 && args[argLength - 1] instanceof RpcCallback) {
                 // 异步调用
                 argLength = argLength - 1;
                 callback = (RpcCallback) args[argLength];
-                Object[] newArgs = new Object[argLength];
-                for (int i = 0; i < newArgs.length; i++) {
-                    newArgs[i] = args[i];
-                }
-                rpcRequest.setArgs(newArgs);
-            } else {
-                // 同步调用
-                callback = null;
-                rpcRequest.setArgs(args);
             }
 
             // attachment
-            rpcRequest.setKvAttachment(rpcContext.getRequestKvAttachment());
-            rpcRequest.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
+            rpcContext = RpcContext.getContext();
+            request.setKvAttachment(rpcContext.getRequestKvAttachment());
+            request.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
+
+            // create and add RpcFuture object to FastFutureStore in order to acquire the logId,
+            // which is required in interceptors;
+            // The missing parameters will be set in rpcClient.sendRequest() method
+            RpcFuture rpcFuture = new RpcFuture(null, request.getRpcMethodInfo(), callback, null, null);
+            long logId = FastFutureStore.getInstance(0).put(rpcFuture);
+            request.setLogId(logId);
 
             // 执行interceptor链
             if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
                 for (Interceptor interceptor : rpcClient.getInterceptors()) {
-                    boolean success = interceptor.handleRequest(rpcRequest);
+                    boolean success = interceptor.handleRequest(request);
                     if (!success) {
                         log.warn("interceptor return false, terminate...");
+
+                        // clean logId before throwing exception
+                        FastFutureStore.getInstance(0).getAndRemove(request.getLogId());
                         throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "interceptor");
                     }
                 }
@@ -182,24 +182,28 @@ public class BrpcProxy implements MethodInterceptor {
             RpcException exception = null;
             Future future = null;
             while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes()) {
+                boolean isFinalTry = currentTryTimes == rpcClient.getRpcClientOptions().getMaxTryTimes();
                 try {
-                    future = rpcClient.sendRequest(rpcRequest, responseType, callback);
+                    future = rpcClient.sendRequest(request, responseType, callback, rpcFuture, isFinalTry);
+
                     if (callback != null) {
                         break;
                     } else {
-                        rpcResponse = (RpcResponse) future.get(
+                        response = (Response) future.get(
                                 rpcClient.getRpcClientOptions().getReadTimeoutMillis(),
                                 TimeUnit.MILLISECONDS);
-                        if (rpcResponse.getResult() != null) {
+                        if (response.getResult() != null) {
                             break;
                         } else {
                             // 同步异常时，需要release rpcResponse，然后再重试，防止被下一次rpcResponse覆盖。
-                            rpcResponse.delRefCntForClient();
+                            response.delRefCntForClient();
                         }
                     }
                 } catch (RpcException ex) {
                     exception = ex;
-                    rpcClient.removeLogId(rpcRequest.getLogId());
+                    if (isFinalTry) {
+                        rpcClient.removeLogId(request.getLogId());
+                    }
                 }
                 // if application set the channel, brpc-java will not do retrying.
                 // because application maybe send different request for different server instance.
@@ -208,9 +212,9 @@ public class BrpcProxy implements MethodInterceptor {
                     break;
                 }
             }
-            if (rpcResponse == null) {
-                rpcResponse = new RpcResponse();
-                rpcResponse.setException(exception);
+            if (response == null) {
+                response = rpcClient.getProtocol().createResponse();
+                response.setException(exception);
             }
 
             if (callback != null) {
@@ -225,31 +229,32 @@ public class BrpcProxy implements MethodInterceptor {
             if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
                 int length = rpcClient.getInterceptors().size();
                 for (int i = length - 1; i >= 0; i--) {
-                    rpcClient.getInterceptors().get(i).handleResponse(rpcResponse);
+                    rpcClient.getInterceptors().get(i).handleResponse(response);
                 }
             }
 
-            if (rpcResponse.getResult() != null) {
-                return rpcResponse.getResult();
+            if (response.getResult() != null) {
+                return response.getResult();
             } else {
-                if (rpcResponse.getException() instanceof RpcException) {
-                    RpcException rpcException = (RpcException) rpcResponse.getException();
+                if (response.getException() instanceof RpcException) {
+                    RpcException rpcException = (RpcException) response.getException();
                     throw rpcException;
                 } else {
-                    throw new RpcException(rpcResponse.getException());
+                    throw new RpcException(response.getException());
                 }
             }
         } finally {
-            if (rpcRequest != null) {
+            if (request != null) {
                 // 对于tcp协议，RpcRequest.refCnt可能会被retain多次，所以这里要减去当前refCnt。
-                rpcRequest.delRefCnt();
+                request.delRefCnt();
             }
-            if (rpcResponse != null) {
-                rpcResponse.delRefCntForClient();
+            if (response != null) {
+                response.delRefCntForClient();
             }
             if (rpcContext != null) {
                 rpcContext.reset();
             }
+
         }
     }
 
