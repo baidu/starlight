@@ -61,6 +61,4 @@ public interface Response {
     void reset();
 
     void delRefCntForServer();
-
-    void delRefCntForClient();
 }

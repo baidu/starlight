@@ -57,7 +57,4 @@ public abstract class AbstractResponse implements Response {
             binaryAttachment = null;
         }
     }
-
-    public void delRefCntForClient() {
-    }
 }
