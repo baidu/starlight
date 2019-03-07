@@ -30,9 +30,9 @@ public class RpcServerTest {
         }
 
         RpcServerOptions options = new RpcServerOptions();
-//        options.setAcceptorThreadNum(8);
-//        options.setIoThreadNum(32);
-//        options.setWorkThreadNum(80);
+        // options.setAcceptorThreadNum(8);
+        // options.setIoThreadNum(32);
+        // options.setWorkThreadNum(80);
         options.setReceiveBufferSize(64 * 1024 * 1024);
         options.setSendBufferSize(64 * 1024 * 1024);
         RpcServer rpcServer = new RpcServer(port, options);

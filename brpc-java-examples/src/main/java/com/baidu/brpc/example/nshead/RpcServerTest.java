@@ -15,6 +15,7 @@ public class RpcServerTest {
 
         RpcServerOptions options = new RpcServerOptions();
         options.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
+        // options.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE);
         options.setEncoding("gbk");
         RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());

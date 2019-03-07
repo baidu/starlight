@@ -15,6 +15,7 @@ public class RpcClientTest {
 
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
+        // clientOption.setProtocolType(ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
         clientOption.setReadTimeoutMillis(5000);
         clientOption.setLoadBalanceType(LoadBalanceType.WEIGHT.getId());
