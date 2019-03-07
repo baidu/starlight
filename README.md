@@ -26,7 +26,7 @@ java 6+ && netty 4 && protobuf 2.5.0
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>2.0.2</version>
+    <version>2.2.0</version>
 </dependency>
 ```
 Spring环境：
@@ -34,7 +34,15 @@ Spring环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-spring</artifactId>
-    <version>2.0.2</version>
+    <version>2.2.0</version>
+</dependency>
+```
+Zookeeper注册中心：
+```xml
+<dependency>
+    <groupId>com.baidu</groupId>
+    <artifactId>brpc-java-naming-zookeeper</artifactId>
+    <version>2.2.0</version>
 </dependency>
 ```
 ### Server端使用
@@ -48,6 +56,9 @@ Spring环境：
 
 ### 与Spring集成
 * [Spring集成使用](https://github.com/baidu/brpc-java/blob/master/docs/cn/spring.md)
+
+### 服务注册发现
+* [Zookeeper注册中心](https://github.com/baidu/brpc-java/blob/master/docs/cn/zookeeper.md)
 
 ### 扩展
 * [新增协议](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)

@@ -26,12 +26,12 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.RpcContext;
-import io.netty.channel.Channel;
 import io.netty.util.ReferenceCountUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Created by wenweihu86 on 2017/4/26.
@@ -46,38 +46,29 @@ public class RpcClientTest {
         clientOption.setReadTimeoutMillis(1000);
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
-//        clientOption.setIoThreadNum(40);
         clientOption.setLoadBalanceType(LoadBalanceType.FAIR.getId());
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
         String serviceUrl = "list://127.0.0.1:8002";
+//        String serviceUrl = "zookeeper://127.0.0.1:2181";
         if (args.length == 1) {
             serviceUrl = args[0];
         }
 
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
+//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
 
         // build request
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
-                .setMessage("hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo")
+                .setMessage("helloooooooooooo")
                 .build();
 
         // sync call
-//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
-        Channel channel = null;
         try {
             RpcContext.getContext().setRequestBinaryAttachment("example attachment".getBytes());
-            // 如果手动指定channel，则RpcClient使用该channel发送请求；
-            // 手动指定的channel，由业务自己调用rpcClient.returnChannel归还；
-            // 如果出错，由业务自己调用rpcClient.removeChannel从连接池删除。
-            // 默认不用手动调用。
-            channel = rpcClient.selectChannel();
-            RpcContext.getContext().setChannel(channel);
-            System.out.println(channel);
-
             Echo.EchoResponse response = echoService.echo(request);
             System.out.printf("sync call service=EchoService.echo success, "
                             + "request=%s,response=%s\n",
@@ -89,19 +80,14 @@ public class RpcClientTest {
             }
         } catch (RpcException ex) {
             System.out.println("sync call failed, ex=" + ex.getMessage());
-            rpcClient.removeChannel(channel);
-            channel = null;
         } finally {
-            if (channel != null) {
-                rpcClient.returnChannel(channel);
-            }
             RpcContext.removeContext();
         }
         rpcClient.stop();
 
         // async call
-//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
+//        rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
         RpcCallback callback = new RpcCallback<Echo.EchoResponse>() {
             @Override
             public void success(Echo.EchoResponse response) {
@@ -124,11 +110,10 @@ public class RpcClientTest {
             RpcContext.getContext().setRequestBinaryAttachment("async example attachment".getBytes());
             Future<Echo.EchoResponse> future = asyncEchoService.echo(request, callback);
             try {
-                if (future != null) {
-                    future.get();
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
+                Echo.EchoResponse response = future.get(100, TimeUnit.MILLISECONDS);
+                System.out.println("response from future:" + response.getMessage());
+            } catch (Exception ex1) {
+                ex1.printStackTrace();
             }
         } catch (RpcException ex) {
             System.out.println("rpc send failed, ex=" + ex.getMessage());

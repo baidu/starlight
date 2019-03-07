@@ -34,7 +34,6 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.utils.ProtobufUtils;
 
@@ -137,11 +136,8 @@ public class BrpcProxy implements MethodInterceptor {
         }
 
         Request request = null;
-        Response response = null;
         RpcContext rpcContext = null;
-
         try {
-
             request = rpcClient.getProtocol().initRequest(rpcClient, rpcMethodMap, obj, method, args);
             RpcCallback callback = null;
             int argLength = args.length;
@@ -163,41 +159,33 @@ public class BrpcProxy implements MethodInterceptor {
             long logId = FastFutureStore.getInstance(0).put(rpcFuture);
             request.setLogId(logId);
 
-            // 执行interceptor链
-            if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
-                for (Interceptor interceptor : rpcClient.getInterceptors()) {
-                    boolean success = interceptor.handleRequest(request);
-                    if (!success) {
-                        log.warn("interceptor return false, terminate...");
-
-                        // clean logId before throwing exception
-                        FastFutureStore.getInstance(0).getAndRemove(request.getLogId());
-                        throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "interceptor");
-                    }
-                }
-            }
-
             Type responseType = rpcMethodInfo.getOutputClass();
             int currentTryTimes = 0;
             RpcException exception = null;
             Future future = null;
             while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes()) {
+                // 执行interceptor链
+                if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
+                    for (Interceptor interceptor : rpcClient.getInterceptors()) {
+                        boolean success = interceptor.handleRequest(request);
+                        if (!success) {
+                            log.warn("interceptor return false, terminate...");
+                            // clean logId before throwing exception
+                            FastFutureStore.getInstance(0).getAndRemove(request.getLogId());
+                            throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "interceptor");
+                        }
+                    }
+                }
                 boolean isFinalTry = currentTryTimes == rpcClient.getRpcClientOptions().getMaxTryTimes();
                 try {
                     future = rpcClient.sendRequest(request, responseType, callback, rpcFuture, isFinalTry);
-
-                    if (callback != null) {
-                        break;
-                    } else {
-                        response = (Response) future.get(
+                    if (callback == null) {
+                        Object response = future.get(
                                 rpcClient.getRpcClientOptions().getReadTimeoutMillis(),
                                 TimeUnit.MILLISECONDS);
-                        if (response.getResult() != null) {
-                            break;
-                        } else {
-                            // 同步异常时，需要release rpcResponse，然后再重试，防止被下一次rpcResponse覆盖。
-                            response.delRefCntForClient();
-                        }
+                        return response;
+                    } else {
+                        return future;
                     }
                 } catch (RpcException ex) {
                     exception = ex;
@@ -212,49 +200,19 @@ public class BrpcProxy implements MethodInterceptor {
                     break;
                 }
             }
-            if (response == null) {
-                response = rpcClient.getProtocol().createResponse();
-                response.setException(exception);
-            }
 
-            if (callback != null) {
-                if (exception != null) {
-                    throw exception;
-                } else {
-                    return future;
-                }
+            if (exception == null) {
+                exception = new RpcException(RpcException.TIMEOUT_EXCEPTION, "unknown error");
             }
-
-            // 执行interceptor链
-            if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
-                int length = rpcClient.getInterceptors().size();
-                for (int i = length - 1; i >= 0; i--) {
-                    rpcClient.getInterceptors().get(i).handleResponse(response);
-                }
-            }
-
-            if (response.getResult() != null) {
-                return response.getResult();
-            } else {
-                if (response.getException() instanceof RpcException) {
-                    RpcException rpcException = (RpcException) response.getException();
-                    throw rpcException;
-                } else {
-                    throw new RpcException(response.getException());
-                }
-            }
+            throw exception;
         } finally {
             if (request != null) {
                 // 对于tcp协议，RpcRequest.refCnt可能会被retain多次，所以这里要减去当前refCnt。
                 request.delRefCnt();
             }
-            if (response != null) {
-                response.delRefCntForClient();
-            }
             if (rpcContext != null) {
                 rpcContext.reset();
             }
-
         }
     }
 
