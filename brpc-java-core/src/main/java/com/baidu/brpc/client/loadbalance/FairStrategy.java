@@ -54,8 +54,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class FairStrategy implements LoadBalanceStrategy {
 
-    private static final int TIMER_INIT_DELAY = 30;
-
     private static final int TIMER_DELAY = 60;
 
     /**
@@ -70,7 +68,7 @@ public class FairStrategy implements LoadBalanceStrategy {
      */
     private CopyOnWriteArrayList<Node> treeContainer;
 
-    private Timer timer;
+    private volatile Timer timer;
 
     private RpcClient rpcClient;
 
