@@ -19,6 +19,8 @@ package com.baidu.brpc.protocol.nshead;
 import java.io.IOException;
 import java.util.Map;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +51,10 @@ import io.netty.channel.ChannelHandlerContext;
 @SuppressWarnings("unchecked")
 public class NSHeadRpcProtocol extends AbstractProtocol {
     private static final Logger LOG = LoggerFactory.getLogger(NSHeadRpcProtocol.class);
-
+    private static final Gson gson = (new GsonBuilder())
+            .disableHtmlEscaping()
+            .serializeSpecialFloatingPointValues()
+            .create();
     private int protocol;
     private String encoding = "utf-8";
 
@@ -164,6 +169,14 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
             } catch (IOException ex) {
                 throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex);
             }
+        } else if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE) {
+            String json = gson.toJson(body);
+            try {
+                bytes = json.getBytes(this.encoding);
+            } catch (Exception e) {
+                LOG.error("can not serialize object using mcpack", e);
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
+            }
         } else {
             throw new RpcException(RpcException.SERVICE_EXCEPTION, "NSHeadRpcProtocol do not support " + protocol);
         }
@@ -215,6 +228,22 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
                     }
                 } catch (IOException e) {
                     LOG.warn("invoke parseFrom method error", e);
+                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
+                }
+            } else if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE) {
+                try {
+                    int readableBytes = bodyBuf.readableBytes();
+                    byte[] bodyBytes = new byte[readableBytes];
+                    bodyBuf.readBytes(bodyBytes);
+                    String jsonString = new String(bodyBytes, this.encoding);
+                    if (rpcMethodInfo.getTarget() != null) {
+                        // server端
+                        result = gson.fromJson(jsonString, rpcMethodInfo.getInputClasses()[0]);
+                    } else {
+                        result = gson.fromJson(jsonString, rpcMethodInfo.getOutputClass());
+                    }
+                } catch (Exception e) {
+                    LOG.error("can not deserialize object", e);
                     throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
                 }
             } else {

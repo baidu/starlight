@@ -65,6 +65,8 @@ public class ProtocolManager {
                     new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE, encoding));
             protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE,
                     new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE, encoding));
+            protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE,
+                    new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE, encoding));
             protocols.addAll(protocolMap.values());
             protocolNum = protocols.size();
             isInit = true;
