@@ -60,6 +60,19 @@ public class ServiceManager {
         }
         Class clazz = interfaces[0];
         Method[] methods = clazz.getDeclaredMethods();
+        registerService(methods, service);
+    }
+    public void registerService(Class targetClass, Object service) {
+        Class[] interfaces = targetClass.getInterfaces();
+        if (interfaces.length != 1) {
+            LOG.error("service must implement one interface only");
+            throw new RuntimeException("service must implement one interface only");
+        }
+        Class clazz = interfaces[0];
+        Method[] methods = clazz.getDeclaredMethods();
+        registerService(methods, service);
+    }
+    protected void registerService(Method[] methods, Object service) {
         for (Method method : methods) {
             RpcMethodInfo methodInfo;
             ProtobufUtils.MessageType messageType = ProtobufUtils.getMessageType(method);

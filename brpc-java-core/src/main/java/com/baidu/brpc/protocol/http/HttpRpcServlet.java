@@ -55,6 +55,11 @@ public class HttpRpcServlet extends HttpServlet {
         serviceManager.registerService(service);
     }
 
+    public void registerService(Class targetClass, Object service) {
+        ServiceManager serviceManager = ServiceManager.getInstance();
+        serviceManager.registerService(targetClass, service);
+    }
+
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
         long startTime = System.nanoTime();
