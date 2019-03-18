@@ -16,9 +16,9 @@
 
 package com.baidu.brpc.example.standard;
 
+import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
-import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Options;
@@ -56,8 +56,7 @@ public class SyncBenchmarkTest {
         options.setWriteTimeoutMillis(1000);
         options.setReadTimeoutMillis(1000);
         options.setTcpNoDelay(false);
-        RpcClient rpcClient = new RpcClient(args[0], options);
-        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
+        RpcClient rpcClient = new RpcClient(args[0], options, null);
         int threadNum = Integer.parseInt(args[1]);
 
         InputStream inputStream = Thread.currentThread().getClass()
@@ -67,11 +66,14 @@ public class SyncBenchmarkTest {
         inputStream.read(messageBytes);
         log.info("message size=" + messageBytes.length);
 
+        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
+
         SendInfo[] sendInfos = new SendInfo[threadNum];
         Thread[] threads = new Thread[threadNum];
+
         for (int i = 0; i < threadNum; i++) {
             sendInfos[i] = new SendInfo();
-            threads[i] = new Thread(new ThreadTask(rpcClient, echoService, messageBytes, sendInfos[i]),
+            threads[i] = new Thread(new ThreadTask(i, rpcClient, messageBytes, sendInfos[i], echoService),
                     "work-thread-" + i);
             threads[i].start();
         }
@@ -110,23 +112,27 @@ public class SyncBenchmarkTest {
     }
 
     public static class ThreadTask implements Runnable {
+        private int id;
         private RpcClient rpcClient;
-        private EchoService echoService;
         private byte[] messageBytes;
         private SendInfo sendInfo;
+        private EchoService echoService;
 
-        public ThreadTask(RpcClient rpcClient, EchoService echoService, byte[] messageBytes, SendInfo sendInfo) {
+        public ThreadTask(int id, RpcClient rpcClient, byte[] messageBytes,
+                          SendInfo sendInfo, EchoService echoService) {
+            this.id = id;
             this.rpcClient = rpcClient;
-            this.echoService = echoService;
             this.messageBytes = messageBytes;
             this.sendInfo = sendInfo;
+            this.echoService = echoService;
         }
 
         public void run() {
             // build request
             Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
-                    .setMessage("hello")
+                    .setMessage("hello" + id)
                     .build();
+
             Channel channel = rpcClient.selectChannel();
             while (true) {
                 try {
@@ -137,7 +143,10 @@ public class SyncBenchmarkTest {
                     RpcContext.getContext().setChannel(channel);
                     RpcContext.getContext().setRequestBinaryAttachment(messageBytes);
                     long beginTime = System.nanoTime();
-                    echoService.echo(request);
+                    Echo.EchoResponse response = echoService.echo(request);
+                    if (!response.getMessage().equals(request.getMessage())) {
+                        log.warn("id:{} request:{}, response:{}", id, request.getMessage(), response.getMessage());
+                    }
                     sendInfo.elapsedNs += (System.nanoTime() - beginTime);
                     sendInfo.successRequestNum++;
                     if (RpcContext.getContext().getResponseBinaryAttachment() != null) {

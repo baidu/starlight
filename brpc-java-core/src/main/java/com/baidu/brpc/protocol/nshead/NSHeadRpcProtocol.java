@@ -87,8 +87,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     @Override
     public Response decodeResponse(Object in, ChannelHandlerContext ctx) throws Exception {
         NSHeadPacket packet = (NSHeadPacket) in;
-        RpcResponse rpcResponse = RpcResponse.getRpcResponse();
-        rpcResponse.reset();
+        RpcResponse rpcResponse = new RpcResponse();
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
         Long logId = channelInfo.getLogId();
         if (packet.getNsHead().logId != 0) {

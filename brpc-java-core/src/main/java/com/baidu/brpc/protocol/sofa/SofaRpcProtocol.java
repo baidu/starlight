@@ -146,8 +146,7 @@ public class SofaRpcProtocol extends AbstractProtocol {
         ByteBuf metaBuf = responsePacket.getMetaBuf();
         ByteBuf protoBuf = responsePacket.getProtoBuf();
         try {
-            RpcResponse rpcResponse = RpcResponse.getRpcResponse();
-            rpcResponse.reset();
+            RpcResponse rpcResponse = new RpcResponse();
             SofaRpcProto.SofaRpcMeta responseMeta = (SofaRpcProto.SofaRpcMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcMetaInstance);
             Long logId = responseMeta.getSequenceId();

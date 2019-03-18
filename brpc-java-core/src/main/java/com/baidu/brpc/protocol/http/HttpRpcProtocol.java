@@ -212,8 +212,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         try {
             ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
             Long logId = parseLogId(httpResponse.headers().get(LOG_ID), channelInfo.getLogId());
-            HttpResponse response = HttpResponse.getHttpResponse();
-            response.reset();
+            HttpResponse response = new HttpResponse();
             response.setLogId(logId);
             RpcFuture future = channelInfo.removeRpcFuture(response.getLogId());
             if (future == null) {

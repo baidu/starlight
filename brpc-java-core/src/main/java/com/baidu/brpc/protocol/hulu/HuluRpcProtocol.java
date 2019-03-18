@@ -119,8 +119,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
         ByteBuf protoAndAttachmentBuf = responsePacket.getProtoAndAttachmentBuf();
         ByteBuf protoBuf = null;
         try {
-            RpcResponse rpcResponse = RpcResponse.getRpcResponse();
-            rpcResponse.reset();
+            RpcResponse rpcResponse = new RpcResponse();
             HuluRpcProto.HuluRpcResponseMeta responseMeta = (HuluRpcProto.HuluRpcResponseMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcResponseMetaInstance);
             Long logId = responseMeta.getCorrelationId();

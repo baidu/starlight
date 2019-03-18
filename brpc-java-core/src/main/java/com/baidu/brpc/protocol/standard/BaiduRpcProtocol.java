@@ -115,8 +115,7 @@ public class BaiduRpcProtocol extends AbstractProtocol {
         try {
             BaiduRpcProto.RpcMeta rpcMeta = (BaiduRpcProto.RpcMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcMetaInstance);
-            RpcResponse rpcResponse = RpcResponse.getRpcResponse();
-            rpcResponse.reset();
+            RpcResponse rpcResponse = new RpcResponse();
             long logId = rpcMeta.getCorrelationId();
             rpcResponse.setLogId(logId);
 
