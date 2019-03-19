@@ -41,6 +41,10 @@ public abstract class AbstractBrpcChannelGroup implements BrpcChannelGroup {
         this.protocol = protocol;
     }
 
+    @Override
+    public void updateChannel(Channel channel) {
+    }
+
 
     @Override
     public Channel connect(final String ip, final int port) {

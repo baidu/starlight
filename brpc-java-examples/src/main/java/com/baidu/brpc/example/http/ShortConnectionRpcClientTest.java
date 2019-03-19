@@ -8,6 +8,7 @@ import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.example.http.json.EchoService;
 import com.baidu.brpc.example.http.json.EchoServiceAsync;
@@ -26,7 +27,7 @@ public class ShortConnectionRpcClientTest {
         clientOption.setReadTimeoutMillis(5000);
         clientOption.setLoadBalanceType(LoadBalanceType.WEIGHT.getId());
         clientOption.setMaxTryTimes(1);
-        clientOption.setLongConnection(false);
+        clientOption.setChannelType(ChannelType.SHORT_CONNECTION);
 
         String serviceUrl = "list://127.0.0.1:8080";
         if (args.length == 1) {

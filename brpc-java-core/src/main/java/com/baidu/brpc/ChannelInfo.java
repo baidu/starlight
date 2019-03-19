@@ -20,6 +20,7 @@ import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.FastFutureStore;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Response;
@@ -102,9 +103,10 @@ public class ChannelInfo {
 
     /**
      * return channel when fail
+     * @param channelType
      */
-    public void handleRequestFail(boolean isLongConnection) {
-        if (isLongConnection) {
+    public void handleRequestFail(ChannelType channelType) {
+        if (channelType != ChannelType.SHORT_CONNECTION) {
             channelGroup.incFailedNum();
             returnChannelAfterRequest();
         } else {

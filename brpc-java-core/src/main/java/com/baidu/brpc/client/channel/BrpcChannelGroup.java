@@ -31,6 +31,8 @@ public interface BrpcChannelGroup {
 
     void removeChannel(Channel channel);
 
+    void updateChannel(Channel channel);
+
     void close();
 
     Channel connect(final String ip, final int port);

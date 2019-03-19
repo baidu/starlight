@@ -21,6 +21,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.protocol.Options;
@@ -49,7 +50,7 @@ public class RpcShortConnectionClientTest {
         EndPoint endPoint = new EndPoint("127.0.0.1", 8001);
         RpcClientOptions rpcClientOptions = new RpcClientOptions();
         rpcClientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
-        rpcClientOptions.setLongConnection(false);
+        rpcClientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
         RpcClient rpcClient = new RpcClient(endPoint, rpcClientOptions);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
@@ -71,7 +72,7 @@ public class RpcShortConnectionClientTest {
         RpcClientOptions clientOptions = new RpcClientOptions();
         clientOptions.setProtocolType(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         clientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
-        clientOptions.setLongConnection(false);
+        clientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
 
         EndPoint endPoint = new EndPoint("127.0.0.1", 8001);
         RpcClient rpcClient = new RpcClient(endPoint, clientOptions);
@@ -95,7 +96,7 @@ public class RpcShortConnectionClientTest {
         RpcClientOptions clientOptions = new RpcClientOptions();
         clientOptions.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
         clientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
-        clientOptions.setLongConnection(false);
+        clientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
         EndPoint endPoint = new EndPoint("127.0.0.1", 8001);
 
         RpcClient rpcClient = new RpcClient(endPoint, clientOptions);
