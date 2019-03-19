@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.client;
 
+import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.protocol.Options;
 
@@ -78,7 +79,7 @@ public class RpcClientOptions {
     private int sendBufferSize = 1024 * 64;
 
     // keep alive time in seconds
-    private int keepAliveTime;
+    private int keepAliveTime =  60 * 5;
 
     // io threads, default use Netty default value
     private int ioThreadNum = Runtime.getRuntime().availableProcessors();
@@ -93,5 +94,5 @@ public class RpcClientOptions {
 
     private Options.CompressType compressType = Options.CompressType.COMPRESS_TYPE_NONE;
 
-    private boolean isLongConnection = true;
+    private ChannelType channelType = ChannelType.POOLED_CONNECTION;
 }

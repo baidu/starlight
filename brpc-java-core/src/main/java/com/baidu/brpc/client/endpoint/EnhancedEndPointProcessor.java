@@ -16,12 +16,14 @@
 
 package com.baidu.brpc.client.endpoint;
 
+import com.baidu.brpc.client.channel.BrpcChannelFactory;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcPooledChannel;
 import com.baidu.brpc.client.loadbalance.FairStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.thread.ClientHealthCheckTimerInstance;
+
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
@@ -186,7 +188,7 @@ public class EnhancedEndPointProcessor implements EndPointProcessor {
             log.warn("endpoint already exist, {}:{}", endPoint.getIp(), endPoint.getPort());
             return;
         }
-        healthyInstances.add(new BrpcPooledChannel(endPoint.getIp(), endPoint.getPort(), rpcClient));
+        healthyInstances.add(BrpcChannelFactory.createChannelGroup(endPoint.getIp(), endPoint.getPort(), rpcClient));
         endPoints.add(endPoint);
     }
 
@@ -226,6 +228,5 @@ public class EnhancedEndPointProcessor implements EndPointProcessor {
             ((FairStrategy) rpcClient.getLoadBalanceStrategy()).markInvalidInstance(invalidInstances);
         }
     }
-
 
 }

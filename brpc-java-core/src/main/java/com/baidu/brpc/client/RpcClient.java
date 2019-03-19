@@ -35,10 +35,12 @@ import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.endpoint.BasicEndPointProcessor;
 import com.baidu.brpc.client.endpoint.EndPoint;
 import com.baidu.brpc.client.endpoint.EndPointProcessor;
 import com.baidu.brpc.client.endpoint.EnhancedEndPointProcessor;
+import com.baidu.brpc.client.handler.IdleChannelHandler;
 import com.baidu.brpc.client.handler.RpcClientHandler;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
@@ -77,6 +79,7 @@ import io.netty.channel.epoll.EpollMode;
 import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
@@ -391,7 +394,7 @@ public class RpcClient {
                 throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
             }
         } catch (Exception ex) {
-            channelInfo.handleRequestFail(rpcClientOptions.isLongConnection());
+            channelInfo.handleRequestFail(rpcClientOptions.getChannelType());
             timeout.cancel();
 
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex.getMessage());
@@ -424,7 +427,7 @@ public class RpcClient {
         timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
 
         // singleServer or isShortConnection do not need healthChecker
-        if (isSingleServer || !rpcClientOptions.isLongConnection()) {
+        if (isSingleServer || rpcClientOptions.getChannelType() == ChannelType.SHORT_CONNECTION) {
             endPointProcessor = new BasicEndPointProcessor(this);
         } else {
             endPointProcessor = new EnhancedEndPointProcessor(this);
@@ -460,6 +463,10 @@ public class RpcClient {
         final ChannelInitializer<SocketChannel> initializer = new ChannelInitializer<SocketChannel>() {
             @Override
             protected void initChannel(SocketChannel ch) throws Exception {
+                if (rpcClientOptions.getChannelType() == ChannelType.SINGLE_CONNECTION) {
+                    ch.pipeline().addLast(new IdleStateHandler(0, 0, rpcClientOptions.getKeepAliveTime()));
+                    ch.pipeline().addLast(new IdleChannelHandler());
+                }
                 ch.pipeline().addLast(rpcClientHandler);
             }
         };
@@ -506,7 +513,7 @@ public class RpcClient {
     }
 
     public boolean isLongConnection() {
-        return rpcClientOptions.isLongConnection();
+        return rpcClientOptions.getChannelType() != ChannelType.SHORT_CONNECTION;
     }
 
     public NamingService getNamingService() {
