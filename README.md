@@ -95,7 +95,7 @@ https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/
 |:-----:| :-----: | :-------: | :-------: | :-------: |
 |qps    | 22w   |    10w  |  5.3w   |   2.7w  |
 
-## 微信交流群：
+# 微信交流群：
 <img src="https://github.com/baidu/brpc-java/blob/master/weixin_qrcode1.png" width=200 height=200 />
 
 
