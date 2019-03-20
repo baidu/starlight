@@ -42,7 +42,7 @@ public class ChannelInfo {
     private Channel channel;
     private BrpcChannelGroup channelGroup;
     // 是否来自于业务RpcContext手动设置的
-    private boolean isFromRpcContext = false;
+    private boolean fromRpcContext = false;
     private Protocol protocol;
     private long logId;
     private FastFutureStore pendingRpc;
