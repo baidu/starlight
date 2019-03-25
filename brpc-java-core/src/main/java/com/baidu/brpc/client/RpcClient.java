@@ -396,7 +396,7 @@ public class RpcClient {
         } catch (Exception ex) {
             channelInfo.handleRequestFail(rpcClientOptions.getChannelType());
             timeout.cancel();
-
+            LOG.warn("meet exception when send request, brpc will try...", ex);
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex.getMessage());
         }
 
