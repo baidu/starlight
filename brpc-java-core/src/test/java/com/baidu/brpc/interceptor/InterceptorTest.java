@@ -17,6 +17,7 @@
 package com.baidu.brpc.interceptor;
 
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -33,6 +34,8 @@ public class InterceptorTest {
 
     private static RpcServer rpcServer;
 
+    private static boolean[] flags = new boolean[4];
+
     @BeforeClass
     public static void beforeClass() {
         rpcServer = new RpcServer(8000);
@@ -42,6 +45,27 @@ public class InterceptorTest {
             public boolean handleRequest(Request request) {
                 System.out.println("server handleRequest");
                 return true;
+            }
+            @Override
+            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+                flags[0] = true;
+                return joinPoint.proceed();
+            }
+            @Override
+            public void handleResponse(Response response) {
+                System.out.println("server handleResponse");
+            }
+        });
+        rpcServer.getInterceptors().add(new Interceptor() {
+            @Override
+            public boolean handleRequest(Request request) {
+                System.out.println("server handleRequest");
+                return true;
+            }
+            @Override
+            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+                flags[1] = true;
+                return joinPoint.proceed();
             }
 
             @Override
@@ -61,6 +85,9 @@ public class InterceptorTest {
 
     @Test
     public void test() {
+        for (int i = 0; i < 4; ++i) {
+            Assert.assertFalse(flags[i]);
+        }
         RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000");
         rpcClient.getInterceptors().add(new Interceptor() {
             @Override
@@ -70,13 +97,39 @@ public class InterceptorTest {
             }
 
             @Override
+            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+                flags[2] = true;
+                return joinPoint.proceed();
+            }
+            @Override
+            public void handleResponse(Response response) {
+                System.out.println("client handleResponse");
+            }
+        });
+        rpcClient.getInterceptors().add(new Interceptor() {
+            @Override
+            public boolean handleRequest(Request request) {
+                System.out.println("client handleRequest");
+                return true;
+            }
+            @Override
+            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+                flags[3] = true;
+                return joinPoint.proceed();
+            }
+            @Override
             public void handleResponse(Response response) {
                 System.out.println("client handleResponse");
             }
         });
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
-        Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
-        echoService.echo(request);
+        final String message = "hello";
+        Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage(message).build();
+        Echo.EchoResponse response = echoService.echo(request);
+        Assert.assertEquals(response.getMessage(), message);
+        for (int i = 0; i < 4; ++i) {
+            Assert.assertTrue(flags[i]);
+        }
         rpcClient.stop();
     }
 

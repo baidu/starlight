@@ -21,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
+import lombok.AccessLevel;
 import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +45,9 @@ public class RpcFuture<T> implements Future<T> {
 
     private CountDownLatch latch;
     private Timeout timeout;
-    private RpcCallback<T> callback;
+
+    @Setter(AccessLevel.NONE)
+    private RpcCallback<T> callback;  // callback cannot be set after init
     private ChannelInfo channelInfo;
     private RpcClient rpcClient;
     private RpcMethodInfo rpcMethodInfo;
@@ -120,8 +123,8 @@ public class RpcFuture<T> implements Future<T> {
         try {
             timeout.cancel();
             latch.countDown();
-            // invoke the chain of interceptors
-            if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
+            // invoke the chain of interceptors when async
+            if (isAsync() && CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
                 int length = rpcClient.getInterceptors().size();
                 for (int i = length - 1; i >= 0; i--) {
                     rpcClient.getInterceptors().get(i).handleResponse(response);
@@ -129,7 +132,7 @@ public class RpcFuture<T> implements Future<T> {
             }
             isDone = true;
 
-            if (callback != null) {
+            if (isAsync()) {
                 if (response == null) {
                     callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
                 } else if (response.getResult() != null) {
@@ -141,6 +144,10 @@ public class RpcFuture<T> implements Future<T> {
         } finally {
             RpcContext.removeContext();
         }
+    }
+
+    public boolean isAsync() {
+        return callback != null;
     }
 
     @Override

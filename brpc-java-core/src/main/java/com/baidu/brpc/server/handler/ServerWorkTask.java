@@ -22,6 +22,8 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
+import com.baidu.brpc.interceptor.JoinPoint;
+import com.baidu.brpc.server.ServerJoinPoint;
 import org.apache.commons.collections.CollectionUtils;
 
 import com.baidu.brpc.exceptions.RpcException;
@@ -49,6 +51,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.InvocationTargetException;
 
 @Slf4j
 @Setter
@@ -141,17 +145,25 @@ public class ServerWorkTask implements Runnable {
 
             if (response.getException() == null) {
                 try {
-                    Object result = request.getTargetMethod().invoke(
-                            request.getTarget(), request.getArgs()[0]);
+                    JoinPoint joinPoint = new ServerJoinPoint(request, rpcServer);
+                    Object result = joinPoint.proceed();
                     response.setResult(result);
                     if (rpcContext.getResponseBinaryAttachment() != null
                             && rpcContext.getResponseBinaryAttachment().isReadable()) {
                         response.setBinaryAttachment(rpcContext.getResponseBinaryAttachment());
                     }
+                } catch (InvocationTargetException ex) {
+                    Throwable targetException = ex.getTargetException();
+                    if (targetException == null) {
+                        targetException = ex;
+                    }
+                    String errorMsg = String.format("invoke method failed, msg=%s", targetException.getMessage());
+                    log.warn(errorMsg, targetException);
+                    response.setException(targetException);
                 } catch (Exception ex) {
                     String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
                     log.warn(errorMsg, ex);
-                    response.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
+                    response.setException(ex);
                 }
             }
 
