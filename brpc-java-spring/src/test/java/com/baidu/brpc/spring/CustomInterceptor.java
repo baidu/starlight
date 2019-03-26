@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.spring;
 
+import com.baidu.brpc.interceptor.AbstractInterceptor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +24,7 @@ import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 
-public class CustomInterceptor implements Interceptor {
+public class CustomInterceptor extends AbstractInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(CustomInterceptor.class);
 
     public boolean handleRequest(Request rpcRequest) {

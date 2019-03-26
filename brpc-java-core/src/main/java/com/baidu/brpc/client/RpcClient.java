@@ -28,7 +28,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.interceptor.JoinPoint;
 import org.apache.commons.beanutils.BeanUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -176,12 +178,20 @@ public class RpcClient {
         endPointProcessor.addEndPoints(endPoints);
     }
 
-    public <T> T getProxy(RpcClient rpcClient, Class clazz, NamingOptions namingOptions) {
+    public static <T> T getProxy(RpcClient rpcClient, Class clazz, NamingOptions namingOptions) {
         return BrpcProxy.getProxy(rpcClient, clazz, namingOptions);
     }
 
-    public <T> T getProxy(RpcClient rpcClient, Class clazz) {
+    public static <T> T getProxy(RpcClient rpcClient, Class clazz) {
         return BrpcProxy.getProxy(rpcClient, clazz, null);
+    }
+
+    public <T> T getProxy(Class clazz, NamingOptions namingOptions) {
+        return BrpcProxy.getProxy(this, clazz, namingOptions);
+    }
+
+    public <T> T getProxy(Class clazz) {
+        return BrpcProxy.getProxy(this, clazz, null);
     }
 
     public void setServiceInterface(Class clazz) {
@@ -324,86 +334,50 @@ public class RpcClient {
         BrpcChannelGroup channelGroup = channelInfo.getChannelGroup();
         protocol.beforeRequestSent(request, this, channelGroup);
 
-        // add request to RpcFuture and add timeout task
-        final long readTimeout = getRpcClientOptions().getReadTimeoutMillis();
-        Timeout timeout = timeoutTimer.newTimeout(new TimerTask() {
-            @Override
-            public void run(Timeout timeout) throws Exception {
-                boolean isSyncAndFinalRequest = isSyncAndFinalRequest();
-
-                RpcFuture rpcFuture;
-                if (isSyncAndFinalRequest) {
-                    // get and remove
-                    rpcFuture = channelInfo.removeRpcFuture(request.getLogId());
-
-                } else {
-                    // get only
-                    rpcFuture = channelInfo.getRpcFuture(request.getLogId());
-                }
-
-                if (rpcFuture != null) {
-                    String ip = rpcFuture.getChannelInfo().getChannelGroup().getIp();
-                    int port = rpcFuture.getChannelInfo().getChannelGroup().getPort();
-                    long elapseTime = System.currentTimeMillis() - rpcFuture.getStartTime();
-                    String errMsg = String.format("request timeout,logId=%d,ip=%s,port=%d,elapse=%dms",
-                            request.getLogId(), ip, port, elapseTime);
-                    LOG.info(errMsg);
-                    Response response = protocol.createResponse();
-                    response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
-
-                    if (isSyncAndFinalRequest) {
-                        rpcFuture.handleResponse(response);
-                    } else {
-                        rpcFuture.processConnection(response);
-                    }
-                }
-            }
-
-            private boolean isSyncAndFinalRequest() {
-                return callback != null || rpcContext.getChannel() != null || isFinalTry;
-            }
-
-        }, readTimeout, TimeUnit.MILLISECONDS);
-
-        // set the missing parameters
-        rpcFuture.setTimeout(timeout);
+        request.setChannel(channel);
         rpcFuture.setChannelInfo(channelInfo);
         rpcFuture.setRpcClient(this);
 
-        channelInfo.setLogId(rpcFuture.getLogId());
-
-        try {
-            // netty在发送完请求后会release，
-            // 所以这里要先retain，防止在重试时，refCnt变成0
-            request.addRefCnt();
-            ByteBuf byteBuf = protocol.encodeRequest(request);
-            ChannelFuture sendFuture = channel.writeAndFlush(byteBuf);
-            sendFuture.awaitUninterruptibly(rpcClientOptions.getWriteTimeoutMillis());
-            if (!sendFuture.isSuccess()) {
-
-                List<BrpcChannelGroup> unHealthyInstances = new ArrayList<BrpcChannelGroup>(1);
-                unHealthyInstances.add(channelGroup);
-                endPointProcessor.updateUnHealthyInstances(unHealthyInstances);
-
-                if (!(sendFuture.cause() instanceof ClosedChannelException)) {
-                    LOG.warn("send request failed, channelActive={}, ex=",
-                            channel.isActive(), sendFuture.cause());
+        // invoke before interceptor
+        if (CollectionUtils.isNotEmpty(interceptors)) {
+            for (Interceptor interceptor : interceptors) {
+                boolean success = interceptor.handleRequest(request);
+                if (!success) {
+                    LOG.warn("interceptor return false, terminate...");
+                    // clean logId before throwing exception
+                    FastFutureStore.getInstance(0).getAndRemove(request.getLogId());
+                    throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "interceptor");
                 }
-                String errMsg = String.format("send request failed, channelActive=%b, ex=%s",
-                        channel.isActive(), sendFuture.cause().getMessage());
-                throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
             }
-        } catch (Exception ex) {
-            channelInfo.handleRequestFail(rpcClientOptions.getChannelType());
-            timeout.cancel();
-            LOG.warn("meet exception when send request, brpc will try...", ex);
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex.getMessage());
         }
-
-        // 立即归还channel
-        channelInfo.handleRequestSuccess();
-
-        return rpcFuture;
+        // invoke around interceptor
+        JoinPoint joinPoint = new ClientJoinPoint(request, this, isFinalTry, rpcFuture,
+                channel, channelInfo, channelGroup);
+        Object result = null;
+        try {
+            result = joinPoint.proceed();
+        } catch (RpcException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RpcException("exception thrown by around interceptor", e);
+        }
+        // sync: invoke after interceptor in this thread
+        // async: invoke after interceptor in another thread
+        if (rpcFuture.isAsync()) {
+            // async: the return type must be Future, but might be replaced in around interceptor
+            return (Future) result;
+        } else {
+            // sync: the result might be replaced in around interceptor, therefore, the result in response should be set
+            Response response = rpcFuture.getResponse();
+            response.setResult(result);
+            if (CollectionUtils.isNotEmpty(interceptors)) {
+                int length = interceptors.size();
+                for (int i = length - 1; i >= 0; i--) {
+                    interceptors.get(i).handleResponse(response);
+                }
+            }
+            return rpcFuture;
+        }
     }
 
     public void triggerCallback(Runnable runnable) {
@@ -518,5 +492,12 @@ public class RpcClient {
 
     public NamingService getNamingService() {
         return namingService;
+    }
+
+    public Timer getTimeoutTimer() {
+        return timeoutTimer;
+    }
+    public EndPointProcessor getEndPointProcessor() {
+        return endPointProcessor;
     }
 }
