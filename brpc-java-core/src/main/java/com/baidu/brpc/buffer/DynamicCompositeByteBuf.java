@@ -182,9 +182,6 @@ public class DynamicCompositeByteBuf {
             return buffers.removeFirst();
         } else if (length < firstLen) {
             ByteBuf newBuf = first.readRetainedSlice(length);
-            if (length == firstLen) {
-                buffers.removeFirst().release();
-            }
             readableBytes -= length;
             return newBuf;
         } else {
