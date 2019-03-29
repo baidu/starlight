@@ -20,27 +20,23 @@ import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-/**
- * Created by wenweihu86 on 2017/5/17.
- */
 public class EndPoint {
-    String ip;
-    int port;
+
+    private String ip;
+
+    private int port;
 
     public EndPoint(String ip, int port) {
         this.ip = ip;
         this.port = port;
     }
 
-    /**
-     * @param hostPort format like "127.0.0.1:8002"
-     * @return {@link EndPoint}
-     */
-    public static EndPoint parseFrom(String hostPort) {
-        Validate.notEmpty(hostPort);
-        String[] splits = hostPort.split(":");
-        EndPoint endPoint = new EndPoint(splits[0], Integer.valueOf(splits[1]));
-        return endPoint;
+    public EndPoint(String address) {
+        Validate.notEmpty(address);
+        String[] splits = address.split(":");
+        Validate.isTrue(2 == splits.length);
+        this.ip = splits[0];
+        this.port = Integer.valueOf(splits[1]);
     }
 
     @Override
@@ -66,9 +62,7 @@ public class EndPoint {
 
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ip).append(":").append(port);
-        return sb.toString();
+        return String.format("EndPoint{\'%s:%d\'}", ip, port);
     }
 
     public String getIp() {
