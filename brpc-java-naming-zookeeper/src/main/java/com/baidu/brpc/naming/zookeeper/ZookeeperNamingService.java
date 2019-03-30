@@ -124,8 +124,7 @@ public class ZookeeperNamingService implements NamingService {
         try {
             List<String> childList = client.getChildren().forPath(path);
             for (String child : childList) {
-                EndPoint endPoint = EndPoint.parseFrom(child);
-                endPoints.add(endPoint);
+                endPoints.add(new EndPoint(child));
             }
             log.info("lookup {} instances from {}", endPoints.size(), url);
         } catch (Exception ex) {
