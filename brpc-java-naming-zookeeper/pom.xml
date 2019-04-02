@@ -11,7 +11,7 @@
     <artifactId>brpc-java-naming-zookeeper</artifactId>
     <packaging>jar</packaging>
 
-    <name>brpc-java</name>
+    <name>${project.artifactId}</name>
     <url>http://maven.apache.org</url>
     <description>Java implementation for BRPC</description>
 

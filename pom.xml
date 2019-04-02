@@ -29,7 +29,7 @@
     <version>2.2.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>brpc-java</name>
+    <name>${project.artifactId}</name>
     <url>http://maven.apache.org</url>
     <description>Java implementation for BRPC</description>
 
