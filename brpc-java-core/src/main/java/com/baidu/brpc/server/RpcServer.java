@@ -18,12 +18,6 @@ package com.baidu.brpc.server;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NamingOptions;
@@ -40,7 +34,6 @@ import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
-
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -57,6 +50,9 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
@@ -104,7 +100,7 @@ public class RpcServer {
         this.port = port;
         if (options != null) {
             try {
-                BeanUtils.copyProperties(this.rpcServerOptions, options);
+                this.rpcServerOptions.copyFrom(options);
             } catch (Exception ex) {
                 LOG.warn("init options failed, so use default");
             }

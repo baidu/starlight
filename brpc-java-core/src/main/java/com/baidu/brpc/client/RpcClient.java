@@ -17,7 +17,6 @@
 package com.baidu.brpc.client;
 
 import java.lang.reflect.Type;
-import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,16 +24,7 @@ import java.util.NoSuchElementException;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.baidu.brpc.interceptor.JoinPoint;
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.client.channel.ChannelType;
@@ -49,6 +39,7 @@ import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.client.loadbalance.RandomStrategy;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.interceptor.JoinPoint;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.DefaultNamingServiceFactory;
 import com.baidu.brpc.naming.ListNamingService;
@@ -67,12 +58,11 @@ import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
+import com.baidu.brpc.utils.CollectionUtils;
 import com.baidu.brpc.utils.ThreadPool;
-
+import edu.emory.mathcs.backport.java.util.Collections;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.epoll.Epoll;
@@ -82,9 +72,10 @@ import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.Timeout;
 import io.netty.util.Timer;
-import io.netty.util.TimerTask;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -157,14 +148,16 @@ public class RpcClient {
     }
 
     public RpcClient(EndPoint endPoint) {
-        this(endPoint, new RpcClientOptions());
+        this(endPoint, null);
     }
 
     public RpcClient(EndPoint endPoint, RpcClientOptions options) {
+        if (null == options) {
+            options = new RpcClientOptions();
+        }
         this.init(options, null, true);
 
-        List<EndPoint> endpoints = new ArrayList<EndPoint>(1);
-        endpoints.add(endPoint);
+        List<EndPoint> endpoints = Collections.singletonList(endPoint);
 
         endPointProcessor.addEndPoints(endpoints);
     }
@@ -389,7 +382,7 @@ public class RpcClient {
     private void init(final RpcClientOptions options, List<Interceptor> interceptors, boolean isSingleServer) {
         Validate.notNull(options);
         try {
-            BeanUtils.copyProperties(this.rpcClientOptions, options);
+            this.rpcClientOptions.copyFrom(options);
         } catch (Exception ex) {
             LOG.warn("init rpc options failed, so use default");
         }
@@ -497,6 +490,7 @@ public class RpcClient {
     public Timer getTimeoutTimer() {
         return timeoutTimer;
     }
+
     public EndPointProcessor getEndPointProcessor() {
         return endPointProcessor;
     }

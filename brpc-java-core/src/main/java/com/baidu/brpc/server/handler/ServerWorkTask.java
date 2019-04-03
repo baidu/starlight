@@ -24,7 +24,6 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 import com.baidu.brpc.interceptor.JoinPoint;
 import com.baidu.brpc.server.ServerJoinPoint;
-import org.apache.commons.collections.CollectionUtils;
 
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
@@ -36,6 +35,7 @@ import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.ServerStatus;
 
+import com.baidu.brpc.utils.CollectionUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
