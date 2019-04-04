@@ -67,6 +67,10 @@
             <artifactId>brpc-java-naming-zookeeper</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>brpc-java-naming-consul</artifactId>
+        </dependency>
+        <dependency>
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
             <version>1.2.3</version>
