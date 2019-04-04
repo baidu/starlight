@@ -18,12 +18,6 @@ package com.baidu.brpc.server;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NamingOptions;
@@ -40,7 +34,6 @@ import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
-
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -57,21 +50,40 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Created by wenweihu86 on 2017/4/24.
+ * TCP Rpc Server
+ *
+ * @author wenweihu86
+ * @author guohao02
  */
 @Getter
 public class RpcServer {
     private static final Logger LOG = LoggerFactory.getLogger(RpcServer.class);
     private RpcServerOptions rpcServerOptions = new RpcServerOptions();
-    // 端口
+
+    /**
+     * host to bind
+     */
+    private String host;
+    /**
+     * port to bind
+     */
     private int port;
-    // netty bootstrap
+    /**
+     * netty bootstrap
+     */
     private ServerBootstrap bootstrap;
-    // netty acceptor thread pool
+    /**
+     * netty acceptor thread pool
+     */
     private EventLoopGroup bossGroup;
-    // netty io thread pool
+    /**
+     * netty io thread pool
+     */
     private EventLoopGroup workerGroup;
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private Protocol protocol;
@@ -82,29 +94,53 @@ public class RpcServer {
     private ServerStatus serverStatus;
 
     public RpcServer(int port) {
-        this(port, new RpcServerOptions(), null, null);
+        this(null, port, new RpcServerOptions(), null, null);
     }
 
     public RpcServer(int port, RpcServerOptions options) {
-        this(port, options, null, null);
+        this(null, port, options, null, null);
+    }
+
+    public RpcServer(String host, int port) {
+        this(host, port, new RpcServerOptions(), null, null);
     }
 
     public RpcServer(int port, RpcServerOptions options, List<Interceptor> interceptors) {
-        this(port, options, interceptors, null);
+        this(null, port, options, interceptors);
+    }
+
+    public RpcServer(String host, int port, RpcServerOptions options) {
+        this(host, port, options, null, null);
+    }
+
+    public RpcServer(String host, int port, RpcServerOptions options, List<Interceptor> interceptors) {
+        this(host, port, options, interceptors, null);
     }
 
     public RpcServer(int port, RpcServerOptions options, NamingServiceFactory namingServiceFactory) {
-        this(port, options, null, namingServiceFactory);
+        this(null, port, options, null, namingServiceFactory);
+    }
+
+    public RpcServer(String host, int port, RpcServerOptions options, NamingServiceFactory namingServiceFactory) {
+        this(host, port, options, null, namingServiceFactory);
     }
 
     public RpcServer(int port,
                      final RpcServerOptions options,
                      List<Interceptor> interceptors,
                      NamingServiceFactory namingServiceFactory) {
+        this(null, port, options, interceptors, namingServiceFactory);
+    }
+
+    public RpcServer(String host, int port,
+                     final RpcServerOptions options,
+                     List<Interceptor> interceptors,
+                     NamingServiceFactory namingServiceFactory) {
+        this.host = host;
         this.port = port;
         if (options != null) {
             try {
-                BeanUtils.copyProperties(this.rpcServerOptions, options);
+                this.rpcServerOptions.copyFrom(options);
             } catch (Exception ex) {
                 LOG.warn("init options failed, so use default");
             }
@@ -204,10 +240,15 @@ public class RpcServer {
             // 判断是否在jarvis环境，若是jarvis环境则以环境变量port为准，否则以用户自定义的port为准
             if (rpcServerOptions.getJarvisPortName() != null) {
                 if (System.getenv(rpcServerOptions.getJarvisPortName()) != null) {
-                    port = Integer.valueOf(System.getenv(rpcServerOptions.getJarvisPortName()));
+                    this.port = Integer.valueOf(System.getenv(rpcServerOptions.getJarvisPortName()));
                 }
             }
-            ChannelFuture channelFuture = bootstrap.bind(port);
+            ChannelFuture channelFuture;
+            if (null != host) {
+                channelFuture = bootstrap.bind(host, port);
+            } else {
+                channelFuture = bootstrap.bind(port);
+            }
             channelFuture.sync();
             if (namingService != null) {
                 for (RegisterInfo registerInfo : registerInfoList) {
@@ -217,7 +258,9 @@ public class RpcServer {
         } catch (InterruptedException e) {
             LOG.error("server failed to start, {}", e.getMessage());
         }
-        LOG.info("server started on port={} success", port);
+        if (LOG.isInfoEnabled()) {
+            LOG.info("server started on port={} success", port);
+        }
     }
 
     public void shutdown() {

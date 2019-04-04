@@ -311,7 +311,7 @@ public class ConsulNamingService implements NamingService {
                         if (urlList == null) {
                             urlList = new ArrayList<EndPoint>();
                         }
-                        urlList.add(EndPoint.parseFrom(service.getAddress() + ":" + service.getPort()));
+                        urlList.add(new EndPoint(service.getAddress(), service.getPort()));
                         groupUrls.put(serviceName, urlList);
                     } catch (Exception e) {
                     }

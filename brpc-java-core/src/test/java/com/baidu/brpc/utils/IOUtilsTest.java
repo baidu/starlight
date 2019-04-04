@@ -23,8 +23,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class IOUtilsTest {
+
     @Test
     public void testByteBufToString() throws IOException {
         ByteBuf byteBuf = Unpooled.buffer(16);
@@ -32,6 +34,10 @@ public class IOUtilsTest {
         byteBuf.writeInt(456);
         ByteBufInputStream inputStream = new ByteBufInputStream(byteBuf);
         byte[] bytes = IOUtils.readInputStream(inputStream);
-        Assert.assertTrue(bytes.length == 8);
+        Assert.assertEquals(8, bytes.length);
+
+        ByteBuffer buf = ByteBuffer.wrap(bytes);
+        Assert.assertEquals(123, buf.getInt(0));
+        Assert.assertEquals(456, buf.getInt(4));
     }
 }

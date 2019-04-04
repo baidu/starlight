@@ -24,19 +24,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.collections.CollectionUtils;
-
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.utils.ProtobufUtils;
-
 import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -82,11 +77,21 @@ public class BrpcProxy implements MethodInterceptor {
             }
 
             Class[] parameterTypes = method.getParameterTypes();
+            final int paramLength = parameterTypes.length;
+            if (Future.class.isAssignableFrom(method.getReturnType())
+                    && (paramLength < 1 || !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1]))) {
+                throw new IllegalArgumentException("returnType is Future, but last argument is not RpcCallback");
+            }
+
             Method syncMethod = method;
-            if (parameterTypes.length > 1 && RpcCallback.class.isAssignableFrom(parameterTypes[0])) {
+            if (paramLength > 1 && RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1])) {
+                if (!Future.class.isAssignableFrom(method.getReturnType())) {
+                    throw new IllegalArgumentException("last argument is RpcCallback, but returnType is not Future");
+                }
+
                 // 异步方法
-                Class[] actualParameterTypes = new Class[parameterTypes.length - 1];
-                for (int i = 0; i < parameterTypes.length - 1; i++) {
+                Class[] actualParameterTypes = new Class[paramLength - 1];
+                for (int i = 0; i < paramLength - 1; i++) {
                     actualParameterTypes[i] = parameterTypes[i];
                 }
                 try {
@@ -125,6 +130,7 @@ public class BrpcProxy implements MethodInterceptor {
         return (T) en.create();
     }
 
+    @Override
     public Object intercept(Object obj, Method method, Object[] args,
                             MethodProxy proxy) throws Throwable {
         String methodName = method.getName();
@@ -162,30 +168,16 @@ public class BrpcProxy implements MethodInterceptor {
             Type responseType = rpcMethodInfo.getOutputClass();
             int currentTryTimes = 0;
             RpcException exception = null;
-            Future future = null;
             while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes()) {
-                // 执行interceptor链
-                if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
-                    for (Interceptor interceptor : rpcClient.getInterceptors()) {
-                        boolean success = interceptor.handleRequest(request);
-                        if (!success) {
-                            log.warn("interceptor return false, terminate...");
-                            // clean logId before throwing exception
-                            FastFutureStore.getInstance(0).getAndRemove(request.getLogId());
-                            throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "interceptor");
-                        }
-                    }
-                }
                 boolean isFinalTry = currentTryTimes == rpcClient.getRpcClientOptions().getMaxTryTimes();
                 try {
-                    future = rpcClient.sendRequest(request, responseType, callback, rpcFuture, isFinalTry);
-                    if (callback == null) {
-                        Object response = future.get(
+                    Future future = rpcClient.sendRequest(request, responseType, callback, rpcFuture, isFinalTry);
+                    if (rpcFuture.isAsync()) {
+                        return future;
+                    } else {
+                        return future.get(
                                 rpcClient.getRpcClientOptions().getReadTimeoutMillis(),
                                 TimeUnit.MILLISECONDS);
-                        return response;
-                    } else {
-                        return future;
                     }
                 } catch (RpcException ex) {
                     exception = ex;

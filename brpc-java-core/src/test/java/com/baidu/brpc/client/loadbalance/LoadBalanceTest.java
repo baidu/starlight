@@ -18,6 +18,7 @@ package com.baidu.brpc.client.loadbalance;
 
 import java.util.Random;
 
+import com.baidu.brpc.interceptor.AbstractInterceptor;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -144,7 +145,7 @@ public class LoadBalanceTest {
         }
     }
 
-    static class TestInterceptor implements Interceptor {
+    static class TestInterceptor extends AbstractInterceptor {
 
         private int serverId;
 
