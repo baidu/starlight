@@ -24,6 +24,7 @@ import io.netty.util.concurrent.FastThreadLocal;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -68,12 +69,15 @@ public class RpcContext {
 
     private Channel channel;
 
+    private SocketAddress remoteAddress;
+
     public void reset() {
         requestKvAttachment.clear();
         requestBinaryAttachment = null;
         responseKvAttachment.clear();
         responseBinaryAttachment = null;
         channel = null;
+        remoteAddress = null;
     }
 
     public void putRequestKvAttachment(String key, String value) {
@@ -130,13 +134,21 @@ public class RpcContext {
         }
     }
 
-    public void setChannelForServer(Channel channel) {
-        this.channel = channel;
+    public void setRemoteAddress(SocketAddress remoteAddress) {
+        this.remoteAddress = remoteAddress;
+    }
+
+    public SocketAddress getRemoteAddress() {
+        return remoteAddress;
     }
 
     public String getRemoteHost() {
-        InetSocketAddress remoteAddress = (InetSocketAddress) channel.remoteAddress();
-        InetAddress address = remoteAddress.getAddress();
-        return address.getHostAddress();
+        if (remoteAddress != null) {
+            InetSocketAddress remoteAddress = (InetSocketAddress) this.remoteAddress;
+            InetAddress address = remoteAddress.getAddress();
+            return address.getHostAddress();
+        } else {
+            return null;
+        }
     }
 }

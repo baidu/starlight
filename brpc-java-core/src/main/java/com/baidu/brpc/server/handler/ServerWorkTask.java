@@ -16,25 +16,17 @@
 
 package com.baidu.brpc.server.handler;
 
-import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
-import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
-import static io.netty.handler.codec.http.HttpResponseStatus.OK;
-import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
-
-import com.baidu.brpc.interceptor.JoinPoint;
-import com.baidu.brpc.server.ServerJoinPoint;
-
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.interceptor.JoinPoint;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.server.RpcServer;
+import com.baidu.brpc.server.ServerJoinPoint;
 import com.baidu.brpc.server.ServerStatus;
-
 import com.baidu.brpc.utils.CollectionUtils;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -53,6 +45,12 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.InvocationTargetException;
+
+import static io.netty.handler.codec.http.HttpHeaderNames.CONNECTION;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_LENGTH;
+import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
+import static io.netty.handler.codec.http.HttpResponseStatus.OK;
+import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 @Slf4j
 @Setter
@@ -120,7 +118,7 @@ public class ServerWorkTask implements Runnable {
         RpcContext rpcContext = RpcContext.getContext();
 
         try {
-            rpcContext.setChannelForServer(ctx.channel());
+            rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
             ByteBuf binaryAttachment = request.getBinaryAttachment();
             if (binaryAttachment != null) {
                 rpcContext.setRequestBinaryAttachment(binaryAttachment);
