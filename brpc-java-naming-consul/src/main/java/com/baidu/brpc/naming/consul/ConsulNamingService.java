@@ -54,7 +54,7 @@ public class ConsulNamingService implements NamingService {
 
     private ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes   =
             new ConcurrentHashMap<SubscribeInfo, NotifyListener>();
-    private ConcurrentSet<SubscribeInfo>                 failedUnsubscribes =
+    private ConcurrentSet<SubscribeInfo> failedUnsubscribes =
             new ConcurrentSet<SubscribeInfo>();
 
     private Timer timer;
