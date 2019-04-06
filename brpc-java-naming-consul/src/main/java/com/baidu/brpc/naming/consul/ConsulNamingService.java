@@ -42,11 +42,11 @@ import java.util.concurrent.*;
 @Slf4j
 public class ConsulNamingService implements NamingService {
 
-    private BrpcURL      url;
+    private BrpcURL url;
     private ConsulClient client;
-    private int          retryInterval;
-    private int          consulInterval;
-    private int          lookupInterval;
+    private int retryInterval;
+    private int consulInterval;
+    private int lookupInterval;
     private ConcurrentSet<RegisterInfo> failedRegisters   =
             new ConcurrentSet<RegisterInfo>();
     private ConcurrentSet<RegisterInfo> failedUnregisters =
