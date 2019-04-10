@@ -37,7 +37,7 @@ public class CompressManager {
         return instance;
     }
 
-    protected CompressManager() {
+    private CompressManager() {
         compressArray = new Compress[MAX_COMPRESS_NUM];
         compressArray[Options.CompressType.COMPRESS_TYPE_NONE_VALUE] = new NoneCompress();
         compressArray[Options.CompressType.COMPRESS_TYPE_GZIP_VALUE] = new GzipCompress();
