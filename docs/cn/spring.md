@@ -3,7 +3,7 @@
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
-    <artifactId>brpc-java-spring-icode</artifactId>
+    <artifactId>brpc-java-spring</artifactId>
     <version>2.0.0</version>
 </dependency>
 ```
