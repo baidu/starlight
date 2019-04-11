@@ -43,11 +43,11 @@ public class RpcShortConnectionClientTest {
 
     @Test
     public void testBasic() {
-        RpcServer rpcServer = new RpcServer(8001);
+        RpcServer rpcServer = new RpcServer(38001);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
-        EndPoint endPoint = new EndPoint("127.0.0.1", 8001);
+        EndPoint endPoint = new EndPoint("127.0.0.1", 38001);
         RpcClientOptions rpcClientOptions = new RpcClientOptions();
         rpcClientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
         rpcClientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
@@ -65,7 +65,7 @@ public class RpcShortConnectionClientTest {
     public void testHttpProto() {
         RpcServerOptions serverOptions = new RpcServerOptions();
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
-        RpcServer rpcServer = new RpcServer(8001, serverOptions);
+        RpcServer rpcServer = new RpcServer(38001, serverOptions);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
@@ -74,7 +74,7 @@ public class RpcShortConnectionClientTest {
         clientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
         clientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
 
-        EndPoint endPoint = new EndPoint("127.0.0.1", 8001);
+        EndPoint endPoint = new EndPoint("127.0.0.1", 38001);
         RpcClient rpcClient = new RpcClient(endPoint, clientOptions);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
@@ -89,7 +89,7 @@ public class RpcShortConnectionClientTest {
     public void testNsheadProto() {
         RpcServerOptions serverOptions = new RpcServerOptions();
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
-        RpcServer rpcServer = new RpcServer(8001, serverOptions);
+        RpcServer rpcServer = new RpcServer(38001, serverOptions);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
@@ -97,7 +97,7 @@ public class RpcShortConnectionClientTest {
         clientOptions.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
         clientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
         clientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
-        EndPoint endPoint = new EndPoint("127.0.0.1", 8001);
+        EndPoint endPoint = new EndPoint("127.0.0.1", 38001);
 
         RpcClient rpcClient = new RpcClient(endPoint, clientOptions);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
