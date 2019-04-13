@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client;
+package com.baidu.brpc.example.jprotobuf;
 
 import com.baidu.brpc.Controller;
+import com.baidu.brpc.client.RpcCallback;
 
-public interface RpcCallback<T> {
+import java.util.concurrent.Future;
 
-    void success(T response);
-
-    /**
-     * if response has response attachment, it should call this method.
-     * @param controller response runtime info, which is not included in idl.
-     * @param response user idl
-     */
-    void success(Controller controller, T response);
-
-    void fail(Throwable e);
-
+/**
+ * Created by huwenwei on 2019/4/9.
+ */
+public interface EchoServiceControllerAsync extends EchoServiceController {
+    Future<EchoResponse> echo(Controller controller,
+                              EchoRequest request,
+                              RpcCallback<EchoResponse> callback);
 }

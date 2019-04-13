@@ -16,19 +16,16 @@
 
 package com.baidu.brpc.example.standard;
 
-import com.baidu.brpc.protocol.BrpcMeta;
+import com.baidu.brpc.Controller;
+import com.baidu.brpc.client.RpcCallback;
+
+import java.util.concurrent.Future;
 
 /**
- * Created by wenweihu86 on 2017/4/25.
+ * Created by baidu on 2017/9/23.
  */
-public interface EchoService {
-    /**
-     * brpc/sofa：
-     * serviceName默认是包名 + 类名，methodName是proto文件Service内对应方法名，
-     * hulu/public_pbrpc：
-     * serviceName默认是类名，不需要加包名，methodName是proto文件Service内对应方法index，默认从0开始。
-     */
-    @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
-//    @BrpcMeta(serviceName = "EchoService", methodName = "0")
-    Echo.EchoResponse echo(Echo.EchoRequest request);
+public interface EchoServiceControllerAsync extends EchoServiceController {
+    Future<Echo.EchoResponse> echo(Controller controller,
+                                   Echo.EchoRequest request,
+                                   RpcCallback<Echo.EchoResponse> callback);
 }

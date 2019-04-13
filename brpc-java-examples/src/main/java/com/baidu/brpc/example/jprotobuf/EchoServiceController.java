@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.example.standard;
+package com.baidu.brpc.example.jprotobuf;
 
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.protocol.BrpcMeta;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
  */
-public interface EchoService {
+public interface EchoServiceController {
     /**
      * brpc/sofa：
      * serviceName默认是包名 + 类名，methodName是proto文件Service内对应方法名，
-     * hulu/public_pbrpc：
-     * serviceName默认是类名，不需要加包名，methodName是proto文件Service内对应方法index，默认从0开始。
+     * hulu：
+     * serviceName默认是类名，methodName是proto文件Service内对应方法index。
      */
     @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
 //    @BrpcMeta(serviceName = "EchoService", methodName = "0")
-    Echo.EchoResponse echo(Echo.EchoRequest request);
+    EchoResponse echo(Controller controller, EchoRequest request);
 }

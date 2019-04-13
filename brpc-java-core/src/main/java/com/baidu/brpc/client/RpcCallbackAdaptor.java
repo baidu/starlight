@@ -18,17 +18,21 @@ package com.baidu.brpc.client;
 
 import com.baidu.brpc.Controller;
 
-public interface RpcCallback<T> {
+import lombok.extern.slf4j.Slf4j;
 
-    void success(T response);
+@Slf4j
+public abstract class RpcCallbackAdaptor<T> implements RpcCallback<T> {
 
-    /**
-     * if response has response attachment, it should call this method.
-     * @param controller response runtime info, which is not included in idl.
-     * @param response user idl
-     */
-    void success(Controller controller, T response);
+    @Override
+    public void success(T response) {
+    }
 
-    void fail(Throwable e);
+    @Override
+    public void success(Controller controller, T response) {
+    }
 
+    @Override
+    public void fail(Throwable e) {
+        log.warn("sync call failed, ex:", e);
+    }
 }
