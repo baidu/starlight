@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.baidu.brpc.Controller;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +19,6 @@ import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.protocol.RpcContext;
 import com.google.common.collect.Lists;
 
 import io.netty.util.ReferenceCountUtil;
@@ -56,7 +56,8 @@ public class SingleConnectionClientTest {
                     if (((index / countInHalfMinute) & 1) == 1) {
                         return;
                     }
-                    RpcContext.getContext().setRequestBinaryAttachment("example attachment".getBytes());
+                    Controller controller = new Controller();
+                    controller.setRequestBinaryAttachment("example attachment".getBytes());
                     Echo.EchoResponse response = echoService.echo(request);
                     // sample log
                     if (random.nextInt(10000) < 30) {
@@ -64,10 +65,10 @@ public class SingleConnectionClientTest {
                                         + "request={},response={}",
                                 request.getMessage(), response.getMessage());
 
-                        if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
+                        if (controller.getResponseBinaryAttachment() != null) {
                             LOG.info("attachment="
-                                    + new String(RpcContext.getContext().getResponseBinaryAttachment().array()));
-                            ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
+                                    + new String(controller.getResponseBinaryAttachment().array()));
+                            ReferenceCountUtil.release(controller.getResponseBinaryAttachment());
                         }
                     }
                 } catch (RpcException ex) {
@@ -77,10 +78,6 @@ public class SingleConnectionClientTest {
                 } catch (Exception e) {
                     LOG.info("other exception, {}", e);
                 }
-                finally {
-                    RpcContext.removeContext();
-                }
-
             }
         }, 100000, PERIOD, TimeUnit.MICROSECONDS);
 

@@ -68,18 +68,9 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
         Validate.notEmpty(request.getArgs(), "args must not be empty");
-        NSHeadMeta nsHeadMeta = request.getNsHeadMeta();
         byte[] bodyBytes = encodeBody(request.getArgs()[0], request.getRpcMethodInfo());
-        NSHead nsHead;
-        if (nsHeadMeta != null) {
-            String provider = nsHeadMeta.provider();
-            short id = nsHeadMeta.id();
-            short version = nsHeadMeta.version();
-            nsHead = new NSHead((int) request.getLogId(), id, version, provider, bodyBytes.length);
-        } else {
-            nsHead = new NSHead((int) request.getLogId(), bodyBytes.length);
-        }
-
+        NSHead nsHead = request.getNsHead();
+        nsHead.bodyLength = bodyBytes.length;
         byte[] nsHeadBytes = nsHead.toBytes();
         return Unpooled.wrappedBuffer(nsHeadBytes, bodyBytes);
     }

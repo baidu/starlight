@@ -16,7 +16,6 @@
 
 package com.baidu.brpc.client;
 
-import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +24,13 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.endpoint.BasicEndPointProcessor;
@@ -52,7 +57,6 @@ import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.protocol.RpcContext;
 import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
 import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
@@ -60,6 +64,7 @@ import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.CollectionUtils;
 import com.baidu.brpc.utils.ThreadPool;
+
 import edu.emory.mathcs.backport.java.util.Collections;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -73,9 +78,6 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timer;
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -314,12 +316,13 @@ public class RpcClient {
     }
 
     public <T> Future<T> sendRequest(
-            final Request request,
-            final Type responseType, final RpcCallback<T> callback, RpcFuture rpcFuture, final boolean isFinalTry) {
-        // 如果业务在RpcContext中设置了channel，则不再通过负载均衡选择channel
-        final RpcContext rpcContext = RpcContext.getContext();
-        Channel channel = rpcContext.getChannel();
-        if (channel == null) {
+            Controller controller, final Request request,
+            RpcFuture rpcFuture, final boolean isFinalTry) {
+        // if user set channel in controller, rpc will not select channel again.
+        Channel channel;
+        if (controller != null && controller.getChannel() != null) {
+            channel = controller.getChannel();
+        } else {
             channel = selectChannel();
         }
         LOG.debug("channel={}", channel);
@@ -329,7 +332,6 @@ public class RpcClient {
 
         request.setChannel(channel);
         rpcFuture.setChannelInfo(channelInfo);
-        rpcFuture.setRpcClient(this);
 
         // invoke before interceptor
         if (CollectionUtils.isNotEmpty(interceptors)) {
@@ -344,9 +346,8 @@ public class RpcClient {
             }
         }
         // invoke around interceptor
-        JoinPoint joinPoint = new ClientJoinPoint(request, this, isFinalTry, rpcFuture,
-                channel, channelInfo, channelGroup);
-        Object result = null;
+        JoinPoint joinPoint = new ClientJoinPoint(controller, request, this, isFinalTry, rpcFuture);
+        Object result;
         try {
             result = joinPoint.proceed();
         } catch (RpcException e) {

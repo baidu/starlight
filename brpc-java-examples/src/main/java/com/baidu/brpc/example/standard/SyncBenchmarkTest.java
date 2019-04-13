@@ -16,13 +16,13 @@
 
 package com.baidu.brpc.example.standard;
 
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.protocol.RpcContext;
 import io.netty.channel.Channel;
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +36,8 @@ import java.io.InputStream;
 @Slf4j
 public class SyncBenchmarkTest {
 
+    private static volatile boolean stop = false;
+
     public static class SendInfo {
         public long successRequestNum = 0;
         public long failRequestNum = 0;
@@ -44,7 +46,7 @@ public class SyncBenchmarkTest {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         if (args.length != 2) {
-            System.out.println("usage: BenchmarkTest 127.0.0.1:8002 threadNum");
+            System.out.println("usage: BenchmarkTest list://127.0.0.1:8002 threadNum");
             System.exit(-1);
         }
         RpcClientOptions options = new RpcClientOptions();
@@ -77,11 +79,10 @@ public class SyncBenchmarkTest {
                     "work-thread-" + i);
             threads[i].start();
         }
-
         long lastSuccessRequestNum = 0;
         long lastFailRequestNum = 0;
         long lastElapsedNs = 0;
-        while (true) {
+        while (!stop) {
             long beginTime = System.nanoTime();
             try {
                 Thread.sleep(1000);
@@ -134,14 +135,15 @@ public class SyncBenchmarkTest {
                     .build();
 
             Channel channel = rpcClient.selectChannel();
-            while (true) {
+            while (!stop) {
                 try {
                     while (!channel.isActive()) {
                         rpcClient.removeChannel(channel);
                         channel = rpcClient.selectChannel();
                     }
-                    RpcContext.getContext().setChannel(channel);
-                    RpcContext.getContext().setRequestBinaryAttachment(messageBytes);
+                    Controller controller = new Controller();
+                    controller.setChannel(channel);
+                    controller.setRequestBinaryAttachment(messageBytes);
                     long beginTime = System.nanoTime();
                     Echo.EchoResponse response = echoService.echo(request);
                     if (!response.getMessage().equals(request.getMessage())) {
@@ -149,14 +151,12 @@ public class SyncBenchmarkTest {
                     }
                     sendInfo.elapsedNs += (System.nanoTime() - beginTime);
                     sendInfo.successRequestNum++;
-                    if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
-                        ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
+                    if (controller.getResponseBinaryAttachment() != null) {
+                        ReferenceCountUtil.release(controller.getResponseBinaryAttachment());
                     }
                 } catch (RpcException ex) {
                     log.info("send exception:" + ex.getMessage());
                     sendInfo.failRequestNum++;
-                } finally {
-                    RpcContext.removeContext();
                 }
             }
         }

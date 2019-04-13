@@ -29,25 +29,25 @@ public class EchoServiceImpl implements EchoService {
 
     @Override
     public Echo.EchoResponse echo(Echo.EchoRequest request) {
-        // // 读取request attachment
-        // RpcContext rpcContext = RpcContext.getContext();
-        // String remoteHost = rpcContext.getRemoteHost();
-        // LOG.debug("remote host:{}", remoteHost);
-        // ByteBuf attachment = rpcContext.getRequestBinaryAttachment();
-        // if (attachment != null) {
-        //     if (LOG.isDebugEnabled()) {
-        //         String attachmentString = new String(attachment.array());
-        //         LOG.debug("request attachment={}", attachmentString);
-        //     }
-        //     // 设置response attachment
-        //     rpcContext.setResponseBinaryAttachment(Unpooled.copiedBuffer(attachment));
-        // }
+        // 读取request attachment
+//        RpcContext rpcContext = RpcContext.getContext();
+//        String remoteHost = rpcContext.getRemoteHost();
+//        LOG.debug("remote host:{}", remoteHost);
+//        ByteBuf attachment = rpcContext.getRequestBinaryAttachment();
+//        if (attachment != null) {
+//            if (LOG.isDebugEnabled()) {
+//                String attachmentString = new String(attachment.array());
+//                LOG.debug("request attachment={}", attachmentString);
+//            }
+            // 设置response attachment
+//            rpcContext.setResponseBinaryAttachment(Unpooled.copiedBuffer(attachment));
+//        }
 
         String message = request.getMessage();
         Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
                 .setMessage(message).build();
-        // LOG.debug("EchoService.echo, request={}, response={}",
-        // request.getMessage(), response.getMessage());
+//        LOG.debug("EchoService.echo, request={}, response={}",
+//                request.getMessage(), response.getMessage());
 
         return response;
     }

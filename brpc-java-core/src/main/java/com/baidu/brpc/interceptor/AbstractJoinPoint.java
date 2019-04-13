@@ -1,27 +1,30 @@
 package com.baidu.brpc.interceptor;
 
-import com.baidu.brpc.protocol.Request;
+import java.util.List;
+
 import org.apache.commons.lang3.Validate;
 
-import java.util.List;
+import com.baidu.brpc.Controller;
+import com.baidu.brpc.protocol.Request;
+
+import lombok.Getter;
 
 /**
  * Abstract implementation of JoinPoint
- * @author Li Yuanxin(liyuanxin999@163.com)
+ * @author Li Yuanxin(liyuanxin@baidu.com)
  */
+@Getter
 public abstract class AbstractJoinPoint implements JoinPoint {
 
     private int index = 0;
+    protected Controller controller;
     protected Request request;
 
-    public AbstractJoinPoint(Request request) {
+    public AbstractJoinPoint(Controller controller, Request request) {
         Validate.notNull(request, "request cannot be null");
+        // controller config by user, may be null
+        this.controller = controller;
         this.request = request;
-    }
-
-    @Override
-    public Request getRequest() {
-        return request;
     }
 
     @Override

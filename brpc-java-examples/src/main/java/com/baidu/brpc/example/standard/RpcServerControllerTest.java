@@ -24,7 +24,7 @@ import lombok.extern.slf4j.Slf4j;
  * Created by wenweihu86 on 2017/4/25.
  */
 @Slf4j
-public class RpcServerTest {
+public class RpcServerControllerTest {
     public static void main(String[] args) {
         int port = 8002;
         if (args.length == 1) {
@@ -38,14 +38,15 @@ public class RpcServerTest {
 //        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
 //        final RpcServer rpcServer = new RpcServer(port, options, new ZookeeperNamingFactory());
         final RpcServer rpcServer = new RpcServer(port, options);
-        rpcServer.registerService(new EchoServiceImpl());
+        rpcServer.registerService(new EchoServiceControllerImpl());
         rpcServer.start();
 
         // make server keep running
-        synchronized (RpcServerTest.class) {
+        synchronized (RpcServerControllerTest.class) {
             try {
-                RpcServerTest.class.wait();
+                RpcServerControllerTest.class.wait();
             } catch (Throwable e) {
+                // ignore
             }
         }
     }

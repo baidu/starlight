@@ -16,19 +16,19 @@
 
 package com.baidu.brpc.example.jprotobuf;
 
+import java.io.IOException;
+import java.io.InputStream;
+
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcCallback;
+import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.protocol.RpcContext;
-import io.netty.channel.Channel;
-import io.netty.util.ReferenceCountUtil;
-import lombok.extern.slf4j.Slf4j;
 
-import java.io.IOException;
-import java.io.InputStream;
+import io.netty.channel.Channel;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by wenweihu86 on 2017/5/1.
@@ -45,7 +45,7 @@ public class BenchmarkTest {
 
     public static void main(String[] args) {
         if (args.length != 2) {
-            System.out.println("usage: BenchmarkTest list://127.0.0.1:8002 threadNum");
+            System.out.println("usage: BenchmarkTest 127.0.0.1:8002 threadNum");
             System.exit(-1);
         }
         RpcClientOptions options = new RpcClientOptions();
@@ -60,7 +60,7 @@ public class BenchmarkTest {
 //        options.setWorkThreadNum(2);
         // options.setFutureBufferSize(10000);
         RpcClient rpcClient = new RpcClient(args[0], options, null);
-        EchoServiceAsync echoService = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
+        EchoServiceControllerAsync echoService = BrpcProxy.getProxy(rpcClient, EchoServiceControllerAsync.class);
         int threadNum = Integer.parseInt(args[1]);
 
         byte[] messageBytes = null;
@@ -136,7 +136,7 @@ public class BenchmarkTest {
         }
     }
 
-    public static class EchoCallback implements RpcCallback<EchoResponse> {
+    public static class EchoCallback extends RpcCallbackAdaptor<EchoResponse> {
         private long startTime;
         private SendInfo sendInfo;
 
@@ -151,9 +151,6 @@ public class BenchmarkTest {
                 sendInfo.successRequestNum++;
                 long elapseTimeNs = System.nanoTime() - startTime;
                 sendInfo.elapsedNs += elapseTimeNs;
-                if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
-                    ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
-                }
                 log.debug("async call success, elapseTimeNs={}, response={}",
                         System.nanoTime() - startTime, response.getMessage());
             } else {
@@ -170,12 +167,14 @@ public class BenchmarkTest {
     }
 
     public static class ThreadTask implements Runnable {
+
         private RpcClient rpcClient;
-        private EchoServiceAsync echoService;
+        EchoServiceControllerAsync echoService;
         private byte[] messageBytes;
         private SendInfo sendInfo;
 
-        public ThreadTask(RpcClient rpcClient, EchoServiceAsync echoService, byte[] messageBytes, SendInfo sendInfo) {
+        public ThreadTask(RpcClient rpcClient, EchoServiceControllerAsync echoService,
+                          byte[] messageBytes, SendInfo sendInfo) {
             this.rpcClient = rpcClient;
             this.echoService = echoService;
             this.messageBytes = messageBytes;
@@ -186,7 +185,7 @@ public class BenchmarkTest {
             // build request
             EchoRequest request = new EchoRequest();
             request.setMessage(new String(messageBytes));
-            byte[] attachment = "hello".getBytes();
+//            byte[] attachment = "hello".getBytes();
             Channel channel = rpcClient.selectChannel();
             while (!stop) {
                 try {
@@ -194,14 +193,9 @@ public class BenchmarkTest {
                         rpcClient.removeChannel(channel);
                         channel = rpcClient.selectChannel();
                     }
-                    RpcContext rpcContext = RpcContext.getContext();
-                    rpcContext.reset();
-                    rpcContext.setChannel(channel);
-                    rpcContext.setRequestBinaryAttachment(attachment);
-                    echoService.echo(request, new EchoCallback(System.nanoTime(), sendInfo));
-                    if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
-                        ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
-                    }
+                    Controller controller = new Controller();
+                    controller.setChannel(channel);
+                    echoService.echo(controller, request, new EchoCallback(System.nanoTime(), sendInfo));
                 } catch (Exception ex) {
                     log.info("send exception:" + ex.getMessage());
                     sendInfo.failRequestNum++;
