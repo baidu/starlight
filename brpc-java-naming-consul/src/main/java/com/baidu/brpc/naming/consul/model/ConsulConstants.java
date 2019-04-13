@@ -27,7 +27,7 @@ public class ConsulConstants {
     /**
      * Time To Live, in seconds. Every service will register a ttl for health check.
      */
-    public static final int TTL                       = 30;
+    public static final int TTL = 30;
     /**
      * consul block time for query params, measures in minutes.
      */

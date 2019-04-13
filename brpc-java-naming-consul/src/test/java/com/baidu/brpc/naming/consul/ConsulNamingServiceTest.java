@@ -28,20 +28,19 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
 import java.util.Collection;
 import java.util.List;
 
 @Slf4j
 public class ConsulNamingServiceTest {
 
-    private static BrpcURL             namingUrl;
+    private static BrpcURL namingUrl;
     private static ConsulNamingService consulNamingService;
-    private static ConsulProcess       consul;
+    private static ConsulProcess consul;
 
     @BeforeClass
     public static void setUp() throws Exception {
-        String customConfiguration =
+        final String customConfiguration =
                 "{\n" +
                         "  \"datacenter\": \"dc-test\",\n" +
                         "  \"log_level\": \"info\"\n" +
@@ -78,7 +77,7 @@ public class ConsulNamingServiceTest {
     }
 
     @Test
-    public void testRegisterAndSubscribe() throws Exception {
+    public void testRegisterAndSubscribe() throws InterruptedException {
 
         RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8015);
         RegisterInfo anotherRegisterInfo = createRegisterInfo("127.0.0.1", 8016);
@@ -100,7 +99,7 @@ public class ConsulNamingServiceTest {
     }
 
     @Test
-    public void testLookup() throws Exception {
+    public void testLookup() throws InterruptedException {
         SubscribeInfo subscribeInfo = createSubscribeInfo(true);
         List<EndPoint> endPoints = consulNamingService.lookup(subscribeInfo);
         Assert.assertTrue(endPoints.size() == 0);

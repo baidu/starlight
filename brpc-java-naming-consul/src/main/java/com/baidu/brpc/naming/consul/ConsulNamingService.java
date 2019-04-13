@@ -35,9 +35,18 @@ import io.netty.util.TimerTask;
 import io.netty.util.internal.ConcurrentSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
-
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Collection;
+import java.util.Arrays;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Executors;
 
 @Slf4j
 public class ConsulNamingService implements NamingService {
@@ -54,14 +63,14 @@ public class ConsulNamingService implements NamingService {
 
     private ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes   =
             new ConcurrentHashMap<SubscribeInfo, NotifyListener>();
-    private ConcurrentSet<SubscribeInfo> failedUnsubscribes =
+    private ConcurrentSet<SubscribeInfo>                 failedUnsubscribes =
             new ConcurrentSet<SubscribeInfo>();
 
     private Timer timer;
 
     private final ConcurrentMap<String, Long> lookupGroupServices = new ConcurrentHashMap<String, Long>();
 
-    private Set<String> serviceIds = new ConcurrentSet<String>();
+    private Set<String>              serviceIds = new ConcurrentSet<String>();
     private ScheduledExecutorService heartbeatExecutor;
 
     private ConcurrentHashMap<String, Future> consulLookupFuture = new ConcurrentHashMap<String, Future>();

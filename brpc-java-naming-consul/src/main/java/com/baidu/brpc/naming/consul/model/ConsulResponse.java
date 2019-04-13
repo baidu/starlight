@@ -19,7 +19,7 @@ package com.baidu.brpc.naming.consul.model;
 public class ConsulResponse<T> {
 
     /**
-     * consul返回的具体结果
+     * details return from consul
      */
     private T value;
 
