@@ -63,14 +63,14 @@ public class ConsulNamingService implements NamingService {
 
     private ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes   =
             new ConcurrentHashMap<SubscribeInfo, NotifyListener>();
-    private ConcurrentSet<SubscribeInfo>                 failedUnsubscribes =
+    private ConcurrentSet<SubscribeInfo> failedUnsubscribes =
             new ConcurrentSet<SubscribeInfo>();
 
     private Timer timer;
 
     private final ConcurrentMap<String, Long> lookupGroupServices = new ConcurrentHashMap<String, Long>();
 
-    private Set<String>              serviceIds = new ConcurrentSet<String>();
+    private Set<String> serviceIds = new ConcurrentSet<String>();
     private ScheduledExecutorService heartbeatExecutor;
 
     private ConcurrentHashMap<String, Future> consulLookupFuture = new ConcurrentHashMap<String, Future>();
