@@ -45,6 +45,14 @@ Zookeeper注册中心：
     <version>2.2.1</version>
 </dependency>
 ```
+Consul注册中心：
+```xml
+<dependency>
+    <groupId>com.baidu</groupId>
+    <artifactId>brpc-java-naming-consul</artifactId>
+    <version>2.2.1</version>
+</dependency>
+```
 ### Server端使用
 * [server端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/server.md)
 * [搭建标准协议/sofa协议/hulu协议server](https://github.com/baidu/brpc-java/blob/master/docs/cn/brpc_server.md)
