@@ -18,9 +18,12 @@ package com.baidu.brpc.protocol.http;
 
 import java.io.ByteArrayInputStream;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import com.baidu.brpc.ProtobufRpcMethodInfo;
+
 import com.google.protobuf.Message;
 import com.googlecode.protobuf.format.JsonFormat;
 import org.apache.commons.lang3.StringUtils;
@@ -47,6 +50,7 @@ import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.ServiceManager;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -94,6 +98,17 @@ public class HttpRpcProtocol extends AbstractProtocol {
             .serializeSpecialFloatingPointValues()
             .create();
     private static final JsonParser jsonParser = new JsonParser();
+
+    // HTTP Headers which should not be modified by user
+    private static final Set<String> prohibitedHeaders = new HashSet<String>();
+
+    static {
+        prohibitedHeaders.add(HttpHeaderNames.CONTENT_TYPE.toString());
+        prohibitedHeaders.add(HttpHeaderNames.CONTENT_LENGTH.toString());
+        prohibitedHeaders.add(HttpHeaderNames.CONNECTION.toString());
+        prohibitedHeaders.add(LOG_ID);
+    }
+
 
     private int protocolType;
     private String encoding;
@@ -184,6 +199,12 @@ public class HttpRpcProtocol extends AbstractProtocol {
                     ? 0 : httpRequestBodyBytes.length);
             nettyHttpRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
             nettyHttpRequest.headers().set(LOG_ID, httpRequest.getLogId());
+            for (Map.Entry<String, String> header : httpRequest.headers()) {
+                if (prohibitedHeaders.contains(header.getKey().toLowerCase())) {
+                    continue;
+                }
+                nettyHttpRequest.headers().set(header.getKey(), header.getValue());
+            }
             BrpcHttpRequestEncoder encoder = new BrpcHttpRequestEncoder();
             return encoder.encode(nettyHttpRequest);
         } finally {
