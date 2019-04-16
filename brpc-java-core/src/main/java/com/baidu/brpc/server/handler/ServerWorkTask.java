@@ -31,6 +31,7 @@ import com.baidu.brpc.interceptor.JoinPoint;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.http.BrpcHttpResponseEncoder;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.ServerJoinPoint;
@@ -67,22 +68,24 @@ public class ServerWorkTask implements Runnable {
     public void run() {
         if (protocol instanceof HttpRpcProtocol) {
             FullHttpRequest fullHttpRequest = (FullHttpRequest) packet;
-            if (fullHttpRequest.uri().equals("/favicon.ico")) {
-                FullHttpResponse fullHttpResponse =
-                        new DefaultFullHttpResponse(HTTP_1_1, OK);
-                fullHttpResponse.headers().set(CONTENT_LENGTH, 0);
-                if (HttpUtil.isKeepAlive(fullHttpRequest)) {
-                    fullHttpResponse.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-                }
-                ChannelFuture f = ctx.channel().writeAndFlush(fullHttpResponse);
-                if (!HttpUtil.isKeepAlive(fullHttpRequest)) {
-                    f.addListener(ChannelFutureListener.CLOSE);
-                }
-                return;
-            }
-            if (fullHttpRequest.uri().equals("/") || fullHttpRequest.uri().equals("/status")) {
-                ServerStatus serverStatus = rpcServer.getServerStatus();
-                try {
+            try {
+                if (fullHttpRequest.uri().equals("/favicon.ico")) {
+                    FullHttpResponse fullHttpResponse =
+                            new DefaultFullHttpResponse(HTTP_1_1, OK);
+                    fullHttpResponse.headers().set(CONTENT_LENGTH, 0);
+                    if (HttpUtil.isKeepAlive(fullHttpRequest)) {
+                        fullHttpResponse.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                    }
+                    BrpcHttpResponseEncoder encoder = new BrpcHttpResponseEncoder();
+                    ByteBuf responseByteBuf = encoder.encode(fullHttpResponse);
+                    ChannelFuture f = ctx.channel().writeAndFlush(responseByteBuf);
+                    if (!HttpUtil.isKeepAlive(fullHttpRequest)) {
+                        f.addListener(ChannelFutureListener.CLOSE);
+                    }
+                    return;
+                } else if (fullHttpRequest.uri().equals("/") || fullHttpRequest.uri().equals("/status")) {
+                    ServerStatus serverStatus = rpcServer.getServerStatus();
+
                     byte[] statusBytes = serverStatus.toString().getBytes("UTF-8");
                     FullHttpResponse fullHttpResponse =
                             new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(statusBytes));
@@ -91,14 +94,16 @@ public class ServerWorkTask implements Runnable {
                     if (HttpUtil.isKeepAlive(fullHttpRequest)) {
                         fullHttpResponse.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
                     }
-                    ChannelFuture f = ctx.channel().writeAndFlush(fullHttpResponse);
+                    BrpcHttpResponseEncoder encoder = new BrpcHttpResponseEncoder();
+                    ByteBuf responseByteBuf = encoder.encode(fullHttpResponse);
+                    ChannelFuture f = ctx.channel().writeAndFlush(responseByteBuf);
                     if (!HttpUtil.isKeepAlive(fullHttpRequest)) {
                         f.addListener(ChannelFutureListener.CLOSE);
                     }
-                } catch (Exception ex) {
-                    log.warn("send status info response failed:", ex);
+                    return;
                 }
-                return;
+            } catch (Exception ex) {
+                log.warn("send status info response failed:", ex);
             }
         }
 
