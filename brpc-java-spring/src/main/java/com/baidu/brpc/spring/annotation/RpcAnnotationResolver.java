@@ -315,8 +315,9 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         GenericBeanDefinition beanDef = new GenericBeanDefinition();
         beanDef.setBeanClass(RpcProxyFactoryBean.class);
         MutablePropertyValues values = new MutablePropertyValues();
-        for (Field field : rpcClientOptions.getClass().getFields()) {
+        for (Field field : rpcClientOptions.getClass().getDeclaredFields()) {
             try {
+                field.setAccessible(true);
                 values.addPropertyValue(field.getName(), field.get(rpcClientOptions));
             } catch (Exception ex) {
                 LOGGER.warn("field not exist:", ex);
