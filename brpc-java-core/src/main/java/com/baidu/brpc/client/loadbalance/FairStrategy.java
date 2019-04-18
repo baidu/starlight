@@ -16,24 +16,22 @@
 
 package com.baidu.brpc.client.loadbalance;
 
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.utils.CollectionUtils;
+import com.baidu.brpc.utils.CustomThreadFactory;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.collections.CollectionUtils;
-
-import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
-import com.baidu.brpc.utils.CustomThreadFactory;
-
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Fair load balance strategy aims to more reasonable distribution of traffic.
@@ -87,7 +85,7 @@ public class FairStrategy implements LoadBalanceStrategy {
     @Override
     public void init(RpcClient rpcClient) {
         if (timer == null) {
-            synchronized(this) {
+            synchronized (this) {
                 if (timer == null) {
                     timer = new HashedWheelTimer(new CustomThreadFactory("fairStrategy-timer-thread"));
                     timer.newTimeout(new TimerTask() {
@@ -254,7 +252,6 @@ public class FairStrategy implements LoadBalanceStrategy {
      *
      * @param group   The BrpcChannelGroup instance of a rpc server
      * @param timeOut Read timeout in millis
-     *
      * @return Weight num
      */
     protected int calculateWeight(BrpcChannelGroup group, int timeOut) {
@@ -278,7 +275,6 @@ public class FairStrategy implements LoadBalanceStrategy {
      * the parent nodes used to calculate the sum of it's children's weight
      *
      * @param leafNodes leaf nodes list
-     *
      * @return the root node of the tree
      */
     protected Node generateWeightTreeByLeafNodes(Queue<Node> leafNodes) {
@@ -322,6 +318,8 @@ public class FairStrategy implements LoadBalanceStrategy {
      * The weight tree node
      */
     static class Node {
+        // empty node
+        static Node none = new Node();
         int serverId;
         int weight;
         boolean isLeaf;
@@ -329,8 +327,6 @@ public class FairStrategy implements LoadBalanceStrategy {
         Node left;
         Node right;
         BrpcChannelGroup server;
-        // empty node
-        static Node none = new Node();
 
         public Node() {
         }

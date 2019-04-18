@@ -6,6 +6,7 @@ import java.util.concurrent.Future;
 
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
+import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
@@ -45,7 +46,7 @@ public class RpcClientTest {
 
         // async call
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-        RpcCallback callback = new RpcCallback<String>() {
+        RpcCallback callback = new RpcCallbackAdaptor<String>() {
             @Override
             public void success(String response) {
                 if (response != null) {

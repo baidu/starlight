@@ -1,17 +1,33 @@
 #!/usr/bin/env bash
+cd `dirname $0`
+PROJECT_DIR=`pwd`/../../../
+cd ${PROJECT_DIR}
 
-export ADDRESS=$1
-export THREAD_NUM=$2
+if [[ $# != 2 ]]; then
+    printf "Usage:\n"
+    printf "\tsh run_http_client.sh <server-address> <thread-num>\n"
+    printf "Sample:\n"
+    printf "\tsh run_http_client.sh list://127.0.0.1:8080 8\n"
+    exit 1
+fi
 
-export JVM_OPTIONS=" -server -Xmn2g -Xmx6g -Xms6g -Xss256k -Xverify:none \
+ADDRESS=$1
+THREAD_NUM=$2
+
+LOG_DIR="./logs"
+if [[ ! -d ${LOG_DIR} ]];then
+    mkdir ${LOG_DIR}
+fi
+
+JVM_OPTIONS=" -server -Xmn2g -Xmx6g -Xms6g -Xss256k -Xverify:none \
  -XX:+DisableExplicitGC -XX:+AlwaysPreTouch \
  -XX:+AggressiveOpts -XX:AutoBoxCacheMax=20000 \
  -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly \
  -XX:+UseParNewGC -XX:+UseConcMarkSweepGC -XX:ParallelGCThreads=4 \
- -XX:+PrintGCDetails  -XX:+PrintGCTimeStamps -Xloggc:./logs/server_gc.log "
+ -XX:+PrintGCDetails  -XX:+PrintGCTimeStamps -Xloggc:./logs/http_client_gc.log "
 
-export CUSTOM_CLASSPATH="target/classes:target/test-classes:target/dependency/* "
+CUSTOM_CLASSPATH="target/classes:target/test-classes:target/dependency/* "
 
-export MAIN_CLASS="com.baidu.brpc.example.http.BenchmarkTest"
+MAIN_CLASS="com.baidu.brpc.example.http.BenchmarkTest"
 
-java $JVM_OPTIONS -cp $CUSTOM_CLASSPATH $MAIN_CLASS $ADDRESS $THREAD_NUM
+java ${JVM_OPTIONS} -cp ${CUSTOM_CLASSPATH} ${MAIN_CLASS} ${ADDRESS} ${THREAD_NUM}

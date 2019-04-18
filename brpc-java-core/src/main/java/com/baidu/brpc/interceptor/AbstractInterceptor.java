@@ -27,6 +27,11 @@ public class AbstractInterceptor implements Interceptor {
     }
 
     @Override
+    public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+        return joinPoint.proceed();
+    }
+
+    @Override
     public void handleResponse(Response response) {
     }
 

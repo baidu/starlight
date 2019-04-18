@@ -17,7 +17,6 @@
 package com.baidu.brpc.client;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -25,16 +24,15 @@ import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.collections.CollectionUtils;
-
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.protocol.RpcContext;
+import com.baidu.brpc.protocol.nshead.NSHead;
+import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.utils.ProtobufUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -82,12 +80,28 @@ public class BrpcProxy implements MethodInterceptor {
             }
 
             Class[] parameterTypes = method.getParameterTypes();
+            int paramLength = parameterTypes.length;
+            if (paramLength < 1) {
+                throw new IllegalArgumentException(
+                        "invalid params, the correct is ([Controller], Request, [Callback])");
+            }
+            if (Future.class.isAssignableFrom(method.getReturnType())
+                    && (paramLength < 1 || !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1]))) {
+                throw new IllegalArgumentException("returnType is Future, but last argument is not RpcCallback");
+            }
+
             Method syncMethod = method;
-            if (parameterTypes.length > 1 && RpcCallback.class.isAssignableFrom(parameterTypes[0])) {
-                // 异步方法
-                Class[] actualParameterTypes = new Class[parameterTypes.length - 1];
-                for (int i = 0; i < parameterTypes.length - 1; i++) {
-                    actualParameterTypes[i] = parameterTypes[i];
+            if (paramLength > 1) {
+                int startIndex = 0;
+                int endIndex = paramLength - 1;
+                // has callback, async rpc
+                if (RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1])) {
+                    endIndex--;
+                    paramLength--;
+                }
+                Class[] actualParameterTypes = new Class[paramLength];
+                for (int i = 0; startIndex <= endIndex; i++) {
+                    actualParameterTypes[i] = parameterTypes[startIndex++];
                 }
                 try {
                     syncMethod = method.getDeclaringClass().getMethod(
@@ -125,6 +139,7 @@ public class BrpcProxy implements MethodInterceptor {
         return (T) en.create();
     }
 
+    @Override
     public Object intercept(Object obj, Method method, Object[] args,
                             MethodProxy proxy) throws Throwable {
         String methodName = method.getName();
@@ -136,56 +151,93 @@ public class BrpcProxy implements MethodInterceptor {
         }
 
         Request request = null;
-        RpcContext rpcContext = null;
         try {
-            request = rpcClient.getProtocol().initRequest(rpcClient, rpcMethodMap, obj, method, args);
+            request = rpcClient.getProtocol().createRequest();
+            request.setCompressType(rpcClient.getRpcClientOptions().getCompressType().getNumber());
+            request.setTarget(obj);
+            request.setRpcMethodInfo(rpcMethodInfo);
+            request.setTargetMethod(rpcMethodInfo.getMethod());
+            request.setServiceName(rpcMethodInfo.getServiceName());
+            request.setMethodName(rpcMethodInfo.getMethodName());
+            NSHeadMeta nsHeadMeta = rpcMethodInfo.getNsHeadMeta();
+            NSHead nsHead = nsHeadMeta == null ? new NSHead() : new NSHead(0, nsHeadMeta.id(), nsHeadMeta.version(),
+                    nsHeadMeta.provider(), 0);
+            request.setNsHead(nsHead);
+
+            // parse request params
+            Controller controller = null;
             RpcCallback callback = null;
             int argLength = args.length;
-            if (argLength > 1 && args[argLength - 1] instanceof RpcCallback) {
+            if (argLength > 1) {
+                int startIndex = 0;
+                int endIndex = argLength - 1;
                 // 异步调用
-                argLength = argLength - 1;
-                callback = (RpcCallback) args[argLength];
+                if (args[endIndex] instanceof RpcCallback) {
+                    callback = (RpcCallback) args[endIndex];
+                    endIndex -= 1;
+                    argLength -= 1;
+                }
+                // Controller
+                if (args[0] instanceof Controller) {
+                    controller = (Controller) args[0];
+                    startIndex += 1;
+                    argLength -= 1;
+                }
+
+                if (argLength <= 0) {
+                    throw new RpcException(RpcException.UNKNOWN_EXCEPTION, "invalid params");
+                }
+
+                Object[] sendArgs = new Object[argLength];
+                for (int i = 0; startIndex <= endIndex; i++) {
+                    sendArgs[i] = args[startIndex++];
+                }
+                request.setArgs(sendArgs);
+            } else {
+                // 同步调用
+                request.setArgs(args);
             }
 
-            // attachment
-            rpcContext = RpcContext.getContext();
-            request.setKvAttachment(rpcContext.getRequestKvAttachment());
-            request.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
+            if (controller != null) {
+                // attachment
+                if (controller.getRequestKvAttachment() != null) {
+                    request.setKvAttachment(controller.getRequestKvAttachment());
+                }
+                if (controller.getRequestBinaryAttachment() != null) {
+                    request.setBinaryAttachment(controller.getRequestBinaryAttachment());
+                }
+                if (controller.getNsHeadLogId() != null) {
+                    request.getNsHead().logId = controller.getNsHeadLogId();
+                }
+            }
 
             // create and add RpcFuture object to FastFutureStore in order to acquire the logId,
             // which is required in interceptors;
             // The missing parameters will be set in rpcClient.sendRequest() method
-            RpcFuture rpcFuture = new RpcFuture(null, request.getRpcMethodInfo(), callback, null, null);
+            RpcFuture rpcFuture = new RpcFuture();
+            rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
+            rpcFuture.setCallback(callback);
+            rpcFuture.setController(controller);
+            rpcFuture.setRpcClient(rpcClient);
             long logId = FastFutureStore.getInstance(0).put(rpcFuture);
             request.setLogId(logId);
 
-            Type responseType = rpcMethodInfo.getOutputClass();
             int currentTryTimes = 0;
             RpcException exception = null;
-            Future future = null;
             while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes()) {
-                // 执行interceptor链
-                if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
-                    for (Interceptor interceptor : rpcClient.getInterceptors()) {
-                        boolean success = interceptor.handleRequest(request);
-                        if (!success) {
-                            log.warn("interceptor return false, terminate...");
-                            // clean logId before throwing exception
-                            FastFutureStore.getInstance(0).getAndRemove(request.getLogId());
-                            throw new RpcException(RpcException.FORBIDDEN_EXCEPTION, "interceptor");
-                        }
-                    }
-                }
                 boolean isFinalTry = currentTryTimes == rpcClient.getRpcClientOptions().getMaxTryTimes();
                 try {
-                    future = rpcClient.sendRequest(request, responseType, callback, rpcFuture, isFinalTry);
-                    if (callback == null) {
-                        Object response = future.get(
-                                rpcClient.getRpcClientOptions().getReadTimeoutMillis(),
-                                TimeUnit.MILLISECONDS);
-                        return response;
-                    } else {
+                    Future future = rpcClient.sendRequest(controller, request, rpcFuture, isFinalTry);
+                    if (rpcFuture.isAsync()) {
                         return future;
+                    } else {
+                        final long readTimeout;
+                        if (controller != null && controller.getReadTimeoutMillis() != null) {
+                            readTimeout = controller.getReadTimeoutMillis();
+                        } else {
+                            readTimeout = rpcClient.getRpcClientOptions().getReadTimeoutMillis();
+                        }
+                        return future.get(readTimeout, TimeUnit.MILLISECONDS);
                     }
                 } catch (RpcException ex) {
                     exception = ex;
@@ -196,7 +248,7 @@ public class BrpcProxy implements MethodInterceptor {
                 // if application set the channel, brpc-java will not do retrying.
                 // because application maybe send different request for different server instance.
                 // this feature is used by Product Ads.
-                if (rpcContext.getChannel() != null) {
+                if (controller != null && controller.getChannel() != null) {
                     break;
                 }
             }
@@ -208,10 +260,7 @@ public class BrpcProxy implements MethodInterceptor {
         } finally {
             if (request != null) {
                 // 对于tcp协议，RpcRequest.refCnt可能会被retain多次，所以这里要减去当前refCnt。
-                request.delRefCnt();
-            }
-            if (rpcContext != null) {
-                rpcContext.reset();
+                request.release();
             }
         }
     }

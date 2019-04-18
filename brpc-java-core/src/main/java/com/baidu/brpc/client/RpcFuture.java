@@ -16,22 +16,20 @@
 
 package com.baidu.brpc.client;
 
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.protocol.RpcContext;
+import com.baidu.brpc.utils.CollectionUtils;
 
-import io.netty.buffer.ByteBuf;
 import io.netty.util.Timeout;
 import lombok.Getter;
 import lombok.Setter;
@@ -44,14 +42,14 @@ public class RpcFuture<T> implements Future<T> {
 
     private CountDownLatch latch;
     private Timeout timeout;
-    private RpcCallback<T> callback;
+
+    private RpcCallback<T> callback;  // callback cannot be set after init
     private ChannelInfo channelInfo;
     private RpcClient rpcClient;
     private RpcMethodInfo rpcMethodInfo;
+    private Controller controller;
 
     private Response response;
-    private Map<String, String> kvAttachment;
-    private ByteBuf binaryAttachment;
     private boolean isDone;
     // record the time of request
     // used in FAIR load balancing
@@ -61,10 +59,12 @@ public class RpcFuture<T> implements Future<T> {
     private volatile long logId;
 
     public RpcFuture() {
+        this.latch = new CountDownLatch(1);
     }
 
     public RpcFuture(long logId) {
         this.logId = logId;
+        this.latch = new CountDownLatch(1);
     }
 
     public RpcFuture(Timeout timeout,
@@ -89,7 +89,7 @@ public class RpcFuture<T> implements Future<T> {
         this.rpcClient = rpcClient;
     }
 
-    protected void processConnection(Response response) {
+    public void handleConnection(Response response) {
         this.response = response;
         this.endTime = System.currentTimeMillis();
 
@@ -105,42 +105,56 @@ public class RpcFuture<T> implements Future<T> {
         } else {
             channelInfo.getChannelGroup().close();
         }
+
+        timeout.cancel();
+        latch.countDown();
+        isDone = true;
     }
 
     public void handleResponse(Response response) {
-        processConnection(response);
-        RpcContext rpcContext = RpcContext.getContext();
+        handleConnection(response);
         if (response != null) {
-            rpcContext.setResponseBinaryAttachment(response.getBinaryAttachment());
-            rpcContext.setResponseKvAttachment(response.getKvAttachment());
-            this.kvAttachment = response.getKvAttachment();
-            this.binaryAttachment = response.getBinaryAttachment();
+            if (response.getBinaryAttachment() != null) {
+                if (controller == null) {
+                    LOG.error("controller can not be null when attachment exist");
+                    controller = new Controller();
+                }
+                controller.setResponseBinaryAttachment(response.getBinaryAttachment());
+            }
+            if (response.getKvAttachment() != null) {
+                if (controller == null) {
+                    LOG.error("controller can not be null when attachment exist");
+                    controller = new Controller();
+                }
+                controller.setResponseKvAttachment(response.getKvAttachment());
+            }
         }
 
-        try {
-            timeout.cancel();
-            latch.countDown();
-            // invoke the chain of interceptors
-            if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
-                int length = rpcClient.getInterceptors().size();
-                for (int i = length - 1; i >= 0; i--) {
-                    rpcClient.getInterceptors().get(i).handleResponse(response);
-                }
+        // invoke the chain of interceptors when async scene
+        if (isAsync() && CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
+            int length = rpcClient.getInterceptors().size();
+            for (int i = length - 1; i >= 0; i--) {
+                rpcClient.getInterceptors().get(i).handleResponse(response);
             }
-            isDone = true;
+        }
 
-            if (callback != null) {
-                if (response == null) {
-                    callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
-                } else if (response.getResult() != null) {
-                    callback.success((T) response.getResult());
+        if (isAsync()) {
+            if (response == null) {
+                callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
+            } else if (response.getResult() != null) {
+                if (controller != null) {
+                    callback.success(controller, (T) response.getResult());
                 } else {
-                    callback.fail(response.getException());
+                    callback.success((T) response.getResult());
                 }
+            } else {
+                callback.fail(response.getException());
             }
-        } finally {
-            RpcContext.removeContext();
         }
+    }
+
+    public boolean isAsync() {
+        return callback != null;
     }
 
     @Override
@@ -167,9 +181,6 @@ public class RpcFuture<T> implements Future<T> {
         if (response.getException() != null) {
             throw new RpcException(response.getException());
         }
-        RpcContext rpcContext = RpcContext.getContext();
-        rpcContext.setResponseBinaryAttachment(binaryAttachment);
-        rpcContext.setRequestKvAttachment(kvAttachment);
         return (T) response.getResult();
     }
 
@@ -183,9 +194,6 @@ public class RpcFuture<T> implements Future<T> {
             if (response.getException() != null) {
                 throw new RpcException(response.getException());
             }
-            RpcContext rpcContext = RpcContext.getContext();
-            rpcContext.setResponseBinaryAttachment(binaryAttachment);
-            rpcContext.setRequestKvAttachment(kvAttachment);
             return (T) response.getResult();
         } catch (InterruptedException e) {
             throw new RpcException(RpcException.UNKNOWN_EXCEPTION);

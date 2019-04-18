@@ -36,6 +36,14 @@ public interface Interceptor {
     boolean handleRequest(Request request);
 
     /**
+     * The around intercept for RPC methods.
+     * Attention: only around the request sending for async client
+     * @param joinPoint The join point, call joinPoint.proceed() can invoke the intercepted method
+     * @return The result returned by intercepted method
+     */
+    Object aroundProcess(JoinPoint joinPoint) throws Exception;
+
+    /**
      * This method is called in two scenarios:
      * Before the server sends the response;
      * After the client receives the response.

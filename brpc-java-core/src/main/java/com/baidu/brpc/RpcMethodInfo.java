@@ -16,17 +16,18 @@
 
 package com.baidu.brpc;
 
+import java.io.IOException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
+
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.utils.RpcMetaUtils;
 import com.google.protobuf.CodedOutputStream;
+
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 
 /**
  * rpc method info is parsed when application initialized.
@@ -43,13 +44,27 @@ public class RpcMethodInfo {
     protected NSHeadMeta nsHeadMeta;
     // instance of interface which method belongs to
     protected Object target;
+    protected boolean includeController;
 
     public RpcMethodInfo(Method method) {
         RpcMetaUtils.RpcMetaInfo metaInfo = RpcMetaUtils.parseRpcMeta(method);
         this.serviceName = metaInfo.getServiceName();
         this.methodName = metaInfo.getMethodName();
         this.method = method;
-        this.inputClasses = method.getGenericParameterTypes();
+        Type[] inputClasses = method.getGenericParameterTypes();
+        if (inputClasses.length <= 0) {
+            throw new IllegalArgumentException("invalid params");
+        }
+        if (inputClasses[0] == Controller.class) {
+            includeController = true;
+            Type[] rpcInputClasses = new Type[inputClasses.length - 1];
+            for (int i = 0; i < inputClasses.length - 1; i++) {
+                rpcInputClasses[i] = inputClasses[i + 1];
+            }
+            this.inputClasses = rpcInputClasses;
+        } else {
+            this.inputClasses = inputClasses;
+        }
         this.outputClass = method.getGenericReturnType();
         this.nsHeadMeta = method.getAnnotation(NSHeadMeta.class);
     }

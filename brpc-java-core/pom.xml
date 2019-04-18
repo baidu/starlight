@@ -21,13 +21,13 @@
     <parent>
         <groupId>com.baidu</groupId>
         <artifactId>brpc-java-parent</artifactId>
-        <version>2.2.1</version>
+        <version>2.2.4-SNAPSHOT</version>
     </parent>
 
     <artifactId>brpc-java</artifactId>
     <packaging>jar</packaging>
 
-    <name>brpc-java</name>
+    <name>${project.artifactId}</name>
     <url>http://maven.apache.org</url>
     <description>Java implementation for BRPC</description>
 
@@ -44,6 +44,10 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.protobuf-java-format</groupId>
+            <artifactId>protobuf-java-format</artifactId>
         </dependency>
         <dependency>
             <groupId>com.baidu</groupId>
@@ -76,14 +80,11 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.servlet</groupId>

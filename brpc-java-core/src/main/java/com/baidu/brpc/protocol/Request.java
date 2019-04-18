@@ -21,7 +21,7 @@ import java.util.Map;
 
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.protocol.nshead.NSHeadMeta;
+import com.baidu.brpc.protocol.nshead.NSHead;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -89,18 +89,30 @@ public interface Request {
 
     void setChannel(Channel channel);
 
-    NSHeadMeta getNsHeadMeta();
+    NSHead getNsHead();
 
-    void setNsHeadMeta(NSHeadMeta nsHeadMeta);
+    void setNsHead(NSHead nsHead);
 
-    Request addRefCnt();
+    Request retain();
 
-    void delRefCnt();
+    void release();
 
     void reset();
 
     String getAuth();
 
     void setAuth(String auth);
+
+    Long getTraceId();
+
+    void setTraceId(Long traceId);
+
+    Long getSpanId();
+
+    void setSpanId(Long spanId);
+
+    Long getParentSpanId();
+
+    void setParentSpanId(Long parentSpanId);
 
 }

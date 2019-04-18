@@ -84,17 +84,17 @@ public class HttpRequest extends AbstractRequest {
     }
 
     @Override
-    public Request addRefCnt() {
-        super.addRefCnt();
+    public Request retain() {
+        super.retain();
         nettyHttpRequest.retain();
         return this;
     }
 
     @Override
-    public void delRefCnt() {
-        super.delRefCnt();
+    public void release() {
+        super.release();
         if (nettyHttpRequest.refCnt() > 0) {
-            nettyHttpRequest.release(nettyHttpRequest.refCnt());
+            nettyHttpRequest.release();
         }
     }
 

@@ -17,6 +17,7 @@
 package com.baidu.brpc.protocol.standard;
 
 import java.util.Arrays;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,7 +36,6 @@ import com.baidu.brpc.protocol.AbstractProtocol;
 import com.baidu.brpc.protocol.BaiduRpcErrno;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.server.ServiceManager;
 import com.baidu.brpc.utils.ProtobufUtils;
@@ -86,6 +86,20 @@ public class BaiduRpcProtocol extends AbstractProtocol {
         requestMeta.setLogId(request.getLogId());
         requestMeta.setServiceName(request.getServiceName());
         requestMeta.setMethodName(request.getMethodName());
+        if (request.getTraceId() != null) {
+            requestMeta.setTraceId(request.getTraceId());
+        }
+        if (request.getSpanId() != null) {
+            requestMeta.setSpanId(request.getSpanId());
+        }
+        if (request.getParentSpanId() != null) {
+            requestMeta.setSpanId(request.getParentSpanId());
+        }
+        if (request.getKvAttachment() != null) {
+            for (Map.Entry<String, String> kv : request.getKvAttachment().entrySet()) {
+                requestMeta.addExtFieldsBuilder().setKey(kv.getKey()).setValue(kv.getValue());
+            }
+        }
         metaBuilder.setRequest(requestMeta.build());
 
         // proto
@@ -229,6 +243,20 @@ public class BaiduRpcProtocol extends AbstractProtocol {
                 LOG.error(errorMsg);
                 request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
                 return request;
+            }
+            if (requestMeta.hasTraceId()) {
+                request.setTraceId(requestMeta.getTraceId());
+            }
+            if (requestMeta.hasSpanId()) {
+                request.setSpanId(request.getSpanId());
+            }
+            if (requestMeta.hasParentSpanId()) {
+                request.setParentSpanId(requestMeta.getParentSpanId());
+            }
+            if (requestMeta.getExtFieldsCount() > 0) {
+                for (BaiduRpcProto.RpcRequestMetaExtField extField : requestMeta.getExtFieldsList()) {
+                    request.getKvAttachment().put(extField.getKey(), extField.getValue());
+                }
             }
             request.setRpcMethodInfo(rpcMethodInfo);
             request.setTargetMethod(rpcMethodInfo.getMethod());
