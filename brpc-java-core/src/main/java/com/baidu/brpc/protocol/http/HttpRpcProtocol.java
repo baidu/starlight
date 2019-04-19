@@ -361,6 +361,8 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
                 return httpRequest;
             }
+            httpRequest.setServiceName(rpcMethodInfo.getServiceName());
+            httpRequest.setMethodName(rpcMethodInfo.getMethodName());
             httpRequest.setRpcMethodInfo(rpcMethodInfo);
             httpRequest.setTargetMethod(rpcMethodInfo.getMethod());
             httpRequest.setTarget(rpcMethodInfo.getTarget());

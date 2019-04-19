@@ -205,6 +205,8 @@ public class SofaRpcProtocol extends AbstractProtocol {
                 request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
                 return request;
             }
+            request.setServiceName(rpcMethodInfo.getServiceName());
+            request.setMethodName(rpcMethodInfo.getMethodName());
             request.setRpcMethodInfo(rpcMethodInfo);
             request.setTargetMethod(rpcMethodInfo.getMethod());
             request.setTarget(rpcMethodInfo.getTarget());

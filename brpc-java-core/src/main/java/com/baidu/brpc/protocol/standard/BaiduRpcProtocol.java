@@ -258,6 +258,8 @@ public class BaiduRpcProtocol extends AbstractProtocol {
                     request.getKvAttachment().put(extField.getKey(), extField.getValue());
                 }
             }
+            request.setServiceName(rpcMethodInfo.getServiceName());
+            request.setMethodName(rpcMethodInfo.getMethodName());
             request.setRpcMethodInfo(rpcMethodInfo);
             request.setTargetMethod(rpcMethodInfo.getMethod());
             request.setTarget(rpcMethodInfo.getTarget());
