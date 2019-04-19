@@ -1,14 +1,5 @@
 package com.baidu.brpc.client;
 
-import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.client.channel.BrpcChannelGroup;
@@ -16,13 +7,18 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.AbstractJoinPoint;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.protocol.Response;
-
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.Timeout;
-import io.netty.util.TimerTask;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * JoinPoint implementation for client
@@ -33,20 +29,17 @@ public class ClientJoinPoint extends AbstractJoinPoint {
 
     private RpcClient rpcClient;
     private RpcFuture rpcFuture;
-    private boolean isFinalTry;
     private Channel channel;
     private ChannelInfo channelInfo;
     private BrpcChannelGroup channelGroup;
 
-    public ClientJoinPoint(Controller controller, Request request, RpcClient rpcClient,
-                           boolean isFinalTry, RpcFuture rpcFuture) {
+    public ClientJoinPoint(Controller controller, Request request, RpcClient rpcClient, RpcFuture rpcFuture) {
         super(controller, request);
         Validate.notNull(rpcClient, "rpcClient cannot be null");
         Validate.notNull(rpcFuture, "rpcFuture cannot be null");
 
         this.rpcClient = rpcClient;
         this.rpcFuture = rpcFuture;
-        this.isFinalTry = isFinalTry;
         this.channel = request.getChannel();
         this.channelInfo = rpcFuture.getChannelInfo();
         Validate.notNull(channelInfo, "channelInfo cannot be null");
@@ -80,43 +73,11 @@ public class ClientJoinPoint extends AbstractJoinPoint {
             writeTimeout = rpcClient.getRpcClientOptions().getWriteTimeoutMillis();
         }
 
-        Timeout timeout = rpcClient.getTimeoutTimer().newTimeout(new TimerTask() {
-            @Override
-            public void run(Timeout timeout) throws Exception {
-                boolean isFinalRetry = isFinalRetry();
-                RpcFuture future;
-                if (isFinalRetry) {
-                    // get and remove
-                    future = channelInfo.removeRpcFuture(request.getLogId());
-                } else {
-                    // get only
-                    future = channelInfo.getRpcFuture(request.getLogId());
-                }
-
-                if (future != null) {
-                    String ip = future.getChannelInfo().getChannelGroup().getIp();
-                    int port = future.getChannelInfo().getChannelGroup().getPort();
-                    long elapseTime = System.currentTimeMillis() - future.getStartTime();
-                    String errMsg = String.format("request timeout,logId=%d,ip=%s,port=%d,elapse=%dms",
-                            request.getLogId(), ip, port, elapseTime);
-                    LOG.info(errMsg);
-                    Response response = rpcClient.getProtocol().createResponse();
-                    response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
-
-                    if (isFinalRetry) {
-                        future.handleResponse(response);
-                    } else {
-                        future.handleConnection(response);
-                    }
-                }
-            }
-
-            private boolean isFinalRetry() {
-                return rpcFuture.isAsync()
-                        || (controller != null && controller.getChannel() != null)
-                        || isFinalTry;
-            }
-        }, readTimeout, TimeUnit.MILLISECONDS);
+        // register timeout timer
+        RpcTimeoutTimer timeoutTask =
+                new RpcTimeoutTimer(channelInfo, request.getLogId(), rpcClient);
+        Timeout timeout = rpcClient.getTimeoutTimer()
+                .newTimeout(timeoutTask, readTimeout, TimeUnit.MILLISECONDS);
 
         // set the missing parameters
         rpcFuture.setTimeout(timeout);

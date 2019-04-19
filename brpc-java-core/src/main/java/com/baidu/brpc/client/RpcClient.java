@@ -315,9 +315,9 @@ public class RpcClient {
         channelInfo.getChannelGroup().removeChannel(channel);
     }
 
-    public <T> Future<T> sendRequest(
+    public <T> AsyncAwareFuture<T> sendRequest(
             Controller controller, final Request request,
-            RpcFuture rpcFuture, final boolean isFinalTry) {
+            RpcCallback callback) {
         // if user set channel in controller, rpc will not select channel again.
         Channel channel;
         if (controller != null && controller.getChannel() != null) {
@@ -331,7 +331,19 @@ public class RpcClient {
         protocol.beforeRequestSent(request, this, channelGroup);
 
         request.setChannel(channel);
+
+        // create RpcFuture object
+        RpcFuture rpcFuture = new RpcFuture();
+        rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
+        rpcFuture.setCallback(callback);
+        rpcFuture.setController(controller);
+        rpcFuture.setRpcClient(this);
         rpcFuture.setChannelInfo(channelInfo);
+        // generate logId
+        long logId = FastFutureStore.getInstance(0).put(rpcFuture);
+        rpcFuture.setChannelInfo(channelInfo);
+
+        request.setLogId(logId);
 
         // invoke before interceptor
         if (CollectionUtils.isNotEmpty(interceptors)) {
@@ -346,7 +358,7 @@ public class RpcClient {
             }
         }
         // invoke around interceptor
-        JoinPoint joinPoint = new ClientJoinPoint(controller, request, this, isFinalTry, rpcFuture);
+        JoinPoint joinPoint = new ClientJoinPoint(controller, request, this, rpcFuture);
         Object result;
         try {
             result = joinPoint.proceed();
@@ -359,7 +371,7 @@ public class RpcClient {
         // async: invoke after interceptor in another thread
         if (rpcFuture.isAsync()) {
             // async: the return type must be Future, but might be replaced in around interceptor
-            return (Future) result;
+            return (AsyncAwareFuture) result;
         } else {
             // sync: the result might be replaced in around interceptor, therefore, the result in response should be set
             Response response = rpcFuture.getResponse();

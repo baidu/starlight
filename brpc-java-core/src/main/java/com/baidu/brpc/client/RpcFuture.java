@@ -16,28 +16,25 @@
 
 package com.baidu.brpc.client;
 
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.utils.CollectionUtils;
-
 import io.netty.util.Timeout;
 import lombok.Getter;
 import lombok.Setter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
 @Setter
 @Getter
-public class RpcFuture<T> implements Future<T> {
+public class RpcFuture<T> implements AsyncAwareFuture<T> {
     private static final Logger LOG = LoggerFactory.getLogger(RpcFuture.class);
 
     private CountDownLatch latch;
@@ -153,6 +150,7 @@ public class RpcFuture<T> implements Future<T> {
         }
     }
 
+    @Override
     public boolean isAsync() {
         return callback != null;
     }
