@@ -130,6 +130,8 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
             request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
             return request;
         }
+        request.setServiceName(rpcMethodInfo.getServiceName());
+        request.setMethodName(rpcMethodInfo.getMethodName());
         request.setRpcMethodInfo(rpcMethodInfo);
 
         Object body = decodeBody(nsHeadPacket.getBodyBuf(), rpcMethodInfo);
