@@ -211,25 +211,15 @@ public class BrpcProxy implements MethodInterceptor {
                 }
             }
 
-            // create and add RpcFuture object to FastFutureStore in order to acquire the logId,
-            // which is required in interceptors;
-            // The missing parameters will be set in rpcClient.sendRequest() method
-            RpcFuture rpcFuture = new RpcFuture();
-            rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
-            rpcFuture.setCallback(callback);
-            rpcFuture.setController(controller);
-            rpcFuture.setRpcClient(rpcClient);
-            long logId = FastFutureStore.getInstance(0).put(rpcFuture);
-            request.setLogId(logId);
 
             int currentTryTimes = 0;
             RpcException exception = null;
             while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes()) {
-                boolean isFinalTry = currentTryTimes == rpcClient.getRpcClientOptions().getMaxTryTimes();
                 try {
-                    Future future = rpcClient.sendRequest(controller, request, rpcFuture, isFinalTry);
-                    if (rpcFuture.isAsync()) {
+                    AsyncAwareFuture future = rpcClient.sendRequest(controller, request, callback);
+                    if (future.isAsync()) {
                         return future;
+
                     } else {
                         final long readTimeout;
                         if (controller != null && controller.getReadTimeoutMillis() != null) {
@@ -241,9 +231,6 @@ public class BrpcProxy implements MethodInterceptor {
                     }
                 } catch (RpcException ex) {
                     exception = ex;
-                    if (isFinalTry) {
-                        rpcClient.removeLogId(request.getLogId());
-                    }
                 }
                 // if application set the channel, brpc-java will not do retrying.
                 // because application maybe send different request for different server instance.
