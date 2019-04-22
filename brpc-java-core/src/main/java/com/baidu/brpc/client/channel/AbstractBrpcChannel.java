@@ -27,14 +27,14 @@ import java.net.InetSocketAddress;
 import java.util.Queue;
 
 @Slf4j
-public abstract class AbstractBrpcChannelGroup implements BrpcChannelGroup {
+public abstract class AbstractBrpcChannel implements BrpcChannel {
 
     protected String ip;
     protected int port;
     protected Bootstrap bootstrap;
     protected Protocol protocol;
 
-    public AbstractBrpcChannelGroup(String ip, int port, Bootstrap bootstrap, Protocol protocol) {
+    public AbstractBrpcChannel(String ip, int port, Bootstrap bootstrap, Protocol protocol) {
         this.ip = ip;
         this.port = port;
         this.bootstrap = bootstrap;

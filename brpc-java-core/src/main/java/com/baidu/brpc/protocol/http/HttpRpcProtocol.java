@@ -35,7 +35,7 @@ import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
 import com.baidu.brpc.exceptions.RpcException;
@@ -215,7 +215,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannelGroup channelGroup) {
+    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannel channelGroup) {
         String hostPort;
         HttpRequest httpRequest = (HttpRequest) request;
         NamingService namingService = rpcClient.getNamingService();

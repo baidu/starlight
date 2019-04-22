@@ -24,7 +24,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcPooledChannel;
 import com.baidu.brpc.server.RpcServer;
 
@@ -36,7 +36,7 @@ public class BrpcChannelGroupTest {
 
     private RpcClient rpcClient;
 
-    private BrpcChannelGroup channelGroup;
+    private BrpcChannel channelGroup;
 
     private RpcClientOptions options;
 

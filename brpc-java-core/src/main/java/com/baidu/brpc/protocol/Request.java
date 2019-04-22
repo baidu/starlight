@@ -19,7 +19,9 @@ package com.baidu.brpc.protocol;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.nshead.NSHead;
 
@@ -115,4 +117,11 @@ public interface Request {
 
     void setParentSpanId(Long parentSpanId);
 
+    Controller getController();
+
+    void setController(Controller controller);
+
+    RpcCallback getCallback();
+
+    void setCallback(RpcCallback callback);
 }

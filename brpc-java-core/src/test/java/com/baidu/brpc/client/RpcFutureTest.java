@@ -38,7 +38,7 @@ import org.mockito.Mock;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Response;
@@ -55,7 +55,7 @@ public class RpcFutureTest extends BaseMockitoTest {
     @Mock
     private ChannelInfo channelInfo;
     @Mock
-    private BrpcChannelGroup channelGroup;
+    private BrpcChannel channelGroup;
     @Mock
     private RpcCallback<String> rpcCallback;
     @Mock

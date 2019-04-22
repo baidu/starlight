@@ -18,7 +18,7 @@ package com.baidu.brpc.protocol;
 
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
 import com.baidu.brpc.exceptions.TooBigDataException;
@@ -80,7 +80,7 @@ public interface Protocol {
     /**
      * do something if needed before client send request
      */
-    void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannelGroup channelGroup);
+    void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannel channelGroup);
 
     /**
      * 客户端反序列化rpc响应

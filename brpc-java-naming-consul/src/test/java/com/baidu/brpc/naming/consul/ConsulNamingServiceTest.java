@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming.consul;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
@@ -87,7 +87,7 @@ public class ConsulNamingServiceTest {
         Thread.sleep(10 * 1000);
 
         consulNamingService.subscribe(subscribeInfo, new NotifyListener() {
-            @Override public void notify(Collection<EndPoint> addList, Collection<EndPoint> deleteList) {
+            @Override public void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList) {
                 log.info("notify: {}, {}", addList, deleteList);
             }
         });
@@ -101,7 +101,7 @@ public class ConsulNamingServiceTest {
     @Test
     public void testLookup() throws InterruptedException {
         SubscribeInfo subscribeInfo = createSubscribeInfo(true);
-        List<EndPoint> endPoints = consulNamingService.lookup(subscribeInfo);
+        List<Endpoint> endPoints = consulNamingService.lookup(subscribeInfo);
         Assert.assertTrue(endPoints.size() == 0);
 
         RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8012);

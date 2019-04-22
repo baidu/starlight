@@ -22,8 +22,7 @@ import io.netty.channel.Channel;
 import java.util.NoSuchElementException;
 import java.util.Queue;
 
-public interface BrpcChannelGroup {
-
+public interface BrpcChannel {
 
     Channel getChannel() throws Exception, NoSuchElementException, IllegalStateException;
 

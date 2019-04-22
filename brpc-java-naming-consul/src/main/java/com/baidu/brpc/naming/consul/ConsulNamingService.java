@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming.consul;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.*;
 import com.baidu.brpc.naming.consul.model.ConsulConstants;
@@ -75,7 +75,7 @@ public class ConsulNamingService implements NamingService {
 
     private ConcurrentHashMap<String, Future> consulLookupFuture = new ConcurrentHashMap<String, Future>();
 
-    private ConcurrentHashMap<String, ConcurrentHashMap<String, List<EndPoint>>> serviceCache = new ConcurrentHashMap<String, ConcurrentHashMap<String, List<EndPoint>>>();
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, List<Endpoint>>> serviceCache = new ConcurrentHashMap<String, ConcurrentHashMap<String, List<Endpoint>>>();
 
     public ConsulNamingService(BrpcURL url) {
         this.url = url;
@@ -137,13 +137,13 @@ public class ConsulNamingService implements NamingService {
         heartbeatExecutor.shutdown();
     }
 
-    @Override public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
+    @Override public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
 
-        List<EndPoint> endPoints = new ArrayList<EndPoint>();
+        List<Endpoint> endPoints = new ArrayList<Endpoint>();
 
         try {
 
-            ConcurrentHashMap<String, List<EndPoint>> serviceUpdate = lookupServiceUpdate(subscribeInfo.getGroup());
+            ConcurrentHashMap<String, List<Endpoint>> serviceUpdate = lookupServiceUpdate(subscribeInfo.getGroup());
 
             if (!serviceUpdate.isEmpty() && serviceUpdate.containsKey(subscribeInfo.getService())) {
                 endPoints = serviceUpdate.get(subscribeInfo.getService());
@@ -171,11 +171,11 @@ public class ConsulNamingService implements NamingService {
                                                           long time = System.currentTimeMillis();
 
                                                           log.debug("heart beat schedule, time: {}", time);
-                                                          Map<String, List<EndPoint>> endpointForGroup = serviceCache
+                                                          Map<String, List<Endpoint>> endpointForGroup = serviceCache
                                                                   .get(subscribeInfo.getGroup());
-                                                          List<EndPoint> currentEndPoints = lookup(subscribeInfo);
+                                                          List<Endpoint> currentEndPoints = lookup(subscribeInfo);
 
-                                                          ConcurrentHashMap<String, List<EndPoint>> serviceUpdate = lookupServiceUpdate(
+                                                          ConcurrentHashMap<String, List<Endpoint>> serviceUpdate = lookupServiceUpdate(
                                                                   subscribeInfo.getGroup());
 
                                                           updateServiceCache(subscribeInfo.getGroup(), serviceUpdate);
@@ -184,14 +184,14 @@ public class ConsulNamingService implements NamingService {
 
                                                           if ((endpointForGroup != null && !endpointForGroup.isEmpty()) ||
                                                                   !currentEndPoints.isEmpty()) {
-                                                              List<EndPoint> lastEndPoints = new ArrayList<EndPoint>();
+                                                              List<Endpoint> lastEndPoints = new ArrayList<Endpoint>();
                                                               if (endpointForGroup != null) {
                                                                   lastEndPoints = endpointForGroup.get(subscribeInfo.getService());
                                                               }
 
-                                                              Collection<EndPoint> addList = CollectionUtils.subtract(
+                                                              Collection<Endpoint> addList = CollectionUtils.subtract(
                                                                       currentEndPoints, lastEndPoints);
-                                                              Collection<EndPoint> deleteList = CollectionUtils.subtract(
+                                                              Collection<Endpoint> deleteList = CollectionUtils.subtract(
                                                                       lastEndPoints, currentEndPoints);
                                                               listener.notify(addList, deleteList);
 
@@ -295,13 +295,13 @@ public class ConsulNamingService implements NamingService {
 
     }
 
-    private void updateServiceCache(String group, ConcurrentHashMap<String, List<EndPoint>> groupUrls) {
+    private void updateServiceCache(String group, ConcurrentHashMap<String, List<Endpoint>> groupUrls) {
         if (groupUrls != null && !groupUrls.isEmpty()) {
-            ConcurrentHashMap<String, List<EndPoint>> groupMap = serviceCache.get(group);
+            ConcurrentHashMap<String, List<Endpoint>> groupMap = serviceCache.get(group);
             if (groupMap == null) {
                 serviceCache.put(group, groupUrls);
             }
-            for (Map.Entry<String, List<EndPoint>> entry : groupUrls.entrySet()) {
+            for (Map.Entry<String, List<Endpoint>> entry : groupUrls.entrySet()) {
                 if (groupMap != null) {
                     groupMap.put(entry.getKey(), entry.getValue());
                 }
@@ -309,8 +309,8 @@ public class ConsulNamingService implements NamingService {
         }
     }
 
-    private ConcurrentHashMap<String, List<EndPoint>> lookupServiceUpdate(String group) {
-        ConcurrentHashMap<String, List<EndPoint>> groupUrls = new ConcurrentHashMap<String, List<EndPoint>>();
+    private ConcurrentHashMap<String, List<Endpoint>> lookupServiceUpdate(String group) {
+        ConcurrentHashMap<String, List<Endpoint>> groupUrls = new ConcurrentHashMap<String, List<Endpoint>>();
         Long lastConsulIndexId = lookupGroupServices.get(group) == null ? 0 : lookupGroupServices.get(group);
 
         long time = System.currentTimeMillis();
@@ -331,12 +331,12 @@ public class ConsulNamingService implements NamingService {
                                 serviceName = tag;
                             }
                         }
-                        List<EndPoint> urlList = groupUrls.get(serviceName);
+                        List<Endpoint> urlList = groupUrls.get(serviceName);
 
                         if (urlList == null) {
-                            urlList = new ArrayList<EndPoint>();
+                            urlList = new ArrayList<Endpoint>();
                         }
-                        urlList.add(new EndPoint(service.getAddress(), service.getPort()));
+                        urlList.add(new Endpoint(service.getAddress(), service.getPort()));
                         groupUrls.put(serviceName, urlList);
                     } catch (Exception e) {
                     }

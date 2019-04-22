@@ -19,7 +19,7 @@ package com.baidu.brpc.client.loadbalance;
 import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.RpcClient;
 
 /**
@@ -36,18 +36,18 @@ public class WeightStrategy implements LoadBalanceStrategy {
     }
 
     @Override
-    public BrpcChannelGroup selectInstance(CopyOnWriteArrayList<BrpcChannelGroup> instances) {
+    public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
         long instanceNum = instances.size();
         if (instanceNum == 0) {
             return null;
         }
 
         long sum = 0;
-        for (BrpcChannelGroup instance : instances) {
+        for (BrpcChannel instance : instances) {
             sum += getWeight(instance.getFailedNum());
         }
         long randWeight = random.nextLong() % sum;
-        for (BrpcChannelGroup channelGroup : instances) {
+        for (BrpcChannel channelGroup : instances) {
             randWeight -= getWeight(channelGroup.getFailedNum());
             if (randWeight <= 0) {
                 return channelGroup;

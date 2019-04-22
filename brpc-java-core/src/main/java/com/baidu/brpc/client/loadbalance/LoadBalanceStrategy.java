@@ -18,7 +18,7 @@ package com.baidu.brpc.client.loadbalance;
 
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.RpcClient;
 
 /**
@@ -28,7 +28,7 @@ public interface LoadBalanceStrategy {
 
     void init(RpcClient rpcClient);
 
-    BrpcChannelGroup selectInstance(CopyOnWriteArrayList<BrpcChannelGroup> instances);
+    BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances);
 
     void destroy();
 }

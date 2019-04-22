@@ -23,6 +23,7 @@ public class RpcException extends RuntimeException {
     public static final int SERVICE_EXCEPTION = 3;
     public static final int FORBIDDEN_EXCEPTION = 4;
     public static final int SERIALIZATION_EXCEPTION = 5;
+    public static final int INTERCEPT_EXCEPTION = 6;
     private static final long serialVersionUID = 7815426523583648235L;
     private int code;
 

@@ -19,6 +19,7 @@ package com.baidu.brpc.server;
 import java.util.ArrayList;
 import java.util.List;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.interceptor.ServerInvokeInterceptor;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NamingService;
@@ -146,7 +147,7 @@ public class RpcServer {
             }
         }
         if (interceptors != null) {
-            this.interceptors = interceptors;
+            this.interceptors.addAll(interceptors);
         }
         if (namingServiceFactory != null
                 && StringUtils.isNotBlank(rpcServerOptions.getNamingServiceUrl())) {
@@ -236,6 +237,7 @@ public class RpcServer {
     }
 
     public void start() {
+        this.interceptors.add(new ServerInvokeInterceptor());
         try {
             // 判断是否在jarvis环境，若是jarvis环境则以环境变量port为准，否则以用户自定义的port为准
             if (rpcServerOptions.getJarvisPortName() != null) {

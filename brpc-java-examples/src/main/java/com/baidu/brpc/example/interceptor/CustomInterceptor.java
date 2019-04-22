@@ -17,11 +17,10 @@
 package com.baidu.brpc.example.interceptor;
 
 import com.baidu.brpc.interceptor.AbstractInterceptor;
-import com.baidu.brpc.interceptor.JoinPoint;
+import com.baidu.brpc.interceptor.InterceptorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 
@@ -38,21 +37,19 @@ public class CustomInterceptor extends AbstractInterceptor {
     }
 
     @Override
-    public Object aroundProcess(JoinPoint joinPoint) throws Exception {
-        Request request = joinPoint.getRequest();
+    public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
         LOG.info("around intercepted, before proceed, logId={}, service={}, method={}",
                 request.getLogId(),
                 request.getTarget().getClass().getSimpleName(),
                 request.getTargetMethod().getName());
 
-        Object result = joinPoint.proceed();  // invoke the intercepted method
+        // invoke the interceptor list
+        chain.intercept(request, response);
 
         LOG.info("around intercepted, after proceed, logId={}, service={}, method={}",
                 request.getLogId(),
                 request.getTarget().getClass().getSimpleName(),
                 request.getTargetMethod().getName());
-
-        return result;
     }
 
     public void handleResponse(Response response) {

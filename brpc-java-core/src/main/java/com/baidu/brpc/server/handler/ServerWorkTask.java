@@ -26,17 +26,15 @@ import java.lang.reflect.InvocationTargetException;
 
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.interceptor.JoinPoint;
+import com.baidu.brpc.interceptor.DefaultInterceptorChain;
+import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.http.BrpcHttpResponseEncoder;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.server.RpcServer;
-import com.baidu.brpc.server.ServerJoinPoint;
 import com.baidu.brpc.server.ServerStatus;
-import com.baidu.brpc.utils.CollectionUtils;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -131,31 +129,19 @@ public class ServerWorkTask implements Runnable {
                     controller.setRequestKvAttachment(request.getKvAttachment());
                 }
                 controller.setRemoteAddress(ctx.channel().remoteAddress());
+                request.setController(controller);
             }
 
             response.setLogId(request.getLogId());
             response.setCompressType(request.getCompressType());
             response.setException(request.getException());
             response.setRpcMethodInfo(request.getRpcMethodInfo());
-
-            // 处理请求前拦截
-            if (response.getException() == null
-                    && CollectionUtils.isNotEmpty(rpcServer.getInterceptors())) {
-                for (Interceptor interceptor : rpcServer.getInterceptors()) {
-                    if (!interceptor.handleRequest(request)) {
-                        response.setException(new RpcException(
-                                RpcException.FORBIDDEN_EXCEPTION, "intercepted"));
-                        break;
-                    }
-                }
-            }
         }
 
         if (response.getException() == null) {
             try {
-                JoinPoint joinPoint = new ServerJoinPoint(controller, request, rpcServer);
-                Object result = joinPoint.proceed();
-                response.setResult(result);
+                InterceptorChain interceptorChain = new DefaultInterceptorChain(rpcServer.getInterceptors());
+                interceptorChain.intercept(request, response);
                 if (controller != null && controller.getResponseBinaryAttachment() != null
                         && controller.getResponseBinaryAttachment().isReadable()) {
                     response.setBinaryAttachment(controller.getResponseBinaryAttachment());
@@ -168,18 +154,10 @@ public class ServerWorkTask implements Runnable {
                 String errorMsg = String.format("invoke method failed, msg=%s", targetException.getMessage());
                 log.warn(errorMsg, targetException);
                 response.setException(targetException);
-            } catch (Exception ex) {
+            } catch (Throwable ex) {
                 String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
                 log.warn(errorMsg, ex);
                 response.setException(ex);
-            }
-        }
-
-        // 处理响应后拦截
-        if (CollectionUtils.isNotEmpty(rpcServer.getInterceptors())) {
-            int length = rpcServer.getInterceptors().size();
-            for (int i = length - 1; i >= 0; i--) {
-                rpcServer.getInterceptors().get(i).handleResponse(response);
             }
         }
 

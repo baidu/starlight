@@ -19,7 +19,9 @@ package com.baidu.brpc.protocol;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.nshead.NSHead;
 
@@ -49,6 +51,8 @@ public abstract class AbstractRequest implements Request {
     private Long traceId;
     private Long spanId;
     private Long parentSpanId;
+    private Controller controller;
+    private RpcCallback callback;
 
     @Override
     public void reset() {
@@ -69,6 +73,8 @@ public abstract class AbstractRequest implements Request {
         traceId = null;
         spanId = null;
         parentSpanId = null;
+        controller = null;
+        callback = null;
     }
 
     @Override
@@ -86,5 +92,4 @@ public abstract class AbstractRequest implements Request {
             binaryAttachment = null;
         }
     }
-
 }

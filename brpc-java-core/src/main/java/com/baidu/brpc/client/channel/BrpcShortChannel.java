@@ -27,7 +27,7 @@ import io.netty.channel.Channel;
  * BrpcShortChannel build single & short connection with server
  * and channel will be closed by brpc after communication with server
  */
-public class BrpcShortChannel extends AbstractBrpcChannelGroup {
+public class BrpcShortChannel extends AbstractBrpcChannel {
 
     private volatile Channel channel;
 

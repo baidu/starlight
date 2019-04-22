@@ -3,7 +3,7 @@ package com.baidu.brpc.client.channel;
 import com.baidu.brpc.client.RpcClient;
 
 public class BrpcChannelFactory {
-    public static BrpcChannelGroup createChannelGroup(String ip, int port, RpcClient rpcClient) {
+    public static BrpcChannel createChannel(String ip, int port, RpcClient rpcClient) {
         ChannelType channelType = rpcClient.getRpcClientOptions().getChannelType();
         if (channelType == ChannelType.POOLED_CONNECTION) {
             return new BrpcPooledChannel(ip, port, rpcClient);

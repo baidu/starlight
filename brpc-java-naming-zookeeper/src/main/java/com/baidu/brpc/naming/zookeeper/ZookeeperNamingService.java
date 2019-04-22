@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming.zookeeper;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.Constants;
@@ -118,13 +118,13 @@ public class ZookeeperNamingService implements NamingService {
     }
 
     @Override
-    public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
+    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
         String path = getSubscribePath(subscribeInfo);
-        List<EndPoint> endPoints = new ArrayList<EndPoint>();
+        List<Endpoint> endPoints = new ArrayList<Endpoint>();
         try {
             List<String> childList = client.getChildren().forPath(path);
             for (String child : childList) {
-                endPoints.add(new EndPoint(child));
+                endPoints.add(new Endpoint(child));
             }
             log.info("lookup {} instances from {}", endPoints.size(), url);
         } catch (Exception ex) {
@@ -148,13 +148,13 @@ public class ZookeeperNamingService implements NamingService {
                     ChildData data = event.getData();
                     switch (event.getType()) {
                         case CHILD_ADDED: {
-                            EndPoint endPoint = GsonUtils.fromJson(new String(data.getData()), EndPoint.class);
-                            listener.notify(Collections.singletonList(endPoint), Collections.<EndPoint>emptyList());
+                            Endpoint endPoint = GsonUtils.fromJson(new String(data.getData()), Endpoint.class);
+                            listener.notify(Collections.singletonList(endPoint), Collections.<Endpoint>emptyList());
                             break;
                         }
                         case CHILD_REMOVED: {
-                            EndPoint endPoint = GsonUtils.fromJson(new String(data.getData()), EndPoint.class);
-                            listener.notify(Collections.<EndPoint>emptyList(), Collections.singletonList(endPoint));
+                            Endpoint endPoint = GsonUtils.fromJson(new String(data.getData()), Endpoint.class);
+                            listener.notify(Collections.<Endpoint>emptyList(), Collections.singletonList(endPoint));
                             break;
                         }
                         case CHILD_UPDATED:
@@ -263,7 +263,7 @@ public class ZookeeperNamingService implements NamingService {
     }
 
     public String getRegisterPathData(RegisterInfo registerInfo) {
-        EndPoint endPoint = new EndPoint(registerInfo.getHost(), registerInfo.getPort());
+        Endpoint endPoint = new Endpoint(registerInfo.getHost(), registerInfo.getPort());
         return GsonUtils.toJson(endPoint);
     }
 }
