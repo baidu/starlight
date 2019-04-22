@@ -342,8 +342,9 @@ public class RpcClient {
         channelInfo.getChannelGroup().removeChannel(channel);
     }
 
-    public <T> AsyncAwareFuture<T> sendRequest(Channel channel, Request request) {
-        final ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(channel);
+    public <T> AsyncAwareFuture<T> sendRequest(Request request) {
+        Channel channel = request.getChannel();
+        ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(channel);
         BrpcChannel brpcChannel = channelInfo.getChannelGroup();
         protocol.beforeRequestSent(request, this, brpcChannel);
 

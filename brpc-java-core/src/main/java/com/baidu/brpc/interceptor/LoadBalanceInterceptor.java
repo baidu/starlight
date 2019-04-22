@@ -14,10 +14,15 @@ import lombok.Setter;
 
 @Setter
 public class LoadBalanceInterceptor extends AbstractInterceptor {
-    private RpcClient rpcClient;
+    protected RpcClient rpcClient;
 
     @Override
     public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
+        selectChannel(request);
+        invokeRpc(request, response);
+    }
+
+    protected Channel selectChannel(Request request) {
         // if user set channel in controller, rpc will not select channel again.
         // otherwise select instance by load balance, and select channel from instance.
         Channel channel;
@@ -28,13 +33,17 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
             channel = rpcClient.selectChannel();
         }
         request.setChannel(channel);
+        return channel;
+    }
 
+    protected void invokeRpc(Request request, Response response) throws Exception {
         // send request with the channel.
-        AsyncAwareFuture future = rpcClient.sendRequest(channel, request);
+        AsyncAwareFuture future = rpcClient.sendRequest(request);
         if (future.isAsync()) {
             response.setRpcFuture((RpcFuture) future);
         } else {
             long readTimeout;
+            Controller controller = request.getController();
             if (controller != null && controller.getReadTimeoutMillis() != null) {
                 readTimeout = controller.getReadTimeoutMillis();
             } else {
