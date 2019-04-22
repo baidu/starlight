@@ -219,35 +219,19 @@ public class BrpcProxy implements MethodInterceptor {
 
             Response response = rpcClient.getProtocol().getResponse();
             InterceptorChain interceptorChain = new DefaultInterceptorChain(rpcClient.getInterceptors());
-            RpcException exception = null;
-            int currentTryTimes = 0;
-            int maxTryTimes = rpcClient.getRpcClientOptions().getMaxTryTimes();
-            while (currentTryTimes++ < maxTryTimes) {
-                try {
-                    interceptorChain.intercept(request, response);
-                    if (request.getCallback() != null) {
-                        return response.getRpcFuture();
-                    } else {
-                        return response.getResult();
-                    }
-                } catch (RpcException ex) {
-                    exception = ex;
-                    if (exception.getCode() == RpcException.INTERCEPT_EXCEPTION) {
-                        break;
-                    }
+            try {
+                interceptorChain.intercept(request, response);
+                if (response.getException() != null) {
+                    throw new RpcException(response.getException());
                 }
-                // if application set the channel, brpc-java will not do retrying.
-                // because application maybe send different request for different server instance.
-                // this feature is used by Product Ads.
-                if (controller != null && controller.getChannel() != null) {
-                    break;
+                if (request.getCallback() != null) {
+                    return response.getRpcFuture();
+                } else {
+                    return response.getResult();
                 }
+            } catch (Exception ex) {
+                throw new RpcException(response.getException());
             }
-
-            if (exception == null) {
-                exception = new RpcException(RpcException.UNKNOWN_EXCEPTION, "unknown error");
-            }
-            throw exception;
         } finally {
             if (request != null) {
                 // release send buffer because we retain send buffer when send request.

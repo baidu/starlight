@@ -25,6 +25,7 @@ import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.zookeeper.ZookeeperNamingFactory;
 import com.baidu.brpc.protocol.Options;
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +45,7 @@ public class RpcClientTest {
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(10000000);
+        clientOption.setReadTimeoutMillis(1000);
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
         clientOption.setLoadBalanceType(LoadBalanceType.FAIR.getId());
@@ -56,17 +57,17 @@ public class RpcClientTest {
             serviceUrl = args[0];
         }
 
-        List<Interceptor> interceptors = new ArrayList<Interceptor>();
-        interceptors.add(new CustomInterceptor());
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
-
         // build request
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
                 .setMessage("helloooooooooooo")
                 .build();
 
+        List<Interceptor> interceptors = new ArrayList<Interceptor>();
+        interceptors.add(new CustomInterceptor());
+
         // sync call
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
+//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         try {
             Echo.EchoResponse response = echoService.echo(request);
@@ -97,7 +98,7 @@ public class RpcClientTest {
         try {
             Future<Echo.EchoResponse> future = asyncEchoService.echo(request, callback);
             try {
-                Echo.EchoResponse response = future.get(100, TimeUnit.MILLISECONDS);
+                Echo.EchoResponse response = future.get(1000, TimeUnit.MILLISECONDS);
                 System.out.println("response from future:" + response.getMessage());
             } catch (Exception ex1) {
                 ex1.printStackTrace();

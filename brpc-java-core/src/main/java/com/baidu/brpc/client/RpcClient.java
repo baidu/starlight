@@ -57,13 +57,11 @@ import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
 import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
-import com.baidu.brpc.utils.CollectionUtils;
 import com.baidu.brpc.utils.ThreadPool;
 
 import edu.emory.mathcs.backport.java.util.Collections;
@@ -437,7 +435,7 @@ public class RpcClient {
             LOG.warn("init rpc options failed, so use default");
         }
         if (interceptors != null) {
-            this.interceptors = interceptors;
+            this.interceptors.addAll(interceptors);
         }
         this.protocol = ProtocolManager.instance().init(options.getEncoding()).getProtocol(options.getProtocolType());
         fastFutureStore = FastFutureStore.getInstance(options.getFutureBufferSize());
