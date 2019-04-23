@@ -110,7 +110,7 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
-        Request request = this.getRequest();
+        Request request = this.createRequest();
         NSHeadPacket nsHeadPacket = (NSHeadPacket) packet;
         request.setLogId((long) nsHeadPacket.getNsHead().logId);
 

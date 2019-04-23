@@ -62,6 +62,8 @@ public class RpcServerOptions {
     private int ioThreadNum = Runtime.getRuntime().availableProcessors();
     // real work threads
     private int workThreadNum = Runtime.getRuntime().availableProcessors();
+    // customized thread num, default value 20
+    private int customizedWorkThreadNum = 20;
     // The max size
     private int maxSize = Integer.MAX_VALUE;
     // server protocol type

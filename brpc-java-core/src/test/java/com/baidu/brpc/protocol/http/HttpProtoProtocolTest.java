@@ -64,7 +64,7 @@ public class HttpProtoProtocolTest {
     @Test
     public void testDecodeHttpRequest() throws Exception {
         ServiceManager serviceManager = ServiceManager.getInstance();
-        serviceManager.registerService(new EchoServiceImpl());
+        serviceManager.registerService(new EchoServiceImpl(), null);
 
         ByteBuf content = Unpooled.wrappedBuffer(encodeBody(Echo.EchoRequest.newBuilder().setMessage("hello").build()));
 

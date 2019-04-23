@@ -93,7 +93,7 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
         namingOptions.setVersion(version);
         namingOptions.setIgnoreFailOfNamingService(ignoreFailOfNamingService);
         for (Object service : registerServices) {
-            prRpcServer.registerService(service, namingOptions);
+            prRpcServer.registerService(service, namingOptions, null);
         }
         prRpcServer.start();
     }

@@ -76,7 +76,7 @@ public class NsHeadRpcProtocolProtobufTest {
     public void testDecodeRequestSuccess() throws Exception {
         ServiceManager.getInstance().getServiceMap().clear();
 
-        ServiceManager.getInstance().registerService(new EchoServiceImpl());
+        ServiceManager.getInstance().registerService(new EchoServiceImpl(), null);
         Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
                 .setMessage("hello").build();
 

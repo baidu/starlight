@@ -18,6 +18,7 @@ package com.baidu.brpc.server;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.interceptor.ServerInvokeInterceptor;
 import com.baidu.brpc.naming.BrpcURL;
@@ -32,6 +33,7 @@ import com.baidu.brpc.server.handler.RpcServerHandler;
 import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
 import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ShutDownManager;
+import com.baidu.brpc.utils.CollectionUtils;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
@@ -89,6 +91,7 @@ public class RpcServer {
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private Protocol protocol;
     private ThreadPool threadPool;
+    private List<ThreadPool> customizedThreadPool = new ArrayList<ThreadPool>();
     private NamingService namingService;
     private List<Object> serviceList = new ArrayList<Object>();
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
@@ -217,12 +220,14 @@ public class RpcServer {
     }
 
     public void registerService(Object service) {
-        registerService(service, null);
+        registerService(service, null, null);
     }
 
-    public void registerService(Object service, NamingOptions namingOptions) {
-        ServiceManager serviceManager = ServiceManager.getInstance();
-        serviceManager.registerService(service);
+    public void registerService(Object service, RpcServerOptions rpcServerOptions) {
+        registerService(service, null, rpcServerOptions);
+    }
+
+    public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions rpcServerOptions) {
         serviceList.add(service);
         RegisterInfo registerInfo = new RegisterInfo();
         registerInfo.setService(service.getClass().getInterfaces()[0].getName());
@@ -233,6 +238,14 @@ public class RpcServer {
             registerInfo.setVersion(namingOptions.getVersion());
             registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
         }
+        ServiceManager serviceManager = ServiceManager.getInstance();
+        ThreadPool threadPool = this.threadPool;
+        if (rpcServerOptions != null) {
+            threadPool = new ThreadPool(rpcServerOptions.getCustomizedWorkThreadNum(),
+                    new CustomThreadFactory("brpc-customized-work-thread"));
+            customizedThreadPool.add(threadPool);
+        }
+        serviceManager.registerService(service, threadPool);
         registerInfoList.add(registerInfo);
     }
 
@@ -273,6 +286,12 @@ public class RpcServer {
         }
         if (bossGroup != null) {
             bossGroup.shutdownGracefully();
+        }
+        if (CollectionUtils.isNotEmpty(customizedThreadPool)) {
+            LOG.info("clean customized theadPool");
+            for (ThreadPool pool : customizedThreadPool) {
+                pool.stop();
+            }
         }
     }
 
