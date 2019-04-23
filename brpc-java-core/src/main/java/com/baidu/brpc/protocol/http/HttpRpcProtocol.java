@@ -17,6 +17,8 @@
 package com.baidu.brpc.protocol.http;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -366,7 +368,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             httpRequest.setRpcMethodInfo(rpcMethodInfo);
             httpRequest.setTargetMethod(rpcMethodInfo.getMethod());
             httpRequest.setTarget(rpcMethodInfo.getTarget());
-            httpRequest.setArgs(parseRequestParam(protocolType, body, rpcMethodInfo));
+            httpRequest.setArgs(parseRequestParam(protocolType, encoding, body, rpcMethodInfo));
             return httpRequest;
         } finally {
             ((FullHttpRequest) packet).release();
@@ -473,7 +475,10 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE: {
                     String bodyJson = "";
                     if (rpcMethodInfo instanceof ProtobufRpcMethodInfo) {
-                        bodyJson = jsonPbConverter.printToString((Message) body);
+                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+                        jsonPbConverter.print((Message) body, out, Charset.forName(encoding));
+                        out.flush();
+                        bodyJson = out.toString(encoding);
                     } else {
                         bodyJson = gson.toJson(body);
                     }
@@ -635,7 +640,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return response;
     }
 
-    protected Object[] parseRequestParam(int protocolType, Object body, RpcMethodInfo rpcMethodInfo) {
+    protected Object[] parseRequestParam(int protocolType, String encoding, Object body, RpcMethodInfo rpcMethodInfo) {
         if (body == null) {
             return null;
         }
