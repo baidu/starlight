@@ -16,9 +16,17 @@
 
 package com.baidu.brpc.protocol.nshead;
 
+import static org.junit.Assert.assertEquals;
+
+import java.lang.reflect.Method;
+
+import org.junit.Before;
+import org.junit.Test;
+
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.protocol.Options.ProtocolType;
+import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.protocol.standard.Echo;
@@ -26,14 +34,9 @@ import com.baidu.brpc.protocol.standard.Echo.EchoRequest;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.server.ServiceManager;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import org.junit.Before;
-import org.junit.Test;
-
-import java.lang.reflect.Method;
-
-import static org.junit.Assert.assertEquals;
 
 public class NsHeadRpcProtocolProtobufTest {
 
@@ -55,7 +58,9 @@ public class NsHeadRpcProtocolProtobufTest {
         rpcRequest.setArgs(new Object[] {request});
         rpcRequest.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
         rpcRequest.setLogId(3L);
-        rpcRequest.setNsHeadMeta(rpcRequest.getRpcMethodInfo().getNsHeadMeta());
+        NSHeadMeta nsHeadMeta = rpcRequest.getRpcMethodInfo().getNsHeadMeta();
+        rpcRequest.setNsHead(new NSHead(3, nsHeadMeta.id(),
+                nsHeadMeta.version(), nsHeadMeta.provider(), 0));
 
         ByteBuf byteBuf = protocol.encodeRequest(rpcRequest);
 
@@ -79,12 +84,10 @@ public class NsHeadRpcProtocolProtobufTest {
         byte[] body = encodeBody(response, EchoService.class.getMethods()[0]);
         packet.setNsHead(new NSHead(1, body.length));
         packet.setBodyBuf(Unpooled.wrappedBuffer(body));
-        RpcRequest rpcRequest = new RpcRequest();
+        Request request = protocol.decodeRequest(packet);
 
-        protocol.decodeRequest(packet, rpcRequest);
-
-        assertEquals(EchoService.class.getMethods()[0], rpcRequest.getTargetMethod());
-        assertEquals(EchoServiceImpl.class, rpcRequest.getTarget().getClass());
+        assertEquals(EchoService.class.getMethods()[0], request.getTargetMethod());
+        assertEquals(EchoServiceImpl.class, request.getTarget().getClass());
     }
 
 
@@ -99,7 +102,7 @@ public class NsHeadRpcProtocolProtobufTest {
         rpcResponse.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
         rpcResponse.setResult(response);
 
-        ByteBuf byteBuf = protocol.encodeResponse(rpcResponse);
+        ByteBuf byteBuf = protocol.encodeResponse(null, rpcResponse);
 
         NSHead nsHead = NSHead.fromByteBuf(byteBuf);
 

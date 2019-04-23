@@ -19,8 +19,8 @@ package com.baidu.brpc.client.loadbalance;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
 
 /**
  * Round-robin load balance strategy implementation
@@ -35,13 +35,13 @@ public class RoundRobinStrategy implements LoadBalanceStrategy {
     }
 
     @Override
-    public BrpcChannelGroup selectInstance(CopyOnWriteArrayList<BrpcChannelGroup> instances) {
+    public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
         long instanceNum = instances.size();
         if (instanceNum == 0) {
             return null;
         }
         int index = (int) (counter.getAndIncrement() % instanceNum);
-        BrpcChannelGroup channelGroup = instances.get(index);
+        BrpcChannel channelGroup = instances.get(index);
         return channelGroup;
     }
 

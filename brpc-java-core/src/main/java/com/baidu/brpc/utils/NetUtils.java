@@ -15,6 +15,9 @@
  */
 package com.baidu.brpc.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -22,8 +25,6 @@ import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.util.Enumeration;
 import java.util.Random;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 
@@ -36,7 +37,7 @@ import java.util.regex.Pattern;
 public class NetUtils {
 
     /** The Constant logger. */
-    private static final Logger logger = Logger.getLogger(NetUtils.class.getName());
+    private static final Logger LOGGER = LoggerFactory.getLogger(NetUtils.class);
 
     /** The Constant LOCALHOST. */
     public static final String LOCALHOST = "127.0.0.1";
@@ -253,7 +254,7 @@ public class NetUtils {
                 return localAddress;
             }
         } catch (Throwable e) {
-            logger.log(Level.WARNING, "Failed to retriving ip address, " + e.getMessage(), e);
+            LOGGER.warn("Failed to retrieve ip address: {}", e);
         }
         try {
             Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
@@ -270,19 +271,19 @@ public class NetUtils {
                                         return address;
                                     }
                                 } catch (Throwable e) {
-                                    logger.log(Level.WARNING, "Failed to retriving ip address, " + e.getMessage(), e);
+                                    LOGGER.warn("Failed to retrieve ip address: {}", e);
                                 }
                             }
                         }
                     } catch (Throwable e) {
-                        logger.log(Level.WARNING, "Failed to retriving ip address, " + e.getMessage(), e);
+                        LOGGER.warn("Failed to retrieve ip address: {}", e);
                     }
                 }
             }
         } catch (Throwable e) {
-            logger.log(Level.WARNING, "Failed to retriving ip address, " + e.getMessage(), e);
+            LOGGER.warn("Failed to retrieve ip address: {}", e);
         }
-        logger.log(Level.SEVERE, "Could not get local host ip address, will use 127.0.0.1 instead.");
+        LOGGER.error("Failed to get local host ip address, use 127.0.0.1 instead.");
         return localAddress;
     }
 }

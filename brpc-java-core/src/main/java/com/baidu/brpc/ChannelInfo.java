@@ -19,10 +19,12 @@ package com.baidu.brpc;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.FastFutureStore;
 import com.baidu.brpc.client.RpcFuture;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.protocol.Response;
+
 import io.netty.channel.Channel;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -38,13 +40,17 @@ public class ChannelInfo {
     private static final AttributeKey<ChannelInfo> SERVER_CHANNEL_KEY = AttributeKey.valueOf("server_key");
 
     private Channel channel;
-    private BrpcChannelGroup channelGroup;
+    private BrpcChannel channelGroup;
     // 是否来自于业务RpcContext手动设置的
-    private boolean isFromRpcContext = false;
+    private boolean fromRpcContext = false;
     private Protocol protocol;
     private long logId;
     private FastFutureStore pendingRpc;
     private DynamicCompositeByteBuf recvBuf = new DynamicCompositeByteBuf(16);
+
+    public void setProtocol(Protocol protocol) {
+        this.protocol = protocol;
+    }
 
     public static ChannelInfo getOrCreateClientChannelInfo(Channel channel) {
         Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.CLIENT_CHANNEL_KEY);
@@ -97,14 +103,16 @@ public class ChannelInfo {
 
     /**
      * return channel when fail
+     * @param channelType
      */
-    public void handleRequestFail(boolean isLongConnection) {
-        if (isLongConnection) {
+    public void handleRequestFail(ChannelType channelType) {
+        if (channelType != ChannelType.SHORT_CONNECTION) {
             channelGroup.incFailedNum();
             returnChannelAfterRequest();
         } else {
             channelGroup.close();
         }
+
     }
 
     /**
@@ -154,8 +162,9 @@ public class ChannelInfo {
         if (isFromRpcContext()) {
             return;
         }
-        channelGroup.removeChannel(channel);
-
+        if (channelGroup != null) {
+            channelGroup.removeChannel(channel);
+        }
         // 遍历并删除当前channel下所有RpcFuture
         pendingRpc.traverse(new ChannelErrorStoreWalker(channel, ex));
     }
@@ -193,9 +202,9 @@ public class ChannelInfo {
 
         @Override
         public void actionAfterDelete(RpcFuture fut) {
-            RpcResponse rpcResponse = new RpcResponse();
-            rpcResponse.setException(exception);
-            fut.handleResponse(rpcResponse);
+            Response response = fut.getRpcClient().getProtocol().createResponse();
+            response.setException(exception);
+            fut.handleResponse(response);
         }
     }
 }

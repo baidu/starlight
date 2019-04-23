@@ -34,7 +34,7 @@ public class RpcServerTest {
         RpcServerOptions options = new RpcServerOptions();
         options.setReceiveBufferSize(64 * 1024 * 1024);
         options.setSendBufferSize(64 * 1024 * 1024);
-//        options.setMetaHttpPort(8003);
+        options.setKeepAliveTime(20);
 //        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
 //        final RpcServer rpcServer = new RpcServer(port, options, new ZookeeperNamingFactory());
         final RpcServer rpcServer = new RpcServer(port, options);

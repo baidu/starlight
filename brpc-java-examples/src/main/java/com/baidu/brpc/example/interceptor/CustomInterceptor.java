@@ -16,16 +16,19 @@
 
 package com.baidu.brpc.example.interceptor;
 
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.interceptor.AbstractInterceptor;
+import com.baidu.brpc.interceptor.InterceptorChain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class CustomInterceptor implements Interceptor {
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
+
+public class CustomInterceptor extends AbstractInterceptor {
+
     private static final Logger LOG = LoggerFactory.getLogger(CustomInterceptor.class);
 
-    public boolean handleRequest(RpcRequest rpcRequest) {
+    public boolean handleRequest(Request rpcRequest) {
         LOG.info("request intercepted, logId={}, service={}, method={}",
                 rpcRequest.getLogId(),
                 rpcRequest.getTarget().getClass().getSimpleName(),
@@ -33,7 +36,23 @@ public class CustomInterceptor implements Interceptor {
         return true;
     }
 
-    public void handleResponse(RpcResponse response) {
+    @Override
+    public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
+        LOG.info("around intercepted, before proceed, logId={}, service={}, method={}",
+                request.getLogId(),
+                request.getTarget().getClass().getSimpleName(),
+                request.getTargetMethod().getName());
+
+        // invoke the interceptor list
+        chain.intercept(request, response);
+
+        LOG.info("around intercepted, after proceed, logId={}, service={}, method={}",
+                request.getLogId(),
+                request.getTarget().getClass().getSimpleName(),
+                request.getTargetMethod().getName());
+    }
+
+    public void handleResponse(Response response) {
         if (response != null) {
             LOG.info("reponse intercepted, logId={}, result={}",
                     response.getLogId(), response.getResult());

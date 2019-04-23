@@ -16,13 +16,12 @@
 
 package com.baidu.brpc.client.handler;
 
-import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.protocol.Protocol;
+import com.baidu.brpc.protocol.Response;
+
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpResponse;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -40,32 +39,21 @@ public class ClientWorkTask implements Runnable {
 
     @Override
     public void run() {
-        RpcResponse rpcResponse;
-        if (!rpcClient.getRpcClientOptions().isHttp()) {
-            ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-            try {
-                rpcResponse = channelInfo.getProtocol().decodeResponse(packet, ctx);
-            } catch (Exception ex) {
-                log.warn("decode response failed:", ex);
-                return;
-            }
-        } else {
-            FullHttpResponse httpResponse = (FullHttpResponse) packet;
-            Protocol protocol = rpcClient.getProtocol();
-            rpcResponse = protocol.decodeHttpResponse(httpResponse, ctx);
+        Response response;
+
+        try {
+            response = protocol.decodeResponse(packet, ctx);
+        } catch (Exception e) {
+            log.warn("decode response failed:", e);
+            return;
         }
 
-        if (rpcResponse.getRpcFuture() != null) {
-            log.debug("handle response, logId={}", rpcResponse.getLogId());
-            // 如果请求处理成功, 则在IO线程中触发用户回调方法;
-            // 如果出错, 就变成了在非IO线程中触发用户回调方法;
-            // 这种行为是否合适
-            RpcFuture future = rpcResponse.getRpcFuture();
-            future.setBinaryAttachment(rpcResponse.getBinaryAttachment());
-            future.setKvAttachment(rpcResponse.getKvAttachment());
-            future.handleResponse(rpcResponse);
+        if (response.getRpcFuture() != null) {
+            log.debug("handle response, logId={}", response.getLogId());
+            RpcFuture future = response.getRpcFuture();
+            future.handleResponse(response);
         } else {
-            log.debug("rpcFuture is null, logId={}", rpcResponse.getLogId());
+            log.debug("rpcFuture is null, logId={}", response.getLogId());
         }
     }
 }

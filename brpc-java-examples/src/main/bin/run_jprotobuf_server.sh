@@ -9,6 +9,6 @@ export JVM_OPTIONS=" -server -Xmn2g -Xmx6g -Xms6g -Xss256k -Xverify:none \
 
 export CUSTOM_CLASSPATH="target/classes:target/test-classes:target/dependency/* "
 
-export MAIN_CLASS="com.baidu.brpc.example.jprotobuf.RpcServerTest"
+export MAIN_CLASS="com.baidu.brpc.example.jprotobuf.RpcServerControllerTest"
 
 java $JVM_OPTIONS -cp $CUSTOM_CLASSPATH $MAIN_CLASS

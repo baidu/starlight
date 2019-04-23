@@ -18,27 +18,30 @@ package com.baidu.brpc.protocol.hulu;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 
-import com.baidu.brpc.exceptions.TooBigDataException;
-import com.baidu.brpc.protocol.AbstractProtocol;
-import com.baidu.brpc.protocol.BaiduRpcErrno;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
-import com.baidu.brpc.exceptions.BadSchemaException;
-import com.baidu.brpc.exceptions.NotEnoughDataException;
-import com.baidu.brpc.utils.ProtobufUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.compress.Compress;
 import com.baidu.brpc.compress.CompressManager;
+import com.baidu.brpc.exceptions.BadSchemaException;
+import com.baidu.brpc.exceptions.NotEnoughDataException;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.exceptions.TooBigDataException;
+import com.baidu.brpc.protocol.AbstractProtocol;
+import com.baidu.brpc.protocol.BaiduRpcErrno;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.utils.ProtobufUtils;
 import com.baidu.brpc.utils.RpcMetaUtils;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -46,19 +49,19 @@ import io.netty.channel.ChannelHandlerContext;
 /**
  * Notes on HULU PBRPC Protocol:
  * <ul>
- *     <li> Header format is ["HULU"][<code>body_size</code>][<code>meta_size
- *         </code>], 12 bytes in total
- *     </li>
- *     <li> {@code body_size} and {@code meta_size} are <b>NOT</b> in
- *         <b>network</b> byte order (little endian)
- *     </li>
- *     <li> Use service->name() and method_index to identify the service and
- *         method to call </li>
- *     <li> {@code user_message_size} is set iff request/response has attachment
- *     </li>
- *     <li> The following fields of rpc are not supported yet:
- *         <ul><li>chunk_info</li></ul>
- *     </li>
+ * <li> Header format is ["HULU"][<code>body_size</code>][<code>meta_size
+ * </code>], 12 bytes in total
+ * </li>
+ * <li> {@code body_size} and {@code meta_size} are <b>NOT</b> in
+ * <b>network</b> byte order (little endian)
+ * </li>
+ * <li> Use service->name() and method_index to identify the service and
+ * method to call </li>
+ * <li> {@code user_message_size} is set iff request/response has attachment
+ * </li>
+ * <li> The following fields of rpc are not supported yet:
+ * <ul><li>chunk_info</li></ul>
+ * </li>
  * </ul>
  */
 public class HuluRpcProtocol extends AbstractProtocol {
@@ -72,16 +75,16 @@ public class HuluRpcProtocol extends AbstractProtocol {
     private static final CompressManager compressManager = CompressManager.getInstance();
 
     @Override
-    public ByteBuf encodeRequest(RpcRequest rpcRequest) throws Exception {
+    public ByteBuf encodeRequest(Request request) throws Exception {
         HuluRpcEncodePacket requestPacket = new HuluRpcEncodePacket();
         HuluRpcProto.HuluRpcRequestMeta.Builder metaBuilder = HuluRpcProto.HuluRpcRequestMeta.newBuilder();
-        metaBuilder.setCorrelationId(rpcRequest.getLogId());
-        metaBuilder.setLogId(rpcRequest.getLogId());
-        int compressType = rpcRequest.getCompressType();
+        metaBuilder.setCorrelationId(request.getLogId());
+        metaBuilder.setLogId(request.getLogId());
+        int compressType = request.getCompressType();
         metaBuilder.setCompressType(compressType);
 
         // service method
-        RpcMetaUtils.RpcMetaInfo rpcMetaInfo = RpcMetaUtils.parseRpcMeta(rpcRequest.getTargetMethod());
+        RpcMetaUtils.RpcMetaInfo rpcMetaInfo = RpcMetaUtils.parseRpcMeta(request.getTargetMethod());
         metaBuilder.setServiceName(rpcMetaInfo.getServiceName());
         try {
             int methodIndex = Integer.valueOf(rpcMetaInfo.getMethodName());
@@ -93,25 +96,39 @@ public class HuluRpcProtocol extends AbstractProtocol {
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
         }
 
+        if (request.getTraceId() != null) {
+            metaBuilder.setTraceId(request.getTraceId());
+        }
+        if (request.getSpanId() != null) {
+            metaBuilder.setSpanId(request.getSpanId());
+        }
+        if (request.getParentSpanId() != null) {
+            metaBuilder.setSpanId(request.getParentSpanId());
+        }
+        if (request.getKvAttachment() != null) {
+            for (Map.Entry<String, String> kv : request.getKvAttachment().entrySet()) {
+                metaBuilder.addExtFieldsBuilder().setKey(kv.getKey()).setValue(kv.getValue());
+            }
+        }
+
         // proto
-        Object proto = rpcRequest.getArgs()[0];
+        Object proto = request.getArgs()[0];
         Compress compress = compressManager.getCompress(compressType);
-        ByteBuf protoBuf = compress.compressInput(proto, rpcRequest.getRpcMethodInfo());
+        ByteBuf protoBuf = compress.compressInput(proto, request.getRpcMethodInfo());
         requestPacket.setProto(protoBuf);
 
         // attachement
-        if (rpcRequest.getBinaryAttachment() != null
-                && rpcRequest.getBinaryAttachment().isReadable()) {
-            requestPacket.setAttachment(rpcRequest.getBinaryAttachment());
+        if (request.getBinaryAttachment() != null
+                && request.getBinaryAttachment().isReadable()) {
+            requestPacket.setAttachment(request.getBinaryAttachment());
             metaBuilder.setUserMessageSize(protoBuf.readableBytes());
         }
         requestPacket.setRequestMeta(metaBuilder.build());
-        ByteBuf outBuf = encode(requestPacket);
-        return outBuf;
+        return encode(requestPacket);
     }
 
     @Override
-    public RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception {
+    public Response decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception {
         HuluRpcDecodePacket responsePacket = (HuluRpcDecodePacket) packet;
         ByteBuf metaBuf = responsePacket.getMetaBuf();
         ByteBuf protoAndAttachmentBuf = responsePacket.getProtoAndAttachmentBuf();
@@ -170,7 +187,8 @@ public class HuluRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception {
+    public Request decodeRequest(Object packet) throws Exception {
+        Request request = this.getRequest();
         HuluRpcDecodePacket requestPacket = (HuluRpcDecodePacket) packet;
         ByteBuf metaBuf = requestPacket.getMetaBuf();
         ByteBuf protoAndAttachmentBuf = requestPacket.getProtoAndAttachmentBuf();
@@ -178,9 +196,9 @@ public class HuluRpcProtocol extends AbstractProtocol {
         try {
             HuluRpcProto.HuluRpcRequestMeta requestMeta = (HuluRpcProto.HuluRpcRequestMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcRequestMetaInstance);
-            rpcRequest.setLogId(requestMeta.getCorrelationId());
+            request.setLogId(requestMeta.getCorrelationId());
             int compressType = requestMeta.getCompressType();
-            rpcRequest.setCompressType(compressType);
+            request.setCompressType(compressType);
 
             // service info
             ServiceManager serviceManager = ServiceManager.getInstance();
@@ -189,12 +207,28 @@ public class HuluRpcProtocol extends AbstractProtocol {
             if (rpcMethodInfo == null) {
                 String errorMsg = String.format("Fail to find service=%s, methodIndex=%s",
                         requestMeta.getServiceName(), requestMeta.getMethodIndex());
-                rpcRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
-                return;
+                request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
+                return request;
             }
-            rpcRequest.setRpcMethodInfo(rpcMethodInfo);
-            rpcRequest.setTargetMethod(rpcMethodInfo.getMethod());
-            rpcRequest.setTarget(rpcMethodInfo.getTarget());
+            if (requestMeta.hasTraceId()) {
+                request.setTraceId(requestMeta.getTraceId());
+            }
+            if (requestMeta.hasSpanId()) {
+                request.setSpanId(request.getSpanId());
+            }
+            if (requestMeta.hasParentSpanId()) {
+                request.setParentSpanId(requestMeta.getParentSpanId());
+            }
+            if (requestMeta.getExtFieldsCount() > 0) {
+                for (HuluRpcProto.HuluRpcRequestMetaExtField extField : requestMeta.getExtFieldsList()) {
+                    request.getKvAttachment().put(extField.getKey(), extField.getValue());
+                }
+            }
+            request.setServiceName(rpcMethodInfo.getServiceName());
+            request.setMethodName(rpcMethodInfo.getMethodName());
+            request.setRpcMethodInfo(rpcMethodInfo);
+            request.setTargetMethod(rpcMethodInfo.getMethod());
+            request.setTarget(rpcMethodInfo.getTarget());
 
             // proto body
             try {
@@ -208,10 +242,10 @@ public class HuluRpcProtocol extends AbstractProtocol {
                     protoBuf = protoAndAttachmentBuf;
                 }
                 Object requestProto = compress.uncompressInput(protoBuf, rpcMethodInfo);
-                rpcRequest.setArgs(new Object[] {requestProto});
+                request.setArgs(new Object[] {requestProto});
                 // attachment
                 if (userMessageSize > 0) {
-                    rpcRequest.setBinaryAttachment(protoAndAttachmentBuf);
+                    request.setBinaryAttachment(protoAndAttachmentBuf);
                     protoAndAttachmentBuf = null;
                 }
             } catch (Exception ex) {
@@ -219,7 +253,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
                 LOG.error(errorMsg);
                 throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
             }
-            return;
+            return request;
         } finally {
             if (metaBuf != null) {
                 metaBuf.release();
@@ -231,34 +265,33 @@ public class HuluRpcProtocol extends AbstractProtocol {
     }
 
     @Override
-    public ByteBuf encodeResponse(RpcResponse rpcResponse) throws Exception {
+    public ByteBuf encodeResponse(Request request, Response response) throws Exception {
         HuluRpcEncodePacket responsePacket = new HuluRpcEncodePacket();
         HuluRpcProto.HuluRpcResponseMeta.Builder metaBuilder = HuluRpcProto.HuluRpcResponseMeta.newBuilder();
-        metaBuilder.setCorrelationId(rpcResponse.getLogId());
-        int compressType = rpcResponse.getCompressType();
+        metaBuilder.setCorrelationId(response.getLogId());
+        int compressType = response.getCompressType();
         metaBuilder.setCompressType(compressType);
 
-        if (rpcResponse.getException() != null) {
+        if (response.getException() != null) {
             metaBuilder.setErrorCode(BaiduRpcErrno.Errno.EINTERNAL_VALUE);
-            metaBuilder.setErrorText(rpcResponse.getException().getMessage());
+            metaBuilder.setErrorText(response.getException().getMessage());
             responsePacket.setResponseMeta(metaBuilder.build());
         } else {
             metaBuilder.setErrorCode(0);
             Compress compress = compressManager.getCompress(compressType);
             ByteBuf responseProtoBuf = compress.compressOutput(
-                    rpcResponse.getResult(), rpcResponse.getRpcMethodInfo());
+                    response.getResult(), response.getRpcMethodInfo());
             responsePacket.setProto(responseProtoBuf);
 
             // attachment
-            if (rpcResponse.getBinaryAttachment() != null) {
-                responsePacket.setAttachment(rpcResponse.getBinaryAttachment());
+            if (response.getBinaryAttachment() != null) {
+                responsePacket.setAttachment(response.getBinaryAttachment());
                 metaBuilder.setUserMessageSize(responseProtoBuf.readableBytes());
             }
             responsePacket.setResponseMeta(metaBuilder.build());
         }
 
-        ByteBuf resBuf = encode(responsePacket);
-        return resBuf;
+        return encode(responsePacket);
     }
 
     protected ByteBuf encode(HuluRpcEncodePacket packet) throws IOException {
@@ -298,14 +331,15 @@ public class HuluRpcProtocol extends AbstractProtocol {
         } else if (protoBuf != null) {
             return Unpooled.wrappedBuffer(headerBuf, metaBuf, protoBuf);
         } else {
-            return  Unpooled.wrappedBuffer(headerBuf, metaBuf);
+            return Unpooled.wrappedBuffer(headerBuf, metaBuf);
         }
     }
 
-    public HuluRpcDecodePacket decode(DynamicCompositeByteBuf in)
+    @Override
+    public HuluRpcDecodePacket decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
         if (in.readableBytes() < FIXED_LEN) {
-            throw new NotEnoughDataException("readable bytes less than 12 for hulu:" + in.readableBytes());
+            throw notEnoughDataException;
         }
         ByteBuf fixHeaderBuf = in.retainedSlice(FIXED_LEN);
 
@@ -322,8 +356,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
                 throw new TooBigDataException("to big body size:" + bodySize);
             }
             if (in.readableBytes() < FIXED_LEN + bodySize) {
-                String errMsg = String.format("readable bytes=%d, bodySize=%d", in.readableBytes(), bodySize);
-                throw new NotEnoughDataException(errMsg);
+                throw notEnoughDataException;
             }
 
             in.skipBytes(FIXED_LEN);

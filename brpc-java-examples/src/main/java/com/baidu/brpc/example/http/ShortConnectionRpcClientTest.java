@@ -1,9 +1,15 @@
 package com.baidu.brpc.example.http;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
+
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
+import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.example.http.json.EchoService;
 import com.baidu.brpc.example.http.json.EchoServiceAsync;
@@ -13,21 +19,16 @@ import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options.ProtocolType;
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
-
 public class ShortConnectionRpcClientTest {
 
     public static void main(String[] args) {
         RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setHttp(true);
         clientOption.setProtocolType(ProtocolType.PROTOCOL_HTTP_JSON_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
         clientOption.setReadTimeoutMillis(5000);
         clientOption.setLoadBalanceType(LoadBalanceType.WEIGHT.getId());
         clientOption.setMaxTryTimes(1);
-        clientOption.setLongConnection(false);
+        clientOption.setChannelType(ChannelType.SHORT_CONNECTION);
 
         String serviceUrl = "list://127.0.0.1:8080";
         if (args.length == 1) {
@@ -50,7 +51,7 @@ public class ShortConnectionRpcClientTest {
 
         // async call
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-        RpcCallback callback = new RpcCallback<String>() {
+        RpcCallback callback = new RpcCallbackAdaptor<String>() {
             @Override
             public void success(String response) {
                 if (response != null) {

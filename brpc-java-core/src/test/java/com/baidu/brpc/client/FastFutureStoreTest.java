@@ -30,6 +30,7 @@ public class FastFutureStoreTest {
 
     @Test
     public void testPutAndRemove() {
+        // 100 is much bigger than cap(10)
         round(100);
     }
 

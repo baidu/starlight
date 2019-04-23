@@ -19,7 +19,7 @@ package com.baidu.brpc.naming;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class BrpcURLTest {
+public class BrpcURITest {
     @Test
     public void testBns() {
         String bns = "bns://test.com";

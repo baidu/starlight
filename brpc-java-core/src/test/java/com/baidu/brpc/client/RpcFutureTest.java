@@ -16,24 +16,6 @@
 
 package com.baidu.brpc.client;
 
-import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.test.BaseMockitoTest;
-import io.netty.util.Timeout;
-import org.junit.Before;
-import org.junit.Test;
-import org.mockito.ArgumentCaptor;
-import org.mockito.Captor;
-import org.mockito.Mock;
-
-import java.lang.reflect.Method;
-import java.util.Collections;
-import java.util.concurrent.TimeUnit;
-
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
@@ -43,6 +25,28 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Method;
+import java.util.Collections;
+import java.util.concurrent.TimeUnit;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
+
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.RpcResponse;
+import com.baidu.brpc.test.BaseMockitoTest;
+
+import io.netty.util.Timeout;
+
 public class RpcFutureTest extends BaseMockitoTest {
     @Mock
     private RpcClient rpcClient;
@@ -51,7 +55,7 @@ public class RpcFutureTest extends BaseMockitoTest {
     @Mock
     private ChannelInfo channelInfo;
     @Mock
-    private BrpcChannelGroup channelGroup;
+    private BrpcChannel channelGroup;
     @Mock
     private RpcCallback<String> rpcCallback;
     @Mock
@@ -67,8 +71,8 @@ public class RpcFutureTest extends BaseMockitoTest {
 
     @Before
     public void init() throws Exception {
-        when(channelInfo.getChannelGroup()).thenReturn(channelGroup);
         when(rpcClient.getInterceptors()).thenReturn(Collections.singletonList(interceptor));
+        when(channelInfo.getChannelGroup()).thenReturn(channelGroup);
         Class clazz = EchoService.class;
         Method method = clazz.getMethod("echo", String.class);
         this.methodInfo = new RpcMethodInfo(method);
@@ -78,24 +82,28 @@ public class RpcFutureTest extends BaseMockitoTest {
     @Test
     public void testAsyncHandleSuccessfulResponse() throws Exception {
         RpcFuture rpcFuture = new RpcFuture<String>(timeout, methodInfo, rpcCallback, channelInfo, rpcClient);
-        RpcResponse response = new RpcResponse();
+        Response response = new RpcResponse();
         response.setResult("hello world");
         rpcFuture.handleResponse(response);
         verify(rpcCallback).success(eq("hello world"));
         verify(interceptor).handleResponse(any(RpcResponse.class));
-        assertThat(rpcFuture.get(), is(response));
+        assertThat(rpcFuture.get(), is(response.getResult()));
     }
 
     @Test
     public void testAsyncHandleFailResponse() throws Exception {
         RpcFuture rpcFuture = new RpcFuture<String>(timeout, methodInfo, rpcCallback, channelInfo, rpcClient);
-        RpcResponse response = new RpcResponse();
+        Response response = new RpcResponse();
         RuntimeException ex = new RuntimeException("dummy");
         response.setException(ex);
         rpcFuture.handleResponse(response);
         verify(rpcCallback).fail(ex);
         verify(interceptor).handleResponse(any(RpcResponse.class));
-        assertThat(rpcFuture.get(), is(response));
+        try {
+            rpcFuture.get();
+        } catch (RpcException ex2) {
+            Assert.assertTrue(ex2.getCause() == ex);
+        }
     }
 
     @Test
@@ -110,31 +118,36 @@ public class RpcFutureTest extends BaseMockitoTest {
 
     @Test
     public void testSyncHandleSuccessfulResponse() throws Exception {
-        RpcFuture rpcFuture = new RpcFuture<String>(timeout, methodInfo, null, channelInfo, rpcClient);
+        RpcFuture<String> rpcFuture = new RpcFuture<String>(timeout, methodInfo, null, channelInfo, rpcClient);
         RpcResponse response = new RpcResponse();
         response.setResult("hello world");
         rpcFuture.handleResponse(response);
-        RpcResponse resp = rpcFuture.get(1, TimeUnit.SECONDS);
-        assertThat((String) resp.getResult(), is("hello world"));
+        String resp = rpcFuture.get(1, TimeUnit.SECONDS);
+        assertThat(resp, is("hello world"));
     }
 
     @Test
     public void testSyncHandleFailResponse() throws Exception {
-        RpcFuture rpcFuture = new RpcFuture<String>(timeout, methodInfo, null, channelInfo, rpcClient);
+        RpcFuture<String> rpcFuture = new RpcFuture<String>(timeout, methodInfo, null, channelInfo, rpcClient);
         RpcResponse response = new RpcResponse();
         RuntimeException ex = new RuntimeException("dummy");
         response.setException(ex);
         rpcFuture.handleResponse(response);
-        RpcResponse resp = rpcFuture.get(1, TimeUnit.SECONDS);
-        assertThat((RuntimeException) resp.getException(), is(ex));
+        try {
+            rpcFuture.get(1, TimeUnit.SECONDS);
+        } catch (RpcException ex2) {
+            Assert.assertTrue(ex2.getCause() == ex);
+        }
     }
 
     @Test
     public void testSyncHandleTimeout() throws Exception {
-        RpcFuture rpcFuture = new RpcFuture<String>(timeout, methodInfo, null, channelInfo, rpcClient);
-        RpcResponse resp = rpcFuture.get(100, TimeUnit.MILLISECONDS);
-        assertThat(resp.getException(), instanceOf(RpcException.class));
-        assertThat(((RpcException) resp.getException()).getCode(), is(RpcException.TIMEOUT_EXCEPTION));
+        RpcFuture<String> rpcFuture = new RpcFuture<String>(timeout, methodInfo, null, channelInfo, rpcClient);
+        try {
+            rpcFuture.get(100, TimeUnit.MILLISECONDS);
+        } catch (RpcException ex2) {
+            Assert.assertTrue(ex2.getCode() == RpcException.TIMEOUT_EXCEPTION);
+        }
     }
 
 }

@@ -16,55 +16,61 @@
 
 package com.baidu.brpc.protocol;
 
-import com.baidu.brpc.exceptions.TooBigDataException;
-import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
-import com.baidu.brpc.exceptions.BadSchemaException;
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.FullHttpResponse;
 
+import io.netty.channel.ChannelFuture;
+
+/**
+ * An abstract protocol used to simplify tcp protocol implementations.
+ * Http protocol implementations extended this class need to override most methods,
+ * or implements {@link Protocol} interface directly.
+ */
 public abstract class AbstractProtocol implements Protocol {
-    public ByteBuf encodeRequest(RpcRequest rpcRequest) throws Exception {
-        return null;
+
+    protected static NotEnoughDataException notEnoughDataException = new NotEnoughDataException();
+
+    @Override
+    public Request createRequest() {
+        // tcp protocol implementation, http protocols should override this method
+        return new RpcRequest();
     }
 
-    public Object decode(DynamicCompositeByteBuf in)
-            throws BadSchemaException, TooBigDataException, NotEnoughDataException {
-        return null;
+    @Override
+    public Response createResponse() {
+        // tcp protocol implementation, http protocols should override this method
+        return new RpcResponse();
     }
 
-    public RpcResponse decodeResponse(Object packet, ChannelHandlerContext ctx) throws Exception {
-        return null;
+    @Override
+    public Request getRequest() {
+        // tcp protocol implementation, http protocols should override this method
+        Request request = RpcRequest.getRpcRequest();
+        request.reset();
+        return request;
     }
 
-
-    public void decodeRequest(Object packet, RpcRequest rpcRequest) throws Exception {
-        return;
+    @Override
+    public Response getResponse() {
+        // tcp protocol implementation, http protocols should override this method
+        Response response = RpcResponse.getRpcResponse();
+        response.reset();
+        return response;
     }
 
-    public ByteBuf encodeResponse(RpcResponse rpcResponse) throws Exception {
-        return null;
+    @Override
+    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannel channelGroup) {
+        // By default, in tcp protocols, there's nothing to to
     }
 
-    public FullHttpRequest encodeHttpRequest(RpcRequest rpcRequest) throws Exception {
-        return null;
-    }
-
-    public RpcResponse decodeHttpResponse(FullHttpResponse httpResponse,
-                                          ChannelHandlerContext ctx) {
-        return null;
-    }
-
-    public void decodeHttpRequest(FullHttpRequest httpRequest, RpcRequest rpcRequest) {
-    }
-
-    public FullHttpResponse encodeHttpResponse(RpcRequest rpcRequest, RpcResponse rpcResponse) {
-        return null;
-    }
-
+    @Override
     public boolean returnChannelBeforeResponse() {
         return true;
+    }
+
+    @Override
+    public void afterResponseSent(Request request, Response response, ChannelFuture channelFuture) {
+        // By default, in tcp protocols, there's nothing to to
     }
 }

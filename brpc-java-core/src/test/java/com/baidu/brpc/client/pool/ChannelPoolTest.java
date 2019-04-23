@@ -15,8 +15,12 @@
  */
 package com.baidu.brpc.client.pool;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
-import io.netty.channel.Channel;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.junit.After;
@@ -25,11 +29,8 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
+import com.baidu.brpc.client.channel.BrpcChannel;
+import io.netty.channel.Channel;
 
 public class ChannelPoolTest {
 
@@ -38,7 +39,7 @@ public class ChannelPoolTest {
     @Before
     public void before() throws Exception {
         ChannelPooledObjectFactory pooledObjectFactory =
-                spy(new ChannelPooledObjectFactory(mock(BrpcChannelGroup.class), "127.0.0.1", 8000));
+                spy(new ChannelPooledObjectFactory(mock(BrpcChannel.class), "127.0.0.1", 8000));
         doAnswer(new Answer<Channel>() {
             public Channel answer(InvocationOnMock invocation) {
                 return mock(Channel.class);

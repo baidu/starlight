@@ -14,28 +14,25 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client.endpoint;
+package com.baidu.brpc.client;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.Controller;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import lombok.extern.slf4j.Slf4j;
 
-public interface EndPointProcessor {
+@Slf4j
+public abstract class RpcCallbackAdaptor<T> implements RpcCallback<T> {
 
-    void addEndPoints(Collection<EndPoint> addList);
+    @Override
+    public void success(T response) {
+    }
 
-    void deleteEndPoints(Collection<EndPoint> deleteList);
+    @Override
+    public void success(Controller controller, T response) {
+    }
 
-    CopyOnWriteArrayList<BrpcChannelGroup> getHealthyInstances();
-
-    CopyOnWriteArrayList<BrpcChannelGroup> getUnHealthyInstances();
-
-    CopyOnWriteArrayList<EndPoint> getEndPoints();
-
-    void updateUnHealthyInstances(List<BrpcChannelGroup> channelGroups);
-
-    void stop();
-
+    @Override
+    public void fail(Throwable e) {
+        log.warn("sync call failed, ex:", e);
+    }
 }

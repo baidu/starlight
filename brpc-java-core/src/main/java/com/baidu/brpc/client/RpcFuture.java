@@ -17,39 +17,36 @@
 package com.baidu.brpc.client;
 
 import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.protocol.RpcContext;
-import com.baidu.brpc.protocol.RpcResponse;
-import io.netty.buffer.ByteBuf;
+import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.utils.CollectionUtils;
 import io.netty.util.Timeout;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.collections.CollectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
 @Setter
 @Getter
-public class RpcFuture<T> implements Future<RpcResponse> {
+public class RpcFuture<T> implements AsyncAwareFuture<T> {
     private static final Logger LOG = LoggerFactory.getLogger(RpcFuture.class);
 
     private CountDownLatch latch;
     private Timeout timeout;
-    private RpcCallback<T> callback;
+
+    private RpcCallback<T> callback;  // callback cannot be set after init
     private ChannelInfo channelInfo;
     private RpcClient rpcClient;
     private RpcMethodInfo rpcMethodInfo;
+    private Controller controller;
 
-    private RpcResponse rpcResponse;
-    private Map<String, String> kvAttachment;
-    private ByteBuf binaryAttachment;
+    private Response response;
     private boolean isDone;
     // record the time of request
     // used in FAIR load balancing
@@ -59,11 +56,12 @@ public class RpcFuture<T> implements Future<RpcResponse> {
     private volatile long logId;
 
     public RpcFuture() {
-
+        this.latch = new CountDownLatch(1);
     }
 
     public RpcFuture(long logId) {
         this.logId = logId;
+        this.latch = new CountDownLatch(1);
     }
 
     public RpcFuture(Timeout timeout,
@@ -88,8 +86,8 @@ public class RpcFuture<T> implements Future<RpcResponse> {
         this.rpcClient = rpcClient;
     }
 
-    protected void processConnection(RpcResponse response) {
-        this.rpcResponse = response;
+    public void handleConnection(Response response) {
+        this.response = response;
         this.endTime = System.currentTimeMillis();
 
         // only long connection need to update channel group
@@ -104,47 +102,57 @@ public class RpcFuture<T> implements Future<RpcResponse> {
         } else {
             channelInfo.getChannelGroup().close();
         }
+
+        timeout.cancel();
+        latch.countDown();
+        isDone = true;
     }
 
-    public void handleResponse(RpcResponse rpcResponse) {
-        processConnection(rpcResponse);
+    public void handleResponse(Response response) {
+        handleConnection(response);
+        if (response != null) {
+            if (response.getBinaryAttachment() != null) {
+                if (controller == null) {
+                    LOG.error("controller can not be null when attachment exist");
+                    controller = new Controller();
+                }
+                controller.setResponseBinaryAttachment(response.getBinaryAttachment());
+            }
+            if (response.getKvAttachment() != null) {
+                if (controller == null) {
+                    LOG.error("controller can not be null when attachment exist");
+                    controller = new Controller();
+                }
+                controller.setResponseKvAttachment(response.getKvAttachment());
+            }
+        }
 
-        RpcContext rpcContext = RpcContext.getContext();
-        if (rpcResponse != null) {
-            rpcContext.setResponseBinaryAttachment(rpcResponse.getBinaryAttachment());
-            rpcContext.setResponseKvAttachment(rpcResponse.getKvAttachment());
-            this.kvAttachment = rpcResponse.getKvAttachment();
-            this.binaryAttachment = rpcResponse.getBinaryAttachment();
+        // invoke the chain of interceptors when async scene
+        if (isAsync() && CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
+            int length = rpcClient.getInterceptors().size();
+            for (int i = length - 1; i >= 0; i--) {
+                rpcClient.getInterceptors().get(i).handleResponse(response);
+            }
         }
-        try {
-            timeout.cancel();
-            latch.countDown();
-            if (callback != null) {
-                // async mode
-                // invoke the chain of interceptors
-                // in case of sync invocation, the interceptors will be invoked by BrpcProxy
-                if (CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
-                    int length = rpcClient.getInterceptors().size();
-                    for (int i = length - 1; i >= 0; i--) {
-                        rpcClient.getInterceptors().get(i).handleResponse(rpcResponse);
-                    }
-                }
-                if (rpcResponse == null) {
-                    callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
-                } else if (rpcResponse.getResult() != null) {
-                    callback.success((T) rpcResponse.getResult());
+
+        if (isAsync()) {
+            if (response == null) {
+                callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
+            } else if (response.getResult() != null) {
+                if (controller != null) {
+                    callback.success(controller, (T) response.getResult());
                 } else {
-                    callback.fail(rpcResponse.getException());
+                    callback.success((T) response.getResult());
                 }
+            } else {
+                callback.fail(response.getException());
             }
-            isDone = true;
-        } finally {
-            // in case of async invocation, response will be released in callback thread
-            if (callback != null && rpcResponse != null) {
-                rpcResponse.delRefCntForClient();
-            }
-            RpcContext.removeContext();
         }
+    }
+
+    @Override
+    public boolean isAsync() {
+        return callback != null;
     }
 
     @Override
@@ -163,34 +171,35 @@ public class RpcFuture<T> implements Future<RpcResponse> {
     }
 
     @Override
-    public RpcResponse get() throws InterruptedException {
+    public T get() throws InterruptedException {
         latch.await();
-        RpcContext rpcContext = RpcContext.getContext();
-        rpcContext.setResponseBinaryAttachment(binaryAttachment);
-        rpcContext.setRequestKvAttachment(kvAttachment);
-        return rpcResponse;
+        if (response == null) {
+            throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
+        }
+        if (response.getException() != null) {
+            throw new RpcException(response.getException());
+        }
+        return (T) response.getResult();
     }
 
     @Override
-    public RpcResponse get(long timeout, TimeUnit unit) {
+    public T get(long timeout, TimeUnit unit) {
         try {
-            if (latch.await(timeout, unit)) {
-                RpcContext rpcContext = RpcContext.getContext();
-                rpcContext.setResponseBinaryAttachment(binaryAttachment);
-                rpcContext.setRequestKvAttachment(kvAttachment);
-                return rpcResponse;
-            } else {
-                LOG.warn("sync call time out");
-                RpcResponse rpcResponse = new RpcResponse();
-                rpcResponse.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, "timeout"));
-                return rpcResponse;
+            boolean ret = latch.await(timeout, unit);
+            if (!ret || response == null) {
+                throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
             }
+            if (response.getException() != null) {
+                throw new RpcException(response.getException());
+            }
+            return (T) response.getResult();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            LOG.warn("sync call is interrupted, {}", e);
-            RpcResponse rpcResponse = new RpcResponse();
-            rpcResponse.setException(new RpcException(RpcException.UNKNOWN_EXCEPTION, "sync call is interrupted"));
-            return rpcResponse;
+            throw new RpcException(RpcException.UNKNOWN_EXCEPTION);
         }
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + "@logId = " + logId;
     }
 }

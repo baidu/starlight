@@ -16,15 +16,16 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
-import com.baidu.brpc.test.BaseMockitoTest;
-import org.junit.Test;
-
-import java.util.List;
-
 import static org.hamcrest.CoreMatchers.hasItems;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
+
+import java.util.List;
+
+import org.junit.Test;
+
+import com.baidu.brpc.client.instance.Endpoint;
+import com.baidu.brpc.test.BaseMockitoTest;
 
 public class DnsNamingServiceTest extends BaseMockitoTest {
 
@@ -33,8 +34,8 @@ public class DnsNamingServiceTest extends BaseMockitoTest {
         String serverList = "dns://127.0.0.1:8888";
         DnsNamingService namingService = new DnsNamingService(new BrpcURL(serverList));
         assertThat(namingService.getHostPort(), is("127.0.0.1:8888"));
-        List<EndPoint> endPoints = namingService.lookup(null);
-        assertThat(endPoints, hasItems(new EndPoint("127.0.0.1", 8888)));
+        List<Endpoint> endPoints = namingService.lookup(null);
+        assertThat(endPoints, hasItems(new Endpoint("127.0.0.1", 8888)));
         namingService.unsubscribe(null);
     }
 
@@ -42,7 +43,6 @@ public class DnsNamingServiceTest extends BaseMockitoTest {
     public void testEmptyServerList() {
         DnsNamingService namingService = new DnsNamingService(new BrpcURL(""));
         namingService.lookup(null);
-        namingService.unsubscribe(null);
     }
 
 }

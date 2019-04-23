@@ -16,16 +16,17 @@
 
 package com.baidu.brpc.server.currentlimit;
 
-import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.interceptor.CurrentLimitInterceptor;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
-import com.baidu.brpc.server.RpcServer;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.BrpcProxy;
+import com.baidu.brpc.interceptor.CurrentLimitInterceptor;
+import com.baidu.brpc.server.RpcServer;
 
 public class CurrentLimitTest {
 

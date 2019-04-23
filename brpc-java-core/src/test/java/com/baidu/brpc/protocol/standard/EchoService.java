@@ -17,6 +17,7 @@
 package com.baidu.brpc.protocol.standard;
 
 import com.baidu.brpc.protocol.BrpcMeta;
+import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -30,5 +31,6 @@ public interface EchoService {
      */
     @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
 //    @BrpcMeta(serviceName = "EchoService", methodName = "0")
+    @NSHeadMeta
     Echo.EchoResponse echo(Echo.EchoRequest request);
 }

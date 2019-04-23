@@ -29,7 +29,6 @@ import java.util.Vector;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.baidu.brpc.spring.PropertyPlaceholderConfigurerTool;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanUtils;
@@ -61,6 +60,7 @@ import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
 
 import com.baidu.brpc.spring.PlaceholderResolver;
+import com.baidu.brpc.spring.PropertyPlaceholderConfigurerTool;
 
 /**
  * Common annotation bean post processor. it uses {@link AnnotationParserCallback}<br>
@@ -216,8 +216,8 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
      * @return the actual property values to apply to to the given bean (can be the passed-in PropertyValues instance),
      *         or {@code null} to skip property population
      * @throws BeansException the beans exception
-     * @throws BeansException in case of errors
-     * @see MutablePropertyValues
+     * @throws org.springframework.beans.BeansException in case of errors
+     * @see org.springframework.beans.MutablePropertyValues
      */
     public PropertyValues postProcessPropertyValues(PropertyValues pvs, PropertyDescriptor[] pds, Object bean,
             String beanName) throws BeansException {

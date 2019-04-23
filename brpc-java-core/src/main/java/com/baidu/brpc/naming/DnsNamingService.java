@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
@@ -37,7 +37,7 @@ public class DnsNamingService implements NamingService {
     private String host;
     private int port;
     private String hostPort;
-    private List<EndPoint> lastEndPoints = new ArrayList<EndPoint>();
+    private List<Endpoint> lastEndPoints = new ArrayList<Endpoint>();
     private Timer namingServiceTimer;
     private int updateInterval;
 
@@ -60,7 +60,7 @@ public class DnsNamingService implements NamingService {
     }
 
     @Override
-    public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
+    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
         InetAddress[] addresses;
         try {
             addresses = InetAddress.getAllByName(host);
@@ -68,9 +68,9 @@ public class DnsNamingService implements NamingService {
             throw new IllegalArgumentException("unknown http host");
         }
 
-        List<EndPoint> endPoints = new ArrayList<EndPoint>();
+        List<Endpoint> endPoints = new ArrayList<Endpoint>();
         for (InetAddress address : addresses) {
-            EndPoint endPoint = new EndPoint(address.getHostAddress(), port);
+            Endpoint endPoint = new Endpoint(address.getHostAddress(), port);
             endPoints.add(endPoint);
         }
         this.lastEndPoints = endPoints;
@@ -84,10 +84,10 @@ public class DnsNamingService implements NamingService {
                     @Override
                     public void run(Timeout timeout) throws Exception {
                         try {
-                            List<EndPoint> currentEndPoints = lookup(null);
-                            Collection<EndPoint> addList = CollectionUtils.subtract(
+                            List<Endpoint> currentEndPoints = lookup(null);
+                            Collection<Endpoint> addList = CollectionUtils.subtract(
                                     currentEndPoints, lastEndPoints);
-                            Collection<EndPoint> deleteList = CollectionUtils.subtract(
+                            Collection<Endpoint> deleteList = CollectionUtils.subtract(
                                     lastEndPoints, currentEndPoints);
                             listener.notify(addList, deleteList);
                         } catch (Exception ex) {

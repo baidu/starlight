@@ -16,18 +16,20 @@
 
 package com.baidu.brpc.client;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import static org.junit.Assert.assertEquals;
+
+import java.util.Map;
+
+import org.junit.Assert;
+import org.junit.Test;
+
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.server.RpcServer;
+
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
-import org.junit.Test;
-
-import java.util.Map;
-
-import static org.junit.Assert.assertEquals;
 
 @Slf4j
 public class ClientInitTest {
@@ -64,7 +66,7 @@ public class ClientInitTest {
         secondRpcClient.stop();
 
         // new third rpc client for short connection
-        EndPoint endPoint = new EndPoint("127.0.0.1", 8000);
+        Endpoint endPoint = new Endpoint("127.0.0.1", 8000);
         long thirdStartTime = System.currentTimeMillis();
         RpcClient thirdConnectionRpcClient = new RpcClient(endPoint);
         long thirdEndTime = System.currentTimeMillis();

@@ -1,7 +1,12 @@
 package com.baidu.brpc.example.http.proto;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.Future;
+
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
+import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
@@ -14,17 +19,11 @@ import com.baidu.brpc.example.standard.EchoServiceAsync;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options.ProtocolType;
-import com.google.gson.Gson;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Future;
 
 public class RpcClientTest {
 
     public static void main(String[] args) {
         RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setHttp(true);
         clientOption.setProtocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
         clientOption.setReadTimeoutMillis(5000);
@@ -54,7 +53,7 @@ public class RpcClientTest {
 
         // async call
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-        RpcCallback callback = new RpcCallback<EchoResponse>() {
+        RpcCallback callback = new RpcCallbackAdaptor<EchoResponse>() {
             @Override
             public void success(EchoResponse response) {
                 if (response != null) {

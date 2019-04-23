@@ -16,10 +16,10 @@
 
 package com.baidu.brpc;
 
-import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.google.protobuf.CodedOutputStream;
+import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.ByteBufOutputStream;

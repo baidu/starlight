@@ -25,8 +25,8 @@ public interface EchoService {
     /**
      * brpc/sofa：
      * serviceName默认是包名 + 类名，methodName是proto文件Service内对应方法名，
-     * hulu：
-     * serviceName默认是类名，methodName是proto文件Service内对应方法index。
+     * hulu/public_pbrpc：
+     * serviceName默认是类名，不需要加包名，methodName是proto文件Service内对应方法index，默认从0开始。
      */
     @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
 //    @BrpcMeta(serviceName = "EchoService", methodName = "0")
