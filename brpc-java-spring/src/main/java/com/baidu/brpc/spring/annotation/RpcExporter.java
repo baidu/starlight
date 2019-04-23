@@ -82,4 +82,10 @@ public @interface RpcExporter {
      * @return true, ignore
      */
     boolean ignoreFailOfNamingService() default false;
+
+    /**
+     * true: use the default single instance thread pool
+     * false: create individual thread pool for register service
+     */
+    boolean useSharedThreadPool() default true;
 }

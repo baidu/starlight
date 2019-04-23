@@ -22,13 +22,7 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import java.lang.reflect.InvocationTargetException;
-
-import com.baidu.brpc.Controller;
-import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.DefaultInterceptorChain;
-import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
@@ -104,6 +98,7 @@ public class DecodeWorkTask implements Runnable {
                 }
             } catch (Exception ex) {
                 log.warn("send status info response failed:", ex);
+                return;
             }
         }
 
@@ -116,75 +111,26 @@ public class DecodeWorkTask implements Runnable {
             log.warn("decode request failed:", ex);
             response.setException(new RpcException(ex));
         }
-        if (request == null || request.getRpcMethodInfo() == null) {
-            // throw request
-            String warn = "decode request is null or request rpcmethordInfo is null!";
-            log.warn(warn);
-            response.setException(new RpcException(warn));
-        }
-        ThreadPool threadPool = request.getRpcMethodInfo().getThreadPool();
-        if (threadPool.equals(rpcServer.getThreadPool())) {
-            workTask(request, response);
-        } else {
-            ServerWorkTask task = new ServerWorkTask(rpcServer, packet, protocol, request, response, ctx);
-            threadPool.submit(task);
-        }
-    }
 
-    private void workTask(Request request, Response response) {
-
-        Controller controller = null;
-        if (request != null) {
-            request.setChannel(ctx.channel());
-            if (request.getRpcMethodInfo().isIncludeController()
-                    || request.getBinaryAttachment() != null
-                    || request.getKvAttachment() != null) {
-                controller = new Controller();
-                if (request.getBinaryAttachment() != null) {
-                    controller.setRequestBinaryAttachment(request.getBinaryAttachment());
-                }
-                if (request.getKvAttachment() != null) {
-                    controller.setRequestKvAttachment(request.getKvAttachment());
-                }
-                controller.setRemoteAddress(ctx.channel().remoteAddress());
-                request.setController(controller);
-            }
-
-            response.setLogId(request.getLogId());
-            response.setCompressType(request.getCompressType());
-            response.setException(request.getException());
-            response.setRpcMethodInfo(request.getRpcMethodInfo());
-        }
-
-        if (response.getException() == null) {
+        if (request == null || response.getException() != null) {
             try {
-                InterceptorChain interceptorChain = new DefaultInterceptorChain(rpcServer.getInterceptors());
-                interceptorChain.intercept(request, response);
-                if (controller != null && controller.getResponseBinaryAttachment() != null
-                        && controller.getResponseBinaryAttachment().isReadable()) {
-                    response.setBinaryAttachment(controller.getResponseBinaryAttachment());
-                }
-            } catch (InvocationTargetException ex) {
-                Throwable targetException = ex.getTargetException();
-                if (targetException == null) {
-                    targetException = ex;
-                }
-                String errorMsg = String.format("invoke method failed, msg=%s", targetException.getMessage());
-                log.warn(errorMsg, targetException);
-                response.setException(targetException);
-            } catch (Throwable ex) {
-                String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
-                log.warn(errorMsg, ex);
-                response.setException(ex);
+                ByteBuf byteBuf = protocol.encodeResponse(request, response);
+                ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);
+                protocol.afterResponseSent(request, response, channelFuture);
+            } catch (Exception ex) {
+                log.warn("send response failed:", ex);
             }
+            return;
         }
 
-        try {
-            ByteBuf byteBuf = protocol.encodeResponse(request, response);
-            ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);
-            protocol.afterResponseSent(request, response, channelFuture);
-        } catch (Exception ex) {
-            log.warn("send response failed:", ex);
+        ThreadPool threadPool = request.getRpcMethodInfo().getThreadPool();
+        ServerWorkTask workTask = new ServerWorkTask(rpcServer, protocol, request, response, ctx);
+        if (threadPool == rpcServer.getThreadPool()) {
+            // service run in the current thread
+            workTask.run();
+        } else {
+            // service run in individual thread
+            threadPool.submit(workTask);
         }
     }
 }

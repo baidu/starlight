@@ -64,6 +64,7 @@ public class ServiceManager {
         Method[] methods = clazz.getDeclaredMethods();
         registerService(methods, service, threadPool);
     }
+
     public void registerService(Class targetClass, Object service, ThreadPool threadPool) {
         Class[] interfaces = targetClass.getInterfaces();
         if (interfaces.length != 1) {
@@ -74,6 +75,7 @@ public class ServiceManager {
         Method[] methods = clazz.getDeclaredMethods();
         registerService(methods, service, threadPool);
     }
+
     protected void registerService(Method[] methods, Object service, ThreadPool threadPool) {
         for (Method method : methods) {
             RpcMethodInfo methodInfo;

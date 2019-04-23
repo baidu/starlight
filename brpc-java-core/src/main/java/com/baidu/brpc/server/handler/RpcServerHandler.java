@@ -67,8 +67,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
             while (channelInfo.getRecvBuf().readableBytes() > 0) {
                 try {
                     Object packet = decodeHeader(ctx, channelInfo, channelInfo.getRecvBuf());
-                    DecodeWorkTask task = new DecodeWorkTask(rpcServer, packet, channelInfo.getProtocol(),
-                            ctx);
+                    DecodeWorkTask task = new DecodeWorkTask(rpcServer, packet, channelInfo.getProtocol(), ctx);
                     tasks[i++] = task;
                     if (i == 64) {
                         rpcServer.getThreadPool().submit(tasks, 0, i);

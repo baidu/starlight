@@ -46,7 +46,6 @@ public class RpcMethodInfo {
     // instance of interface which method belongs to
     protected Object target;
     protected boolean includeController;
-
     protected ThreadPool threadPool;
 
     public RpcMethodInfo(Method method) {

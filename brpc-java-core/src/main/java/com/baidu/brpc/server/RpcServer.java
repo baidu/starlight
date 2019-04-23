@@ -91,7 +91,7 @@ public class RpcServer {
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private Protocol protocol;
     private ThreadPool threadPool;
-    private List<ThreadPool> customizedThreadPool = new ArrayList<ThreadPool>();
+    private List<ThreadPool> customThreadPools = new ArrayList<ThreadPool>();
     private NamingService namingService;
     private List<Object> serviceList = new ArrayList<Object>();
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
@@ -223,11 +223,15 @@ public class RpcServer {
         registerService(service, null, null);
     }
 
-    public void registerService(Object service, RpcServerOptions rpcServerOptions) {
-        registerService(service, null, rpcServerOptions);
+    public void registerService(Object service, NamingOptions namingOptions) {
+        registerService(service, namingOptions, null);
     }
 
-    public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions rpcServerOptions) {
+    public void registerService(Object service, RpcServerOptions serverOptions) {
+        registerService(service, null, serverOptions);
+    }
+
+    public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions serverOptions) {
         serviceList.add(service);
         RegisterInfo registerInfo = new RegisterInfo();
         registerInfo.setService(service.getClass().getInterfaces()[0].getName());
@@ -239,13 +243,13 @@ public class RpcServer {
             registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
         }
         ServiceManager serviceManager = ServiceManager.getInstance();
-        ThreadPool threadPool = this.threadPool;
-        if (rpcServerOptions != null) {
-            threadPool = new ThreadPool(rpcServerOptions.getCustomizedWorkThreadNum(),
-                    new CustomThreadFactory("brpc-customized-work-thread"));
-            customizedThreadPool.add(threadPool);
+        ThreadPool customThreadPool = threadPool;
+        if (serverOptions != null) {
+            customThreadPool = new ThreadPool(serverOptions.getWorkThreadNum(),
+                    new CustomThreadFactory(service.getClass().getSimpleName() + "-work-thread"));
+            customThreadPools.add(customThreadPool);
         }
-        serviceManager.registerService(service, threadPool);
+        serviceManager.registerService(service, customThreadPool);
         registerInfoList.add(registerInfo);
     }
 
@@ -287,9 +291,10 @@ public class RpcServer {
         if (bossGroup != null) {
             bossGroup.shutdownGracefully();
         }
-        if (CollectionUtils.isNotEmpty(customizedThreadPool)) {
-            LOG.info("clean customized theadPool");
-            for (ThreadPool pool : customizedThreadPool) {
+
+        if (CollectionUtils.isNotEmpty(customThreadPools)) {
+            LOG.info("clean customized ThreadPool");
+            for (ThreadPool pool : customThreadPools) {
                 pool.stop();
             }
         }

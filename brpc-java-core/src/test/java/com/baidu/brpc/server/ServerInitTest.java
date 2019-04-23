@@ -26,7 +26,6 @@ public class ServerInitTest {
 
         RpcServer rpcServer2 = new RpcServer(8001);
         RpcServerOptions options = new RpcServerOptions();
-        options.setCustomizedWorkThreadNum(10);
         rpcServer2.registerService(new EchoServiceImpl(), options);
         rpcServer2.start();
 
@@ -35,12 +34,11 @@ public class ServerInitTest {
         EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         echoService.echo(request);
 
-
         int processor = Runtime.getRuntime().availableProcessors();
         ThreadNumStat stat1 = calThreadNum();
         Assert.assertEquals(processor, stat1.ioThreadNum);
         Assert.assertEquals(processor, stat1.workThreadNum);
-        Assert.assertEquals(10, stat1.customizedWorkThreadNum);
+        Assert.assertEquals(processor, stat1.customWorkThreadNum);
 
         rpcServer1.shutdown();
         rpcServer2.shutdown();
@@ -49,7 +47,7 @@ public class ServerInitTest {
 
         Assert.assertEquals(processor, stat2.ioThreadNum);
         Assert.assertEquals(processor, stat2.workThreadNum);
-        Assert.assertEquals(0, stat2.customizedWorkThreadNum);
+        Assert.assertEquals(0, stat2.customWorkThreadNum);
 
     }
 
@@ -68,24 +66,23 @@ public class ServerInitTest {
                 stat.workThreadNum ++;
             } else if (thread.getName().contains("server-acceptor-thread")) {
                 stat.acceptorThreadNum ++;
-            } else if (thread.getName().contains("brpc-customized-work-thread")) {
-                stat.customizedWorkThreadNum ++;
+            } else if (thread.getName().contains("EchoServiceImpl-work-thread")) {
+                stat.customWorkThreadNum ++;
             }
         }
 
         log.info("thread statistic data, ioThreadNum : {}, \n workThreadNum : {}, acceptorThreadNum : {}, "
                         + "customizedWorkThreadNum : {}",
-                stat.ioThreadNum, stat.workThreadNum, stat.acceptorThreadNum, stat.customizedWorkThreadNum);
+                stat.ioThreadNum, stat.workThreadNum, stat.acceptorThreadNum, stat.customWorkThreadNum);
 
         return stat;
     }
 
     public static class ThreadNumStat {
-
         public int ioThreadNum;
         public int workThreadNum;
         public int acceptorThreadNum;
-        public int customizedWorkThreadNum;
+        public int customWorkThreadNum;
     }
 
 }

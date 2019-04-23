@@ -57,11 +57,13 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
 
     public RpcFuture() {
         this.latch = new CountDownLatch(1);
+        this.startTime = System.currentTimeMillis();
     }
 
     public RpcFuture(long logId) {
         this.logId = logId;
         this.latch = new CountDownLatch(1);
+        this.startTime = System.currentTimeMillis();
     }
 
     public RpcFuture(Timeout timeout,
