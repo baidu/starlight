@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.baidu.brpc.client.channel.ChannelType;
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.standard.Echo;
@@ -47,7 +47,7 @@ public class RpcShortConnectionClientTest {
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
-        EndPoint endPoint = new EndPoint("127.0.0.1", 38001);
+        Endpoint endPoint = new Endpoint("127.0.0.1", 38001);
         RpcClientOptions rpcClientOptions = new RpcClientOptions();
         rpcClientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
         rpcClientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
@@ -74,7 +74,7 @@ public class RpcShortConnectionClientTest {
         clientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
         clientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
 
-        EndPoint endPoint = new EndPoint("127.0.0.1", 38001);
+        Endpoint endPoint = new Endpoint("127.0.0.1", 38001);
         RpcClient rpcClient = new RpcClient(endPoint, clientOptions);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
@@ -97,7 +97,7 @@ public class RpcShortConnectionClientTest {
         clientOptions.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
         clientOptions.setLoadBalanceType(LoadBalanceType.RANDOM.getId());
         clientOptions.setChannelType(ChannelType.SHORT_CONNECTION);
-        EndPoint endPoint = new EndPoint("127.0.0.1", 38001);
+        Endpoint endPoint = new Endpoint("127.0.0.1", 38001);
 
         RpcClient rpcClient = new RpcClient(endPoint, clientOptions);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);

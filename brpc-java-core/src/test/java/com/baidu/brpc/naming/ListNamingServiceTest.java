@@ -18,8 +18,9 @@ package com.baidu.brpc.naming;
 
 import java.util.List;
 
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.test.BaseMockitoTest;
-import com.baidu.brpc.client.endpoint.EndPoint;
+
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.hasItems;
@@ -32,10 +33,10 @@ public class ListNamingServiceTest extends BaseMockitoTest {
     public void testUpdateServerList() {
         String serverList = "list://1.1.1.1:1111,2.2.2.2:2222";
         ListNamingService namingService = new ListNamingService(new BrpcURL(serverList));
-        List<EndPoint> endPoints = namingService.lookup(null);
+        List<Endpoint> endPoints = namingService.lookup(null);
         assertThat(endPoints, hasItems(
-                new EndPoint("1.1.1.1", 1111),
-                new EndPoint("2.2.2.2", 2222)
+                new Endpoint("1.1.1.1", 1111),
+                new Endpoint("2.2.2.2", 2222)
         ));
         assertThat(endPoints.size(), is(2));
     }

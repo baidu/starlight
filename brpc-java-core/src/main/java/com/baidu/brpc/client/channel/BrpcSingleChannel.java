@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
  * BrpcSingleChannel class keeps single persistent connection with one server
  */
 @Slf4j
-public class BrpcSingleChannel extends AbstractBrpcChannelGroup {
+public class BrpcSingleChannel extends AbstractBrpcChannel {
 
     private static final int RETRY_THRESHOLD = 2;
 

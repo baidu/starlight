@@ -20,7 +20,7 @@ import java.util.Random;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 
 /**
  * Simple random select load balance strategy implementation
@@ -35,15 +35,15 @@ public class RandomStrategy implements LoadBalanceStrategy {
     }
 
     @Override
-    public BrpcChannelGroup selectInstance(CopyOnWriteArrayList<BrpcChannelGroup> instances) {
+    public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
         long instanceNum = instances.size();
         if (instanceNum == 0) {
             return null;
         }
 
         int index = (int) (getRandomLong() % instanceNum);
-        BrpcChannelGroup channelGroup = instances.get(index);
-        return channelGroup;
+        BrpcChannel brpcChannel = instances.get(index);
+        return brpcChannel;
     }
 
     @Override

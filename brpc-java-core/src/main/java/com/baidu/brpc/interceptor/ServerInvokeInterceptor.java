@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,19 +19,18 @@ package com.baidu.brpc.interceptor;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 
-public abstract class AbstractInterceptor implements Interceptor {
-
-    @Override
-    public boolean handleRequest(Request request) {
-        return true;
-    }
-
-    @Override
-    public void handleResponse(Response response) {
-    }
-
+public class ServerInvokeInterceptor extends AbstractInterceptor {
     @Override
     public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
-        chain.intercept(request, response);
+        if (request.getRpcMethodInfo().isIncludeController()) {
+            Object[] args = new Object[request.getArgs().length + 1];
+            args[0] = request.getController();
+            for (int i = 0; i < request.getArgs().length; i++) {
+                args[i + 1] = request.getArgs()[i];
+            }
+            response.setResult(request.getTargetMethod().invoke(request.getTarget(), args));
+        } else {
+            response.setResult(request.getTargetMethod().invoke(request.getTarget(), request.getArgs()));
+        }
     }
 }

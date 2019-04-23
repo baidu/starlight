@@ -17,7 +17,7 @@
 package com.baidu.brpc.protocol;
 
 import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
 
 import io.netty.channel.ChannelFuture;
@@ -60,7 +60,7 @@ public abstract class AbstractProtocol implements Protocol {
     }
 
     @Override
-    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannelGroup channelGroup) {
+    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannel channelGroup) {
         // By default, in tcp protocols, there's nothing to to
     }
 

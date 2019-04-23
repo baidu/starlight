@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,11 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client.loadbalance;
+package com.baidu.brpc.interceptor;
 
-import java.util.concurrent.CopyOnWriteArrayList;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
 
-import com.baidu.brpc.client.channel.BrpcChannel;
-import com.baidu.brpc.client.RpcClient;
-
-/**
- * load balance strategy interface
- */
-public interface LoadBalanceStrategy {
-
-    void init(RpcClient rpcClient);
-
-    BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances);
-
-    void destroy();
+public interface InterceptorChain {
+    void intercept(Request request, Response response) throws Exception;
 }

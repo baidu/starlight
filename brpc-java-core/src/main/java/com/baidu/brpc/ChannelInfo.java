@@ -19,7 +19,7 @@ package com.baidu.brpc;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.FastFutureStore;
 import com.baidu.brpc.client.RpcFuture;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
@@ -40,7 +40,7 @@ public class ChannelInfo {
     private static final AttributeKey<ChannelInfo> SERVER_CHANNEL_KEY = AttributeKey.valueOf("server_key");
 
     private Channel channel;
-    private BrpcChannelGroup channelGroup;
+    private BrpcChannel channelGroup;
     // 是否来自于业务RpcContext手动设置的
     private boolean fromRpcContext = false;
     private Protocol protocol;

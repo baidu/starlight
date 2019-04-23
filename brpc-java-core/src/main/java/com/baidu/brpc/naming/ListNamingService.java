@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import org.apache.commons.lang3.Validate;
 
 import java.util.ArrayList;
@@ -26,7 +26,7 @@ import java.util.List;
  * Fetch service list from List Naming Service
  */
 public class ListNamingService implements NamingService {
-    private List<EndPoint> endPoints;
+    private List<Endpoint> endPoints;
 
     public ListNamingService(BrpcURL namingUrl) {
         Validate.notNull(namingUrl);
@@ -34,7 +34,7 @@ public class ListNamingService implements NamingService {
 
         String hostPorts = namingUrl.getHostPorts();
         String[] hostPortSplits = hostPorts.split(",");
-        this.endPoints = new ArrayList<EndPoint>(hostPortSplits.length);
+        this.endPoints = new ArrayList<Endpoint>(hostPortSplits.length);
         for (String hostPort : hostPortSplits) {
             String[] hostPortSplit = hostPort.split(":");
             String host = hostPortSplit[0];
@@ -44,12 +44,12 @@ public class ListNamingService implements NamingService {
             } else {
                 port = 80;
             }
-            endPoints.add(new EndPoint(host, port));
+            endPoints.add(new Endpoint(host, port));
         }
     }
 
     @Override
-    public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
+    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
         return endPoints;
     }
 

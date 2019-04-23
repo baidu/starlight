@@ -38,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 
 @Slf4j
-public class BrpcPooledChannel extends AbstractBrpcChannelGroup {
+public class BrpcPooledChannel extends AbstractBrpcChannel {
 
     private GenericObjectPool<Channel> channelFuturePool;
     private volatile long failedNum;
@@ -111,8 +111,8 @@ public class BrpcPooledChannel extends AbstractBrpcChannelGroup {
     @Override
     public boolean equals(Object obj) {
         boolean flag = false;
-        if (obj != null && BrpcChannelGroup.class.isAssignableFrom(obj.getClass())) {
-            BrpcChannelGroup f = (BrpcChannelGroup) obj;
+        if (obj != null && BrpcChannel.class.isAssignableFrom(obj.getClass())) {
+            BrpcChannel f = (BrpcChannel) obj;
             flag = new EqualsBuilder()
                     .append(ip, f.getIp())
                     .append(port, f.getPort())

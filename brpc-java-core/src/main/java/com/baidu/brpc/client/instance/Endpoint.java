@@ -14,24 +14,32 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client.endpoint;
+package com.baidu.brpc.client.instance;
 
 import org.apache.commons.lang3.Validate;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public class EndPoint {
+import lombok.Getter;
+import lombok.Setter;
+
+@Setter
+@Getter
+public class Endpoint {
 
     private String ip;
 
     private int port;
 
-    public EndPoint(String ip, int port) {
+    public Endpoint() {
+    }
+
+    public Endpoint(String ip, int port) {
         this.ip = ip;
         this.port = port;
     }
 
-    public EndPoint(String address) {
+    public Endpoint(String address) {
         Validate.notEmpty(address);
         String[] splits = address.split(":");
         Validate.isTrue(2 == splits.length);
@@ -50,8 +58,8 @@ public class EndPoint {
     @Override
     public boolean equals(Object object) {
         boolean flag = false;
-        if (object != null && EndPoint.class.isAssignableFrom(object.getClass())) {
-            EndPoint rhs = (EndPoint) object;
+        if (object != null && Endpoint.class.isAssignableFrom(object.getClass())) {
+            Endpoint rhs = (Endpoint) object;
             flag = new EqualsBuilder()
                     .append(ip, rhs.ip)
                     .append(port, rhs.port)
@@ -62,23 +70,6 @@ public class EndPoint {
 
     @Override
     public String toString() {
-        return String.format("EndPoint{\'%s:%d\'}", ip, port);
+        return String.format("Endpoint{\'%s:%d\'}", ip, port);
     }
-
-    public String getIp() {
-        return ip;
-    }
-
-    public void setIp(String ip) {
-        this.ip = ip;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
 }

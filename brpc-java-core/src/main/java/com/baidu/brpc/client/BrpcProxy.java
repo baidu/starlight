@@ -22,15 +22,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.interceptor.DefaultInterceptorChain;
+import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.nshead.NSHead;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.utils.ProtobufUtils;
@@ -133,6 +135,8 @@ public class BrpcProxy implements MethodInterceptor {
 
     public static <T> T getProxy(RpcClient rpcClient, Class clazz, NamingOptions namingOptions) {
         rpcClient.setServiceInterface(clazz, namingOptions);
+        rpcClient.getLoadBalanceInterceptor().setRpcClient(rpcClient);
+        rpcClient.getInterceptors().add(rpcClient.getLoadBalanceInterceptor());
         Enhancer en = new Enhancer();
         en.setSuperclass(clazz);
         en.setCallback(new BrpcProxy(rpcClient, clazz));
@@ -193,8 +197,9 @@ public class BrpcProxy implements MethodInterceptor {
                     sendArgs[i] = args[startIndex++];
                 }
                 request.setArgs(sendArgs);
+                request.setCallback(callback);
             } else {
-                // 同步调用
+                // sync call
                 request.setArgs(args);
             }
 
@@ -209,44 +214,27 @@ public class BrpcProxy implements MethodInterceptor {
                 if (controller.getNsHeadLogId() != null) {
                     request.getNsHead().logId = controller.getNsHeadLogId();
                 }
+                request.setController(controller);
             }
 
-
-            int currentTryTimes = 0;
-            RpcException exception = null;
-            while (currentTryTimes++ < rpcClient.getRpcClientOptions().getMaxTryTimes()) {
-                try {
-                    AsyncAwareFuture future = rpcClient.sendRequest(controller, request, callback);
-                    if (future.isAsync()) {
-                        return future;
-
-                    } else {
-                        final long readTimeout;
-                        if (controller != null && controller.getReadTimeoutMillis() != null) {
-                            readTimeout = controller.getReadTimeoutMillis();
-                        } else {
-                            readTimeout = rpcClient.getRpcClientOptions().getReadTimeoutMillis();
-                        }
-                        return future.get(readTimeout, TimeUnit.MILLISECONDS);
-                    }
-                } catch (RpcException ex) {
-                    exception = ex;
+            Response response = rpcClient.getProtocol().getResponse();
+            InterceptorChain interceptorChain = new DefaultInterceptorChain(rpcClient.getInterceptors());
+            try {
+                interceptorChain.intercept(request, response);
+                if (response.getException() != null) {
+                    throw new RpcException(response.getException());
                 }
-                // if application set the channel, brpc-java will not do retrying.
-                // because application maybe send different request for different server instance.
-                // this feature is used by Product Ads.
-                if (controller != null && controller.getChannel() != null) {
-                    break;
+                if (request.getCallback() != null) {
+                    return response.getRpcFuture();
+                } else {
+                    return response.getResult();
                 }
+            } catch (Exception ex) {
+                throw new RpcException(response.getException());
             }
-
-            if (exception == null) {
-                exception = new RpcException(RpcException.TIMEOUT_EXCEPTION, "unknown error");
-            }
-            throw exception;
         } finally {
             if (request != null) {
-                // 对于tcp协议，RpcRequest.refCnt可能会被retain多次，所以这里要减去当前refCnt。
+                // release send buffer because we retain send buffer when send request.
                 request.release();
             }
         }

@@ -43,34 +43,38 @@ public class InterceptorTest {
         rpcServer.getInterceptors().add(new Interceptor() {
             @Override
             public boolean handleRequest(Request request) {
-                System.out.println("server handleRequest");
+                System.out.println("server handleRequest1");
                 return true;
             }
+
             @Override
-            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+            public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
                 flags[0] = true;
-                return joinPoint.proceed();
-            }
-            @Override
-            public void handleResponse(Response response) {
-                System.out.println("server handleResponse");
-            }
-        });
-        rpcServer.getInterceptors().add(new Interceptor() {
-            @Override
-            public boolean handleRequest(Request request) {
-                System.out.println("server handleRequest");
-                return true;
-            }
-            @Override
-            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
-                flags[1] = true;
-                return joinPoint.proceed();
+                chain.intercept(request, response);
             }
 
             @Override
             public void handleResponse(Response response) {
-                System.out.println("server handleResponse");
+                System.out.println("server handleResponse1");
+            }
+        });
+
+        rpcServer.getInterceptors().add(new Interceptor() {
+            @Override
+            public boolean handleRequest(Request request) {
+                System.out.println("server handleRequest2");
+                return true;
+            }
+
+            @Override
+            public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
+                flags[1] = true;
+                chain.intercept(request, response);
+            }
+
+            @Override
+            public void handleResponse(Response response) {
+                System.out.println("server handleResponse2");
             }
         });
         rpcServer.start();
@@ -92,36 +96,41 @@ public class InterceptorTest {
         rpcClient.getInterceptors().add(new Interceptor() {
             @Override
             public boolean handleRequest(Request request) {
-                System.out.println("client handleRequest");
+                System.out.println("client handleRequest1");
                 return true;
             }
 
             @Override
-            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+            public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
                 flags[2] = true;
-                return joinPoint.proceed();
+                chain.intercept(request, response);
             }
+
             @Override
             public void handleResponse(Response response) {
-                System.out.println("client handleResponse");
+                System.out.println("client handleResponse1");
             }
         });
+
         rpcClient.getInterceptors().add(new Interceptor() {
             @Override
             public boolean handleRequest(Request request) {
-                System.out.println("client handleRequest");
+                System.out.println("client handleRequest2");
                 return true;
             }
+
             @Override
-            public Object aroundProcess(JoinPoint joinPoint) throws Exception {
+            public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
                 flags[3] = true;
-                return joinPoint.proceed();
+                chain.intercept(request, response);
             }
+
             @Override
             public void handleResponse(Response response) {
-                System.out.println("client handleResponse");
+                System.out.println("client handleResponse2");
             }
         });
+
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         final String message = "hello";
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage(message).build();

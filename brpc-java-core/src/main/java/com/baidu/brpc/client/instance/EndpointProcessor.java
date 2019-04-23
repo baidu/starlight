@@ -14,27 +14,30 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client.endpoint;
+package com.baidu.brpc.client.instance;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public interface EndPointProcessor {
+public interface EndpointProcessor {
 
-    void addEndPoints(Collection<EndPoint> addList);
+    void addEndPoints(Collection<Endpoint> addList);
 
-    void deleteEndPoints(Collection<EndPoint> deleteList);
+    void deleteEndPoints(Collection<Endpoint> deleteList);
 
-    CopyOnWriteArrayList<BrpcChannelGroup> getHealthyInstances();
+    CopyOnWriteArrayList<BrpcChannel> getHealthyInstances();
 
-    CopyOnWriteArrayList<BrpcChannelGroup> getUnHealthyInstances();
+    CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstances();
 
-    CopyOnWriteArrayList<EndPoint> getEndPoints();
+    ConcurrentMap<Endpoint, BrpcChannel> getInstanceChannelMap();
 
-    void updateUnHealthyInstances(List<BrpcChannelGroup> channelGroups);
+    CopyOnWriteArrayList<Endpoint> getEndPoints();
+
+    void updateUnHealthyInstances(List<BrpcChannel> channelGroups);
 
     void stop();
 

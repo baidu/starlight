@@ -15,7 +15,7 @@
  */
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 
 import java.util.Collection;
 
@@ -33,5 +33,5 @@ public interface NotifyListener {
      * @param addList to be added endpoints
      * @param deleteList to be deleted endpoints
      */
-    void notify(Collection<EndPoint> addList, Collection<EndPoint> deleteList);
+    void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList);
 }
