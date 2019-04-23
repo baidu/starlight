@@ -25,10 +25,12 @@ public class ServerInitTest {
         rpcServer1.start();
 
         RpcServer rpcServer2 = new RpcServer(8001);
-        rpcServer2.registerService(new EchoServiceImpl());
+        RpcServerOptions options = new RpcServerOptions();
+        options.setCustomizedWorkThreadNum(10);
+        rpcServer2.registerService(new EchoServiceImpl(), options);
         rpcServer2.start();
 
-        RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8000");
+        RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8001");
         EchoService echoService = BrpcProxy.getProxy(secondRpcClient, EchoService.class);
         EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         echoService.echo(request);
@@ -38,6 +40,7 @@ public class ServerInitTest {
         ThreadNumStat stat1 = calThreadNum();
         Assert.assertEquals(processor, stat1.ioThreadNum);
         Assert.assertEquals(processor, stat1.workThreadNum);
+        Assert.assertEquals(10, stat1.customizedWorkThreadNum);
 
         rpcServer1.shutdown();
         rpcServer2.shutdown();
@@ -46,6 +49,7 @@ public class ServerInitTest {
 
         Assert.assertEquals(processor, stat2.ioThreadNum);
         Assert.assertEquals(processor, stat2.workThreadNum);
+        Assert.assertEquals(0, stat2.customizedWorkThreadNum);
 
     }
 
@@ -64,11 +68,14 @@ public class ServerInitTest {
                 stat.workThreadNum ++;
             } else if (thread.getName().contains("server-acceptor-thread")) {
                 stat.acceptorThreadNum ++;
+            } else if (thread.getName().contains("brpc-customized-work-thread")) {
+                stat.customizedWorkThreadNum ++;
             }
         }
 
-        log.info("thread statistic data, ioThreadNum : {}, \n workThreadNum : {}, acceptorThreadNum : {}",
-                stat.ioThreadNum, stat.workThreadNum, stat.acceptorThreadNum);
+        log.info("thread statistic data, ioThreadNum : {}, \n workThreadNum : {}, acceptorThreadNum : {}, "
+                        + "customizedWorkThreadNum : {}",
+                stat.ioThreadNum, stat.workThreadNum, stat.acceptorThreadNum, stat.customizedWorkThreadNum);
 
         return stat;
     }
@@ -78,7 +85,7 @@ public class ServerInitTest {
         public int ioThreadNum;
         public int workThreadNum;
         public int acceptorThreadNum;
-
+        public int customizedWorkThreadNum;
     }
 
 }

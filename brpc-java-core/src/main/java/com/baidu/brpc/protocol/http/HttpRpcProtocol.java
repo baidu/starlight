@@ -303,7 +303,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
     @Override
     public Request decodeRequest(Object packet) {
         try {
-            HttpRequest httpRequest = (HttpRequest) this.getRequest();
+            HttpRequest httpRequest = (HttpRequest) this.createRequest();
             httpRequest.setMsg(packet);
             long logId = parseLogId(httpRequest.headers().get(LOG_ID), null);
             httpRequest.setLogId(logId);

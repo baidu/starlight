@@ -25,18 +25,18 @@ import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 import java.lang.reflect.InvocationTargetException;
 
 import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.DefaultInterceptorChain;
 import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.protocol.http.BrpcHttpResponseEncoder;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.ServerStatus;
+import com.baidu.brpc.utils.ThreadPool;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -58,20 +58,82 @@ import lombok.extern.slf4j.Slf4j;
 @Setter
 @Getter
 @AllArgsConstructor
-public class ServerWorkTask implements Runnable {
+public class DecodeWorkTask implements Runnable {
     private RpcServer rpcServer;
     private Object packet;
     private Protocol protocol;
-    private Request request;
-    private Response response;
     private ChannelHandlerContext ctx;
 
     @Override
     public void run() {
+        if (protocol instanceof HttpRpcProtocol) {
+            FullHttpRequest fullHttpRequest = (FullHttpRequest) packet;
+            try {
+                if (fullHttpRequest.uri().equals("/favicon.ico")) {
+                    FullHttpResponse fullHttpResponse =
+                            new DefaultFullHttpResponse(HTTP_1_1, OK);
+                    fullHttpResponse.headers().set(CONTENT_LENGTH, 0);
+                    if (HttpUtil.isKeepAlive(fullHttpRequest)) {
+                        fullHttpResponse.headers().set(CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+                    }
+                    BrpcHttpResponseEncoder encoder = new BrpcHttpResponseEncoder();
+                    ByteBuf responseByteBuf = encoder.encode(fullHttpResponse);
+                    ChannelFuture f = ctx.channel().writeAndFlush(responseByteBuf);
+                    if (!HttpUtil.isKeepAlive(fullHttpRequest)) {
+                        f.addListener(ChannelFutureListener.CLOSE);
+                    }
+                    return;
+                } else if (fullHttpRequest.uri().equals("/") || fullHttpRequest.uri().equals("/status")) {
+                    ServerStatus serverStatus = rpcServer.getServerStatus();
 
-        log.info("current thread is: {}", Thread.currentThread().getName());
+                    byte[] statusBytes = serverStatus.toString().getBytes("UTF-8");
+                    FullHttpResponse fullHttpResponse =
+                            new DefaultFullHttpResponse(HTTP_1_1, OK, Unpooled.wrappedBuffer(statusBytes));
+                    fullHttpResponse.headers().set(CONTENT_TYPE, "text/html");
+                    fullHttpResponse.headers().set(CONTENT_LENGTH, fullHttpResponse.content().readableBytes());
+                    if (HttpUtil.isKeepAlive(fullHttpRequest)) {
+                        fullHttpResponse.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
+                    }
+                    BrpcHttpResponseEncoder encoder = new BrpcHttpResponseEncoder();
+                    ByteBuf responseByteBuf = encoder.encode(fullHttpResponse);
+                    ChannelFuture f = ctx.channel().writeAndFlush(responseByteBuf);
+                    if (!HttpUtil.isKeepAlive(fullHttpRequest)) {
+                        f.addListener(ChannelFutureListener.CLOSE);
+                    }
+                    return;
+                }
+            } catch (Exception ex) {
+                log.warn("send status info response failed:", ex);
+            }
+        }
+
+        Request request = null;
+        Response response = protocol.createResponse();
+        try {
+            request = protocol.decodeRequest(packet);
+        } catch (Exception ex) {
+            // throw request
+            log.warn("decode request failed:", ex);
+            response.setException(new RpcException(ex));
+        }
+        if (request == null || request.getRpcMethodInfo() == null) {
+            // throw request
+            String warn = "decode request is null or request rpcmethordInfo is null!";
+            log.warn(warn);
+            response.setException(new RpcException(warn));
+        }
+        ThreadPool threadPool = request.getRpcMethodInfo().getThreadPool();
+        if (threadPool.equals(rpcServer.getThreadPool())) {
+            workTask(request, response);
+        } else {
+            ServerWorkTask task = new ServerWorkTask(rpcServer, packet, protocol, request, response, ctx);
+            threadPool.submit(task);
+        }
+    }
+
+    private void workTask(Request request, Response response) {
+
         Controller controller = null;
-
         if (request != null) {
             request.setChannel(ctx.channel());
             if (request.getRpcMethodInfo().isIncludeController()
