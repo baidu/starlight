@@ -23,6 +23,7 @@ import java.lang.reflect.Type;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.utils.RpcMetaUtils;
+import com.baidu.brpc.utils.ThreadPool;
 import com.google.protobuf.CodedOutputStream;
 
 import io.netty.buffer.ByteBuf;
@@ -45,6 +46,7 @@ public class RpcMethodInfo {
     // instance of interface which method belongs to
     protected Object target;
     protected boolean includeController;
+    protected ThreadPool threadPool;
 
     public RpcMethodInfo(Method method) {
         RpcMetaUtils.RpcMetaInfo metaInfo = RpcMetaUtils.parseRpcMeta(method);

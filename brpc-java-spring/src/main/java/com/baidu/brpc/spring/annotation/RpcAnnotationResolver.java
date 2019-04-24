@@ -70,7 +70,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     /**
      * The port mapping expoters.
      */
-    private Map<Integer, RpcServiceExporter> portMappingExpoters = new HashMap<Integer, RpcServiceExporter>();
+    private Map<Integer, RpcServiceExporter> portMappingExporters = new HashMap<Integer, RpcServiceExporter>();
 
     /**
      * The compiler.
@@ -98,7 +98,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     /**
      * The protobuf rpc annotation resolver listener.
      */
-    private RpcAnnotationResolverListener protobufRpcAnnotationRessolverListener;
+    private RpcAnnotationResolverListener protobufRpcAnnotationResolverListener;
 
     @Override
     public Object annotationAtType(Annotation t, Object bean, String beanName,
@@ -128,76 +128,77 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         int intPort = Integer.valueOf(port);
 
         // if there are multi service on one port, the first service configs effect only.
-        RpcServiceExporter rpcServiceExporter = portMappingExpoters.get(intPort);
+        RpcServiceExporter rpcServiceExporter = portMappingExporters.get(intPort);
         if (rpcServiceExporter == null) {
             rpcServiceExporter = new RpcServiceExporter();
             rpcServiceExporter.setServicePort(intPort);
+            portMappingExporters.put(intPort, rpcServiceExporter);
+        }
 
-            // get RpcServerOptions
-            String rpcServerOptionsBeanName = parsePlaceholder(rpcExporter.rpcServerOptionsBeanName());
-            RpcServerOptions rpcServerOptions;
-            if (StringUtils.isBlank(rpcServerOptionsBeanName)) {
-                rpcServerOptions = new RpcServerOptions();
-            } else {
-                // if not exist throw exception
-                rpcServerOptions = beanFactory.getBean(rpcServerOptionsBeanName, RpcServerOptions.class);
-            }
-            // naming service url
-            if (StringUtils.isBlank(rpcServerOptions.getNamingServiceUrl())) {
-                rpcServerOptions.setNamingServiceUrl(namingServiceUrl);
-            }
+        // get RpcServerOptions
+        String rpcServerOptionsBeanName = parsePlaceholder(rpcExporter.rpcServerOptionsBeanName());
+        RpcServerOptions rpcServerOptions;
+        if (StringUtils.isBlank(rpcServerOptionsBeanName)) {
+            rpcServerOptions = new RpcServerOptions();
+        } else {
+            // if not exist throw exception
+            rpcServerOptions = beanFactory.getBean(rpcServerOptionsBeanName, RpcServerOptions.class);
+        }
+        // naming service url
+        if (StringUtils.isBlank(rpcServerOptions.getNamingServiceUrl())) {
+            rpcServerOptions.setNamingServiceUrl(namingServiceUrl);
+            rpcServiceExporter.setNamingServiceUrl(namingServiceUrl);
+        }
 
+        if (rpcExporter.useSharedThreadPool()) {
             try {
                 rpcServiceExporter.copyFrom(rpcServerOptions);
             } catch (Exception ex) {
                 throw new RuntimeException("copy server options failed:", ex);
             }
+        }
 
-            // interceptor
-            String interceptorName = parsePlaceholder(rpcExporter.interceptorBeanName());
-            if (!StringUtils.isBlank(interceptorName)) {
-                Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
+        // interceptor
+        String interceptorName = parsePlaceholder(rpcExporter.interceptorBeanName());
+        if (!StringUtils.isBlank(interceptorName)) {
+            Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
+            List<Interceptor> interceptors = new ArrayList<Interceptor>();
+            interceptors.add(interceptor);
+            rpcServiceExporter.setInterceptors(interceptors);
+        } else {
+            if (interceptor != null) {
                 List<Interceptor> interceptors = new ArrayList<Interceptor>();
                 interceptors.add(interceptor);
                 rpcServiceExporter.setInterceptors(interceptors);
-            } else {
-                if (interceptor != null) {
-                    List<Interceptor> interceptors = new ArrayList<Interceptor>();
-                    interceptors.add(interceptor);
-                    rpcServiceExporter.setInterceptors(interceptors);
-                }
             }
+        }
 
-            // naming service group/version
-            rpcServiceExporter.setGroup(rpcExporter.group());
-            rpcServiceExporter.setVersion(rpcExporter.version());
-            rpcServiceExporter.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
+        // naming service group/version
+        rpcServiceExporter.setGroup(rpcExporter.group());
+        rpcServiceExporter.setVersion(rpcExporter.version());
+        rpcServiceExporter.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
 
-            // namingServiceFactory
-            String namingServiceFactoryBeanName = parsePlaceholder(rpcExporter.namingServiceFactoryBeanName());
-            if (!StringUtils.isBlank(namingServiceFactoryBeanName)) {
-                NamingServiceFactory namingServiceFactory = beanFactory.getBean(
-                        namingServiceFactoryBeanName, NamingServiceFactory.class);
-                rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-            } else {
-                rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-            }
-            portMappingExpoters.put(intPort, rpcServiceExporter);
+        // namingServiceFactory
+        String namingServiceFactoryBeanName = parsePlaceholder(rpcExporter.namingServiceFactoryBeanName());
+        if (!StringUtils.isBlank(namingServiceFactoryBeanName)) {
+            NamingServiceFactory namingServiceFactory = beanFactory.getBean(
+                    namingServiceFactoryBeanName, NamingServiceFactory.class);
+            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
+        } else {
+            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
         }
 
         // do register service
-        List<Object> registerServices = rpcServiceExporter.getRegisterServices();
-        if (registerServices == null) {
-            registerServices = new ArrayList<Object>();
-        }
-        registerServices.add(bean);
-
-        if (protobufRpcAnnotationRessolverListener != null) {
-            protobufRpcAnnotationRessolverListener.onRpcExporterAnnotationParsered(rpcExporter, intPort, bean,
-                    registerServices);
+        if (rpcExporter.useSharedThreadPool()) {
+            rpcServiceExporter.getRegisterServices().add(bean);
+        } else {
+            rpcServiceExporter.getCustomOptionsServiceMap().put(rpcServerOptions, bean);
         }
 
-        rpcServiceExporter.setRegisterServices(registerServices);
+        if (protobufRpcAnnotationResolverListener != null) {
+            protobufRpcAnnotationResolverListener.onRpcExporterAnnotationParsered(
+                    rpcExporter, intPort, bean, rpcServiceExporter.getRegisterServices());
+        }
     }
 
     @Override
@@ -206,7 +207,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
         if (started.compareAndSet(false, true)) {
             // do export service here
-            Collection<RpcServiceExporter> values = portMappingExpoters.values();
+            Collection<RpcServiceExporter> values = portMappingExporters.values();
             for (RpcServiceExporter rpcServiceExporter : values) {
                 try {
                     rpcServiceExporter.afterPropertiesSet();
@@ -287,11 +288,11 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
         rpcClients.add(rpcProxyFactoryBean);
         Object object = rpcProxyFactoryBean.getObject();
-        if (protobufRpcAnnotationRessolverListener != null) {
+        if (protobufRpcAnnotationResolverListener != null) {
             // TODO: why create new RpcProxyFactoryBean?
 //            RpcProxyFactoryBean newRpcProxyFactoryBean =
 //                    createRpcProxyFactoryBean(rpcProxy, beanFactory, rpcClientOptions, serviceUrl);
-            protobufRpcAnnotationRessolverListener.onRpcProxyAnnotationParsed(rpcProxy, rpcProxyFactoryBean,
+            protobufRpcAnnotationResolverListener.onRpcProxyAnnotationParsed(rpcProxy, rpcProxyFactoryBean,
                     rpcProxyFactoryBean.getObject());
         }
 
@@ -423,8 +424,8 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             }
         }
 
-        if (portMappingExpoters != null) {
-            Collection<RpcServiceExporter> exporters = portMappingExpoters.values();
+        if (portMappingExporters != null) {
+            Collection<RpcServiceExporter> exporters = portMappingExporters.values();
             for (RpcServiceExporter rpcServiceExporter : exporters) {
                 try {
                     rpcServiceExporter.destroy();
@@ -434,8 +435,8 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             }
         }
 
-        if (protobufRpcAnnotationRessolverListener != null) {
-            protobufRpcAnnotationRessolverListener.destroy();
+        if (protobufRpcAnnotationResolverListener != null) {
+            protobufRpcAnnotationResolverListener.destroy();
         }
 
     }

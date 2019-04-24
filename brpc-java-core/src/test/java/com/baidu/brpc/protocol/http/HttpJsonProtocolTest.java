@@ -62,7 +62,7 @@ public class HttpJsonProtocolTest {
     @Test
     public void testDecodeHttpRequest() {
         ServiceManager serviceManager = ServiceManager.getInstance();
-        serviceManager.registerService(new HelloWorldServiceImpl());
+        serviceManager.registerService(new HelloWorldServiceImpl(), null);
         ByteBuf content = Unpooled.wrappedBuffer(new Gson().toJson("hello").getBytes());
 
         FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET,

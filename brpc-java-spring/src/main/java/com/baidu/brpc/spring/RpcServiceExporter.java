@@ -15,7 +15,10 @@
  */
 package com.baidu.brpc.spring;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.NamingOptions;
@@ -24,10 +27,11 @@ import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 /**
  * PBRPC exporter for standard PROTOBUF RPC implementation from jprotobuf-rpc-socket.
@@ -37,6 +41,7 @@ import org.springframework.util.CollectionUtils;
  */
 @Setter
 @Getter
+@Slf4j
 public class RpcServiceExporter extends RpcServerOptions implements InitializingBean, DisposableBean {
 
     /** The pr rpc server. */
@@ -62,9 +67,16 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
      * if true, naming service will throw exception when register/subscribe exceptions.
      */
     private boolean ignoreFailOfNamingService = false;
-    
-    /** The register services. */
-    private List<Object> registerServices;
+
+    /**
+     * the register services which use default thread pool
+     */
+    private List<Object> registerServices = new ArrayList<Object>();
+
+    /**
+     * the register services which use individual thread pool
+     */
+    private Map<RpcServerOptions, Object> customOptionsServiceMap = new HashMap<RpcServerOptions, Object>();
     
 	/** The interceptor. */
 	private List<Interceptor> interceptors;
@@ -85,16 +97,23 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
     @Override
     public void afterPropertiesSet() throws Exception {
         Assert.isTrue(servicePort > 0, "invalid service port: " + servicePort);
-        Assert.isTrue(!CollectionUtils.isEmpty(registerServices), "No register service specified.");
+        if (registerServices.size() == 0 && customOptionsServiceMap.size() == 0) {
+            throw new IllegalArgumentException("No register service specified.");
+        }
         
         prRpcServer = new RpcServer(servicePort, this, interceptors, namingServiceFactory);
         NamingOptions namingOptions = new NamingOptions();
         namingOptions.setGroup(group);
         namingOptions.setVersion(version);
         namingOptions.setIgnoreFailOfNamingService(ignoreFailOfNamingService);
+
         for (Object service : registerServices) {
-            prRpcServer.registerService(service, namingOptions);
+            prRpcServer.registerService(service, namingOptions, null);
         }
+        for (Map.Entry<RpcServerOptions, Object> entry : customOptionsServiceMap.entrySet()) {
+            prRpcServer.registerService(entry.getValue(), namingOptions, entry.getKey());
+        }
+
         prRpcServer.start();
     }
 

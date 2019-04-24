@@ -18,6 +18,7 @@ package com.baidu.brpc.server;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.interceptor.ServerInvokeInterceptor;
 import com.baidu.brpc.naming.BrpcURL;
@@ -32,6 +33,7 @@ import com.baidu.brpc.server.handler.RpcServerHandler;
 import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
 import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ShutDownManager;
+import com.baidu.brpc.utils.CollectionUtils;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
@@ -89,6 +91,7 @@ public class RpcServer {
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private Protocol protocol;
     private ThreadPool threadPool;
+    private List<ThreadPool> customThreadPools = new ArrayList<ThreadPool>();
     private NamingService namingService;
     private List<Object> serviceList = new ArrayList<Object>();
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
@@ -217,12 +220,25 @@ public class RpcServer {
     }
 
     public void registerService(Object service) {
-        registerService(service, null);
+        registerService(service, null, null);
     }
 
     public void registerService(Object service, NamingOptions namingOptions) {
-        ServiceManager serviceManager = ServiceManager.getInstance();
-        serviceManager.registerService(service);
+        registerService(service, namingOptions, null);
+    }
+
+    public void registerService(Object service, RpcServerOptions serverOptions) {
+        registerService(service, null, serverOptions);
+    }
+
+    /**
+     * register service which can be accessed by client
+     * @param service the service object which implement rpc interface.
+     * @param namingOptions register center info
+     * @param serverOptions service own custom RpcServerOptions
+     *                      if not null, the service will not use the shared thread pool.
+     */
+    public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions serverOptions) {
         serviceList.add(service);
         RegisterInfo registerInfo = new RegisterInfo();
         registerInfo.setService(service.getClass().getInterfaces()[0].getName());
@@ -233,6 +249,14 @@ public class RpcServer {
             registerInfo.setVersion(namingOptions.getVersion());
             registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
         }
+        ServiceManager serviceManager = ServiceManager.getInstance();
+        ThreadPool customThreadPool = threadPool;
+        if (serverOptions != null) {
+            customThreadPool = new ThreadPool(serverOptions.getWorkThreadNum(),
+                    new CustomThreadFactory(service.getClass().getSimpleName() + "-work-thread"));
+            customThreadPools.add(customThreadPool);
+        }
+        serviceManager.registerService(service, customThreadPool);
         registerInfoList.add(registerInfo);
     }
 
@@ -273,6 +297,13 @@ public class RpcServer {
         }
         if (bossGroup != null) {
             bossGroup.shutdownGracefully();
+        }
+
+        if (CollectionUtils.isNotEmpty(customThreadPools)) {
+            LOG.info("clean customized ThreadPool");
+            for (ThreadPool pool : customThreadPools) {
+                pool.stop();
+            }
         }
     }
 

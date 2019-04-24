@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
  * @author wenweihu86
  */
 public class RpcServerChannelIdleHandler extends ChannelDuplexHandler {
-
     private static final Logger LOG = LoggerFactory.getLogger(RpcServerChannelIdleHandler.class);
 
     @Override

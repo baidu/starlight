@@ -13,7 +13,8 @@ public class RpcServerTest {
 
         RpcServerOptions options = new RpcServerOptions();
         RpcServer rpcServer = new RpcServer(port, options);
-        rpcServer.registerService(new EchoServiceImpl());
+        // rpcServer.registerService(new EchoServiceImpl());
+        rpcServer.registerService(new EchoServiceImpl(), options);
         rpcServer.start();
 
         // make server keep running

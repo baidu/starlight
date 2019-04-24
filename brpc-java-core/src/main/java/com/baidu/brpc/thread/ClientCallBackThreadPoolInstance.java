@@ -33,7 +33,6 @@ public class ClientCallBackThreadPoolInstance {
      * threadNum only works when thread pool instance create in the first time
      */
     public static ExecutorService getOrCreateInstance(int threadNum) {
-
         if (callbackThreadPool == null) {
             synchronized (ClientCallBackThreadPoolInstance.class) {
                 if (callbackThreadPool == null) {

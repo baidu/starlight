@@ -62,13 +62,12 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
         int len = msg.readableBytes();
         if (len > 0) {
             channelInfo.getRecvBuf().addBuffer(msg.retain());
-            ServerWorkTask[] tasks = new ServerWorkTask[64];
+            DecodeWorkTask[] tasks = new DecodeWorkTask[64];
             int i = 0;
             while (channelInfo.getRecvBuf().readableBytes() > 0) {
                 try {
                     Object packet = decodeHeader(ctx, channelInfo, channelInfo.getRecvBuf());
-                    ServerWorkTask task = new ServerWorkTask(rpcServer, packet, channelInfo.getProtocol(),
-                            ctx);
+                    DecodeWorkTask task = new DecodeWorkTask(rpcServer, packet, channelInfo.getProtocol(), ctx);
                     tasks[i++] = task;
                     if (i == 64) {
                         rpcServer.getThreadPool().submit(tasks, 0, i);
@@ -84,6 +83,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
             }
             if (i > 0) {
                 rpcServer.getThreadPool().submit(tasks, 0, i);
+
             }
         }
     }
