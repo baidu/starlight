@@ -231,6 +231,13 @@ public class RpcServer {
         registerService(service, null, serverOptions);
     }
 
+    /**
+     * register service which can be accessed by client
+     * @param service the service object which implement rpc interface.
+     * @param namingOptions register center info
+     * @param serverOptions service own custom RpcServerOptions
+     *                      if not null, the service will not use the shared thread pool.
+     */
     public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions serverOptions) {
         serviceList.add(service);
         RegisterInfo registerInfo = new RegisterInfo();
