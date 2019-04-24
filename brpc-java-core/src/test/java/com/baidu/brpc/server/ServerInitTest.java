@@ -18,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 public class ServerInitTest {
 
     @Test
-    public void testInitServerMultiTimes() {
+    public void testInitServerMultiTimes() throws Exception {
 
         RpcServer rpcServer1 = new RpcServer(8000);
         rpcServer1.registerService(new EchoServiceImpl());
@@ -42,9 +42,9 @@ public class ServerInitTest {
 
         rpcServer1.shutdown();
         rpcServer2.shutdown();
-
+        Thread.sleep(5);
+        
         ThreadNumStat stat2 = calThreadNum();
-
         Assert.assertEquals(processor, stat2.ioThreadNum);
         Assert.assertEquals(processor, stat2.workThreadNum);
         Assert.assertEquals(0, stat2.customWorkThreadNum);
