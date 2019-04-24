@@ -71,7 +71,6 @@ public class FileNamingService implements NamingService {
             }
             LOG.debug("Got " + list.size() + " servers (out of " + lineNum + ')'
                     + " from " + filePath);
-            lastEndPoints = list;
             this.lastModified = lastModified;
             return list;
         } catch (IOException ex) {
@@ -104,6 +103,7 @@ public class FileNamingService implements NamingService {
                                 Collection<Endpoint> deleteList = CollectionUtils.subtract(
                                         lastEndPoints, currentEndPoints);
                                 listener.notify(addList, deleteList);
+                                lastEndPoints = currentEndPoints;
                             }
                         } catch (Exception ex) {
                             // ignore exception

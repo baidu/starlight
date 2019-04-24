@@ -73,7 +73,6 @@ public class DnsNamingService implements NamingService {
             Endpoint endPoint = new Endpoint(address.getHostAddress(), port);
             endPoints.add(endPoint);
         }
-        this.lastEndPoints = endPoints;
         return endPoints;
     }
 
@@ -90,6 +89,7 @@ public class DnsNamingService implements NamingService {
                             Collection<Endpoint> deleteList = CollectionUtils.subtract(
                                     lastEndPoints, currentEndPoints);
                             listener.notify(addList, deleteList);
+                            lastEndPoints = currentEndPoints;
                         } catch (Exception ex) {
                             // ignore exception
                         }
