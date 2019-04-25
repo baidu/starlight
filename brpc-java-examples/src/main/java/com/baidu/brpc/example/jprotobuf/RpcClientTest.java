@@ -17,13 +17,13 @@
 package com.baidu.brpc.example.jprotobuf;
 
 import com.baidu.brpc.client.RpcCallbackAdaptor;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
 import io.netty.channel.Channel;
@@ -46,7 +46,7 @@ public class RpcClientTest {
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
 //        clientOption.setIoThreadNum(40);
-        clientOption.setLoadBalanceType(LoadBalanceType.WEIGHT.getId());
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
         String serviceUrl = "list://127.0.0.1:8002";

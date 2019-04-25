@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,27 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.client.loadbalance;
 
-import java.util.concurrent.CopyOnWriteArrayList;
-
-import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannel;
-
-/**
- * load balance strategy interface
- */
-public interface LoadBalanceStrategy {
-    // default supported load balance type
-    int LOAD_BALANCE_RANDOM = 0;
-    int LOAD_BALANCE_ROUND_ROBIN = 1;
-    int LOAD_BALANCE_WEIGHT = 2;
-    int LOAD_BALANCE_FAIR = 3;
-
-    void init(RpcClient rpcClient);
-
-    BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances);
-
-    void destroy();
+public interface LoadBalanceFactory {
+    LoadBalanceStrategy createLoadBalance(int loadBalanceType);
 }

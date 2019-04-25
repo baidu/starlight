@@ -40,8 +40,8 @@ import com.baidu.brpc.client.instance.EndpointProcessor;
 import com.baidu.brpc.client.instance.EnhancedEndpointProcessor;
 import com.baidu.brpc.client.handler.IdleChannelHandler;
 import com.baidu.brpc.client.handler.RpcClientHandler;
+import com.baidu.brpc.client.loadbalance.LoadBalanceManager;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.client.loadbalance.RandomStrategy;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
@@ -449,8 +449,8 @@ public class RpcClient {
         }
 
         // 负载均衡算法
-        LoadBalanceType loadBalanceType = LoadBalanceType.parse(rpcClientOptions.getLoadBalanceType());
-        loadBalanceStrategy = loadBalanceType.getStrategy();
+        loadBalanceStrategy = LoadBalanceManager.getInstance().createLoadBalance(
+                rpcClientOptions.getLoadBalanceType());
         loadBalanceStrategy.init(this);
 
         // init once

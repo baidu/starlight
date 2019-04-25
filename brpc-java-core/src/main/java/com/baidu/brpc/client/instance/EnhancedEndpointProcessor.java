@@ -20,6 +20,7 @@ import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.loadbalance.FairStrategy;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.thread.ClientHealthCheckTimerInstance;
 
@@ -231,7 +232,7 @@ public class EnhancedEndpointProcessor implements EndpointProcessor {
     }
 
     private void notifyInvalidInstance(List<BrpcChannel> invalidInstances) {
-        if (rpcClient.getRpcClientOptions().getLoadBalanceType() == LoadBalanceType.FAIR.getId()) {
+        if (rpcClient.getRpcClientOptions().getLoadBalanceType() == LoadBalanceStrategy.LOAD_BALANCE_FAIR) {
             ((FairStrategy) rpcClient.getLoadBalanceStrategy()).markInvalidInstance(invalidInstances);
         }
     }

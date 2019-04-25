@@ -21,11 +21,10 @@ import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.zookeeper.ZookeeperNamingFactory;
 import com.baidu.brpc.protocol.Options;
 import lombok.extern.slf4j.Slf4j;
 
@@ -48,7 +47,7 @@ public class RpcClientTest {
         clientOption.setReadTimeoutMillis(1000);
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
-        clientOption.setLoadBalanceType(LoadBalanceType.FAIR.getId());
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
         String serviceUrl = "list://127.0.0.1:8002";

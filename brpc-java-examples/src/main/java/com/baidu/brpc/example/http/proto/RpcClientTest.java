@@ -9,7 +9,7 @@ import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.example.standard.Echo;
 import com.baidu.brpc.example.standard.Echo.EchoRequest;
@@ -27,7 +27,7 @@ public class RpcClientTest {
         clientOption.setProtocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
         clientOption.setReadTimeoutMillis(500000);
-        clientOption.setLoadBalanceType(LoadBalanceType.WEIGHT.getId());
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setMaxTryTimes(1);
 
         String serviceUrl = "list://127.0.0.1:8080";
