@@ -21,6 +21,7 @@ import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
 
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -57,6 +58,17 @@ public class BasicEndpointProcessor implements EndpointProcessor {
         for (Endpoint endPoint : deleteList) {
             if (endPoints.contains(endPoint)) {
                 endPoints.remove(endPoint);
+                // remove instance
+                Iterator<BrpcChannel> iterator = instances.iterator();
+                while (iterator.hasNext()) {
+                    BrpcChannel brpcChannel = iterator.next();
+                    if (brpcChannel.getIp().equals(endPoint.getIp())
+                            && brpcChannel.getPort() == endPoint.getPort()) {
+                        brpcChannel.close();
+                        instances.remove(brpcChannel);
+                        break;
+                    }
+                }
                 instanceChannelMap.remove(endPoint);
             }
         }
