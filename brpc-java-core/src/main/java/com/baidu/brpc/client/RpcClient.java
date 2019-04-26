@@ -248,14 +248,20 @@ public class RpcClient {
      *
      * @return netty channel
      */
-    public Channel selectChannel() {
+    public Channel selectChannel(Request request) {
         boolean isHealthInstance = true;
-        BrpcChannel brpcChannel = loadBalanceStrategy.selectInstance(endPointProcessor.getHealthyInstances());
+        BrpcChannel brpcChannel = loadBalanceStrategy.selectInstance(
+                request,
+                endPointProcessor.getHealthyInstances(),
+                request.getSelectedInstances());
         if (brpcChannel == null) {
             LOG.debug("no available healthy server, so random select one unhealthy server");
             RandomStrategy randomStrategy = new RandomStrategy();
             randomStrategy.init(this);
-            brpcChannel = randomStrategy.selectInstance(endPointProcessor.getUnHealthyInstances());
+            brpcChannel = randomStrategy.selectInstance(
+                    request,
+                    endPointProcessor.getUnHealthyInstances(),
+                    request.getSelectedInstances());
             if (brpcChannel == null) {
                 throw new RpcException(RpcException.NETWORK_EXCEPTION, "no available instance");
             }
@@ -314,6 +320,10 @@ public class RpcClient {
      */
     public Channel selectChannel(Endpoint endpoint) {
         BrpcChannel brpcChannel = endPointProcessor.getInstanceChannelMap().get(endpoint);
+        if (brpcChannel == null) {
+            LOG.warn("instance:{} not found, may be it is removed from naming service.", endpoint);
+            throw new RpcException(RpcException.SERVICE_EXCEPTION, "instance not found:" + endpoint);
+        }
         Channel channel;
         try {
             channel = brpcChannel.getChannel();

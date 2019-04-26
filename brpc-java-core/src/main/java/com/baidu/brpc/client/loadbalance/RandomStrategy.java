@@ -17,10 +17,12 @@
 package com.baidu.brpc.client.loadbalance;
 
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.protocol.Request;
 
 /**
  * Simple random select load balance strategy implementation
@@ -35,7 +37,10 @@ public class RandomStrategy implements LoadBalanceStrategy {
     }
 
     @Override
-    public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
+    public BrpcChannel selectInstance(
+            Request request,
+            CopyOnWriteArrayList<BrpcChannel> instances,
+            Set<BrpcChannel> selectedInstances) {
         long instanceNum = instances.size();
         if (instanceNum == 0) {
             return null;

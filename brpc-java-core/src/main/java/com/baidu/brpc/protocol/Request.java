@@ -18,10 +18,12 @@ package com.baidu.brpc.protocol;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Set;
 
 import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.nshead.NSHead;
 
@@ -90,6 +92,10 @@ public interface Request {
     Channel getChannel();
 
     void setChannel(Channel channel);
+
+    Set<BrpcChannel> getSelectedInstances();
+
+    void setSelectedInstances(Set<BrpcChannel> selectedInstances);
 
     NSHead getNsHead();
 

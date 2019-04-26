@@ -18,6 +18,7 @@ package com.baidu.brpc.client.loadbalance;
 
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.utils.CollectionUtils;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.util.HashedWheelTimer;
@@ -30,6 +31,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
@@ -109,7 +111,10 @@ public class FairStrategy implements LoadBalanceStrategy {
     }
 
     @Override
-    public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
+    public BrpcChannel selectInstance(
+            Request request,
+            CopyOnWriteArrayList<BrpcChannel> instances,
+            Set<BrpcChannel> selectedInstances) {
 
         if (treeContainer.size() == 0) {
             return randomSelect(instances);

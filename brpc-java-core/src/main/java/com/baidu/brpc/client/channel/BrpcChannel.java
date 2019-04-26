@@ -23,7 +23,6 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 
 public interface BrpcChannel {
-
     Channel getChannel() throws Exception, NoSuchElementException, IllegalStateException;
 
     void returnChannel(Channel channel);
@@ -59,4 +58,8 @@ public interface BrpcChannel {
     int getActiveConnectionNum();
 
     int getIdleConnectionNum();
+
+    int hashCode();
+
+    boolean equals(Object object);
 }
