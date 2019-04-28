@@ -78,14 +78,15 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Object> {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         final ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
+        String ip = channelInfo.getChannelGroup().getIp();
+        int port = channelInfo.getChannelGroup().getPort();
+        final String errMsg = String.format("channel is non active, ip=%s,port=%d", ip, port);
+        log.debug(errMsg);
 
         if (channelInfo != null) {
             rpcClient.triggerCallback(new Runnable() {
                 @Override
                 public void run() {
-                    String ip = channelInfo.getChannelGroup().getIp();
-                    int port = channelInfo.getChannelGroup().getPort();
-                    String errMsg = String.format("channel is non active, ip=%s,port=%d", ip, port);
                     RpcException ex = new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
                     channelInfo.handleChannelException(ex);
                 }

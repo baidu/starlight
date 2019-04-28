@@ -5,7 +5,7 @@
  */
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
@@ -32,7 +32,7 @@ public class FileNamingService implements NamingService {
     private static final Logger LOG = LoggerFactory.getLogger(FileNamingService.class);
     private BrpcURL namingUrl;
     private String filePath;
-    private List<EndPoint> lastEndPoints = new ArrayList<EndPoint>();
+    private List<Endpoint> lastEndPoints = new ArrayList<Endpoint>();
     private Timer namingServiceTimer;
     private long lastModified;
     private int updateInterval;
@@ -48,8 +48,8 @@ public class FileNamingService implements NamingService {
     }
 
     @Override
-    public List<EndPoint> lookup(SubscribeInfo subscribeInfo) {
-        List<EndPoint> list = new ArrayList<EndPoint>();
+    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
+        List<Endpoint> list = new ArrayList<Endpoint>();
         int lineNum = 0;
         BufferedReader reader = null;
         try {
@@ -65,13 +65,12 @@ public class FileNamingService implements NamingService {
                     LOG.warn("Invalid address format: " + line);
                     continue;
                 }
-                EndPoint endPoint = new EndPoint(ipPort[0].trim(),
+                Endpoint endPoint = new Endpoint(ipPort[0].trim(),
                         Integer.valueOf(ipPort[1].trim()));
                 list.add(endPoint);
             }
             LOG.debug("Got " + list.size() + " servers (out of " + lineNum + ')'
                     + " from " + filePath);
-            lastEndPoints = list;
             this.lastModified = lastModified;
             return list;
         } catch (IOException ex) {
@@ -98,12 +97,13 @@ public class FileNamingService implements NamingService {
                             File file = new File(filePath);
                             long currentModified = file.lastModified();
                             if (currentModified > lastModified) {
-                                List<EndPoint> currentEndPoints = lookup(null);
-                                Collection<EndPoint> addList = CollectionUtils.subtract(
+                                List<Endpoint> currentEndPoints = lookup(null);
+                                Collection<Endpoint> addList = CollectionUtils.subtract(
                                         currentEndPoints, lastEndPoints);
-                                Collection<EndPoint> deleteList = CollectionUtils.subtract(
+                                Collection<Endpoint> deleteList = CollectionUtils.subtract(
                                         lastEndPoints, currentEndPoints);
                                 listener.notify(addList, deleteList);
+                                lastEndPoints = currentEndPoints;
                             }
                         } catch (Exception ex) {
                             // ignore exception

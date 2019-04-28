@@ -16,17 +16,19 @@
 
 package com.baidu.brpc.utils;
 
-import com.baidu.bjf.remoting.protobuf.annotation.Protobuf;
-import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
-import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
-import com.google.protobuf.Message;
-import io.netty.buffer.ByteBuf;
-import lombok.extern.slf4j.Slf4j;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+
+import com.baidu.bjf.remoting.protobuf.annotation.Protobuf;
+import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
+import com.baidu.brpc.Controller;
+import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
+import com.google.protobuf.Message;
+
+import io.netty.buffer.ByteBuf;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ProtobufUtils {
@@ -39,20 +41,33 @@ public class ProtobufUtils {
     public static MessageType getMessageType(Method method) {
         Class<?>[] types = method.getParameterTypes();
         Class returnType = method.getReturnType();
-        if (types.length != 1) {
-            return MessageType.POJO;
+        if (types.length <= 0) {
+            throw new IllegalArgumentException("invalid rpc method params");
         }
-        if (Message.class.isAssignableFrom(types[0])
+        Class<?> inputType = null;
+        if (types[0] == Controller.class) {
+            if (types.length != 2) {
+                return MessageType.POJO;
+            }
+            inputType = types[1];
+        } else {
+            if (types.length != 1) {
+                return MessageType.POJO;
+            }
+            inputType = types[0];
+        }
+
+        if (Message.class.isAssignableFrom(inputType)
                 && Message.class.isAssignableFrom(returnType)) {
             return MessageType.PROTOBUF;
         }
 
-        ProtobufClass protobufClass = types[0].getAnnotation(ProtobufClass.class);
+        ProtobufClass protobufClass = inputType.getAnnotation(ProtobufClass.class);
         if (protobufClass != null) {
             return MessageType.JPROTOBUF;
         }
 
-        Field[] fields = types[0].getFields();
+        Field[] fields = inputType.getFields();
         for (Field field : fields) {
             Protobuf protobuf = field.getAnnotation(Protobuf.class);
             if (protobuf != null) {

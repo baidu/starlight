@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ public interface NamingService {
      * @param subscribeInfo service/group/version info
      * @return 已注册信息列表，可能为空。
      */
-    List<EndPoint> lookup(SubscribeInfo subscribeInfo);
+    List<Endpoint> lookup(SubscribeInfo subscribeInfo);
 
     /**
      * 订阅符合条件的已注册数据，当有注册数据变更时自动推送.

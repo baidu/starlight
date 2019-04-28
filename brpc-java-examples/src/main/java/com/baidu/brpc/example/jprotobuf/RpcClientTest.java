@@ -16,18 +16,17 @@
 
 package com.baidu.brpc.example.jprotobuf;
 
+import com.baidu.brpc.client.RpcCallbackAdaptor;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.protocol.RpcContext;
 import io.netty.channel.Channel;
-import io.netty.util.ReferenceCountUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +46,7 @@ public class RpcClientTest {
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
 //        clientOption.setIoThreadNum(40);
-        clientOption.setLoadBalanceType(LoadBalanceType.WEIGHT.getId());
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
         String serviceUrl = "list://127.0.0.1:8002";
@@ -57,58 +56,33 @@ public class RpcClientTest {
 
         List<Interceptor> interceptors = new ArrayList<Interceptor>();;
         interceptors.add(new CustomInterceptor());
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
 
         // build request
         EchoRequest request = new EchoRequest();
         request.setMessage("hellooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooo");
 
         // sync call
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Channel channel = null;
         try {
-            RpcContext.getContext().setRequestBinaryAttachment("example attachment".getBytes());
-            // 如果手动指定channel，则RpcClient使用该channel发送请求；
-            // 手动指定的channel，由业务自己调用rpcClient.returnChannel归还；
-            // 如果出错，由业务自己调用rpcClient.removeChannel从连接池删除。
-            channel = rpcClient.selectChannel();
-            RpcContext.getContext().setChannel(channel);
-            System.out.println(channel);
-
             EchoResponse response = echoService.echo(request);
             System.out.printf("sync call service=EchoService.echo success, "
                             + "request=%s,response=%s\n",
                     request.getMessage(), response.getMessage());
-            if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
-                System.out.println("attachment="
-                        + new String(RpcContext.getContext().getResponseBinaryAttachment().array()));
-                ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
-            }
         } catch (RpcException ex) {
             System.out.println("sync call failed, ex=" + ex.getMessage());
-            rpcClient.removeChannel(channel);
-            channel = null;
-        } finally {
-            if (channel != null) {
-                rpcClient.returnChannel(channel);
-            }
-            RpcContext.removeContext();
         }
         rpcClient.stop();
 
         // async call
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-        RpcCallback callback = new RpcCallback<EchoResponse>() {
+        RpcCallback callback = new RpcCallbackAdaptor<EchoResponse>() {
             @Override
             public void success(EchoResponse response) {
                 if (response != null) {
                     System.out.printf("async call EchoService.echo success, response=%s\n",
                             response.getMessage());
-                    if (RpcContext.getContext().getResponseBinaryAttachment() != null) {
-                        System.out.println("attachment="
-                                + new String(RpcContext.getContext().getResponseBinaryAttachment().array()));
-                        ReferenceCountUtil.release(RpcContext.getContext().getResponseBinaryAttachment());
-                    }
                 } else {
                     System.out.println("async call failed, service=EchoService.echo");
                 }
@@ -121,7 +95,6 @@ public class RpcClientTest {
         };
         EchoServiceAsync asyncEchoService = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
         try {
-            RpcContext.getContext().setRequestBinaryAttachment("async example attachment".getBytes());
             Future<EchoResponse> future = asyncEchoService.echo(request, callback);
             try {
                 if (future != null) {
@@ -132,8 +105,6 @@ public class RpcClientTest {
             }
         } catch (RpcException ex) {
             System.out.println("rpc send failed, ex=" + ex.getMessage());
-        } finally {
-            RpcContext.getContext().removeContext();
         }
         rpcClient.stop();
     }

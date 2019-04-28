@@ -21,7 +21,8 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.DefaultPooledObject;
 
 import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
+
 import io.netty.channel.Channel;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,13 +33,13 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChannelPooledObjectFactory extends BasePooledObjectFactory<Channel> {
 
-    private BrpcChannelGroup channelGroup;
+    private BrpcChannel channelGroup;
 
     private String ip;
 
     private int port;
 
-    public ChannelPooledObjectFactory(BrpcChannelGroup channelGroup, String ip, int port) {
+    public ChannelPooledObjectFactory(BrpcChannel channelGroup, String ip, int port) {
         this.channelGroup = channelGroup;
         this.ip = ip;
         this.port = port;

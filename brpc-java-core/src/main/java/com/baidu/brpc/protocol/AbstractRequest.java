@@ -17,12 +17,16 @@
 package com.baidu.brpc.protocol;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import com.baidu.brpc.Controller;
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.RpcCallback;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.protocol.nshead.NSHeadMeta;
+import com.baidu.brpc.protocol.nshead.NSHead;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -32,7 +36,6 @@ import lombok.Setter;
 @Setter
 @Getter
 public abstract class AbstractRequest implements Request {
-
     private Object msg;
     private long logId;
     private Object target;
@@ -41,13 +44,19 @@ public abstract class AbstractRequest implements Request {
     private String serviceName;
     private String methodName;
     private Object[] args;
-    private NSHeadMeta nsHeadMeta;
-    private Map<String, String> kvAttachment = new HashMap<String, String>();
+    private NSHead nsHead;
+    private Map<String, String> kvAttachment;
     private ByteBuf binaryAttachment;
     private int compressType;
     private RpcException exception;
     private Channel channel;
+    private Set<BrpcChannel> selectedInstances;
     private String auth;
+    private Long traceId;
+    private Long spanId;
+    private Long parentSpanId;
+    private Controller controller;
+    private RpcCallback callback;
 
     @Override
     public void reset() {
@@ -59,16 +68,22 @@ public abstract class AbstractRequest implements Request {
         serviceName = "";
         methodName = "";
         args = null;
-        nsHeadMeta = null;
-        kvAttachment.clear();
-        delRefCntForServer();
+        nsHead = null;
+        kvAttachment = null;
+        binaryAttachment = null;
         compressType = 0;
         exception = null;
         channel = null;
+        selectedInstances = null;
+        traceId = null;
+        spanId = null;
+        parentSpanId = null;
+        controller = null;
+        callback = null;
     }
 
     @Override
-    public Request addRefCnt() {
+    public Request retain() {
         if (binaryAttachment != null) {
             binaryAttachment.retain();
         }
@@ -76,20 +91,10 @@ public abstract class AbstractRequest implements Request {
     }
 
     @Override
-    public void delRefCnt() {
+    public void release() {
         if (binaryAttachment != null && binaryAttachment.refCnt() > 0) {
             binaryAttachment.release();
-        }
-    }
-
-    public void delRefCntForServer() {
-        if (binaryAttachment != null) {
-            int refCnt = binaryAttachment.refCnt();
-            if (refCnt > 0) {
-                binaryAttachment.release();
-            }
             binaryAttachment = null;
         }
     }
-
 }

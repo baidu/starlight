@@ -1,55 +1,98 @@
-/*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.baidu.brpc.client.channel;
 
-
 import java.util.NoSuchElementException;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.utils.CustomThreadFactory;
 
 import io.netty.channel.Channel;
+import lombok.extern.slf4j.Slf4j;
 
 /**
- * BrpcSingleChannel build single & short connection with server
- * and channel will be closed by brpc after communication with server
+ * BrpcSingleChannel class keeps single persistent connection with one server
  */
-public class BrpcSingleChannel extends AbstractBrpcChannelGroup {
+@Slf4j
+public class BrpcSingleChannel extends AbstractBrpcChannel {
+
+    private static final int RETRY_THRESHOLD = 2;
 
     private volatile Channel channel;
 
+    private volatile Long lastTryConnectTime = 0L;
+    private volatile AtomicInteger retryCount = new AtomicInteger(0);
+    private int connectPeriod;
+
+    private AtomicLong failedNum = new AtomicLong(0);
+    private int readTimeOut;
+    private int latencyWindowSize;
+    private Queue<Integer> latencyWindow;
+
+    private static final ExecutorService CONNECTION_SERVICE = Executors.newFixedThreadPool(3, new CustomThreadFactory(
+            "single-channel-connect-thread"));
+
+    public static class ReConnectTask implements Runnable {
+        BrpcSingleChannel channelGroup;
+        Channel oldChannel;
+
+        public ReConnectTask(BrpcSingleChannel channelGroup, Channel oldChannel) {
+            this.channelGroup = channelGroup;
+            this.oldChannel = oldChannel;
+        }
+
+        @Override
+        public void run() {
+            if (oldChannel != channelGroup.channel) {
+                return;
+            }
+            // avoid busy connecting
+            if (System.currentTimeMillis() - channelGroup.lastTryConnectTime < channelGroup.connectPeriod
+                    && channelGroup.retryCount.get() >= RETRY_THRESHOLD) {
+                return;
+            }
+            synchronized(channelGroup) {
+                if (oldChannel != channelGroup.channel) {
+                    return;
+                }
+                Channel newChannel = null;
+                try {
+                    newChannel = channelGroup.createChannel(channelGroup.getIp(),
+                            channelGroup.getPort());
+                } catch (Exception e) {
+                    log.info("failed reconnecting");
+                }
+                if (newChannel != null) {
+                    channelGroup.updateChannel(newChannel);
+                    if (oldChannel != null) {
+                        oldChannel.close();
+                    }
+                }
+            }
+        }
+    }
+
     public BrpcSingleChannel(String ip, int port, RpcClient rpcClient) {
         super(ip, port, rpcClient.getBootstrap(), rpcClient.getProtocol());
+        RpcClientOptions rpcClientOptions = rpcClient.getRpcClientOptions();
+        this.connectPeriod = rpcClientOptions.getHealthyCheckIntervalMillis();
+        this.readTimeOut = rpcClientOptions.getReadTimeoutMillis();
+        this.latencyWindowSize = rpcClientOptions.getLatencyWindowSizeOfFairLoadBalance();
+        this.latencyWindow = new ConcurrentLinkedQueue<Integer>();
     }
 
     @Override
     public Channel getChannel() throws Exception, NoSuchElementException, IllegalStateException {
-
-        if (channel == null || !channel.isActive()) {
-            synchronized (this) {
-                if (channel != null && !channel.isActive()) {
-                    channel.close();
-                    channel = null;
-                }
-                if (channel == null) {
-                    channel = connect(ip, port);
-                    ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(channel);
-                    channelInfo.setProtocol(protocol);
-                    channelInfo.setChannelGroup(this);
-
+        if (isNonActive(channel)) {
+            synchronized(this) {
+                if (isNonActive(channel)) {
+                    channel = createChannel(ip, port);
                 }
             }
         }
@@ -57,52 +100,123 @@ public class BrpcSingleChannel extends AbstractBrpcChannelGroup {
     }
 
     @Override
-    public void returnChannel(Channel channel) {
-
+    public void removeChannel(Channel channel) {
+        if (channel != this.channel) {
+            return;
+        }
+        CONNECTION_SERVICE.execute(genReconnectTask(channel));
     }
 
     @Override
-    public void removeChannel(Channel channel) {
-        closeChannel();
+    public void updateChannel(Channel channel) {
+        if (channel != this.channel) {
+            this.channel = channel;
+        }
+    }
+
+    private ReConnectTask genReconnectTask(Channel oldChannel) {
+        return new ReConnectTask(this, oldChannel);
+    }
+
+    private Channel createChannel(String ip, int port) {
+        long currentTimeMillis = System.currentTimeMillis();
+        if (currentTimeMillis - lastTryConnectTime < connectPeriod
+                && retryCount.getAndIncrement() >= RETRY_THRESHOLD) {
+            return null;
+        } else {
+            if (currentTimeMillis - lastTryConnectTime >= connectPeriod) {
+                refreshConnectionState(currentTimeMillis, 1);
+            }
+            Channel channel;
+            channel = doCreateChannel(ip, port);
+            refreshConnectionState(currentTimeMillis, 0);
+            return channel;
+        }
+    }
+
+    private void refreshConnectionState(long currentTimeMillis, int retryCount) {
+        this.retryCount = new AtomicInteger(retryCount);
+        this.lastTryConnectTime = currentTimeMillis;
+    }
+
+    private Channel doCreateChannel(String ip, int port) {
+        Channel channel = connect(ip, port);
+        ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(channel);
+        channelInfo.setProtocol(protocol);
+        channelInfo.setChannelGroup(this);
+        return channel;
     }
 
     @Override
     public void close() {
-        closeChannel();
-    }
-
-    @Override
-    public void updateMaxConnection(int num) {
-
-        // do nothing
-
+        if (channel != null) {
+            channel.close();
+            channel = null;
+        }
     }
 
     @Override
     public int getCurrentMaxConnection() {
-        return getActiveConnectionNum();
+        return countChannel();
     }
 
     @Override
     public int getActiveConnectionNum() {
-        if (channel != null && channel.isActive()) {
-            return 1;
-        }
-
-        return 0;
+        return countChannel();
     }
 
     @Override
     public int getIdleConnectionNum() {
-        if (channel == null || !channel.isActive()) {
-            return 1;
-        }
-        return 0;
+        return countChannel();
     }
 
-    private void closeChannel() {
-        if (channel != null && channel.isActive()) {
-            channel.close();
+    @Override
+    public void returnChannel(Channel channel) {
+        // ignore
+    }
+
+    @Override
+    public void updateMaxConnection(int num) {
+        // ignore
+    }
+
+    private boolean isActive(Channel channel) {
+        return channel != null && channel.isActive();
+    }
+
+    private boolean isNonActive(Channel channel) {
+        return !isActive(channel);
+    }
+
+    private int countChannel() {
+        return isActive(channel) ? 1 : 0;
+    }
+
+    @Override
+    public long getFailedNum() {
+        return failedNum.get();
+    }
+
+    @Override
+    public void incFailedNum() {
+        failedNum.incrementAndGet();
+    }
+
+    @Override
+    public Queue<Integer> getLatencyWindow() {
+        return latencyWindow;
+    }
+
+    @Override
+    public void updateLatency(int latency) {
+        latencyWindow.add(latency);
+        if (latencyWindow.size() > latencyWindowSize) {
+            latencyWindow.poll();
         }
+    }
+
+    @Override
+    public void updateLatencyWithReadTimeOut() {
+        updateLatency(readTimeOut);
     }
 }

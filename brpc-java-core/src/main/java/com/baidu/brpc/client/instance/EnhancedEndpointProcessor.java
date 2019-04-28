@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client.endpoint;
+package com.baidu.brpc.client.instance;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.client.channel.BrpcChannelFactory;
 import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcPooledChannel;
 import com.baidu.brpc.client.loadbalance.FairStrategy;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.thread.ClientHealthCheckTimerInstance;
+
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
@@ -34,52 +36,52 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class EnhancedEndPointProcessor implements EndPointProcessor {
-
+public class EnhancedEndpointProcessor implements EndpointProcessor {
     private RpcClient rpcClient;
-    private CopyOnWriteArrayList<BrpcChannelGroup> healthyInstances;
-    private CopyOnWriteArrayList<BrpcChannelGroup> unhealthyInstances;
-    private CopyOnWriteArrayList<EndPoint> endPoints;
+    private CopyOnWriteArrayList<BrpcChannel> healthyInstances;
+    private CopyOnWriteArrayList<BrpcChannel> unhealthyInstances;
+    private ConcurrentMap<Endpoint, BrpcChannel> instanceChannelMap;
+    private CopyOnWriteArrayList<Endpoint> endPoints;
     private Timer healthCheckTimer;
     private volatile boolean isStop = false;
 
-    public EnhancedEndPointProcessor(RpcClient rpcClient) {
-
+    public EnhancedEndpointProcessor(RpcClient rpcClient) {
         this.rpcClient = rpcClient;
-        this.endPoints = new CopyOnWriteArrayList<EndPoint>();
-        this.healthyInstances = new CopyOnWriteArrayList<BrpcChannelGroup>();
-        this.unhealthyInstances = new CopyOnWriteArrayList<BrpcChannelGroup>();
+        this.endPoints = new CopyOnWriteArrayList<Endpoint>();
+        this.healthyInstances = new CopyOnWriteArrayList<BrpcChannel>();
+        this.unhealthyInstances = new CopyOnWriteArrayList<BrpcChannel>();
+        this.instanceChannelMap = new ConcurrentHashMap<Endpoint, BrpcChannel>();
         healthCheckTimer = ClientHealthCheckTimerInstance.getOrCreateInstance();
-
         init();
     }
 
     private void init() {
-        // 开启健康检查线程
+        // start healthy check timer
         healthCheckTimer.newTimeout(
                 new TimerTask() {
                     @Override
                     public void run(Timeout timeout) throws Exception {
-
                         if (!isStop) {
-                            List<BrpcChannelGroup> newHealthyInstances = new ArrayList<BrpcChannelGroup>();
-                            Iterator<BrpcChannelGroup> iter = unhealthyInstances.iterator();
+                            List<BrpcChannel> newHealthyInstances = new ArrayList<BrpcChannel>();
+                            Iterator<BrpcChannel> iter = unhealthyInstances.iterator();
                             while (iter.hasNext()) {
-                                BrpcChannelGroup instance = iter.next();
+                                BrpcChannel instance = iter.next();
                                 boolean isHealthy = isInstanceHealthy(instance.getIp(), instance.getPort());
                                 if (isHealthy) {
                                     newHealthyInstances.add(instance);
                                 }
                             }
 
-                            List<BrpcChannelGroup> newUnhealthyInstances = new ArrayList<BrpcChannelGroup>();
+                            List<BrpcChannel> newUnhealthyInstances = new ArrayList<BrpcChannel>();
                             iter = healthyInstances.iterator();
                             while (iter.hasNext()) {
-                                BrpcChannelGroup instance = iter.next();
+                                BrpcChannel instance = iter.next();
                                 boolean isHealthy = isInstanceHealthy(instance.getIp(), instance.getPort());
                                 if (!isHealthy) {
                                     newUnhealthyInstances.add(instance);
@@ -105,38 +107,42 @@ public class EnhancedEndPointProcessor implements EndPointProcessor {
     }
 
     @Override
-    public void addEndPoints(Collection<EndPoint> addList) {
-
-        for (EndPoint endPoint : addList) {
+    public void addEndPoints(Collection<Endpoint> addList) {
+        for (Endpoint endPoint : addList) {
             addEndPoint(endPoint);
         }
     }
 
     @Override
-    public void deleteEndPoints(Collection<EndPoint> deleteList) {
-        for (EndPoint endPoint : deleteList) {
+    public void deleteEndPoints(Collection<Endpoint> deleteList) {
+        for (Endpoint endPoint : deleteList) {
             deleteEndPoint(endPoint);
         }
     }
 
     @Override
-    public CopyOnWriteArrayList<BrpcChannelGroup> getHealthyInstances() {
+    public CopyOnWriteArrayList<BrpcChannel> getHealthyInstances() {
         return healthyInstances;
     }
 
     @Override
-    public CopyOnWriteArrayList<BrpcChannelGroup> getUnHealthyInstances() {
+    public CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstances() {
         return unhealthyInstances;
     }
 
     @Override
-    public CopyOnWriteArrayList<EndPoint> getEndPoints() {
+    public ConcurrentMap<Endpoint, BrpcChannel> getInstanceChannelMap() {
+        return instanceChannelMap;
+    }
+
+    @Override
+    public CopyOnWriteArrayList<Endpoint> getEndPoints() {
         return endPoints;
     }
 
     @Override
-    public void updateUnHealthyInstances(List<BrpcChannelGroup> channelGroups) {
-        for (BrpcChannelGroup channelGroup : channelGroups) {
+    public void updateUnHealthyInstances(List<BrpcChannel> channelGroups) {
+        for (BrpcChannel channelGroup : channelGroups) {
             healthyInstances.remove(channelGroup);
             if (!unhealthyInstances.contains(channelGroup)) {
                 unhealthyInstances.add(channelGroup);
@@ -149,10 +155,10 @@ public class EnhancedEndPointProcessor implements EndPointProcessor {
     @Override
     public void stop() {
         isStop = true;
-        for (BrpcChannelGroup channelGroup : healthyInstances) {
+        for (BrpcChannel channelGroup : healthyInstances) {
             channelGroup.close();
         }
-        for (BrpcChannelGroup channelGroup : unhealthyInstances) {
+        for (BrpcChannel channelGroup : unhealthyInstances) {
             channelGroup.close();
         }
     }
@@ -181,33 +187,36 @@ public class EnhancedEndPointProcessor implements EndPointProcessor {
         return isHealthy;
     }
 
-    private void addEndPoint(EndPoint endPoint) {
+    private void addEndPoint(Endpoint endPoint) {
         if (endPoints.contains(endPoint)) {
             log.warn("endpoint already exist, {}:{}", endPoint.getIp(), endPoint.getPort());
             return;
         }
-        healthyInstances.add(new BrpcPooledChannel(endPoint.getIp(), endPoint.getPort(), rpcClient));
+        BrpcChannel brpcChannel = BrpcChannelFactory.createChannel(
+                endPoint.getIp(), endPoint.getPort(), rpcClient);
+        healthyInstances.add(brpcChannel);
+        instanceChannelMap.putIfAbsent(endPoint, brpcChannel);
         endPoints.add(endPoint);
     }
 
-    private void deleteEndPoint(EndPoint endPoint) {
-        List<BrpcChannelGroup> removedInstances = new LinkedList<BrpcChannelGroup>();
+    private void deleteEndPoint(Endpoint endPoint) {
+        List<BrpcChannel> removedInstances = new LinkedList<BrpcChannel>();
 
-        Iterator<BrpcChannelGroup> iterator = healthyInstances.iterator();
+        Iterator<BrpcChannel> iterator = healthyInstances.iterator();
         while (iterator.hasNext()) {
-            BrpcChannelGroup channelGroup = iterator.next();
-            if (channelGroup.getIp().equals(endPoint.getIp())
-                    && channelGroup.getPort() == endPoint.getPort()) {
-                channelGroup.close();
-                healthyInstances.remove(channelGroup);
-                removedInstances.add(channelGroup);
+            BrpcChannel brpcChannel = iterator.next();
+            if (brpcChannel.getIp().equals(endPoint.getIp())
+                    && brpcChannel.getPort() == endPoint.getPort()) {
+                brpcChannel.close();
+                healthyInstances.remove(brpcChannel);
+                removedInstances.add(brpcChannel);
                 break;
             }
         }
 
         iterator = unhealthyInstances.iterator();
         while (iterator.hasNext()) {
-            BrpcChannelGroup channelGroup = iterator.next();
+            BrpcChannel channelGroup = iterator.next();
             if (channelGroup.getIp().equals(endPoint.getIp())
                     && channelGroup.getPort() == endPoint.getPort()) {
                 channelGroup.close();
@@ -215,17 +224,17 @@ public class EnhancedEndPointProcessor implements EndPointProcessor {
                 break;
             }
         }
+        instanceChannelMap.remove(endPoint);
         endPoints.remove(endPoint);
 
         // notify the fair load balance strategy
         notifyInvalidInstance(removedInstances);
     }
 
-    private void notifyInvalidInstance(List<BrpcChannelGroup> invalidInstances) {
-        if (rpcClient.getRpcClientOptions().getLoadBalanceType() == LoadBalanceType.FAIR.getId()) {
+    private void notifyInvalidInstance(List<BrpcChannel> invalidInstances) {
+        if (rpcClient.getRpcClientOptions().getLoadBalanceType() == LoadBalanceStrategy.LOAD_BALANCE_FAIR) {
             ((FairStrategy) rpcClient.getLoadBalanceStrategy()).markInvalidInstance(invalidInstances);
         }
     }
-
 
 }

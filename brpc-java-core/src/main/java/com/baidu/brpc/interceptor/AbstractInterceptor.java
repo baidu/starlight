@@ -19,7 +19,7 @@ package com.baidu.brpc.interceptor;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 
-public class AbstractInterceptor implements Interceptor {
+public abstract class AbstractInterceptor implements Interceptor {
 
     @Override
     public boolean handleRequest(Request request) {
@@ -30,4 +30,8 @@ public class AbstractInterceptor implements Interceptor {
     public void handleResponse(Response response) {
     }
 
+    @Override
+    public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
+        chain.intercept(request, response);
+    }
 }

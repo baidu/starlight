@@ -39,7 +39,7 @@ public class JprotobufRpcMethodInfo extends RpcMethodInfo {
 
     public JprotobufRpcMethodInfo(Method method) {
         super(method);
-        inputCodec = ProtobufProxy.create(inputClasses[0]);
+        inputCodec = ProtobufProxy.create((Class) (inputClasses[0]));
         outputCodec = ProtobufProxy.create((Class) outputClass);
     }
 

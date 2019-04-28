@@ -1,6 +1,6 @@
 package com.baidu.brpc.naming.zookeeper;
 
-import com.baidu.brpc.client.endpoint.EndPoint;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
@@ -48,7 +48,7 @@ public class ZookeeperNamingServiceTest {
     public void testLookup() throws Exception {
         setUp();
         SubscribeInfo subscribeInfo = createSubscribeInfo(true);
-        List<EndPoint> endPoints = namingService.lookup(subscribeInfo);
+        List<Endpoint> endPoints = namingService.lookup(subscribeInfo);
         Assert.assertTrue(endPoints.size() == 0);
 
         RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8012);
@@ -64,21 +64,21 @@ public class ZookeeperNamingServiceTest {
     @Test
     public void testSubscribe() throws Exception {
         setUp();
-        final List<EndPoint> adds = new ArrayList<EndPoint>();
-        final List<EndPoint> deletes = new ArrayList<EndPoint>();
+        final List<Endpoint> adds = new ArrayList<Endpoint>();
+        final List<Endpoint> deletes = new ArrayList<Endpoint>();
         SubscribeInfo subscribeInfo = createSubscribeInfo(false);
         namingService.subscribe(subscribeInfo, new NotifyListener() {
             @Override
-            public void notify(Collection<EndPoint> addList, Collection<EndPoint> deleteList) {
+            public void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList) {
                 System.out.println("receive new subscribe info time:" + System.currentTimeMillis());
                 System.out.println("add size:" + addList.size());
-                for (EndPoint endPoint : addList) {
+                for (Endpoint endPoint : addList) {
                     System.out.println(endPoint);
                 }
                 adds.addAll(addList);
 
                 System.out.println("delete size:" + deleteList.size());
-                for (EndPoint endPoint : deleteList) {
+                for (Endpoint endPoint : deleteList) {
                     System.out.println(endPoint);
                 }
                 deletes.addAll(deleteList);
@@ -116,21 +116,21 @@ public class ZookeeperNamingServiceTest {
         namingUrl = new BrpcURL("zookeeper://127.0.0.1:2181");
         namingService = new ZookeeperNamingService(namingUrl);
 
-        final List<EndPoint> adds = new ArrayList<EndPoint>();
-        final List<EndPoint> deletes = new ArrayList<EndPoint>();
+        final List<Endpoint> adds = new ArrayList<Endpoint>();
+        final List<Endpoint> deletes = new ArrayList<Endpoint>();
         SubscribeInfo subscribeInfo = createSubscribeInfo(false);
         namingService.subscribe(subscribeInfo, new NotifyListener() {
             @Override
-            public void notify(Collection<EndPoint> addList, Collection<EndPoint> deleteList) {
+            public void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList) {
                 System.out.println("receive new subscribe info time:" + System.currentTimeMillis());
                 System.out.println("add size:" + addList.size());
-                for (EndPoint endPoint : addList) {
+                for (Endpoint endPoint : addList) {
                     System.out.println(endPoint);
                 }
                 adds.addAll(addList);
 
                 System.out.println("delete size:" + deleteList.size());
-                for (EndPoint endPoint : deleteList) {
+                for (Endpoint endPoint : deleteList) {
                     System.out.println(endPoint);
                 }
                 deletes.addAll(deleteList);
@@ -150,7 +150,7 @@ public class ZookeeperNamingServiceTest {
         // sleep for restarting zookeeper
         Thread.sleep(30 * 1000);
 
-        List<EndPoint> endPoints = namingService.lookup(subscribeInfo);
+        List<Endpoint> endPoints = namingService.lookup(subscribeInfo);
         Assert.assertTrue(endPoints.size() == 1);
         Assert.assertTrue(endPoints.get(0).getIp().equals("127.0.0.1"));
         Assert.assertTrue(endPoints.get(0).getPort() == 8014);
@@ -178,7 +178,7 @@ public class ZookeeperNamingServiceTest {
         RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8015);
         namingService.register(registerInfo);
         SubscribeInfo subscribeInfo = createSubscribeInfo(false);
-        List<EndPoint> endPoints = namingService.lookup(subscribeInfo);
+        List<Endpoint> endPoints = namingService.lookup(subscribeInfo);
         Assert.assertTrue(endPoints.size() == 1);
         Assert.assertTrue(endPoints.get(0).getIp().equals("127.0.0.1"));
         Assert.assertTrue(endPoints.get(0).getPort() == 8015);

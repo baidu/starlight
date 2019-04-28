@@ -15,11 +15,11 @@
  */
 package com.baidu.brpc.protocol;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.protocol.nshead.NSHead;
 
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
@@ -33,9 +33,10 @@ public abstract class AbstractResponse implements Response {
     private Throwable exception;
     private RpcMethodInfo rpcMethodInfo;
     private RpcFuture rpcFuture;
-    private Map<String, String> kvAttachment = new HashMap<String, String>();
+    private Map<String, String> kvAttachment;
     private ByteBuf binaryAttachment;
     private int compressType;
+    private NSHead nsHead;
 
     public void reset() {
         logId = -1;
@@ -43,21 +44,9 @@ public abstract class AbstractResponse implements Response {
         exception = null;
         rpcMethodInfo = null;
         rpcFuture = null;
-        kvAttachment.clear();
-        delRefCntForServer();
+        nsHead = null;
+        kvAttachment = null;
+        binaryAttachment = null;
         compressType = 0;
-    }
-
-    public void delRefCntForServer() {
-        if (binaryAttachment != null) {
-            int refCnt = binaryAttachment.refCnt();
-            if (refCnt > 0) {
-                binaryAttachment.release();
-            }
-            binaryAttachment = null;
-        }
-    }
-
-    public void delRefCntForClient() {
     }
 }

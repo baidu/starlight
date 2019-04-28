@@ -92,7 +92,7 @@ public class ServerStatus {
                     .append(LINE_BREAK);
 
             ret.append("Request IDL:").append(LINE_BREAK).append(
-                    entry.getValue().getInputClasses()[0].getName())
+                    ((Class) entry.getValue().getInputClasses()[0]).getName())
                     .append(LINE_BREAK);
             ret.append("Response IDL:").append(LINE_BREAK).append(
                     ((Class) entry.getValue().getOutputClass()).getName())

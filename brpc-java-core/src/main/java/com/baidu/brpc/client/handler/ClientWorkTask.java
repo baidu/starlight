@@ -16,7 +16,6 @@
 
 package com.baidu.brpc.client.handler;
 
-import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.Protocol;
@@ -51,12 +50,7 @@ public class ClientWorkTask implements Runnable {
 
         if (response.getRpcFuture() != null) {
             log.debug("handle response, logId={}", response.getLogId());
-            // 如果请求处理成功, 则在IO线程中触发用户回调方法;
-            // 如果出错, 就变成了在非IO线程中触发用户回调方法;
-            // 这种行为是否合适
             RpcFuture future = response.getRpcFuture();
-            future.setBinaryAttachment(response.getBinaryAttachment());
-            future.setKvAttachment(response.getKvAttachment());
             future.handleResponse(response);
         } else {
             log.debug("rpcFuture is null, logId={}", response.getLogId());

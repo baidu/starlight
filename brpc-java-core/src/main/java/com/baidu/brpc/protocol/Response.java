@@ -20,12 +20,11 @@ import java.util.Map;
 
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.protocol.nshead.NSHead;
 
 import io.netty.buffer.ByteBuf;
 
 public interface Response {
-
-    //
     Object getResult();
 
     void setResult(Object result);
@@ -35,6 +34,10 @@ public interface Response {
     void setLogId(long logId);
 
     Throwable getException();
+
+    NSHead getNsHead();
+
+    void setNsHead(NSHead nsHead);
 
     void setException(Throwable exception);
 
@@ -59,8 +62,4 @@ public interface Response {
     void setCompressType(int compressType);
 
     void reset();
-
-    void delRefCntForServer();
-
-    void delRefCntForClient();
 }

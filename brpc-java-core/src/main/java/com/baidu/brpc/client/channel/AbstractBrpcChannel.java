@@ -26,19 +26,25 @@ import lombok.extern.slf4j.Slf4j;
 import java.net.InetSocketAddress;
 import java.util.Queue;
 
-@Slf4j
-public abstract class AbstractBrpcChannelGroup implements BrpcChannelGroup {
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+@Slf4j
+public abstract class AbstractBrpcChannel implements BrpcChannel {
     protected String ip;
     protected int port;
     protected Bootstrap bootstrap;
     protected Protocol protocol;
 
-    public AbstractBrpcChannelGroup(String ip, int port, Bootstrap bootstrap, Protocol protocol) {
+    public AbstractBrpcChannel(String ip, int port, Bootstrap bootstrap, Protocol protocol) {
         this.ip = ip;
         this.port = port;
         this.bootstrap = bootstrap;
         this.protocol = protocol;
+    }
+
+    @Override
+    public void updateChannel(Channel channel) {
     }
 
 
@@ -105,5 +111,26 @@ public abstract class AbstractBrpcChannelGroup implements BrpcChannelGroup {
     @Override
     public Protocol getProtocol() {
         return protocol;
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(ip)
+                .append(port)
+                .toHashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        boolean flag = false;
+        if (object != null && BrpcChannel.class.isAssignableFrom(object.getClass())) {
+            BrpcChannel rhs = (BrpcChannel) object;
+            flag = new EqualsBuilder()
+                    .append(ip, rhs.getIp())
+                    .append(port, rhs.getPort())
+                    .isEquals();
+        }
+        return flag;
     }
 }

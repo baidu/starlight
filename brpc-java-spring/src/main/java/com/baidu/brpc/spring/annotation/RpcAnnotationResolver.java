@@ -24,15 +24,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
+import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
+import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.DefaultNamingServiceFactory;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.server.RpcServerOptions;
+import com.baidu.brpc.spring.RpcProxyFactoryBean;
+import com.baidu.brpc.spring.RpcServiceExporter;
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -42,11 +44,6 @@ import org.springframework.beans.PropertyValues;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-
-import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
-import com.baidu.brpc.spring.RpcProxyFactoryBean;
-import com.baidu.brpc.spring.RpcServiceExporter;
-import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 
@@ -60,36 +57,52 @@ import org.springframework.beans.factory.support.GenericBeanDefinition;
 @Getter
 public class RpcAnnotationResolver extends AbstractAnnotationParserCallback implements InitializingBean {
 
-    /** log this class. */
+    /**
+     * log this class.
+     */
     protected static final Log LOGGER = LogFactory.getLog(RpcAnnotationResolver.class);
 
-    /** The rpc clients. */
+    /**
+     * The rpc clients.
+     */
     private List<RpcProxyFactoryBean> rpcClients = new ArrayList<RpcProxyFactoryBean>();
 
-    /** The port mapping expoters. */
-    private Map<Integer, RpcServiceExporter> portMappingExpoters = new HashMap<Integer, RpcServiceExporter>();
+    /**
+     * The port mapping expoters.
+     */
+    private Map<Integer, RpcServiceExporter> portMappingExporters = new HashMap<Integer, RpcServiceExporter>();
 
-    /** The compiler. */
+    /**
+     * The compiler.
+     */
     private Compiler compiler;
 
-    /** status to control start only once. */
+    /**
+     * status to control start only once.
+     */
     private AtomicBoolean started = new AtomicBoolean(false);
 
     /* the default naming service url */
     private String namingServiceUrl;
 
-    /** The default registry center service for all service */
+    /**
+     * The default registry center service for all service
+     */
     private NamingServiceFactory namingServiceFactory;
 
-    /** The default interceptor for all service */
+    /**
+     * The default interceptor for all service
+     */
     private Interceptor interceptor;
 
-    /** The protobuf rpc annotation resolver listener. */
-    private RpcAnnotationResolverListener protobufRpcAnnotationRessolverListener;
+    /**
+     * The protobuf rpc annotation resolver listener.
+     */
+    private RpcAnnotationResolverListener protobufRpcAnnotationResolverListener;
 
     @Override
     public Object annotationAtType(Annotation t, Object bean, String beanName,
-            ConfigurableListableBeanFactory beanFactory) throws BeansException {
+                                   ConfigurableListableBeanFactory beanFactory) throws BeansException {
         if (t instanceof RpcExporter) {
             LOGGER.info("Annotation 'RpcExporter' for target '" + beanName + "' created");
 
@@ -105,95 +118,96 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
      *
      * @param rpcExporter the rpc exporter
      * @param beanFactory the bean factory
-     * @param bean the bean
+     * @param bean        the bean
      */
     private void parseRpcExporterAnnotation(RpcExporter rpcExporter, ConfigurableListableBeanFactory beanFactory,
-            Object bean) {
+                                            Object bean) {
 
         String port = parsePlaceholder(rpcExporter.port());
         // convert to integer and throw exception on error
         int intPort = Integer.valueOf(port);
 
         // if there are multi service on one port, the first service configs effect only.
-        RpcServiceExporter rpcServiceExporter = portMappingExpoters.get(intPort);
+        RpcServiceExporter rpcServiceExporter = portMappingExporters.get(intPort);
         if (rpcServiceExporter == null) {
             rpcServiceExporter = new RpcServiceExporter();
             rpcServiceExporter.setServicePort(intPort);
+            portMappingExporters.put(intPort, rpcServiceExporter);
+        }
 
-            // get RpcServerOptions
-            String rpcServerOptionsBeanName = parsePlaceholder(rpcExporter.rpcServerOptionsBeanName());
-            RpcServerOptions rpcServerOptions;
-            if (StringUtils.isBlank(rpcServerOptionsBeanName)) {
-                rpcServerOptions = new RpcServerOptions();
-            } else {
-                // if not exist throw exception
-                rpcServerOptions = beanFactory.getBean(rpcServerOptionsBeanName, RpcServerOptions.class);
-            }
-            // naming service url
-            if (StringUtils.isBlank(rpcServerOptions.getNamingServiceUrl())) {
-                rpcServerOptions.setNamingServiceUrl(namingServiceUrl);
-            }
+        // get RpcServerOptions
+        String rpcServerOptionsBeanName = parsePlaceholder(rpcExporter.rpcServerOptionsBeanName());
+        RpcServerOptions rpcServerOptions;
+        if (StringUtils.isBlank(rpcServerOptionsBeanName)) {
+            rpcServerOptions = new RpcServerOptions();
+        } else {
+            // if not exist throw exception
+            rpcServerOptions = beanFactory.getBean(rpcServerOptionsBeanName, RpcServerOptions.class);
+        }
+        // naming service url
+        if (StringUtils.isBlank(rpcServerOptions.getNamingServiceUrl())) {
+            rpcServerOptions.setNamingServiceUrl(namingServiceUrl);
+            rpcServiceExporter.setNamingServiceUrl(namingServiceUrl);
+        }
 
+        if (rpcExporter.useSharedThreadPool()) {
             try {
-                BeanUtils.copyProperties(rpcServiceExporter, rpcServerOptions);
+                rpcServiceExporter.copyFrom(rpcServerOptions);
             } catch (Exception ex) {
                 throw new RuntimeException("copy server options failed:", ex);
             }
+        }
 
-            // interceptor
-            String interceptorName = parsePlaceholder(rpcExporter.interceptorBeanName());
-            if (!StringUtils.isBlank(interceptorName)) {
-                Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
+        // interceptor
+        String interceptorName = parsePlaceholder(rpcExporter.interceptorBeanName());
+        if (!StringUtils.isBlank(interceptorName)) {
+            Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
+            List<Interceptor> interceptors = new ArrayList<Interceptor>();
+            interceptors.add(interceptor);
+            rpcServiceExporter.setInterceptors(interceptors);
+        } else {
+            if (interceptor != null) {
                 List<Interceptor> interceptors = new ArrayList<Interceptor>();
                 interceptors.add(interceptor);
                 rpcServiceExporter.setInterceptors(interceptors);
-            } else {
-                if (interceptor != null) {
-                    List<Interceptor> interceptors = new ArrayList<Interceptor>();
-                    interceptors.add(interceptor);
-                    rpcServiceExporter.setInterceptors(interceptors);
-                }
             }
+        }
 
-            // naming service group/version
-            rpcServiceExporter.setGroup(rpcExporter.group());
-            rpcServiceExporter.setVersion(rpcExporter.version());
-            rpcServiceExporter.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
+        // naming service group/version
+        rpcServiceExporter.setGroup(rpcExporter.group());
+        rpcServiceExporter.setVersion(rpcExporter.version());
+        rpcServiceExporter.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
 
-            // namingServiceFactory
-            String namingServiceFactoryBeanName = parsePlaceholder(rpcExporter.namingServiceFactoryBeanName());
-            if (!StringUtils.isBlank(namingServiceFactoryBeanName)) {
-                NamingServiceFactory namingServiceFactory = beanFactory.getBean(
-                        namingServiceFactoryBeanName, NamingServiceFactory.class);
-                rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-            } else {
-                rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-            }
-            portMappingExpoters.put(intPort, rpcServiceExporter);
+        // namingServiceFactory
+        String namingServiceFactoryBeanName = parsePlaceholder(rpcExporter.namingServiceFactoryBeanName());
+        if (!StringUtils.isBlank(namingServiceFactoryBeanName)) {
+            NamingServiceFactory namingServiceFactory = beanFactory.getBean(
+                    namingServiceFactoryBeanName, NamingServiceFactory.class);
+            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
+        } else {
+            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
         }
 
         // do register service
-        List<Object> registerServices = rpcServiceExporter.getRegisterServices();
-        if (registerServices == null) {
-            registerServices = new ArrayList<Object>();
-        }
-        registerServices.add(bean);
-
-        if (protobufRpcAnnotationRessolverListener != null) {
-            protobufRpcAnnotationRessolverListener.onRpcExporterAnnotationParsered(rpcExporter, intPort, bean,
-                    registerServices);
+        if (rpcExporter.useSharedThreadPool()) {
+            rpcServiceExporter.getRegisterServices().add(bean);
+        } else {
+            rpcServiceExporter.getCustomOptionsServiceMap().put(rpcServerOptions, bean);
         }
 
-        rpcServiceExporter.setRegisterServices(registerServices);
+        if (protobufRpcAnnotationResolverListener != null) {
+            protobufRpcAnnotationResolverListener.onRpcExporterAnnotationParsered(
+                    rpcExporter, intPort, bean, rpcServiceExporter.getRegisterServices());
+        }
     }
 
     @Override
     public void annotationAtTypeAfterStarted(Annotation t, Object bean, String beanName,
-            ConfigurableListableBeanFactory beanFactory) throws BeansException {
+                                             ConfigurableListableBeanFactory beanFactory) throws BeansException {
 
         if (started.compareAndSet(false, true)) {
             // do export service here
-            Collection<RpcServiceExporter> values = portMappingExpoters.values();
+            Collection<RpcServiceExporter> values = portMappingExporters.values();
             for (RpcServiceExporter rpcServiceExporter : values) {
                 try {
                     rpcServiceExporter.afterPropertiesSet();
@@ -206,7 +220,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.baidu.brpc.spring.annotation.AnnotationParserCallback#
      * annotationAtField(java.lang.annotation. Annotation, java.lang.Object, java.lang.String,
      * org.springframework.beans.PropertyValues,
@@ -214,7 +228,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
      */
     @Override
     public Object annotationAtField(Annotation t, Object value, String beanName, PropertyValues pvs,
-            DefaultListableBeanFactory beanFactory, Field field) throws BeansException {
+                                    DefaultListableBeanFactory beanFactory, Field field) throws BeansException {
         if (t instanceof RpcProxy) {
             try {
                 LOGGER.info("Annotation 'BrpcProxy' on field '" + field.getName() + "' for target '" + beanName
@@ -231,7 +245,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     /**
      * Parses the rpc proxy annotation.
      *
-     * @param rpcProxy the rpc proxy
+     * @param rpcProxy    the rpc proxy
      * @param beanFactory the bean factory
      * @return the object
      * @throws Exception the exception
@@ -274,11 +288,11 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
         rpcClients.add(rpcProxyFactoryBean);
         Object object = rpcProxyFactoryBean.getObject();
-        if (protobufRpcAnnotationRessolverListener != null) {
+        if (protobufRpcAnnotationResolverListener != null) {
             // TODO: why create new RpcProxyFactoryBean?
 //            RpcProxyFactoryBean newRpcProxyFactoryBean =
 //                    createRpcProxyFactoryBean(rpcProxy, beanFactory, rpcClientOptions, serviceUrl);
-            protobufRpcAnnotationRessolverListener.onRpcProxyAnnotationParsed(rpcProxy, rpcProxyFactoryBean,
+            protobufRpcAnnotationResolverListener.onRpcProxyAnnotationParsed(rpcProxy, rpcProxyFactoryBean,
                     rpcProxyFactoryBean.getObject());
         }
 
@@ -288,8 +302,8 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     /**
      * Creates the rpc proxy factory bean.
      *
-     * @param rpcProxy the rpc proxy
-     * @param beanFactory the bean factory
+     * @param rpcProxy         the rpc proxy
+     * @param beanFactory      the bean factory
      * @param rpcClientOptions the rpc client options
      * @param namingServiceUrl naming service url
      * @return the rpc proxy factory bean
@@ -302,8 +316,9 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         GenericBeanDefinition beanDef = new GenericBeanDefinition();
         beanDef.setBeanClass(RpcProxyFactoryBean.class);
         MutablePropertyValues values = new MutablePropertyValues();
-        for (Field field : rpcClientOptions.getClass().getFields()) {
+        for (Field field : rpcClientOptions.getClass().getDeclaredFields()) {
             try {
+                field.setAccessible(true);
                 values.addPropertyValue(field.getName(), field.get(rpcClientOptions));
             } catch (Exception ex) {
                 LOGGER.warn("field not exist:", ex);
@@ -350,7 +365,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.baidu.jprotobuf.pbrpc.spring.annotation.AnnotationParserCallback#
      * annotationAtMethod(java.lang.annotation. Annotation, java.lang.Object, java.lang.String,
      * org.springframework.beans.PropertyValues,
@@ -358,7 +373,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
      */
     @Override
     public Object annotationAtMethod(Annotation t, Object bean, String beanName, PropertyValues pvs,
-            DefaultListableBeanFactory beanFactory, Method method) throws BeansException {
+                                     DefaultListableBeanFactory beanFactory, Method method) throws BeansException {
         if (t instanceof RpcProxy) {
             try {
                 LOGGER.info("Annotation 'BrpcProxy' on method '" + method.getName() + "' for target '" + beanName
@@ -374,7 +389,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.baidu.brpc.spring.annotation.AnnotationParserCallback# getTypeAnnotation()
      */
     @Override
@@ -384,7 +399,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see com.baidu.brpc.spring.annotation.AnnotationParserCallback# getMethodFieldAnnotation()
      */
     @Override
@@ -409,8 +424,8 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             }
         }
 
-        if (portMappingExpoters != null) {
-            Collection<RpcServiceExporter> exporters = portMappingExpoters.values();
+        if (portMappingExporters != null) {
+            Collection<RpcServiceExporter> exporters = portMappingExporters.values();
             for (RpcServiceExporter rpcServiceExporter : exporters) {
                 try {
                     rpcServiceExporter.destroy();
@@ -420,8 +435,8 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             }
         }
 
-        if (protobufRpcAnnotationRessolverListener != null) {
-            protobufRpcAnnotationRessolverListener.destroy();
+        if (protobufRpcAnnotationResolverListener != null) {
+            protobufRpcAnnotationResolverListener.destroy();
         }
 
     }
@@ -437,7 +452,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
 
     /*
      * (non-Javadoc)
-     * 
+     *
      * @see org.springframework.beans.factory.InitializingBean#afterPropertiesSet()
      */
     @Override

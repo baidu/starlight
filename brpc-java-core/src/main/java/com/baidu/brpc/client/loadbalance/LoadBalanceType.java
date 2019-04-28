@@ -17,8 +17,10 @@
 package com.baidu.brpc.client.loadbalance;
 
 /**
- * Created by baidu on 2017/9/29.
+ * Created by huwenwei on 2017/9/29.
+ * please use constants of {@link LoadBalanceStrategy} instead.
  */
+@Deprecated
 public enum LoadBalanceType {
 
     RANDOM(0, "RANDOM", new RandomStrategy()),

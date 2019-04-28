@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 
 @Service("echoServiceImpl")
 @RpcExporter(port = "8012",
+        useSharedThreadPool = false,
         rpcServerOptionsBeanName = "rpcServerOptions",
         interceptorBeanName = "customInterceptor")
 public class EchoServiceImpl implements EchoService {

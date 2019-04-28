@@ -84,8 +84,7 @@ public class NSHead {
         this.bodyLength = bodyLength;
     }
 
-    NSHead() {
-
+    public NSHead() {
     }
 
     public static NSHead fromByteBuf(ByteBuf buf) throws BadSchemaException {

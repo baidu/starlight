@@ -16,13 +16,9 @@
 
 package com.baidu.brpc.protocol;
 
-import java.lang.reflect.Method;
-import java.util.Map;
-
-import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
 import com.baidu.brpc.exceptions.TooBigDataException;
@@ -75,18 +71,6 @@ public interface Protocol {
     /**************** 以下4个函数是客户端需要实现的。 *******************/
 
     /**
-     * 初始化请求
-     * @param rpcClient 客户端
-     * @param rpcMethodMap rpc方法元信息
-     * @param instance 调用者实例
-     * @param method 被调用的方法
-     * @param args 方法参数
-     * @return rpc请求实例
-     */
-    Request initRequest(RpcClient rpcClient, Map<String, RpcMethodInfo> rpcMethodMap,
-                           Object instance, Method method, Object[] args);
-
-    /**
      * 客户端序列化请求对象
      * @param request 待发送给服务端的对象
      * @throws Exception 序列化异常
@@ -96,7 +80,7 @@ public interface Protocol {
     /**
      * do something if needed before client send request
      */
-    void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannelGroup channelGroup);
+    void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannel channelGroup);
 
     /**
      * 客户端反序列化rpc响应

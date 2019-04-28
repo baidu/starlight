@@ -23,6 +23,7 @@ import com.baidu.brpc.protocol.Response;
  * The client or server intercepts the interface.
  * The reason for dividing the two functions is that in the asynchronous scenario,
  * the request and response cannot be obtained at the same time.
+ * @author Li Yuanxin(liyuanxin@baidu.com)
  */
 public interface Interceptor {
     /**
@@ -42,4 +43,13 @@ public interface Interceptor {
      * @param response server response content, when the business is implemented, it needs to be converted into the type
      */
     void handleResponse(Response response);
+
+    /**
+     * The around intercept for RPC methods.
+     * Attention: only around the request sending for async client
+     * @param chain interceptor chain
+     * @param response sync result or async future
+     * @param chain the interceptor call chain
+     */
+    void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception;
 }

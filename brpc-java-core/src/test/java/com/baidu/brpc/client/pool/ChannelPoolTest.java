@@ -29,7 +29,7 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import com.baidu.brpc.client.channel.BrpcChannelGroup;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import io.netty.channel.Channel;
 
 public class ChannelPoolTest {
@@ -39,7 +39,7 @@ public class ChannelPoolTest {
     @Before
     public void before() throws Exception {
         ChannelPooledObjectFactory pooledObjectFactory =
-                spy(new ChannelPooledObjectFactory(mock(BrpcChannelGroup.class), "127.0.0.1", 8000));
+                spy(new ChannelPooledObjectFactory(mock(BrpcChannel.class), "127.0.0.1", 8000));
         doAnswer(new Answer<Channel>() {
             public Channel answer(InvocationOnMock invocation) {
                 return mock(Channel.class);

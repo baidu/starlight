@@ -52,7 +52,12 @@ public class HttpRpcServlet extends HttpServlet {
 
     public void registerService(Object service) {
         ServiceManager serviceManager = ServiceManager.getInstance();
-        serviceManager.registerService(service);
+        serviceManager.registerService(service, null);
+    }
+
+    public void registerService(Class targetClass, Object service) {
+        ServiceManager serviceManager = ServiceManager.getInstance();
+        serviceManager.registerService(targetClass, service, null);
     }
 
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)

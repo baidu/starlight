@@ -20,6 +20,8 @@ import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.utils.ProtobufUtils;
+import com.baidu.brpc.utils.ThreadPool;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,7 +54,7 @@ public class ServiceManager {
         this.serviceMap = new HashMap<String, RpcMethodInfo>();
     }
 
-    public void registerService(Object service) {
+    public void registerService(Object service, ThreadPool threadPool) {
         Class[] interfaces = service.getClass().getInterfaces();
         if (interfaces.length != 1) {
             LOG.error("service must implement one interface only");
@@ -60,6 +62,21 @@ public class ServiceManager {
         }
         Class clazz = interfaces[0];
         Method[] methods = clazz.getDeclaredMethods();
+        registerService(methods, service, threadPool);
+    }
+
+    public void registerService(Class targetClass, Object service, ThreadPool threadPool) {
+        Class[] interfaces = targetClass.getInterfaces();
+        if (interfaces.length != 1) {
+            LOG.error("service must implement one interface only");
+            throw new RuntimeException("service must implement one interface only");
+        }
+        Class clazz = interfaces[0];
+        Method[] methods = clazz.getDeclaredMethods();
+        registerService(methods, service, threadPool);
+    }
+
+    protected void registerService(Method[] methods, Object service, ThreadPool threadPool) {
         for (Method method : methods) {
             RpcMethodInfo methodInfo;
             ProtobufUtils.MessageType messageType = ProtobufUtils.getMessageType(method);
@@ -71,6 +88,7 @@ public class ServiceManager {
                 methodInfo = new RpcMethodInfo(method);
             }
             methodInfo.setTarget(service);
+            methodInfo.setThreadPool(threadPool);
             registerService(methodInfo);
             LOG.info("register service, serviceName={}, methodName={}",
                     methodInfo.getServiceName(), methodInfo.getMethodName());

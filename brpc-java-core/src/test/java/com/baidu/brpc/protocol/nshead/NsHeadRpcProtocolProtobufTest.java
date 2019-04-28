@@ -58,7 +58,9 @@ public class NsHeadRpcProtocolProtobufTest {
         rpcRequest.setArgs(new Object[] {request});
         rpcRequest.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
         rpcRequest.setLogId(3L);
-        rpcRequest.setNsHeadMeta(rpcRequest.getRpcMethodInfo().getNsHeadMeta());
+        NSHeadMeta nsHeadMeta = rpcRequest.getRpcMethodInfo().getNsHeadMeta();
+        rpcRequest.setNsHead(new NSHead(3, nsHeadMeta.id(),
+                nsHeadMeta.version(), nsHeadMeta.provider(), 0));
 
         ByteBuf byteBuf = protocol.encodeRequest(rpcRequest);
 
@@ -74,7 +76,7 @@ public class NsHeadRpcProtocolProtobufTest {
     public void testDecodeRequestSuccess() throws Exception {
         ServiceManager.getInstance().getServiceMap().clear();
 
-        ServiceManager.getInstance().registerService(new EchoServiceImpl());
+        ServiceManager.getInstance().registerService(new EchoServiceImpl(), null);
         Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
                 .setMessage("hello").build();
 

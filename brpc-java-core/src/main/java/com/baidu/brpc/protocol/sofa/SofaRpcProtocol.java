@@ -146,8 +146,7 @@ public class SofaRpcProtocol extends AbstractProtocol {
         ByteBuf metaBuf = responsePacket.getMetaBuf();
         ByteBuf protoBuf = responsePacket.getProtoBuf();
         try {
-            RpcResponse rpcResponse = RpcResponse.getRpcResponse();
-            rpcResponse.reset();
+            RpcResponse rpcResponse = new RpcResponse();
             SofaRpcProto.SofaRpcMeta responseMeta = (SofaRpcProto.SofaRpcMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcMetaInstance);
             Long logId = responseMeta.getSequenceId();
@@ -189,7 +188,7 @@ public class SofaRpcProtocol extends AbstractProtocol {
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
-        Request request = this.getRequest();
+        Request request = this.createRequest();
         SofaRpcDecodePacket requestPacket = (SofaRpcDecodePacket) packet;
         ByteBuf metaBuf = requestPacket.getMetaBuf();
         ByteBuf protoBuf = requestPacket.getProtoBuf();
@@ -206,6 +205,8 @@ public class SofaRpcProtocol extends AbstractProtocol {
                 request.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorMsg));
                 return request;
             }
+            request.setServiceName(rpcMethodInfo.getServiceName());
+            request.setMethodName(rpcMethodInfo.getMethodName());
             request.setRpcMethodInfo(rpcMethodInfo);
             request.setTargetMethod(rpcMethodInfo.getMethod());
             request.setTarget(rpcMethodInfo.getTarget());
