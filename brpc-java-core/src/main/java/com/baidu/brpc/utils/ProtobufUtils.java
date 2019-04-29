@@ -23,7 +23,6 @@ import java.lang.reflect.Method;
 
 import com.baidu.bjf.remoting.protobuf.annotation.Protobuf;
 import com.baidu.bjf.remoting.protobuf.annotation.ProtobufClass;
-import com.baidu.brpc.Controller;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.google.protobuf.Message;
 
@@ -44,19 +43,12 @@ public class ProtobufUtils {
         if (types.length <= 0) {
             throw new IllegalArgumentException("invalid rpc method params");
         }
-        Class<?> inputType = null;
-        if (types[0] == Controller.class) {
-            if (types.length != 2) {
-                return MessageType.POJO;
-            }
-            inputType = types[1];
-        } else {
-            if (types.length != 1) {
-                return MessageType.POJO;
-            }
-            inputType = types[0];
+
+        if (types.length != 1) {
+            return MessageType.POJO;
         }
 
+        Class<?> inputType = types[0];
         if (Message.class.isAssignableFrom(inputType)
                 && Message.class.isAssignableFrom(returnType)) {
             return MessageType.PROTOBUF;

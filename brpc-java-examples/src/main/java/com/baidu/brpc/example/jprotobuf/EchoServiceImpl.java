@@ -24,18 +24,6 @@ public class EchoServiceImpl implements EchoService {
 
     @Override
     public EchoResponse echo(EchoRequest request) {
-        // 读取request attachment
-//        RpcContext rpcContext = RpcContext.getContext();
-//        ByteBuf attachment = rpcContext.getRequestBinaryAttachment();
-//        if (attachment != null) {
-//            if (LOG.isDebugEnabled()) {
-//                String attachmentString = new String(attachment.array());
-//                LOG.debug("request attachment={}", attachmentString);
-//            }
-//            // 设置response attachment
-//            rpcContext.setResponseBinaryAttachment(Unpooled.copiedBuffer(attachment));
-//        }
-
         String message = request.getMessage();
         EchoResponse response = new EchoResponse();
         response.setMessage(message);

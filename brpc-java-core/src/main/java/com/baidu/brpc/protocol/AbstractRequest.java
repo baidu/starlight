@@ -17,11 +17,10 @@
 package com.baidu.brpc.protocol;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.channel.BrpcChannel;
@@ -55,7 +54,7 @@ public abstract class AbstractRequest implements Request {
     private Long traceId;
     private Long spanId;
     private Long parentSpanId;
-    private Controller controller;
+    private RpcContext rpcContext;
     private RpcCallback callback;
 
     @Override
@@ -78,7 +77,7 @@ public abstract class AbstractRequest implements Request {
         traceId = null;
         spanId = null;
         parentSpanId = null;
-        controller = null;
+        rpcContext = null;
         callback = null;
     }
 

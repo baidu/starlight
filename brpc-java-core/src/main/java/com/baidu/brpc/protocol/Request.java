@@ -20,7 +20,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.channel.BrpcChannel;
@@ -123,9 +123,9 @@ public interface Request {
 
     void setParentSpanId(Long parentSpanId);
 
-    Controller getController();
+    RpcContext getRpcContext();
 
-    void setController(Controller controller);
+    void setRpcContext(RpcContext rpcContext);
 
     RpcCallback getCallback();
 

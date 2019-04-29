@@ -8,15 +8,37 @@ import java.util.Map;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
+import io.netty.util.concurrent.FastThreadLocal;
 import lombok.Getter;
 import lombok.Setter;
 
 /**
  * runtime information which are not in Request/Response.
+ * it should be reset when begin new rpc.
+ * the requestBinaryAttachment should be released at server.
+ * the responseBinaryAttachment should be released at client.
  */
 @Setter
 @Getter
-public class Controller {
+public class RpcContext {
+    private static final FastThreadLocal<RpcContext> CURRENT_RPC_CONTEXT = new FastThreadLocal<RpcContext>() {
+        @Override
+        protected RpcContext initialValue() {
+            return new RpcContext();
+        }
+    };
+
+    public static boolean isSet() {
+        return CURRENT_RPC_CONTEXT.isSet();
+    }
+
+    public static RpcContext getContext() {
+        return CURRENT_RPC_CONTEXT.get();
+    }
+
+    public static void removeContext() {
+        CURRENT_RPC_CONTEXT.remove();
+    }
 
     private Integer readTimeoutMillis;
 
@@ -34,22 +56,24 @@ public class Controller {
 
     private SocketAddress remoteAddress;
 
+    public void reset() {
+        readTimeoutMillis = null;
+        writeTimeoutMillis = null;
+        nsHeadLogId = null;
+        requestKvAttachment = null;
+        requestBinaryAttachment = null;
+        responseBinaryAttachment = null;
+        responseKvAttachment = null;
+        channel = null;
+        remoteAddress = null;
+    }
+
     public void setRequestBinaryAttachment(ByteBuf byteBuf) {
         this.requestBinaryAttachment = byteBuf == null ? null : Unpooled.wrappedBuffer(byteBuf);
     }
 
     public void setRequestBinaryAttachment(byte[] bytes) {
         this.requestBinaryAttachment = bytes == null ? null : Unpooled.wrappedBuffer(bytes);
-    }
-
-    public void setChannel(Channel channel) {
-        this.channel = channel;
-        if (channel != null) {
-            ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(channel);
-            if (channelInfo != null) {
-                channelInfo.setFromRpcContext(true);
-            }
-        }
     }
 
     public String getRemoteHost() {

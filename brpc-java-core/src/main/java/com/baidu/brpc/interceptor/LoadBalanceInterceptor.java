@@ -16,12 +16,11 @@
 
 package com.baidu.brpc.interceptor;
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
 import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.AsyncAwareFuture;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
@@ -100,9 +99,9 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
             response.setRpcFuture((RpcFuture) future);
         } else {
             long readTimeout;
-            Controller controller = request.getController();
-            if (controller != null && controller.getReadTimeoutMillis() != null) {
-                readTimeout = controller.getReadTimeoutMillis();
+            RpcContext rpcContext = request.getRpcContext();
+            if (rpcContext != null && rpcContext.getReadTimeoutMillis() != null) {
+                readTimeout = rpcContext.getReadTimeoutMillis();
             } else {
                 readTimeout = rpcClient.getRpcClientOptions().getReadTimeoutMillis();
             }

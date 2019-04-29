@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.example.standard;
 
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
@@ -137,7 +137,7 @@ public class SyncBenchmarkTest {
 
             while (!stop) {
                 try {
-                    Controller controller = new Controller();
+                    RpcContext controller = new RpcContext();
                     controller.setRequestBinaryAttachment(messageBytes);
                     long beginTime = System.nanoTime();
                     Echo.EchoResponse response = echoService.echo(request);

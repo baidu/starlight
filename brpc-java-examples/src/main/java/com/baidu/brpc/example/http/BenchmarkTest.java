@@ -1,9 +1,10 @@
 package com.baidu.brpc.example.http;
 
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcCallbackAdaptor;
+import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.example.standard.Echo;
 import com.baidu.brpc.example.standard.Echo.EchoRequest;
@@ -25,7 +26,7 @@ public class BenchmarkTest {
         }
         RpcClientOptions options = new RpcClientOptions();
         options.setProtocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
-        options.setLoadBalanceType(LoadBalanceType.FAIR.getId());
+        options.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         options.setMaxTotalConnections(1000000);
         options.setMinIdleConnections(10);
         options.setReadTimeoutMillis(5000);
@@ -73,7 +74,7 @@ public class BenchmarkTest {
         }
     }
 
-    public static class EchoCallback extends RpcCallbackAdaptor<EchoResponse> {
+    public static class EchoCallback implements RpcCallback<EchoResponse> {
         private long startTime;
 
         public EchoCallback(long startTime) {

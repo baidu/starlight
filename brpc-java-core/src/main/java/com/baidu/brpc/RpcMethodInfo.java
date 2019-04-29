@@ -45,7 +45,6 @@ public class RpcMethodInfo {
     protected NSHeadMeta nsHeadMeta;
     // instance of interface which method belongs to
     protected Object target;
-    protected boolean includeController;
     protected ThreadPool threadPool;
 
     public RpcMethodInfo(Method method) {
@@ -57,16 +56,7 @@ public class RpcMethodInfo {
         if (inputClasses.length <= 0) {
             throw new IllegalArgumentException("invalid params");
         }
-        if (inputClasses[0] == Controller.class) {
-            includeController = true;
-            Type[] rpcInputClasses = new Type[inputClasses.length - 1];
-            for (int i = 0; i < inputClasses.length - 1; i++) {
-                rpcInputClasses[i] = inputClasses[i + 1];
-            }
-            this.inputClasses = rpcInputClasses;
-        } else {
-            this.inputClasses = inputClasses;
-        }
+        this.inputClasses = inputClasses;
         this.outputClass = method.getGenericReturnType();
         this.nsHeadMeta = method.getAnnotation(NSHeadMeta.class);
     }

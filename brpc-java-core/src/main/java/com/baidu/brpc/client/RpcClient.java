@@ -31,7 +31,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.instance.BasicEndpointProcessor;
@@ -360,7 +360,7 @@ public class RpcClient {
         RpcFuture rpcFuture = new RpcFuture();
         rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
         rpcFuture.setCallback(request.getCallback());
-        rpcFuture.setController(request.getController());
+        rpcFuture.setRpcContext(request.getRpcContext());
         rpcFuture.setRpcClient(this);
         rpcFuture.setChannelInfo(channelInfo);
         // generate logId
@@ -371,15 +371,15 @@ public class RpcClient {
         // read write timeout
         final long readTimeout;
         final long writeTimeout;
-        Controller controller = request.getController();
-        if (controller != null) {
-            if (controller.getReadTimeoutMillis() != null) {
-                readTimeout = controller.getReadTimeoutMillis();
+        RpcContext rpcContext = request.getRpcContext();
+        if (rpcContext != null) {
+            if (rpcContext.getReadTimeoutMillis() != null) {
+                readTimeout = rpcContext.getReadTimeoutMillis();
             } else {
                 readTimeout = rpcClientOptions.getReadTimeoutMillis();
             }
-            if (controller.getWriteTimeoutMillis() != null) {
-                writeTimeout = controller.getWriteTimeoutMillis();
+            if (rpcContext.getWriteTimeoutMillis() != null) {
+                writeTimeout = rpcContext.getWriteTimeoutMillis();
             } else {
                 writeTimeout = rpcClientOptions.getWriteTimeoutMillis();
             }
@@ -401,7 +401,7 @@ public class RpcClient {
             request.retain();
             ByteBuf byteBuf = protocol.encodeRequest(request);
             ChannelFuture sendFuture = channel.writeAndFlush(byteBuf);
-            // set Controller writeTimeout
+            // set RpcContext writeTimeout
             sendFuture.awaitUninterruptibly(writeTimeout);
             if (!sendFuture.isSuccess()) {
                 List<BrpcChannel> unHealthyInstances = new ArrayList<BrpcChannel>(1);

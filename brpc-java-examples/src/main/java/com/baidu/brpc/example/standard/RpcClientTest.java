@@ -18,7 +18,6 @@ package com.baidu.brpc.example.standard;
 
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
-import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
@@ -81,7 +80,7 @@ public class RpcClientTest {
         // async call
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
 //        rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
-        RpcCallback callback = new RpcCallbackAdaptor<Echo.EchoResponse>() {
+        RpcCallback callback = new RpcCallback<Echo.EchoResponse>() {
             @Override
             public void success(Echo.EchoResponse response) {
                 System.out.printf("async call EchoService.echo success, response=%s\n",

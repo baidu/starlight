@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.example.spring.client;
 
-import com.baidu.brpc.client.RpcCallbackAdaptor;
+import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.example.spring.api.AsyncEchoService;
 import com.baidu.brpc.example.spring.api.EchoRequest;
 import com.baidu.brpc.example.spring.api.EchoResponse;
@@ -60,7 +60,7 @@ public class EchoFacadeImpl implements EchoFacade {
 
     public Future<EchoResponse> echo3(EchoRequest request) {
         System.out.println(echoService3.hashCode());
-        Future<EchoResponse> future = echoService3.echo(request, new RpcCallbackAdaptor<EchoResponse>() {
+        Future<EchoResponse> future = echoService3.echo(request, new RpcCallback<EchoResponse>() {
             @Override
             public void success(EchoResponse response) {
                 System.out.println(response.getMessage());
