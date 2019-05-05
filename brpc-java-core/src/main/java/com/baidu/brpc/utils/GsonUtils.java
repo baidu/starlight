@@ -12,7 +12,7 @@ public class GsonUtils {
     private static Gson gson;
 
     static {
-        gson = getGB().create();
+        gson = getGB().setDateFormat("yyyy-MM-dd HH:mm:ss").create();
     }
 
     private static GsonBuilder getGB() {
