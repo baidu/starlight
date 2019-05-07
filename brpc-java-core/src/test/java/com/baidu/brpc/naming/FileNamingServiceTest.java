@@ -25,7 +25,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.baidu.brpc.client.instance.Endpoint;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.test.BaseMockitoTest;
 
 public class FileNamingServiceTest extends BaseMockitoTest {
@@ -36,10 +36,10 @@ public class FileNamingServiceTest extends BaseMockitoTest {
         String serverList = url.getFile();
         FileNamingService namingService = new FileNamingService(new BrpcURL("file://" + serverList));
 
-        List<Endpoint> endPoints = namingService.lookup(null);
-        assertThat(endPoints.size(), is(1));
-        assertThat(endPoints, hasItems(
-                new Endpoint("127.0.0.1", 8002)
+        List<ServiceInstance> instances = namingService.lookup(null);
+        assertThat(instances.size(), is(1));
+        assertThat(instances, hasItems(
+                new ServiceInstance("127.0.0.1", 8002)
         ));
         namingService.unsubscribe(null);
     }

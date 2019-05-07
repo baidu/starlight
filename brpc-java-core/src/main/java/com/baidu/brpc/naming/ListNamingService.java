@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.naming;
-
-import com.baidu.brpc.client.instance.Endpoint;
-import org.apache.commons.lang3.Validate;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.lang3.Validate;
+
+import com.baidu.brpc.client.instance.ServiceInstance;
 
 /**
  * Fetch service list from List Naming Service
  */
 public class ListNamingService implements NamingService {
-    private List<Endpoint> endPoints;
+    private List<ServiceInstance> instances;
 
     public ListNamingService(BrpcURL namingUrl) {
         Validate.notNull(namingUrl);
@@ -34,7 +34,7 @@ public class ListNamingService implements NamingService {
 
         String hostPorts = namingUrl.getHostPorts();
         String[] hostPortSplits = hostPorts.split(",");
-        this.endPoints = new ArrayList<Endpoint>(hostPortSplits.length);
+        this.instances = new ArrayList<ServiceInstance>(hostPortSplits.length);
         for (String hostPort : hostPortSplits) {
             String[] hostPortSplit = hostPort.split(":");
             String host = hostPortSplit[0];
@@ -44,13 +44,13 @@ public class ListNamingService implements NamingService {
             } else {
                 port = 80;
             }
-            endPoints.add(new Endpoint(host, port));
+            instances.add(new ServiceInstance(host, port));
         }
     }
 
     @Override
-    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
-        return endPoints;
+    public List<ServiceInstance> lookup(SubscribeInfo subscribeInfo) {
+        return instances;
     }
 
     @Override

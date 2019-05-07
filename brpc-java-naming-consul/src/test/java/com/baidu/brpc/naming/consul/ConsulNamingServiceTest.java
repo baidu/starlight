@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming.consul;
 
-import com.baidu.brpc.client.instance.Endpoint;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
@@ -87,7 +87,8 @@ public class ConsulNamingServiceTest {
         Thread.sleep(10 * 1000);
 
         consulNamingService.subscribe(subscribeInfo, new NotifyListener() {
-            @Override public void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList) {
+            @Override public void notify(Collection<ServiceInstance> addList,
+                                         Collection<ServiceInstance> deleteList) {
                 log.info("notify: {}, {}", addList, deleteList);
             }
         });
@@ -101,17 +102,17 @@ public class ConsulNamingServiceTest {
     @Test
     public void testLookup() throws InterruptedException {
         SubscribeInfo subscribeInfo = createSubscribeInfo(true);
-        List<Endpoint> endPoints = consulNamingService.lookup(subscribeInfo);
-        Assert.assertTrue(endPoints.size() == 0);
+        List<ServiceInstance> instances = consulNamingService.lookup(subscribeInfo);
+        Assert.assertTrue(instances.size() == 0);
 
         RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8012);
         consulNamingService.register(registerInfo);
         Thread.sleep(10 * 1000);
 
-        endPoints = consulNamingService.lookup(subscribeInfo);
-        Assert.assertTrue(endPoints.size() == 1);
-        Assert.assertTrue(endPoints.get(0).getIp().equals("127.0.0.1"));
-        Assert.assertTrue(endPoints.get(0).getPort() == 8012);
+        instances = consulNamingService.lookup(subscribeInfo);
+        Assert.assertTrue(instances.size() == 1);
+        Assert.assertTrue(instances.get(0).getIp().equals("127.0.0.1"));
+        Assert.assertTrue(instances.get(0).getPort() == 8012);
         consulNamingService.unregister(registerInfo);
 
     }

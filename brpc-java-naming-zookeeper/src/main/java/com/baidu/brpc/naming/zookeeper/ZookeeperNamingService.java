@@ -17,6 +17,7 @@
 package com.baidu.brpc.naming.zookeeper;
 
 import com.baidu.brpc.client.instance.Endpoint;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.Constants;
@@ -118,23 +119,23 @@ public class ZookeeperNamingService implements NamingService {
     }
 
     @Override
-    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
+    public List<ServiceInstance> lookup(SubscribeInfo subscribeInfo) {
         String path = getSubscribePath(subscribeInfo);
-        List<Endpoint> endPoints = new ArrayList<Endpoint>();
+        List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
         try {
             List<String> childList = client.getChildren().forPath(path);
             for (String child : childList) {
-                endPoints.add(new Endpoint(child));
+                instances.add(new ServiceInstance(child));
             }
-            log.info("lookup {} instances from {}", endPoints.size(), url);
+            log.info("lookup {} instances from {}", instances.size(), url);
         } catch (Exception ex) {
-            log.warn("lookup end point list failed from {}, msg={}",
+            log.warn("lookup instance list failed from {}, msg={}",
                     url, ex.getMessage());
             if (!subscribeInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("lookup end point list failed from zookeeper failed", ex);
+                throw new RpcException("lookup instance list failed from zookeeper failed", ex);
             }
         }
-        return endPoints;
+        return instances;
     }
 
     @Override
@@ -148,13 +149,17 @@ public class ZookeeperNamingService implements NamingService {
                     ChildData data = event.getData();
                     switch (event.getType()) {
                         case CHILD_ADDED: {
-                            Endpoint endPoint = GsonUtils.fromJson(new String(data.getData()), Endpoint.class);
-                            listener.notify(Collections.singletonList(endPoint), Collections.<Endpoint>emptyList());
+                            ServiceInstance instance = GsonUtils.fromJson(
+                                    new String(data.getData()), ServiceInstance.class);
+                            listener.notify(Collections.singletonList(instance),
+                                    Collections.<ServiceInstance>emptyList());
                             break;
                         }
                         case CHILD_REMOVED: {
-                            Endpoint endPoint = GsonUtils.fromJson(new String(data.getData()), Endpoint.class);
-                            listener.notify(Collections.<Endpoint>emptyList(), Collections.singletonList(endPoint));
+                            ServiceInstance instance = GsonUtils.fromJson(
+                                    new String(data.getData()), ServiceInstance.class);
+                            listener.notify(Collections.<ServiceInstance>emptyList(),
+                                    Collections.singletonList(instance));
                             break;
                         }
                         case CHILD_UPDATED:

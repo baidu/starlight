@@ -13,21 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.baidu.brpc.naming;
+package com.baidu.brpc.client.instance;
 
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
-/**
- * POJO class of subscribe info.
- *
- * @author xiemalin
- */
 @Setter
 @Getter
-@EqualsAndHashCode
-public class SubscribeInfo extends NamingOptions {
-    /** the interface class name. */
-    private String service;
+public class ServiceInstance extends Endpoint {
+    /**
+     * instance tag, used to filter service instance at load balance.
+     */
+    private String tag;
+
+    public ServiceInstance() {
+        super();
+    }
+
+    public ServiceInstance(String ip, int port) {
+        super(ip, port);
+    }
+
+    public ServiceInstance(String address) {
+        super(address);
+    }
+
+    public ServiceInstance(Endpoint endpoint) {
+        super(endpoint.getIp(), endpoint.getPort());
+    }
 }
