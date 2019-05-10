@@ -35,6 +35,5 @@ public class Constants {
     public static final String SESSION_TIMEOUT_MS = "sessionTimeoutMs";
     public static final int DEFAULT_SESSION_TIMEOUT_MS = 60000;
 
-    public static final String PATH_PREFIX = "prefix";
-    public static final String DEFAULT_PATH_PREFIX = "";
+    public static final String DEFAULT_PATH = "";
 }

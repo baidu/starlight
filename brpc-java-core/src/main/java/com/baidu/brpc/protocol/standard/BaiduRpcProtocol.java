@@ -19,6 +19,7 @@ package com.baidu.brpc.protocol.standard;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,8 +97,8 @@ public class BaiduRpcProtocol extends AbstractProtocol {
             requestMeta.setSpanId(request.getParentSpanId());
         }
         if (request.getKvAttachment() != null) {
-            for (Map.Entry<String, String> kv : request.getKvAttachment().entrySet()) {
-                requestMeta.addExtFieldsBuilder().setKey(kv.getKey()).setValue(kv.getValue());
+            for (Map.Entry<String, Object> kv : request.getKvAttachment().entrySet()) {
+                requestMeta.addExtFieldsBuilder().setKey(kv.getKey()).setValue((String) kv.getValue());
             }
         }
         metaBuilder.setRequest(requestMeta.build());
@@ -304,7 +305,9 @@ public class BaiduRpcProtocol extends AbstractProtocol {
 
         if (response.getException() != null) {
             responseMetaBuilder.setErrorCode(BaiduRpcErrno.Errno.EINTERNAL_VALUE);
-            responseMetaBuilder.setErrorText(response.getException().getMessage());
+            if (StringUtils.isNotBlank(response.getException().getMessage())) {
+                responseMetaBuilder.setErrorText(response.getException().getMessage());
+            }
             metaBuilder.setResponse(responseMetaBuilder.build());
             responsePacket.setRpcMeta(metaBuilder.build());
         } else {

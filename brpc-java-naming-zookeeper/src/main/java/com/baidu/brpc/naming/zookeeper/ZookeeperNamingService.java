@@ -53,19 +53,19 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class ZookeeperNamingService implements NamingService {
-    private BrpcURL url;
-    private CuratorFramework client;
+    protected BrpcURL url;
+    protected CuratorFramework client;
     private int retryInterval;
     private Timer timer;
-    private ConcurrentSet<RegisterInfo> failedRegisters =
+    protected ConcurrentSet<RegisterInfo> failedRegisters =
             new ConcurrentSet<RegisterInfo>();
-    private ConcurrentSet<RegisterInfo> failedUnregisters =
+    protected ConcurrentSet<RegisterInfo> failedUnregisters =
             new ConcurrentSet<RegisterInfo>();
-    private ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes =
+    protected ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes =
             new ConcurrentHashMap<SubscribeInfo, NotifyListener>();
-    private ConcurrentSet<SubscribeInfo> failedUnsubscribes =
+    protected ConcurrentSet<SubscribeInfo> failedUnsubscribes =
             new ConcurrentSet<SubscribeInfo>();
-    private ConcurrentMap<SubscribeInfo, PathChildrenCache> subscribeCacheMap =
+    protected ConcurrentMap<SubscribeInfo, PathChildrenCache> subscribeCacheMap =
             new ConcurrentHashMap<SubscribeInfo, PathChildrenCache>();
 
     public ZookeeperNamingService(BrpcURL url) {
@@ -78,15 +78,17 @@ public class ZookeeperNamingService implements NamingService {
                 Constants.SESSION_TIMEOUT_MS, Constants.DEFAULT_SESSION_TIMEOUT_MS);
         int connectTimeoutMs = url.getIntParameter(
                 Constants.CONNECT_TIMEOUT_MS, Constants.DEFAULT_CONNECT_TIMEOUT_MS);
-        String pathPrefix = url.getStringParameter(
-                Constants.PATH_PREFIX, Constants.DEFAULT_PATH_PREFIX);
+        String namespace = Constants.DEFAULT_PATH;
+        if (url.getPath().startsWith("/")) {
+            namespace = url.getPath().substring(1);
+        }
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(sleepTimeoutMs, maxTryTimes);
         client = CuratorFrameworkFactory.builder()
                 .connectString(url.getHostPorts())
                 .connectionTimeoutMs(connectTimeoutMs)
                 .sessionTimeoutMs(sessionTimeoutMs)
                 .retryPolicy(retryPolicy)
-                .namespace(pathPrefix)
+                .namespace(namespace)
                 .build();
         client.start();
 
@@ -125,14 +127,21 @@ public class ZookeeperNamingService implements NamingService {
         try {
             List<String> childList = client.getChildren().forPath(path);
             for (String child : childList) {
-                instances.add(new ServiceInstance(child));
+                String childPath = path + "/" + child;
+                try {
+                    String childData = new String(client.getData().forPath(childPath));
+                    Endpoint endpoint = GsonUtils.fromJson(childData, Endpoint.class);
+                    instances.add(new ServiceInstance(endpoint));
+                } catch (Exception getDataFailedException) {
+                    log.warn("get child data failed, path:{}, ex:", childPath, getDataFailedException);
+                }
             }
             log.info("lookup {} instances from {}", instances.size(), url);
         } catch (Exception ex) {
-            log.warn("lookup instance list failed from {}, msg={}",
+            log.warn("lookup end point list failed from {}, msg={}",
                     url, ex.getMessage());
             if (!subscribeInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("lookup instance list failed from zookeeper failed", ex);
+                throw new RpcException("lookup end point list failed from zookeeper failed", ex);
             }
         }
         return instances;
@@ -209,6 +218,13 @@ public class ZookeeperNamingService implements NamingService {
         try {
             if (client.checkExists().forPath(parentPath) == null) {
                 client.create().withMode(CreateMode.PERSISTENT).forPath(parentPath);
+            }
+            if (client.checkExists().forPath(path) != null) {
+                try {
+                    client.delete().forPath(path);
+                } catch (Exception deleteException) {
+                    log.info("zk delete node failed, ignore");
+                }
             }
             client.create().withMode(CreateMode.EPHEMERAL).forPath(path, pathData.getBytes());
             log.info("register success to {}", url);

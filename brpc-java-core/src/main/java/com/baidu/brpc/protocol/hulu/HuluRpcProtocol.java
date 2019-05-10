@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,8 +107,8 @@ public class HuluRpcProtocol extends AbstractProtocol {
             metaBuilder.setSpanId(request.getParentSpanId());
         }
         if (request.getKvAttachment() != null) {
-            for (Map.Entry<String, String> kv : request.getKvAttachment().entrySet()) {
-                metaBuilder.addExtFieldsBuilder().setKey(kv.getKey()).setValue(kv.getValue());
+            for (Map.Entry<String, Object> kv : request.getKvAttachment().entrySet()) {
+                metaBuilder.addExtFieldsBuilder().setKey(kv.getKey()).setValue((String) kv.getValue());
             }
         }
 
@@ -274,7 +275,9 @@ public class HuluRpcProtocol extends AbstractProtocol {
 
         if (response.getException() != null) {
             metaBuilder.setErrorCode(BaiduRpcErrno.Errno.EINTERNAL_VALUE);
-            metaBuilder.setErrorText(response.getException().getMessage());
+            if (StringUtils.isNotBlank(response.getException().getMessage())) {
+                metaBuilder.setErrorText(response.getException().getMessage());
+            }
             responsePacket.setResponseMeta(metaBuilder.build());
         } else {
             metaBuilder.setErrorCode(0);

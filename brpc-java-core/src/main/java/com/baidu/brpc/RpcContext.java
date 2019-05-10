@@ -3,6 +3,7 @@ package com.baidu.brpc;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
+import java.util.HashMap;
 import java.util.Map;
 
 import io.netty.buffer.ByteBuf;
@@ -46,10 +47,16 @@ public class RpcContext {
 
     private Integer nsHeadLogId;
 
-    private Map<String, String> requestKvAttachment;
+    /**
+     * set custom service instance tag,
+     * so that load balance can select instance with the tag.
+     */
+    private String serviceTag;
+
+    private Map<String, Object> requestKvAttachment;
     private ByteBuf requestBinaryAttachment;
 
-    private Map<String, String> responseKvAttachment;
+    private Map<String, Object> responseKvAttachment;
     private ByteBuf responseBinaryAttachment;
 
     private Channel channel;
@@ -66,6 +73,7 @@ public class RpcContext {
         responseKvAttachment = null;
         channel = null;
         remoteAddress = null;
+        serviceTag = null;
     }
 
     public void setRequestBinaryAttachment(ByteBuf byteBuf) {
@@ -74,6 +82,36 @@ public class RpcContext {
 
     public void setRequestBinaryAttachment(byte[] bytes) {
         this.requestBinaryAttachment = bytes == null ? null : Unpooled.wrappedBuffer(bytes);
+    }
+
+    public void setRequestKvAttachment(String key, Object value) {
+        if (requestKvAttachment == null) {
+            requestKvAttachment = new HashMap<String, Object>();
+        }
+        requestKvAttachment.put(key, value);
+    }
+
+    public void setRequestKvAttachment(Map<String, Object> attachment) {
+        if (requestKvAttachment == null) {
+            requestKvAttachment = attachment;
+        } else {
+            requestKvAttachment.putAll(attachment);
+        }
+    }
+
+    public void setResponseKvAttachment(String key, Object value) {
+        if (responseKvAttachment == null) {
+            responseKvAttachment = new HashMap<String, Object>();
+        }
+        responseKvAttachment.put(key, value);
+    }
+
+    public void setResponseKvAttachment(Map<String, Object> attachment) {
+        if (responseKvAttachment == null) {
+            responseKvAttachment = attachment;
+        } else {
+            responseKvAttachment.putAll(attachment);
+        }
     }
 
     public String getRemoteHost() {

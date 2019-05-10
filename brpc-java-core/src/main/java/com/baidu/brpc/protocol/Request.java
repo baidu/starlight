@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.protocol;
 
 import java.lang.reflect.Method;
@@ -25,6 +24,7 @@ import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.nshead.NSHead;
 
 import io.netty.buffer.ByteBuf;
@@ -73,9 +73,9 @@ public interface Request {
 
     void setArgs(Object[] newArgs);
 
-    Map<String, String> getKvAttachment();
+    Map<String, Object> getKvAttachment();
 
-    void setKvAttachment(Map<String, String> requestKvAttachment);
+    void setKvAttachment(Map<String, Object> requestKvAttachment);
 
     ByteBuf getBinaryAttachment();
 
@@ -130,4 +130,12 @@ public interface Request {
     RpcCallback getCallback();
 
     void setCallback(RpcCallback callback);
+
+    String getServiceTag();
+
+    void setServiceTag(String serviceTag);
+
+    SubscribeInfo getSubscribeInfo();
+
+    void setSubscribeInfo(SubscribeInfo subscribeInfo);
 }

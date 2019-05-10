@@ -116,7 +116,7 @@ public class ServiceManager {
 
     private String buildServiceKey(String serviceName, String methodName) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(serviceName).append(".").append(methodName);
+        stringBuilder.append(serviceName.toLowerCase()).append(".").append(methodName);
         return stringBuilder.toString();
     }
 }

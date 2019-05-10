@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.DefaultInterceptorChain;
@@ -167,7 +167,7 @@ public class BrpcProxy implements MethodInterceptor {
             NSHead nsHead = nsHeadMeta == null ? new NSHead() : new NSHead(0, nsHeadMeta.id(), nsHeadMeta.version(),
                     nsHeadMeta.provider(), 0);
             request.setNsHead(nsHead);
-
+            request.setSubscribeInfo(rpcClient.getSubscribeInfo());
             // parse request params
             RpcCallback callback = null;
             int argLength = args.length;
@@ -207,6 +207,9 @@ public class BrpcProxy implements MethodInterceptor {
                 }
                 if (rpcContext.getNsHeadLogId() != null) {
                     request.getNsHead().logId = rpcContext.getNsHeadLogId();
+                }
+                if (rpcContext.getServiceTag() != null) {
+                    request.setServiceTag(rpcContext.getServiceTag());
                 }
                 request.setRpcContext(rpcContext);
             }

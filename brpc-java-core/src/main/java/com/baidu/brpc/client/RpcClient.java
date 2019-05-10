@@ -13,7 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.baidu.brpc.client;
+
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.channel.epoll.EpollMode;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
 
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
@@ -25,20 +46,15 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.handler.IdleChannelHandler;
 import com.baidu.brpc.client.handler.RpcClientHandler;
 import com.baidu.brpc.client.instance.BasicInstanceProcessor;
 import com.baidu.brpc.client.instance.Endpoint;
-import com.baidu.brpc.client.instance.EnhancedInstanceProcessor;
 import com.baidu.brpc.client.instance.InstanceProcessor;
+import com.baidu.brpc.client.instance.EnhancedInstanceProcessor;
 import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.client.loadbalance.LoadBalanceManager;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
@@ -57,28 +73,13 @@ import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
 import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.ThreadPool;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollChannelOption;
-import io.netty.channel.epoll.EpollMode;
-import io.netty.channel.epoll.EpollSocketChannel;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -306,6 +307,7 @@ public class RpcClient {
 
     /**
      * select channel from endpoint which is selected by custom load balance.
+     *
      * @param endpoint ip:port
      * @return netty channel
      */
@@ -542,5 +544,9 @@ public class RpcClient {
 
     public void setLoadBalanceInterceptor(LoadBalanceInterceptor loadBalanceInterceptor) {
         this.loadBalanceInterceptor = loadBalanceInterceptor;
+    }
+
+    public SubscribeInfo getSubscribeInfo() {
+        return subscribeInfo;
     }
 }
