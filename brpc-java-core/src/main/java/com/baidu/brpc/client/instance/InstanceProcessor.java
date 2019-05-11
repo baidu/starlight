@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.client.instance;
+
+import java.util.Collection;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CopyOnWriteArraySet;
 
 import com.baidu.brpc.client.channel.BrpcChannel;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.CopyOnWriteArrayList;
+public interface InstanceProcessor {
+    void addInstance(ServiceInstance instance);
 
-public interface EndpointProcessor {
+    void addInstances(Collection<ServiceInstance> addList);
 
-    void addEndPoints(Collection<Endpoint> addList);
+    void deleteInstances(Collection<ServiceInstance> deleteList);
 
-    void deleteEndPoints(Collection<Endpoint> deleteList);
+    CopyOnWriteArraySet<ServiceInstance> getInstances();
 
-    CopyOnWriteArrayList<BrpcChannel> getHealthyInstances();
+    CopyOnWriteArrayList<BrpcChannel> getHealthyInstanceChannels();
 
-    CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstances();
+    CopyOnWriteArrayList<BrpcChannel> getUnHealthyInstanceChannels();
 
-    ConcurrentMap<Endpoint, BrpcChannel> getInstanceChannelMap();
-
-    CopyOnWriteArrayList<Endpoint> getEndPoints();
-
-    void updateUnHealthyInstances(List<BrpcChannel> channelGroups);
+    ConcurrentMap<ServiceInstance, BrpcChannel> getInstanceChannelMap();
 
     void stop();
 

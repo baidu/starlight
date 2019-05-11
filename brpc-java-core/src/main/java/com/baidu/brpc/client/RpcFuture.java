@@ -17,7 +17,7 @@
 package com.baidu.brpc.client;
 
 import com.baidu.brpc.ChannelInfo;
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Response;
@@ -44,7 +44,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     private ChannelInfo channelInfo;
     private RpcClient rpcClient;
     private RpcMethodInfo rpcMethodInfo;
-    private Controller controller;
+    private RpcContext rpcContext;
 
     private Response response;
     private boolean isDone;
@@ -112,23 +112,6 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
 
     public void handleResponse(Response response) {
         handleConnection(response);
-        if (response != null) {
-            if (response.getBinaryAttachment() != null) {
-                if (controller == null) {
-                    LOG.error("controller can not be null when attachment exist");
-                    controller = new Controller();
-                }
-                controller.setResponseBinaryAttachment(response.getBinaryAttachment());
-            }
-            if (response.getKvAttachment() != null) {
-                if (controller == null) {
-                    LOG.error("controller can not be null when attachment exist");
-                    controller = new Controller();
-                }
-                controller.setResponseKvAttachment(response.getKvAttachment());
-            }
-        }
-
         // invoke the chain of interceptors when async scene
         if (isAsync() && CollectionUtils.isNotEmpty(rpcClient.getInterceptors())) {
             int length = rpcClient.getInterceptors().size();
@@ -138,14 +121,11 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
         }
 
         if (isAsync()) {
+            setRpcContext();
             if (response == null) {
                 callback.fail(new RpcException(RpcException.SERVICE_EXCEPTION, "internal error"));
             } else if (response.getResult() != null) {
-                if (controller != null) {
-                    callback.success(controller, (T) response.getResult());
-                } else {
-                    callback.success((T) response.getResult());
-                }
+                callback.success((T) response.getResult());
             } else {
                 callback.fail(response.getException());
             }
@@ -181,6 +161,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
         if (response.getException() != null) {
             throw new RpcException(response.getException());
         }
+        setRpcContext();
         return (T) response.getResult();
     }
 
@@ -194,6 +175,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
             if (response.getException() != null) {
                 throw new RpcException(response.getException());
             }
+            setRpcContext();
             return (T) response.getResult();
         } catch (InterruptedException e) {
             throw new RpcException(RpcException.UNKNOWN_EXCEPTION);
@@ -203,5 +185,22 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     @Override
     public String toString() {
         return super.toString() + "@logId = " + logId;
+    }
+
+    private void setRpcContext() {
+        if (response == null) {
+            return;
+        }
+        if (response.getBinaryAttachment() != null
+                || response.getKvAttachment() != null) {
+            RpcContext rpcContext = RpcContext.getContext();
+            rpcContext.reset();
+            if (response.getBinaryAttachment() != null) {
+                rpcContext.setResponseBinaryAttachment(response.getBinaryAttachment());
+            }
+            if (response.getKvAttachment() != null) {
+                rpcContext.setResponseKvAttachment(response.getKvAttachment());
+            }
+        }
     }
 }

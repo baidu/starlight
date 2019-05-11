@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.naming;
-
-import com.baidu.brpc.client.instance.Endpoint;
-import com.baidu.brpc.utils.CustomThreadFactory;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
-import org.apache.commons.collections4.CollectionUtils;
-import org.apache.commons.lang3.Validate;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -32,12 +22,23 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.Validate;
+
+import com.baidu.brpc.client.instance.ServiceInstance;
+import com.baidu.brpc.utils.CustomThreadFactory;
+
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
+
 public class DnsNamingService implements NamingService {
     private BrpcURL namingUrl;
     private String host;
     private int port;
     private String hostPort;
-    private List<Endpoint> lastEndPoints = new ArrayList<Endpoint>();
+    private List<ServiceInstance> lastInstances = new ArrayList<ServiceInstance>();
     private Timer namingServiceTimer;
     private int updateInterval;
 
@@ -60,7 +61,7 @@ public class DnsNamingService implements NamingService {
     }
 
     @Override
-    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
+    public List<ServiceInstance> lookup(SubscribeInfo subscribeInfo) {
         InetAddress[] addresses;
         try {
             addresses = InetAddress.getAllByName(host);
@@ -68,12 +69,12 @@ public class DnsNamingService implements NamingService {
             throw new IllegalArgumentException("unknown http host");
         }
 
-        List<Endpoint> endPoints = new ArrayList<Endpoint>();
+        List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
         for (InetAddress address : addresses) {
-            Endpoint endPoint = new Endpoint(address.getHostAddress(), port);
-            endPoints.add(endPoint);
+            ServiceInstance instance = new ServiceInstance(address.getHostAddress(), port);
+            instances.add(instance);
         }
-        return endPoints;
+        return instances;
     }
 
     @Override
@@ -83,13 +84,13 @@ public class DnsNamingService implements NamingService {
                     @Override
                     public void run(Timeout timeout) throws Exception {
                         try {
-                            List<Endpoint> currentEndPoints = lookup(null);
-                            Collection<Endpoint> addList = CollectionUtils.subtract(
-                                    currentEndPoints, lastEndPoints);
-                            Collection<Endpoint> deleteList = CollectionUtils.subtract(
-                                    lastEndPoints, currentEndPoints);
+                            List<ServiceInstance> currentInstances = lookup(null);
+                            Collection<ServiceInstance> addList = CollectionUtils.subtract(
+                                    currentInstances, lastInstances);
+                            Collection<ServiceInstance> deleteList = CollectionUtils.subtract(
+                                    lastInstances, currentInstances);
                             listener.notify(addList, deleteList);
-                            lastEndPoints = currentEndPoints;
+                            lastInstances = currentInstances;
                         } catch (Exception ex) {
                             // ignore exception
                         }

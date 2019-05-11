@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.utils;
 
+import io.netty.util.concurrent.FastThreadLocalThread;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.concurrent.ThreadFactory;
@@ -41,7 +42,7 @@ public class CustomThreadFactory implements ThreadFactory {
     @Override
     public Thread newThread(Runnable r) {
         String name = namePrefix + threadNumber.getAndIncrement();
-        Thread t = new Thread(group, r, name, 0);
+        Thread t = new FastThreadLocalThread(group, r, name, 0);
         t.setDaemon(true);
         t.setPriority(Thread.NORM_PRIORITY);
         log.info("create thread:{}", name);

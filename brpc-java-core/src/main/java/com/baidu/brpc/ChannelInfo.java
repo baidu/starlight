@@ -41,8 +41,6 @@ public class ChannelInfo {
 
     private Channel channel;
     private BrpcChannel channelGroup;
-    // 是否来自于业务RpcContext手动设置的
-    private boolean fromRpcContext = false;
     private Protocol protocol;
     private long logId;
     private FastFutureStore pendingRpc;
@@ -123,9 +121,6 @@ public class ChannelInfo {
     }
 
     private void returnChannelAfterRequest() {
-        if (isFromRpcContext()) {
-            return;
-        }
         if (protocol.returnChannelBeforeResponse()) {
             channelGroup.returnChannel(channel);
         }
@@ -147,9 +142,6 @@ public class ChannelInfo {
     }
 
     private void returnChannelAfterResponse() {
-        if (isFromRpcContext()) {
-            return;
-        }
         if (!protocol.returnChannelBeforeResponse()) {
             channelGroup.returnChannel(channel);
         }
@@ -159,9 +151,6 @@ public class ChannelInfo {
      * channel不可用时或者handler出现异常时处理逻辑
      */
     public void handleChannelException(RpcException ex) {
-        if (isFromRpcContext()) {
-            return;
-        }
         if (channelGroup != null) {
             channelGroup.removeChannel(channel);
         }

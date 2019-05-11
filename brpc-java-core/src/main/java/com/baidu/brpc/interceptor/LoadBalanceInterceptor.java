@@ -16,12 +16,15 @@
 
 package com.baidu.brpc.interceptor;
 
+import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.AsyncAwareFuture;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
@@ -42,11 +45,22 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
     @Override
     public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
         RpcException exception = null;
-        Controller controller = request.getController();
         int currentTryTimes = 0;
         int maxTryTimes = rpcClient.getRpcClientOptions().getMaxTryTimes();
-        while (currentTryTimes++ < maxTryTimes) {
+        while (currentTryTimes < maxTryTimes) {
             try {
+                // if it is a retry request, add the last selected instance to request,
+                // so that load balance strategy can exclude the selected instance.
+                // if it is the initial request, not init HashSet, so it is more fast.
+                // therefore, it need LoadBalanceStrategy to judge if selectInstances is null.
+                if (currentTryTimes > 0) {
+                    if (request.getSelectedInstances() == null) {
+                        request.setSelectedInstances(new HashSet<BrpcChannel>(maxTryTimes - 1));
+                    }
+                    BrpcChannel lastInstance = ChannelInfo
+                            .getClientChannelInfo(request.getChannel()).getChannelGroup();
+                    request.getSelectedInstances().add(lastInstance);
+                }
                 invokeRpc(request, response);
                 break;
             } catch (RpcException ex) {
@@ -54,12 +68,8 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
                 if (exception.getCode() == RpcException.INTERCEPT_EXCEPTION) {
                     break;
                 }
-                // if application set the channel, brpc-java will not do retrying.
-                // because application maybe send different request for different server instance.
-                // this feature is used by Product Ads.
-                if (controller != null && controller.getChannel() != null) {
-                    break;
-                }
+            } finally {
+                currentTryTimes++;
             }
         }
         if (response.getResult() == null && response.getRpcFuture() == null) {
@@ -76,15 +86,8 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
     }
 
     protected Channel selectChannel(Request request) {
-        // if user set channel in controller, rpc will not select channel again.
-        // otherwise select instance by load balance, and select channel from instance.
-        Channel channel;
-        Controller controller = request.getController();
-        if (controller != null && controller.getChannel() != null) {
-            channel = controller.getChannel();
-        } else {
-            channel = rpcClient.selectChannel();
-        }
+        // select instance by load balance, and select channel from instance.
+        Channel channel = rpcClient.selectChannel(request);
         request.setChannel(channel);
         return channel;
     }
@@ -96,9 +99,9 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
             response.setRpcFuture((RpcFuture) future);
         } else {
             long readTimeout;
-            Controller controller = request.getController();
-            if (controller != null && controller.getReadTimeoutMillis() != null) {
-                readTimeout = controller.getReadTimeoutMillis();
+            RpcContext rpcContext = request.getRpcContext();
+            if (rpcContext != null && rpcContext.getReadTimeoutMillis() != null) {
+                readTimeout = rpcContext.getReadTimeoutMillis();
             } else {
                 readTimeout = rpcClient.getRpcClientOptions().getReadTimeoutMillis();
             }

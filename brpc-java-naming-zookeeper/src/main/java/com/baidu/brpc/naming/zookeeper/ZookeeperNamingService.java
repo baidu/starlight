@@ -17,6 +17,7 @@
 package com.baidu.brpc.naming.zookeeper;
 
 import com.baidu.brpc.client.instance.Endpoint;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.Constants;
@@ -52,19 +53,19 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class ZookeeperNamingService implements NamingService {
-    private BrpcURL url;
-    private CuratorFramework client;
+    protected BrpcURL url;
+    protected CuratorFramework client;
     private int retryInterval;
     private Timer timer;
-    private ConcurrentSet<RegisterInfo> failedRegisters =
+    protected ConcurrentSet<RegisterInfo> failedRegisters =
             new ConcurrentSet<RegisterInfo>();
-    private ConcurrentSet<RegisterInfo> failedUnregisters =
+    protected ConcurrentSet<RegisterInfo> failedUnregisters =
             new ConcurrentSet<RegisterInfo>();
-    private ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes =
+    protected ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes =
             new ConcurrentHashMap<SubscribeInfo, NotifyListener>();
-    private ConcurrentSet<SubscribeInfo> failedUnsubscribes =
+    protected ConcurrentSet<SubscribeInfo> failedUnsubscribes =
             new ConcurrentSet<SubscribeInfo>();
-    private ConcurrentMap<SubscribeInfo, PathChildrenCache> subscribeCacheMap =
+    protected ConcurrentMap<SubscribeInfo, PathChildrenCache> subscribeCacheMap =
             new ConcurrentHashMap<SubscribeInfo, PathChildrenCache>();
 
     public ZookeeperNamingService(BrpcURL url) {
@@ -77,15 +78,17 @@ public class ZookeeperNamingService implements NamingService {
                 Constants.SESSION_TIMEOUT_MS, Constants.DEFAULT_SESSION_TIMEOUT_MS);
         int connectTimeoutMs = url.getIntParameter(
                 Constants.CONNECT_TIMEOUT_MS, Constants.DEFAULT_CONNECT_TIMEOUT_MS);
-        String pathPrefix = url.getStringParameter(
-                Constants.PATH_PREFIX, Constants.DEFAULT_PATH_PREFIX);
+        String namespace = Constants.DEFAULT_PATH;
+        if (url.getPath().startsWith("/")) {
+            namespace = url.getPath().substring(1);
+        }
         RetryPolicy retryPolicy = new ExponentialBackoffRetry(sleepTimeoutMs, maxTryTimes);
         client = CuratorFrameworkFactory.builder()
                 .connectString(url.getHostPorts())
                 .connectionTimeoutMs(connectTimeoutMs)
                 .sessionTimeoutMs(sessionTimeoutMs)
                 .retryPolicy(retryPolicy)
-                .namespace(pathPrefix)
+                .namespace(namespace)
                 .build();
         client.start();
 
@@ -118,15 +121,22 @@ public class ZookeeperNamingService implements NamingService {
     }
 
     @Override
-    public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
+    public List<ServiceInstance> lookup(SubscribeInfo subscribeInfo) {
         String path = getSubscribePath(subscribeInfo);
-        List<Endpoint> endPoints = new ArrayList<Endpoint>();
+        List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
         try {
             List<String> childList = client.getChildren().forPath(path);
             for (String child : childList) {
-                endPoints.add(new Endpoint(child));
+                String childPath = path + "/" + child;
+                try {
+                    String childData = new String(client.getData().forPath(childPath));
+                    Endpoint endpoint = GsonUtils.fromJson(childData, Endpoint.class);
+                    instances.add(new ServiceInstance(endpoint));
+                } catch (Exception getDataFailedException) {
+                    log.warn("get child data failed, path:{}, ex:", childPath, getDataFailedException);
+                }
             }
-            log.info("lookup {} instances from {}", endPoints.size(), url);
+            log.info("lookup {} instances from {}", instances.size(), url);
         } catch (Exception ex) {
             log.warn("lookup end point list failed from {}, msg={}",
                     url, ex.getMessage());
@@ -134,7 +144,7 @@ public class ZookeeperNamingService implements NamingService {
                 throw new RpcException("lookup end point list failed from zookeeper failed", ex);
             }
         }
-        return endPoints;
+        return instances;
     }
 
     @Override
@@ -148,13 +158,17 @@ public class ZookeeperNamingService implements NamingService {
                     ChildData data = event.getData();
                     switch (event.getType()) {
                         case CHILD_ADDED: {
-                            Endpoint endPoint = GsonUtils.fromJson(new String(data.getData()), Endpoint.class);
-                            listener.notify(Collections.singletonList(endPoint), Collections.<Endpoint>emptyList());
+                            ServiceInstance instance = GsonUtils.fromJson(
+                                    new String(data.getData()), ServiceInstance.class);
+                            listener.notify(Collections.singletonList(instance),
+                                    Collections.<ServiceInstance>emptyList());
                             break;
                         }
                         case CHILD_REMOVED: {
-                            Endpoint endPoint = GsonUtils.fromJson(new String(data.getData()), Endpoint.class);
-                            listener.notify(Collections.<Endpoint>emptyList(), Collections.singletonList(endPoint));
+                            ServiceInstance instance = GsonUtils.fromJson(
+                                    new String(data.getData()), ServiceInstance.class);
+                            listener.notify(Collections.<ServiceInstance>emptyList(),
+                                    Collections.singletonList(instance));
                             break;
                         }
                         case CHILD_UPDATED:
@@ -204,6 +218,13 @@ public class ZookeeperNamingService implements NamingService {
         try {
             if (client.checkExists().forPath(parentPath) == null) {
                 client.create().withMode(CreateMode.PERSISTENT).forPath(parentPath);
+            }
+            if (client.checkExists().forPath(path) != null) {
+                try {
+                    client.delete().forPath(path);
+                } catch (Exception deleteException) {
+                    log.info("zk delete node failed, ignore");
+                }
             }
             client.create().withMode(CreateMode.EPHEMERAL).forPath(path, pathData.getBytes());
             log.info("register success to {}", url);

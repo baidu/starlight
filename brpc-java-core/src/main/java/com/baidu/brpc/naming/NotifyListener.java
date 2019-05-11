@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,9 @@
  */
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.instance.Endpoint;
-
 import java.util.Collection;
+
+import com.baidu.brpc.client.instance.ServiceInstance;
 
 /**
  * NotifyListener. (API, Prototype, ThreadSafe)
@@ -33,5 +33,5 @@ public interface NotifyListener {
      * @param addList to be added endpoints
      * @param deleteList to be deleted endpoints
      */
-    void notify(Collection<Endpoint> addList, Collection<Endpoint> deleteList);
+    void notify(Collection<ServiceInstance> addList, Collection<ServiceInstance> deleteList);
 }

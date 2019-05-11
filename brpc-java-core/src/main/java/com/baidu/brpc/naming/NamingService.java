@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.naming;
 
-import com.baidu.brpc.client.instance.Endpoint;
-
 import java.util.List;
+
+import com.baidu.brpc.client.instance.ServiceInstance;
 
 public interface NamingService {
     /**
@@ -27,7 +26,7 @@ public interface NamingService {
      * @param subscribeInfo service/group/version info
      * @return 已注册信息列表，可能为空。
      */
-    List<Endpoint> lookup(SubscribeInfo subscribeInfo);
+    List<ServiceInstance> lookup(SubscribeInfo subscribeInfo);
 
     /**
      * 订阅符合条件的已注册数据，当有注册数据变更时自动推送.

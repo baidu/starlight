@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.client.loadbalance;
 
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.List;
+import java.util.Set;
 
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.protocol.Request;
 
 /**
  * load balance strategy interface
@@ -33,7 +34,17 @@ public interface LoadBalanceStrategy {
 
     void init(RpcClient rpcClient);
 
-    BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances);
+    /**
+     * select instance channel from total instances
+     * @param request request info
+     * @param instances total instances, often are all healthy instances
+     * @param selectedInstances instances which have been selected.
+     * @return the best instance channel
+     */
+    BrpcChannel selectInstance(
+            Request request,
+            List<BrpcChannel> instances,
+            Set<BrpcChannel> selectedInstances);
 
     void destroy();
 }

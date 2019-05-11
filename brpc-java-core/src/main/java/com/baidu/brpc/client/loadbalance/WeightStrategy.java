@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.client.loadbalance;
 
+import java.util.List;
 import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Set;
 
-import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.protocol.Request;
 
 /**
  * Simple weight load balance strategy implementation
@@ -36,7 +37,10 @@ public class WeightStrategy implements LoadBalanceStrategy {
     }
 
     @Override
-    public BrpcChannel selectInstance(CopyOnWriteArrayList<BrpcChannel> instances) {
+    public BrpcChannel selectInstance(
+            Request request,
+            List<BrpcChannel> instances,
+            Set<BrpcChannel> selectedInstances) {
         long instanceNum = instances.size();
         if (instanceNum == 0) {
             return null;

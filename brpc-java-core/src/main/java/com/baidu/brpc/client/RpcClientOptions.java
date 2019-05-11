@@ -17,9 +17,8 @@
 package com.baidu.brpc.client;
 
 import com.baidu.brpc.client.channel.ChannelType;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
+import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.protocol.Options;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -40,7 +39,7 @@ public class RpcClientOptions {
     private int maxTryTimes = 3;
     // Maximum time for connection idle, testWhileIdle needs to be true
     private long timeBetweenEvictionRunsMillis = 5 * 60 * 1000;
-    private int loadBalanceType = LoadBalanceType.ROUND_ROBIN.getId();
+    private int loadBalanceType = LoadBalanceStrategy.LOAD_BALANCE_FAIR;
     // for fair load balance strategy only
     private int latencyWindowSizeOfFairLoadBalance = 30;
     // for fair load balance strategy only

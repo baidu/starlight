@@ -18,7 +18,7 @@ package com.baidu.brpc.server.handler;
 
 import java.lang.reflect.InvocationTargetException;
 
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.interceptor.DefaultInterceptorChain;
 import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.protocol.Protocol;
@@ -47,21 +47,21 @@ public class ServerWorkTask implements Runnable {
 
     @Override
     public void run() {
-        Controller controller = null;
+        RpcContext rpcContext = null;
         if (request != null) {
             request.setChannel(ctx.channel());
-            if (request.getRpcMethodInfo().isIncludeController()
-                    || request.getBinaryAttachment() != null
+            if (request.getBinaryAttachment() != null
                     || request.getKvAttachment() != null) {
-                controller = new Controller();
+                rpcContext = RpcContext.getContext();
+                rpcContext.reset();
                 if (request.getBinaryAttachment() != null) {
-                    controller.setRequestBinaryAttachment(request.getBinaryAttachment());
+                    rpcContext.setRequestBinaryAttachment(request.getBinaryAttachment());
                 }
                 if (request.getKvAttachment() != null) {
-                    controller.setRequestKvAttachment(request.getKvAttachment());
+                    rpcContext.setRequestKvAttachment(request.getKvAttachment());
                 }
-                controller.setRemoteAddress(ctx.channel().remoteAddress());
-                request.setController(controller);
+                rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
+                request.setRpcContext(rpcContext);
             }
 
             response.setLogId(request.getLogId());
@@ -74,9 +74,9 @@ public class ServerWorkTask implements Runnable {
             try {
                 InterceptorChain interceptorChain = new DefaultInterceptorChain(rpcServer.getInterceptors());
                 interceptorChain.intercept(request, response);
-                if (controller != null && controller.getResponseBinaryAttachment() != null
-                        && controller.getResponseBinaryAttachment().isReadable()) {
-                    response.setBinaryAttachment(controller.getResponseBinaryAttachment());
+                if (rpcContext != null && rpcContext.getResponseBinaryAttachment() != null
+                        && rpcContext.getResponseBinaryAttachment().isReadable()) {
+                    response.setBinaryAttachment(rpcContext.getResponseBinaryAttachment());
                 }
             } catch (InvocationTargetException ex) {
                 Throwable targetException = ex.getTargetException();
