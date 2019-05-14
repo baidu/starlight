@@ -57,10 +57,9 @@ public abstract class AbstractRequest implements Request {
     private RpcContext rpcContext;
     private RpcCallback callback;
     private String serviceTag;
-
     /**
      * 订阅信息，客户端请求时，将订阅的服务信息存入
-     * - StarGate使用
+     * - Stargate使用
      */
     private SubscribeInfo subscribeInfo;
 

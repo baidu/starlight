@@ -18,6 +18,7 @@ package com.baidu.brpc.protocol.hulu;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -221,6 +222,9 @@ public class HuluRpcProtocol extends AbstractProtocol {
                 request.setParentSpanId(requestMeta.getParentSpanId());
             }
             if (requestMeta.getExtFieldsCount() > 0) {
+                if (request.getKvAttachment() == null) {
+                    request.setKvAttachment(new HashMap<String, Object>());
+                }
                 for (HuluRpcProto.HuluRpcRequestMetaExtField extField : requestMeta.getExtFieldsList()) {
                     request.getKvAttachment().put(extField.getKey(), extField.getValue());
                 }
