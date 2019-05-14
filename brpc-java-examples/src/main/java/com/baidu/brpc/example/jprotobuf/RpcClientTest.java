@@ -16,7 +16,6 @@
 
 package com.baidu.brpc.example.jprotobuf;
 
-import com.baidu.brpc.client.RpcCallbackAdaptor;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
@@ -77,7 +76,7 @@ public class RpcClientTest {
 
         // async call
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-        RpcCallback callback = new RpcCallbackAdaptor<EchoResponse>() {
+        RpcCallback callback = new RpcCallback<EchoResponse>() {
             @Override
             public void success(EchoResponse response) {
                 if (response != null) {

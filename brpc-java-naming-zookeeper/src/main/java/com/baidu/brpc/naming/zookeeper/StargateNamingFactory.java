@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.baidu.brpc.naming.zookeeper;
 
-package com.baidu.brpc.example.standard;
+import com.baidu.brpc.naming.BrpcURL;
+import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NamingServiceFactory;
 
-import com.baidu.brpc.Controller;
-import com.baidu.brpc.client.RpcCallback;
+public class StargateNamingFactory implements NamingServiceFactory {
 
-import java.util.concurrent.Future;
-
-/**
- * Created by baidu on 2017/9/23.
- */
-public interface EchoServiceControllerAsync extends EchoServiceController {
-    Future<Echo.EchoResponse> echo(Controller controller,
-                                   Echo.EchoRequest request,
-                                   RpcCallback<Echo.EchoResponse> callback);
+    @Override
+    public NamingService createNamingService(BrpcURL url) {
+        return new StargateZookeeperNamingService(url);
+    }
 }

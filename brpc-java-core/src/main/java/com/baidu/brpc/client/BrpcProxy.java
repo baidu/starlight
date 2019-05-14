@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
-import com.baidu.brpc.Controller;
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.DefaultInterceptorChain;
@@ -85,7 +85,7 @@ public class BrpcProxy implements MethodInterceptor {
             int paramLength = parameterTypes.length;
             if (paramLength < 1) {
                 throw new IllegalArgumentException(
-                        "invalid params, the correct is ([Controller], Request, [Callback])");
+                        "invalid params, the correct is ([RpcContext], Request, [Callback])");
             }
             if (Future.class.isAssignableFrom(method.getReturnType())
                     && (paramLength < 1 || !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1]))) {
@@ -167,9 +167,8 @@ public class BrpcProxy implements MethodInterceptor {
             NSHead nsHead = nsHeadMeta == null ? new NSHead() : new NSHead(0, nsHeadMeta.id(), nsHeadMeta.version(),
                     nsHeadMeta.provider(), 0);
             request.setNsHead(nsHead);
-
+            request.setSubscribeInfo(rpcClient.getSubscribeInfo());
             // parse request params
-            Controller controller = null;
             RpcCallback callback = null;
             int argLength = args.length;
             if (argLength > 1) {
@@ -179,12 +178,6 @@ public class BrpcProxy implements MethodInterceptor {
                 if (args[endIndex] instanceof RpcCallback) {
                     callback = (RpcCallback) args[endIndex];
                     endIndex -= 1;
-                    argLength -= 1;
-                }
-                // Controller
-                if (args[0] instanceof Controller) {
-                    controller = (Controller) args[0];
-                    startIndex += 1;
                     argLength -= 1;
                 }
 
@@ -203,18 +196,22 @@ public class BrpcProxy implements MethodInterceptor {
                 request.setArgs(args);
             }
 
-            if (controller != null) {
+            if (RpcContext.isSet()) {
+                RpcContext rpcContext = RpcContext.getContext();
                 // attachment
-                if (controller.getRequestKvAttachment() != null) {
-                    request.setKvAttachment(controller.getRequestKvAttachment());
+                if (rpcContext.getRequestKvAttachment() != null) {
+                    request.setKvAttachment(rpcContext.getRequestKvAttachment());
                 }
-                if (controller.getRequestBinaryAttachment() != null) {
-                    request.setBinaryAttachment(controller.getRequestBinaryAttachment());
+                if (rpcContext.getRequestBinaryAttachment() != null) {
+                    request.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
                 }
-                if (controller.getNsHeadLogId() != null) {
-                    request.getNsHead().logId = controller.getNsHeadLogId();
+                if (rpcContext.getNsHeadLogId() != null) {
+                    request.getNsHead().logId = rpcContext.getNsHeadLogId();
                 }
-                request.setController(controller);
+                if (rpcContext.getServiceTag() != null) {
+                    request.setServiceTag(rpcContext.getServiceTag());
+                }
+                request.setRpcContext(rpcContext);
             }
 
             Response response = rpcClient.getProtocol().getResponse();

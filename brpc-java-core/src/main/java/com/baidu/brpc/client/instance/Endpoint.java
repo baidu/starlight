@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.client.instance;
 
 import org.apache.commons.lang3.Validate;
@@ -23,8 +22,11 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
+/**
+ * Created by wenweihu86 on 2017/5/17.
+ */
 @Getter
+@Setter
 public class Endpoint {
 
     private String ip;
@@ -70,6 +72,7 @@ public class Endpoint {
 
     @Override
     public String toString() {
-        return String.format("Endpoint{\'%s:%d\'}", ip, port);
+        return String.format("EndPoint{\'%s:%d\'}", ip, port);
     }
+
 }

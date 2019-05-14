@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.client.loadbalance;
-
-import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannel;
-import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.utils.CollectionUtils;
-import com.baidu.brpc.utils.CustomThreadFactory;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
-import lombok.extern.slf4j.Slf4j;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -34,6 +22,18 @@ import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
+
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.channel.BrpcChannel;
+import com.baidu.brpc.protocol.Request;
+import com.baidu.brpc.utils.CollectionUtils;
+import com.baidu.brpc.utils.CustomThreadFactory;
+
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Fair load balance strategy aims to more reasonable distribution of traffic.
@@ -113,7 +113,7 @@ public class FairStrategy implements LoadBalanceStrategy {
     @Override
     public BrpcChannel selectInstance(
             Request request,
-            CopyOnWriteArrayList<BrpcChannel> instances,
+            List<BrpcChannel> instances,
             Set<BrpcChannel> selectedInstances) {
 
         if (treeContainer.size() == 0) {
@@ -153,7 +153,7 @@ public class FairStrategy implements LoadBalanceStrategy {
         this.invalidInstances.addAll(instances);
     }
 
-    protected BrpcChannel randomSelect(CopyOnWriteArrayList<BrpcChannel> instances) {
+    protected BrpcChannel randomSelect(List<BrpcChannel> instances) {
         long instanceNum = instances.size();
         if (instanceNum == 0) {
             return null;

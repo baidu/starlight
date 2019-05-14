@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.naming.consul;
 
-import com.baidu.brpc.client.instance.Endpoint;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.*;
 import com.baidu.brpc.naming.consul.model.ConsulConstants;
@@ -75,7 +75,8 @@ public class ConsulNamingService implements NamingService {
 
     private ConcurrentHashMap<String, Future> consulLookupFuture = new ConcurrentHashMap<String, Future>();
 
-    private ConcurrentHashMap<String, ConcurrentHashMap<String, List<Endpoint>>> serviceCache = new ConcurrentHashMap<String, ConcurrentHashMap<String, List<Endpoint>>>();
+    private ConcurrentHashMap<String, ConcurrentHashMap<String, List<ServiceInstance>>> serviceCache
+            = new ConcurrentHashMap<String, ConcurrentHashMap<String, List<ServiceInstance>>>();
 
     public ConsulNamingService(BrpcURL url) {
         this.url = url;
@@ -88,8 +89,10 @@ public class ConsulNamingService implements NamingService {
         }
 
         this.retryInterval = url.getIntParameter(Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
-        this.consulInterval = url.getIntParameter(ConsulConstants.CONSULINTERVAL, ConsulConstants.DEFAULT_CONSUL_INTERVAL);
-        this.lookupInterval = url.getIntParameter(ConsulConstants.LOOKUPINTERVAL, ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
+        this.consulInterval = url.getIntParameter(ConsulConstants.CONSULINTERVAL,
+                ConsulConstants.DEFAULT_CONSUL_INTERVAL);
+        this.lookupInterval = url.getIntParameter(ConsulConstants.LOOKUPINTERVAL,
+                ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
         timer = new HashedWheelTimer(new CustomThreadFactory("consul-retry-timer-thread"));
 
         timer.newTimeout(
@@ -137,16 +140,17 @@ public class ConsulNamingService implements NamingService {
         heartbeatExecutor.shutdown();
     }
 
-    @Override public List<Endpoint> lookup(SubscribeInfo subscribeInfo) {
+    @Override
+    public List<ServiceInstance> lookup(SubscribeInfo subscribeInfo) {
 
-        List<Endpoint> endPoints = new ArrayList<Endpoint>();
+        List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
 
         try {
-
-            ConcurrentHashMap<String, List<Endpoint>> serviceUpdate = lookupServiceUpdate(subscribeInfo.getGroup());
+            ConcurrentHashMap<String, List<ServiceInstance>> serviceUpdate
+                    = lookupServiceUpdate(subscribeInfo.getGroup());
 
             if (!serviceUpdate.isEmpty() && serviceUpdate.containsKey(subscribeInfo.getService())) {
-                endPoints = serviceUpdate.get(subscribeInfo.getService());
+                instances = serviceUpdate.get(subscribeInfo.getService());
             }
         } catch (Exception ex) {
             log.warn("lookup end point list failed from {}, msg={}",
@@ -156,58 +160,63 @@ public class ConsulNamingService implements NamingService {
             }
         }
 
-        return endPoints;
+        return instances;
     }
 
     @Override public void subscribe(final SubscribeInfo subscribeInfo, final NotifyListener listener) {
 
         final String path = getSubscribePath(subscribeInfo);
 
-        Future future = heartbeatExecutor.scheduleAtFixedRate(new Runnable() {
-                                                  @Override
-                                                  public void run() {
-                                                      try {
+        Future future = heartbeatExecutor.scheduleAtFixedRate(
+                new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            long time = System.currentTimeMillis();
+                            log.debug("heart beat schedule, time: {}",
+                                    time);
+                            Map<String, List<ServiceInstance>> instanceForGroup
+                                    = serviceCache.get(subscribeInfo.getGroup());
+                            List<ServiceInstance> currentInstances = lookup(subscribeInfo);
 
-                                                          long time = System.currentTimeMillis();
+                            ConcurrentHashMap<String,
+                                    List<ServiceInstance>> serviceUpdate = lookupServiceUpdate(
+                                    subscribeInfo.getGroup());
 
-                                                          log.debug("heart beat schedule, time: {}", time);
-                                                          Map<String, List<Endpoint>> endpointForGroup = serviceCache
-                                                                  .get(subscribeInfo.getGroup());
-                                                          List<Endpoint> currentEndPoints = lookup(subscribeInfo);
+                            updateServiceCache(subscribeInfo.getGroup()
+                                    , serviceUpdate);
 
-                                                          ConcurrentHashMap<String, List<Endpoint>> serviceUpdate = lookupServiceUpdate(
-                                                                  subscribeInfo.getGroup());
+                            log.debug("heart beat schedule, lookup and "
+                                            + "update time: {}",
+                                    System.currentTimeMillis() - time);
 
-                                                          updateServiceCache(subscribeInfo.getGroup(), serviceUpdate);
+                            if ((instanceForGroup != null && !instanceForGroup.isEmpty())
+                                    || !currentInstances.isEmpty()) {
+                                List<ServiceInstance> lastInstances = new ArrayList<ServiceInstance>();
+                                if (instanceForGroup != null) {
+                                    lastInstances = instanceForGroup.get(subscribeInfo.getService());
+                                }
 
-                                                          log.debug("heart beat schedule, lookup and update time: {}", System.currentTimeMillis() - time);
+                                Collection<ServiceInstance> addList = CollectionUtils.subtract(
+                                        currentInstances, lastInstances);
+                                Collection<ServiceInstance> deleteList = CollectionUtils.subtract(
+                                        lastInstances, currentInstances);
+                                listener.notify(addList, deleteList);
 
-                                                          if ((endpointForGroup != null && !endpointForGroup.isEmpty()) ||
-                                                                  !currentEndPoints.isEmpty()) {
-                                                              List<Endpoint> lastEndPoints = new ArrayList<Endpoint>();
-                                                              if (endpointForGroup != null) {
-                                                                  lastEndPoints = endpointForGroup.get(subscribeInfo.getService());
-                                                              }
+                                failedSubscribes.remove(subscribeInfo);
+                            }
+                            log.info("subscribe success from {}", url);
+                        } catch (Exception e) {
+                            if (!subscribeInfo.isIgnoreFailOfNamingService()) {
+                                throw new RpcException("subscribe "
+                                        + "failed from " + url, e);
+                            } else {
+                                failedSubscribes.putIfAbsent(subscribeInfo, listener);
+                            }
+                        }
+                    }
 
-                                                              Collection<Endpoint> addList = CollectionUtils.subtract(
-                                                                      currentEndPoints, lastEndPoints);
-                                                              Collection<Endpoint> deleteList = CollectionUtils.subtract(
-                                                                      lastEndPoints, currentEndPoints);
-                                                              listener.notify(addList, deleteList);
-
-                                                              failedSubscribes.remove(subscribeInfo);
-                                                          }
-                                                          log.info("subscribe success from {}", url);
-                                                      } catch (Exception e) {
-                                                          if (!subscribeInfo.isIgnoreFailOfNamingService()) {
-                                                              throw new RpcException("subscribe failed from " + url, e);
-                                                          } else {
-                                                              failedSubscribes.putIfAbsent(subscribeInfo, listener);
-                                                          }
-                                                      }
-                                                  }
-
-                                              }, ConsulConstants.HEARTBEAT_CIRCLE,
+                }, ConsulConstants.HEARTBEAT_CIRCLE,
                 ConsulConstants.DEFAULT_LOOKUP_INTERVAL, TimeUnit.MILLISECONDS);
 
         consulLookupFuture.putIfAbsent(path, future);
@@ -295,13 +304,13 @@ public class ConsulNamingService implements NamingService {
 
     }
 
-    private void updateServiceCache(String group, ConcurrentHashMap<String, List<Endpoint>> groupUrls) {
+    private void updateServiceCache(String group, ConcurrentHashMap<String, List<ServiceInstance>> groupUrls) {
         if (groupUrls != null && !groupUrls.isEmpty()) {
-            ConcurrentHashMap<String, List<Endpoint>> groupMap = serviceCache.get(group);
+            ConcurrentHashMap<String, List<ServiceInstance>> groupMap = serviceCache.get(group);
             if (groupMap == null) {
                 serviceCache.put(group, groupUrls);
             }
-            for (Map.Entry<String, List<Endpoint>> entry : groupUrls.entrySet()) {
+            for (Map.Entry<String, List<ServiceInstance>> entry : groupUrls.entrySet()) {
                 if (groupMap != null) {
                     groupMap.put(entry.getKey(), entry.getValue());
                 }
@@ -309,8 +318,9 @@ public class ConsulNamingService implements NamingService {
         }
     }
 
-    private ConcurrentHashMap<String, List<Endpoint>> lookupServiceUpdate(String group) {
-        ConcurrentHashMap<String, List<Endpoint>> groupUrls = new ConcurrentHashMap<String, List<Endpoint>>();
+    private ConcurrentHashMap<String, List<ServiceInstance>> lookupServiceUpdate(String group) {
+        ConcurrentHashMap<String, List<ServiceInstance>> groupUrls
+                = new ConcurrentHashMap<String, List<ServiceInstance>>();
         Long lastConsulIndexId = lookupGroupServices.get(group) == null ? 0 : lookupGroupServices.get(group);
 
         long time = System.currentTimeMillis();
@@ -331,12 +341,12 @@ public class ConsulNamingService implements NamingService {
                                 serviceName = tag;
                             }
                         }
-                        List<Endpoint> urlList = groupUrls.get(serviceName);
+                        List<ServiceInstance> urlList = groupUrls.get(serviceName);
 
                         if (urlList == null) {
-                            urlList = new ArrayList<Endpoint>();
+                            urlList = new ArrayList<ServiceInstance>();
                         }
-                        urlList.add(new Endpoint(service.getAddress(), service.getPort()));
+                        urlList.add(new ServiceInstance(service.getAddress(), service.getPort()));
                         groupUrls.put(serviceName, urlList);
                     } catch (Exception e) {
                     }

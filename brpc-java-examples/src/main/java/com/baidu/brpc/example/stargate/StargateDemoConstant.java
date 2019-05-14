@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.baidu.brpc.example.stargate;
 
-package com.baidu.brpc.client;
+public interface StargateDemoConstant {
 
-import com.baidu.brpc.Controller;
+    String version = "1.0.0";
+    
+    String group = "normal";
 
-import lombok.extern.slf4j.Slf4j;
+    /**
+     * star 并无特殊含义，单纯只是长得像
+     */
+    String namingUrl = "star://10.64.72.52:8181/stargate";
 
-@Slf4j
-public abstract class RpcCallbackAdaptor<T> implements RpcCallback<T> {
-
-    @Override
-    public void success(T response) {
-    }
-
-    @Override
-    public void success(Controller controller, T response) {
-    }
-
-    @Override
-    public void fail(Throwable e) {
-        log.warn("sync call failed, ex:", e);
-    }
 }

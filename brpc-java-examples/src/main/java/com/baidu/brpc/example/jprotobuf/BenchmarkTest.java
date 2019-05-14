@@ -20,7 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import com.baidu.brpc.client.BrpcProxy;
-import com.baidu.brpc.client.RpcCallbackAdaptor;
+import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.ChannelType;
@@ -136,7 +136,7 @@ public class BenchmarkTest {
         }
     }
 
-    public static class EchoCallback extends RpcCallbackAdaptor<EchoResponse> {
+    public static class EchoCallback implements RpcCallback<EchoResponse> {
         private long startTime;
         private SendInfo sendInfo;
 

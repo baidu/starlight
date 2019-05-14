@@ -7,7 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,7 +56,7 @@ public class SingleConnectionClientTest {
                     if (((index / countInHalfMinute) & 1) == 1) {
                         return;
                     }
-                    Controller controller = new Controller();
+                    RpcContext controller = new RpcContext();
                     controller.setRequestBinaryAttachment("example attachment".getBytes());
                     Echo.EchoResponse response = echoService.echo(request);
                     // sample log

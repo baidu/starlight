@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.baidu.brpc.protocol;
 
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import com.baidu.brpc.Controller;
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.nshead.NSHead;
 
 import io.netty.buffer.ByteBuf;
@@ -45,7 +44,7 @@ public abstract class AbstractRequest implements Request {
     private String methodName;
     private Object[] args;
     private NSHead nsHead;
-    private Map<String, String> kvAttachment;
+    private Map<String, Object> kvAttachment;
     private ByteBuf binaryAttachment;
     private int compressType;
     private RpcException exception;
@@ -55,8 +54,15 @@ public abstract class AbstractRequest implements Request {
     private Long traceId;
     private Long spanId;
     private Long parentSpanId;
-    private Controller controller;
+    private RpcContext rpcContext;
     private RpcCallback callback;
+    private String serviceTag;
+
+    /**
+     * 订阅信息，客户端请求时，将订阅的服务信息存入
+     * - StarGate使用
+     */
+    private SubscribeInfo subscribeInfo;
 
     @Override
     public void reset() {
@@ -65,8 +71,8 @@ public abstract class AbstractRequest implements Request {
         target = null;
         targetMethod = null;
         rpcMethodInfo = null;
-        serviceName = "";
-        methodName = "";
+        serviceName = null;
+        methodName = null;
         args = null;
         nsHead = null;
         kvAttachment = null;
@@ -78,8 +84,9 @@ public abstract class AbstractRequest implements Request {
         traceId = null;
         spanId = null;
         parentSpanId = null;
-        controller = null;
+        rpcContext = null;
         callback = null;
+        serviceTag = null;
     }
 
     @Override
@@ -97,4 +104,5 @@ public abstract class AbstractRequest implements Request {
             binaryAttachment = null;
         }
     }
+
 }
