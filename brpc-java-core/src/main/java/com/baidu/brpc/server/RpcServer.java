@@ -220,15 +220,15 @@ public class RpcServer {
     }
 
     public void registerService(Object service) {
-        registerService(service, null, null);
+        registerService(service, null, null, null);
     }
 
     public void registerService(Object service, NamingOptions namingOptions) {
-        registerService(service, namingOptions, null);
+        registerService(service, null, namingOptions, null);
     }
 
     public void registerService(Object service, RpcServerOptions serverOptions) {
-        registerService(service, null, serverOptions);
+        registerService(service, null, null, serverOptions);
     }
 
     /**
@@ -238,7 +238,8 @@ public class RpcServer {
      * @param serverOptions service own custom RpcServerOptions
      *                      if not null, the service will not use the shared thread pool.
      */
-    public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions serverOptions) {
+    public void registerService(Object service, Class targetClass, NamingOptions namingOptions,
+                                RpcServerOptions serverOptions) {
         serviceList.add(service);
         RegisterInfo registerInfo = new RegisterInfo();
         registerInfo.setService(service.getClass().getInterfaces()[0].getName());
@@ -256,7 +257,11 @@ public class RpcServer {
                     new CustomThreadFactory(service.getClass().getSimpleName() + "-work-thread"));
             customThreadPools.add(customThreadPool);
         }
-        serviceManager.registerService(service, customThreadPool);
+        if (targetClass == null) {
+            serviceManager.registerService(service, customThreadPool);
+        } else {
+            serviceManager.registerService(targetClass, service, customThreadPool);
+        }
         registerInfoList.add(registerInfo);
     }
 
