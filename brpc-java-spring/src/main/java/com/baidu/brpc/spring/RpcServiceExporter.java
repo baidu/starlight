@@ -29,6 +29,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.util.Assert;
@@ -108,10 +109,11 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
         namingOptions.setIgnoreFailOfNamingService(ignoreFailOfNamingService);
 
         for (Object service : registerServices) {
-            prRpcServer.registerService(service, namingOptions, null);
+            prRpcServer.registerService(service, AopUtils.getTargetClass(service), namingOptions, null);
         }
         for (Map.Entry<RpcServerOptions, Object> entry : customOptionsServiceMap.entrySet()) {
-            prRpcServer.registerService(entry.getValue(), namingOptions, entry.getKey());
+            prRpcServer.registerService(entry.getValue(), AopUtils.getTargetClass(entry.getValue()), namingOptions,
+                    entry.getKey());
         }
 
         prRpcServer.start();
