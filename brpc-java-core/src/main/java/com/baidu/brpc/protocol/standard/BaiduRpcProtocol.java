@@ -17,6 +17,7 @@
 package com.baidu.brpc.protocol.standard;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -255,6 +256,9 @@ public class BaiduRpcProtocol extends AbstractProtocol {
                 request.setParentSpanId(requestMeta.getParentSpanId());
             }
             if (requestMeta.getExtFieldsCount() > 0) {
+                if (request.getKvAttachment() == null) {
+                    request.setKvAttachment(new HashMap<String, Object>());
+                }
                 for (BaiduRpcProto.RpcRequestMetaExtField extField : requestMeta.getExtFieldsList()) {
                     request.getKvAttachment().put(extField.getKey(), extField.getValue());
                 }
