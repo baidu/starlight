@@ -3,10 +3,10 @@
 ![maven](https://img.shields.io/maven-central/v/com.baidu/brpc-java.svg)
 
 # 项目名称
-brpc-java是baidu rpc的java版本实现，主要用于java系统中的rpc交互，支持baidu rpc、nshead、sofa、hulu、http等协议。
+brpc-java是baidu rpc的java版本实现，主要用于java系统中的rpc交互，支持baidu rpc、nshead、sofa、hulu、http、stargate等协议。
 
 # 核心功能点
-* 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议。
+* 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议、public pbrpc、stargate协议。
 * 可以灵活自定义任意协议，只需要实现Protocol接口，客户端和服务端可以分开实现。
 * 支持使用POJO替代protobuf生成的类来进行序列化（基于[jprotobuf](https://github.com/jhunters/jprotobuf)实现）。
 * 支持多种naming服务，比如zookeeper、List、File、DNS等，可以灵活扩展支持etcd、eureka、nacos等。
@@ -26,7 +26,7 @@ java 6+ && netty 4 && protobuf 2.5.0
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>2.2.1</version>
+    <version>2.3.7</version>
 </dependency>
 ```
 Spring环境：
@@ -34,7 +34,7 @@ Spring环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-spring</artifactId>
-    <version>2.2.1</version>
+    <version>2.3.7</version>
 </dependency>
 ```
 Zookeeper注册中心：
@@ -42,7 +42,7 @@ Zookeeper注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-zookeeper</artifactId>
-    <version>2.2.1</version>
+    <version>2.3.7</version>
 </dependency>
 ```
 Consul注册中心：
@@ -50,7 +50,7 @@ Consul注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-consul</artifactId>
-    <version>2.2.1</version>
+    <version>2.3.7</version>
 </dependency>
 ```
 ### Server端使用
