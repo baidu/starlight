@@ -73,7 +73,6 @@ import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
 import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
@@ -353,7 +352,6 @@ public class RpcClient {
         RpcFuture rpcFuture = new RpcFuture();
         rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
         rpcFuture.setCallback(request.getCallback());
-        rpcFuture.setRpcContext(request.getRpcContext());
         rpcFuture.setRpcClient(this);
         rpcFuture.setChannelInfo(channelInfo);
         // generate logId
@@ -362,25 +360,8 @@ public class RpcClient {
         request.setLogId(logId);
 
         // read write timeout
-        final long readTimeout;
-        final long writeTimeout;
-        RpcContext rpcContext = request.getRpcContext();
-        if (rpcContext != null) {
-            if (rpcContext.getReadTimeoutMillis() != null) {
-                readTimeout = rpcContext.getReadTimeoutMillis();
-            } else {
-                readTimeout = rpcClientOptions.getReadTimeoutMillis();
-            }
-            if (rpcContext.getWriteTimeoutMillis() != null) {
-                writeTimeout = rpcContext.getWriteTimeoutMillis();
-            } else {
-                writeTimeout = rpcClientOptions.getWriteTimeoutMillis();
-            }
-        } else {
-            readTimeout = rpcClientOptions.getReadTimeoutMillis();
-            writeTimeout = rpcClientOptions.getWriteTimeoutMillis();
-        }
-
+        final long readTimeout = request.getReadTimeoutMillis();
+        final long writeTimeout = request.getWriteTimeoutMillis();
         // register timeout timer
         RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getLogId(), this);
         Timeout timeout = timeoutTimer.newTimeout(timeoutTask, readTimeout, TimeUnit.MILLISECONDS);
