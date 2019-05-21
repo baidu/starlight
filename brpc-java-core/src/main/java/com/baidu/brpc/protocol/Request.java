@@ -123,10 +123,6 @@ public interface Request {
 
     void setParentSpanId(Long parentSpanId);
 
-    RpcContext getRpcContext();
-
-    void setRpcContext(RpcContext rpcContext);
-
     RpcCallback getCallback();
 
     void setCallback(RpcCallback callback);
@@ -138,4 +134,12 @@ public interface Request {
     SubscribeInfo getSubscribeInfo();
 
     void setSubscribeInfo(SubscribeInfo subscribeInfo);
+
+    Integer getReadTimeoutMillis();
+
+    void setReadTimeoutMillis(Integer readTimeoutMillis);
+
+    Integer getWriteTimeoutMillis();
+
+    void setWriteTimeoutMillis(Integer writeTimeoutMillis);
 }

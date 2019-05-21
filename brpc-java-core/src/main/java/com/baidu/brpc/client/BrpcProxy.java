@@ -211,7 +211,20 @@ public class BrpcProxy implements MethodInterceptor {
                 if (rpcContext.getServiceTag() != null) {
                     request.setServiceTag(rpcContext.getServiceTag());
                 }
-                request.setRpcContext(rpcContext);
+                if (rpcContext.getReadTimeoutMillis() != null) {
+                    request.setReadTimeoutMillis(rpcContext.getReadTimeoutMillis());
+                }
+                if (rpcContext.getWriteTimeoutMillis() != null) {
+                    request.setWriteTimeoutMillis(rpcContext.getWriteTimeoutMillis());
+                }
+                rpcContext.reset();
+            }
+
+            if (request.getReadTimeoutMillis() == null) {
+                request.setReadTimeoutMillis(rpcClient.getRpcClientOptions().getReadTimeoutMillis());
+            }
+            if (request.getWriteTimeoutMillis() == null) {
+                request.setWriteTimeoutMillis(rpcClient.getRpcClientOptions().getWriteTimeoutMillis());
             }
 
             Response response = rpcClient.getProtocol().getResponse();

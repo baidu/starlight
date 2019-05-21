@@ -1,20 +1,14 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2019 Baidu, Inc. All Rights Reserved.
  */
 
 package com.baidu.brpc.client;
+
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.RpcContext;
@@ -22,14 +16,10 @@ import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.utils.CollectionUtils;
+
 import io.netty.util.Timeout;
 import lombok.Getter;
 import lombok.Setter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 @SuppressWarnings("unchecked")
 @Setter
@@ -44,7 +34,6 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     private ChannelInfo channelInfo;
     private RpcClient rpcClient;
     private RpcMethodInfo rpcMethodInfo;
-    private RpcContext rpcContext;
 
     private Response response;
     private boolean isDone;
@@ -188,19 +177,12 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     }
 
     private void setRpcContext() {
-        RpcContext rpcContext = null;
-        if (RpcContext.isSet()) {
-            rpcContext = RpcContext.getContext();
-            rpcContext.reset();
-        }
         if (response == null) {
             return;
         }
         if (response.getBinaryAttachment() != null
                 || response.getKvAttachment() != null) {
-            if (rpcContext == null) {
-                rpcContext = RpcContext.getContext();
-            }
+            RpcContext rpcContext = RpcContext.getContext();
             if (response.getBinaryAttachment() != null) {
                 rpcContext.setResponseBinaryAttachment(response.getBinaryAttachment());
             }

@@ -19,7 +19,6 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
-import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.channel.BrpcChannel;
@@ -54,12 +53,14 @@ public abstract class AbstractRequest implements Request {
     private Long traceId;
     private Long spanId;
     private Long parentSpanId;
-    private RpcContext rpcContext;
     private RpcCallback callback;
     private String serviceTag;
+    private Integer readTimeoutMillis;
+    private Integer writeTimeoutMillis;
+
     /**
      * 订阅信息，客户端请求时，将订阅的服务信息存入
-     * - Stargate使用
+     * - StarGate使用
      */
     private SubscribeInfo subscribeInfo;
 
@@ -83,9 +84,10 @@ public abstract class AbstractRequest implements Request {
         traceId = null;
         spanId = null;
         parentSpanId = null;
-        rpcContext = null;
         callback = null;
         serviceTag = null;
+        readTimeoutMillis = null;
+        writeTimeoutMillis = null;
     }
 
     @Override
@@ -103,5 +105,4 @@ public abstract class AbstractRequest implements Request {
             binaryAttachment = null;
         }
     }
-
 }
