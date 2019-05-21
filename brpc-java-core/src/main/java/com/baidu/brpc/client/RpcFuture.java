@@ -188,13 +188,19 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     }
 
     private void setRpcContext() {
+        RpcContext rpcContext = null;
+        if (RpcContext.isSet()) {
+            rpcContext = RpcContext.getContext();
+            rpcContext.reset();
+        }
         if (response == null) {
             return;
         }
         if (response.getBinaryAttachment() != null
                 || response.getKvAttachment() != null) {
-            RpcContext rpcContext = RpcContext.getContext();
-            rpcContext.reset();
+            if (rpcContext == null) {
+                rpcContext = RpcContext.getContext();
+            }
             if (response.getBinaryAttachment() != null) {
                 rpcContext.setResponseBinaryAttachment(response.getBinaryAttachment());
             }
