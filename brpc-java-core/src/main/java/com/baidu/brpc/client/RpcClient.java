@@ -16,20 +16,24 @@
 
 package com.baidu.brpc.client;
 
+import com.baidu.brpc.utils.CustomThreadFactory;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollMode;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollChannelOption;
-import io.netty.channel.epoll.EpollMode;
-import io.netty.channel.epoll.EpollSocketChannel;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
@@ -73,8 +77,6 @@ import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
-import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
@@ -96,6 +98,7 @@ public class RpcClient {
     private LoadBalanceInterceptor loadBalanceInterceptor = new LoadBalanceInterceptor();
     private NamingService namingService;
     private ThreadPool workThreadPool;
+    private EventLoopGroup ioThreadPool;
     private Class serviceInterface;
     private SubscribeInfo subscribeInfo;
     private AtomicBoolean isStop = new AtomicBoolean(false);
@@ -226,6 +229,10 @@ public class RpcClient {
         }
     }
 
+    public void shutdown() {
+        stop();
+    }
+
     public void stop() {
         // avoid stop multi times
         if (isStop.compareAndSet(false, true)) {
@@ -237,6 +244,12 @@ public class RpcClient {
             }
             if (loadBalanceStrategy != null) {
                 loadBalanceStrategy.destroy();
+            }
+            if (ioThreadPool != null) {
+                ioThreadPool.shutdownGracefully().syncUninterruptibly();
+            }
+            if (workThreadPool != null) {
+                workThreadPool.stop();
             }
         }
     }
@@ -436,7 +449,8 @@ public class RpcClient {
         // init once
         ShutDownManager.getInstance();
 
-        this.workThreadPool = BrpcWorkThreadPoolInstance.getOrCreateInstance(rpcClientOptions.getWorkThreadNum());
+        this.workThreadPool = new ThreadPool(rpcClientOptions.getWorkThreadNum(),
+                new CustomThreadFactory("client-work-thread"));
         this.callbackThread = ClientCallBackThreadPoolInstance.getOrCreateInstance(1);
 
         // init netty bootstrap
@@ -466,9 +480,14 @@ public class RpcClient {
             }
         };
 
-        bootstrap.group(BrpcIoThreadPoolInstance.getOrCreateInstance(options.getIoThreadNum()))
-                .handler(initializer);
-
+        if (Epoll.isAvailable()) {
+            ioThreadPool = new EpollEventLoopGroup(options.getIoThreadNum(),
+                    new CustomThreadFactory("client-io-thread"));
+        } else {
+            ioThreadPool = new NioEventLoopGroup(options.getIoThreadNum(),
+                    new CustomThreadFactory("client-io-thread"));
+        }
+        bootstrap.group(ioThreadPool).handler(initializer);
     }
 
     public void removeLogId(long id) {

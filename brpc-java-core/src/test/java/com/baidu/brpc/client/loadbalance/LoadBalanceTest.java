@@ -16,22 +16,21 @@
 
 package com.baidu.brpc.client.loadbalance;
 
-import java.util.Random;
-
-import com.baidu.brpc.interceptor.AbstractInterceptor;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
-import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.interceptor.AbstractInterceptor;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
+import com.baidu.brpc.RpcOptionsUtils;
 import com.baidu.brpc.server.RpcServer;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.util.Random;
 
 public class LoadBalanceTest {
 
@@ -42,15 +41,15 @@ public class LoadBalanceTest {
 
     @BeforeClass
     public static void beforeClass() {
-        rpcServer1 = new RpcServer(8000);
+        rpcServer1 = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer1.registerService(new TestEchoService(100));
         rpcServer1.getInterceptors().add(new TestInterceptor(1));
         rpcServer1.start();
-        rpcServer2 = new RpcServer(8001);
+        rpcServer2 = new RpcServer(8001, RpcOptionsUtils.getRpcServerOptions());
         rpcServer2.registerService(new TestEchoService(200));
         rpcServer2.getInterceptors().add(new TestInterceptor(2));
         rpcServer2.start();
-        rpcServer3 = new RpcServer(8002);
+        rpcServer3 = new RpcServer(8002, RpcOptionsUtils.getRpcServerOptions());
         rpcServer3.registerService(new TestEchoService(300));
         rpcServer3.getInterceptors().add(new TestInterceptor(3));
         rpcServer3.start();
@@ -71,7 +70,7 @@ public class LoadBalanceTest {
 
     @Test
     public void testRandomStrategy() {
-        RpcClientOptions clientOption = new RpcClientOptions();
+        RpcClientOptions clientOption = RpcOptionsUtils.getRpcClientOptions();
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_RANDOM);
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, null);
         final Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
@@ -84,8 +83,8 @@ public class LoadBalanceTest {
 
     @Test
     public void testRoundRobinStrategy() {
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setLoadBalanceType(LoadBalanceType.ROUND_ROBIN.getId());
+        RpcClientOptions clientOption = RpcOptionsUtils.getRpcClientOptions();
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN);
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, null);
         final Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         final EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
@@ -97,8 +96,8 @@ public class LoadBalanceTest {
 
     @Test
     public void testWeightStrategy() {
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setLoadBalanceType(LoadBalanceType.WEIGHT.getId());
+        RpcClientOptions clientOption = RpcOptionsUtils.getRpcClientOptions();
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_WEIGHT);
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, null);
         final Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         final EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
@@ -110,9 +109,9 @@ public class LoadBalanceTest {
 
     @Test
     public void testFairStrategy() {
-        RpcClientOptions clientOption = new RpcClientOptions();
+        RpcClientOptions clientOption = RpcOptionsUtils.getRpcClientOptions();
         clientOption.setLatencyWindowSizeOfFairLoadBalance(10);
-        clientOption.setLoadBalanceType(LoadBalanceType.FAIR.getId());
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, null);
         final Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         final EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);

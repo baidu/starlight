@@ -1,17 +1,5 @@
 /*
- * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2019 Baidu, Inc. All Rights Reserved.
  */
 
 package com.baidu.brpc.client.loadbalance;
@@ -28,6 +16,7 @@ import org.junit.Test;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
+import com.baidu.brpc.RpcOptionsUtils;
 import com.baidu.brpc.server.RpcServer;
 
 public class RandomStrategyTest {
@@ -44,20 +33,20 @@ public class RandomStrategyTest {
 
     @BeforeClass
     public static void beforeClass() {
-        rpcServer1 = new RpcServer(8000);
+        rpcServer1 = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer1.registerService(new LoadBalanceTest.TestEchoService(100));
         rpcServer1.getInterceptors().add(new LoadBalanceTest.TestInterceptor(1));
         rpcServer1.start();
-        rpcServer2 = new RpcServer(8001);
+        rpcServer2 = new RpcServer(8001, RpcOptionsUtils.getRpcServerOptions());
         rpcServer2.registerService(new LoadBalanceTest.TestEchoService(200));
         rpcServer2.getInterceptors().add(new LoadBalanceTest.TestInterceptor(2));
         rpcServer2.start();
-        rpcServer3 = new RpcServer(8002);
+        rpcServer3 = new RpcServer(8002, RpcOptionsUtils.getRpcServerOptions());
         rpcServer3.registerService(new LoadBalanceTest.TestEchoService(300));
         rpcServer3.getInterceptors().add(new LoadBalanceTest.TestInterceptor(3));
         rpcServer3.start();
 
-        rpcClient = new RpcClient(serviceUrl);
+        rpcClient = new RpcClient(serviceUrl, RpcOptionsUtils.getRpcClientOptions());
         instance1 = BrpcChannelFactory.createChannel("127.0.0.1", 8000, rpcClient);
         instance2 = BrpcChannelFactory.createChannel("127.0.0.1", 8001, rpcClient);
         instance3 = BrpcChannelFactory.createChannel("127.0.0.1", 8002, rpcClient);

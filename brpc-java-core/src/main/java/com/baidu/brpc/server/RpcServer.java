@@ -19,6 +19,10 @@ package com.baidu.brpc.server;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.interceptor.ServerInvokeInterceptor;
 import com.baidu.brpc.naming.BrpcURL;
@@ -30,13 +34,12 @@ import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
 import com.baidu.brpc.server.handler.RpcServerHandler;
-import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
-import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
 import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.CollectionUtils;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.ChannelFuture;
@@ -53,40 +56,37 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import lombok.Getter;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- * TCP Rpc Server
- *
- * @author wenweihu86
- * @author guohao02
+ * Created by wenweihu86 on 2017/4/24.
  */
 @Getter
 public class RpcServer {
+
     private static final Logger LOG = LoggerFactory.getLogger(RpcServer.class);
+
     private RpcServerOptions rpcServerOptions = new RpcServerOptions();
 
     /**
      * host to bind
      */
     private String host;
+
     /**
      * port to bind
      */
     private int port;
+
     /**
      * netty bootstrap
      */
     private ServerBootstrap bootstrap;
-    /**
-     * netty acceptor thread pool
-     */
-    private EventLoopGroup bossGroup;
+
     /**
      * netty io thread pool
      */
+    private EventLoopGroup bossGroup;
+    // netty io thread pool
     private EventLoopGroup workerGroup;
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private Protocol protocol;
@@ -101,20 +101,20 @@ public class RpcServer {
         this(null, port, new RpcServerOptions(), null, null);
     }
 
-    public RpcServer(int port, RpcServerOptions options) {
-        this(null, port, options, null, null);
-    }
-
     public RpcServer(String host, int port) {
         this(host, port, new RpcServerOptions(), null, null);
     }
 
-    public RpcServer(int port, RpcServerOptions options, List<Interceptor> interceptors) {
-        this(null, port, options, interceptors);
+    public RpcServer(int port, RpcServerOptions options) {
+        this(port, options, null, null);
     }
 
     public RpcServer(String host, int port, RpcServerOptions options) {
         this(host, port, options, null, null);
+    }
+
+    public RpcServer(int port, RpcServerOptions options, List<Interceptor> interceptors) {
+        this(null, port, options, interceptors);
     }
 
     public RpcServer(String host, int port, RpcServerOptions options, List<Interceptor> interceptors) {
@@ -163,19 +163,14 @@ public class RpcServer {
             this.protocol = ProtocolManager.instance().getProtocol(rpcServerOptions.getProtocolType());
         }
 
-        // shutDownManager init once
-        ShutDownManager.getInstance();
-
-        threadPool = BrpcWorkThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getWorkThreadNum());
-        workerGroup = BrpcIoThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getIoThreadNum());
-
+        threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
+                new CustomThreadFactory("server-work-thread"));
         bootstrap = new ServerBootstrap();
-
         if (Epoll.isAvailable()) {
-
             bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
-
+            workerGroup = new EpollEventLoopGroup(rpcServerOptions.getIoThreadNum(),
+                    new CustomThreadFactory("server-io-thread"));
             ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
             ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(EpollServerSocketChannel.class);
@@ -183,10 +178,10 @@ public class RpcServer {
             bootstrap.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
             LOG.info("use epoll edge trigger mode");
         } else {
-
             bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
-
+            workerGroup = new NioEventLoopGroup(rpcServerOptions.getIoThreadNum(),
+                    new CustomThreadFactory("server-io-thread"));
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(NioServerSocketChannel.class);
@@ -217,6 +212,15 @@ public class RpcServer {
         bootstrap.group(bossGroup, workerGroup).childHandler(initializer);
 
         this.serverStatus = new ServerStatus(this);
+
+        // register shutdown hook to jvm
+        ShutDownManager.getInstance();
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                RpcServer.this.shutdown();
+            }
+        }));
     }
 
     public void registerService(Object service) {
@@ -225,6 +229,10 @@ public class RpcServer {
 
     public void registerService(Object service, NamingOptions namingOptions) {
         registerService(service, null, namingOptions, null);
+    }
+
+    public void registerService(Object service, Class targetClass, NamingOptions namingOptions) {
+        registerService(service, targetClass, namingOptions, null);
     }
 
     public void registerService(Object service, RpcServerOptions serverOptions) {
@@ -301,11 +309,16 @@ public class RpcServer {
             }
         }
         if (bossGroup != null) {
-            bossGroup.shutdownGracefully();
+            bossGroup.shutdownGracefully().syncUninterruptibly();
         }
-
+        if (workerGroup != null) {
+            workerGroup.shutdownGracefully().syncUninterruptibly();
+        }
+        if (threadPool != null) {
+            threadPool.stop();
+        }
         if (CollectionUtils.isNotEmpty(customThreadPools)) {
-            LOG.info("clean customized ThreadPool");
+            LOG.info("clean customized thread pool");
             for (ThreadPool pool : customThreadPools) {
                 pool.stop();
             }

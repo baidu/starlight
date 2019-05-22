@@ -18,6 +18,7 @@ package com.baidu.brpc.client;
 
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.RpcOptionsUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -28,10 +29,12 @@ public class RpcProxyTest {
 
     @Test
     public void testRpcProxy() {
-        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002");
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002",
+                RpcOptionsUtils.getRpcClientOptions());
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         System.out.println(echoService.toString());
         System.out.println(echoService.hashCode());
+        rpcClient.shutdown();
     }
 
     @Test
@@ -43,6 +46,7 @@ public class RpcProxyTest {
         constructor.setAccessible(true);
         RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002");
         BrpcProxy rpcProxy = (BrpcProxy) constructor.newInstance(rpcClient, EchoService.class);
+        rpcClient.shutdown();
         Assert.assertTrue(rpcProxy != null);
         Map<String, RpcMethodInfo> methodInfoMap = rpcProxy.getRpcMethodMap();
         Assert.assertTrue(methodInfoMap.size() > 0);

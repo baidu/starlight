@@ -11,6 +11,7 @@ import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.Echo.EchoRequest;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
+import com.baidu.brpc.RpcOptionsUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -20,35 +21,35 @@ public class ServerInitTest {
     @Test
     public void testInitServerMultiTimes() throws Exception {
 
-        RpcServer rpcServer1 = new RpcServer(8000);
+        RpcServer rpcServer1 = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer1.registerService(new EchoServiceImpl());
         rpcServer1.start();
 
-        RpcServer rpcServer2 = new RpcServer(8001);
-        RpcServerOptions options = new RpcServerOptions();
-        rpcServer2.registerService(new EchoServiceImpl(), options);
+        RpcServer rpcServer2 = new RpcServer(8001, RpcOptionsUtils.getRpcServerOptions());
+        rpcServer2.registerService(new EchoServiceImpl(), RpcOptionsUtils.getRpcServerOptions());
         rpcServer2.start();
 
-        RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8001");
+        RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8001",
+                RpcOptionsUtils.getRpcClientOptions());
         EchoService echoService = BrpcProxy.getProxy(secondRpcClient, EchoService.class);
         EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         echoService.echo(request);
 
         int processor = Runtime.getRuntime().availableProcessors();
         ThreadNumStat stat1 = calThreadNum();
-        Assert.assertEquals(processor, stat1.ioThreadNum);
-        Assert.assertEquals(processor, stat1.workThreadNum);
-        Assert.assertEquals(processor, stat1.customWorkThreadNum);
+        Assert.assertEquals(2, stat1.serverWorkThreadNum);
+        Assert.assertEquals(1, stat1.customWorkThreadNum);
+        Assert.assertEquals(1, stat1.clientWorkThreadNum);
 
         rpcServer1.shutdown();
         rpcServer2.shutdown();
-        Thread.sleep(5);
-        
-        ThreadNumStat stat2 = calThreadNum();
-        Assert.assertEquals(processor, stat2.ioThreadNum);
-        Assert.assertEquals(processor, stat2.workThreadNum);
-        Assert.assertEquals(0, stat2.customWorkThreadNum);
+        Thread.sleep(3);
 
+        ThreadNumStat stat2 = calThreadNum();
+        Assert.assertEquals(0, stat2.serverIoThreadNum);
+        Assert.assertEquals(0, stat2.serverWorkThreadNum);
+        Assert.assertEquals(0, stat2.customWorkThreadNum);
+        secondRpcClient.shutdown();
     }
 
     private ThreadNumStat calThreadNum() {
@@ -60,10 +61,14 @@ public class ServerInitTest {
 
             Thread thread = entry.getKey();
 
-            if (thread.getName().contains("brpc-io-thread")) {
-                stat.ioThreadNum ++;
-            } else if (thread.getName().contains("brpc-work-thread")) {
-                stat.workThreadNum ++;
+            if (thread.getName().contains("server-io-thread")) {
+                stat.serverIoThreadNum ++;
+            } else if (thread.getName().contains("server-work-thread")) {
+                stat.serverWorkThreadNum++;
+            } else if (thread.getName().contains("client-io-thread")) {
+                stat.clientIoThreadNum ++;
+            } else if (thread.getName().contains("client-work-thread")) {
+                stat.clientWorkThreadNum ++;
             } else if (thread.getName().contains("server-acceptor-thread")) {
                 stat.acceptorThreadNum ++;
             } else if (thread.getName().contains("EchoServiceImpl-work-thread")) {
@@ -71,18 +76,24 @@ public class ServerInitTest {
             }
         }
 
-        log.info("thread statistic data, ioThreadNum : {}, \n workThreadNum : {}, acceptorThreadNum : {}, "
+        log.info("thread statistic data, serverIoThreadNum : {}, serverWorkThreadNum : {}, "
+                        + "clientIoThreadNum : {}, clientWorkThreadNum : {}, acceptorThreadNum : {}, "
                         + "customizedWorkThreadNum : {}",
-                stat.ioThreadNum, stat.workThreadNum, stat.acceptorThreadNum, stat.customWorkThreadNum);
+                stat.serverIoThreadNum, stat.serverWorkThreadNum,
+                stat.clientIoThreadNum, stat.clientWorkThreadNum,
+                stat.acceptorThreadNum, stat.customWorkThreadNum);
 
         return stat;
     }
 
     public static class ThreadNumStat {
-        public int ioThreadNum;
-        public int workThreadNum;
+        public int serverIoThreadNum;
+        public int serverWorkThreadNum;
+        public int clientIoThreadNum;
+        public int clientWorkThreadNum;
         public int acceptorThreadNum;
         public int customWorkThreadNum;
     }
+
 
 }
