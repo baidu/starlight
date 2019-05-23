@@ -84,6 +84,7 @@ public class BaiduRpcProtocolTest {
         constructor.setAccessible(true);
         RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002");
         BrpcProxy rpcProxy = (BrpcProxy) constructor.newInstance(rpcClient, EchoService.class);
+        rpcClient.shutdown();
         Map<String, RpcMethodInfo> methodInfoMap = rpcProxy.getRpcMethodMap();
         RpcMethodInfo rpcMethodInfo = methodInfoMap.entrySet().iterator().next().getValue();
         return rpcMethodInfo;

@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.interceptor;
 
+import com.baidu.brpc.RpcOptionsUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -38,7 +39,7 @@ public class InterceptorTest {
 
     @BeforeClass
     public static void beforeClass() {
-        rpcServer = new RpcServer(8000);
+        rpcServer = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.getInterceptors().add(new Interceptor() {
             @Override
@@ -92,7 +93,8 @@ public class InterceptorTest {
         for (int i = 0; i < 4; ++i) {
             Assert.assertFalse(flags[i]);
         }
-        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000");
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000",
+                RpcOptionsUtils.getRpcClientOptions());
         rpcClient.getInterceptors().add(new Interceptor() {
             @Override
             public boolean handleRequest(Request request) {

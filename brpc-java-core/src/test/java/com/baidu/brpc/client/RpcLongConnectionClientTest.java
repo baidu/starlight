@@ -25,6 +25,7 @@ import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
+import com.baidu.brpc.RpcOptionsUtils;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.server.ServiceManager;
@@ -40,11 +41,12 @@ public class RpcLongConnectionClientTest {
 
     @Test
     public void testBasic() {
-        RpcServer rpcServer = new RpcServer(8000);
+        RpcServer rpcServer = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
-        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000");
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000",
+                RpcOptionsUtils.getRpcClientOptions());
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         Echo.EchoResponse response = echoService.echo(request);
@@ -56,13 +58,13 @@ public class RpcLongConnectionClientTest {
 
     @Test
     public void testHttpProto() {
-        RpcServerOptions serverOptions = new RpcServerOptions();
+        RpcServerOptions serverOptions = RpcOptionsUtils.getRpcServerOptions();
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         RpcServer rpcServer = new RpcServer(8000, serverOptions);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
-        RpcClientOptions clientOptions = new RpcClientOptions();
+        RpcClientOptions clientOptions = RpcOptionsUtils.getRpcClientOptions();
         clientOptions.setProtocolType(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         clientOptions.setMaxTryTimes(1);
         clientOptions.setReadTimeoutMillis(1000000);
@@ -105,13 +107,13 @@ public class RpcLongConnectionClientTest {
 
     @Test
     public void testNsheadProto() {
-        RpcServerOptions serverOptions = new RpcServerOptions();
+        RpcServerOptions serverOptions = RpcOptionsUtils.getRpcServerOptions();
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
         RpcServer rpcServer = new RpcServer(8000, serverOptions);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
-        RpcClientOptions clientOptions = new RpcClientOptions();
+        RpcClientOptions clientOptions = RpcOptionsUtils.getRpcClientOptions();
         clientOptions.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
         RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000", clientOptions);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);

@@ -27,6 +27,7 @@ import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
+import com.baidu.brpc.RpcOptionsUtils;
 import com.baidu.brpc.server.RpcServer;
 
 import lombok.extern.slf4j.Slf4j;
@@ -34,17 +35,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ClientInitTest {
 
-
     @Test
     public void testClientInit() {
 
-        RpcServer rpcServer = new RpcServer(8000);
+        RpcServer rpcServer = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
         // new first rpc client
         long firstStartTime = System.currentTimeMillis();
-        RpcClient firstRpcClient = new RpcClient("list://127.0.0.1:8000");
+        RpcClient firstRpcClient = new RpcClient("list://127.0.0.1:8000",
+                RpcOptionsUtils.getRpcClientOptions());
         long firstEndTime = System.currentTimeMillis();
 
         EchoService echoService = BrpcProxy.getProxy(firstRpcClient, EchoService.class);
@@ -52,34 +53,33 @@ public class ClientInitTest {
         Echo.EchoResponse response = echoService.echo(request);
         assertEquals("hello", response.getMessage());
         log.info("first new rpcClient cost : {}", firstEndTime - firstStartTime);
-        firstRpcClient.stop();
 
         // new second rpc client
         long secondStartTime = System.currentTimeMillis();
-        RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8000");
+        RpcClient secondRpcClient = new RpcClient("list://127.0.0.1:8000",
+                RpcOptionsUtils.getRpcClientOptions());
         long secondEndTime = System.currentTimeMillis();
         log.info("second new rpcClient cost : {}", secondEndTime - secondStartTime);
         echoService = BrpcProxy.getProxy(secondRpcClient, EchoService.class);
         request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         response = echoService.echo(request);
         assertEquals("hello", response.getMessage());
-        secondRpcClient.stop();
 
         // new third rpc client for short connection
         Endpoint endPoint = new Endpoint("127.0.0.1", 8000);
         long thirdStartTime = System.currentTimeMillis();
-        RpcClient thirdConnectionRpcClient = new RpcClient(endPoint);
+        RpcClient thirdConnectionRpcClient = new RpcClient(endPoint,
+                RpcOptionsUtils.getRpcClientOptions());
         long thirdEndTime = System.currentTimeMillis();
         log.info("third new rpcClient cost : {}", thirdEndTime - thirdStartTime);
-        thirdConnectionRpcClient.stop();
 
         ThreadNumStat stat = calThreadNum();
-        int processors = Runtime.getRuntime().availableProcessors();
-
-        Assert.assertEquals(processors, stat.ioThreadNum);
-        Assert.assertEquals(processors, stat.workThreadNum);
+        Assert.assertEquals(3, stat.workThreadNum);
         Assert.assertEquals(1, stat.timoutThreadNum);
 
+        firstRpcClient.stop();
+        secondRpcClient.stop();
+        thirdConnectionRpcClient.stop();
         rpcServer.shutdown();
     }
 
@@ -95,9 +95,9 @@ public class ClientInitTest {
 
             if (thread.getName().contains("invalid-channel-callback-thread")) {
                 stat.callBackThreadNum ++;
-            } else if (thread.getName().contains("brpc-io-thread")) {
+            } else if (thread.getName().contains("client-io-thread")) {
                 stat.ioThreadNum ++;
-            } else if (thread.getName().contains("brpc-work-thread")) {
+            } else if (thread.getName().contains("client-work-thread")) {
                 stat.workThreadNum ++;
             } else if (thread.getName().contains("health-check-timer-thread")) {
                 stat.healthCheckThreadNum ++;
