@@ -20,6 +20,7 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+import com.baidu.brpc.client.instance.ServiceInstance;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.pool2.impl.GenericObjectPool;
@@ -39,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class BrpcPooledChannel extends AbstractBrpcChannel {
-
     private GenericObjectPool<Channel> channelFuturePool;
     private volatile long failedNum;
     private int readTimeOut;
@@ -51,9 +51,8 @@ public class BrpcPooledChannel extends AbstractBrpcChannel {
     private Queue<Integer> latencyWindow;
     private RpcClientOptions rpcClientOptions;
 
-    public BrpcPooledChannel(String ip, int port, RpcClient rpcClient) {
-
-        super(ip, port, rpcClient.getBootstrap(), rpcClient.getProtocol());
+    public BrpcPooledChannel(ServiceInstance serviceInstance, RpcClient rpcClient) {
+        super(serviceInstance, rpcClient.getBootstrap(), rpcClient.getProtocol());
 
         this.protocol = rpcClient.getProtocol();
         this.rpcClientOptions = rpcClient.getRpcClientOptions();
@@ -71,8 +70,8 @@ public class BrpcPooledChannel extends AbstractBrpcChannel {
         conf.setTestWhileIdle(true);
         // Maximum time for connection idle, testWhileIdle needs to be true
         conf.setTimeBetweenEvictionRunsMillis(rpcClientOptions.getTimeBetweenEvictionRunsMillis());
-        channelFuturePool = new GenericObjectPool<Channel>(
-                new ChannelPooledObjectFactory(this, ip, port), conf);
+        channelFuturePool = new GenericObjectPool<Channel>(new ChannelPooledObjectFactory(
+                this, serviceInstance.getIp(), serviceInstance.getPort()), conf);
         try {
             channelFuturePool.preparePool();
         } catch (Exception ex) {
@@ -106,27 +105,6 @@ public class BrpcPooledChannel extends AbstractBrpcChannel {
     @Override
     public void close() {
         channelFuturePool.close();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        boolean flag = false;
-        if (obj != null && BrpcChannel.class.isAssignableFrom(obj.getClass())) {
-            BrpcChannel f = (BrpcChannel) obj;
-            flag = new EqualsBuilder()
-                    .append(ip, f.getIp())
-                    .append(port, f.getPort())
-                    .isEquals();
-        }
-        return flag;
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder()
-                .append(ip)
-                .append(port)
-                .toHashCode();
     }
 
     @Override

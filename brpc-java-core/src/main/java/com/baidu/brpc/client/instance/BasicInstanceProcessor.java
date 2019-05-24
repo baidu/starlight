@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.baidu.brpc.client.instance;
 
 import java.util.Collection;
@@ -24,9 +25,9 @@ import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
+import com.baidu.brpc.client.RpcClient;
 
 public class BasicInstanceProcessor implements InstanceProcessor {
     private CopyOnWriteArraySet<ServiceInstance> instances;
@@ -48,8 +49,7 @@ public class BasicInstanceProcessor implements InstanceProcessor {
         lock.lock();
         try {
             if (instances.add(instance)) {
-                BrpcChannel brpcChannel = BrpcChannelFactory.createChannel(
-                        instance.getIp(), instance.getPort(), rpcClient);
+                BrpcChannel brpcChannel = BrpcChannelFactory.createChannel(instance, rpcClient);
                 instanceChannels.add(brpcChannel);
                 instanceChannelMap.putIfAbsent(instance, brpcChannel);
             }
@@ -79,8 +79,7 @@ public class BasicInstanceProcessor implements InstanceProcessor {
                 Iterator<BrpcChannel> iterator = instanceChannels.iterator();
                 while (iterator.hasNext()) {
                     BrpcChannel brpcChannel = iterator.next();
-                    if (brpcChannel.getIp().equals(instance.getIp())
-                            && brpcChannel.getPort() == instance.getPort()) {
+                    if (brpcChannel.getServiceInstance().equals(instance)) {
                         brpcChannel.close();
                         instanceChannels.remove(brpcChannel);
                         instanceChannelMap.remove(instance);

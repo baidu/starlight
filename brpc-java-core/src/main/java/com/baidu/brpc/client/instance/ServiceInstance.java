@@ -22,7 +22,8 @@ import lombok.Setter;
 @Getter
 public class ServiceInstance extends Endpoint {
     /**
-     * instance tag, used to filter service instance at load balance.
+     * instance tag, such as sharding info.
+     * used by bns naming service.
      */
     private String tag;
 

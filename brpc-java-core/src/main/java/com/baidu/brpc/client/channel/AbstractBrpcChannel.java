@@ -1,44 +1,32 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright (C) 2019 Baidu, Inc. All Rights Reserved.
  */
 package com.baidu.brpc.client.channel;
 
+import java.net.InetSocketAddress;
+import java.util.Queue;
+
+import com.baidu.brpc.client.instance.ServiceInstance;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
+
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.InetSocketAddress;
-import java.util.Queue;
-
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
 @Slf4j
 public abstract class AbstractBrpcChannel implements BrpcChannel {
-    protected String ip;
-    protected int port;
+    protected ServiceInstance serviceInstance;
     protected Bootstrap bootstrap;
     protected Protocol protocol;
 
-    public AbstractBrpcChannel(String ip, int port, Bootstrap bootstrap, Protocol protocol) {
-        this.ip = ip;
-        this.port = port;
+    public AbstractBrpcChannel(ServiceInstance serviceInstance, Bootstrap bootstrap, Protocol protocol) {
+        this.serviceInstance = serviceInstance;
         this.bootstrap = bootstrap;
         this.protocol = protocol;
     }
@@ -74,13 +62,8 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
     }
 
     @Override
-    public String getIp() {
-        return ip;
-    }
-
-    @Override
-    public int getPort() {
-        return port;
+    public ServiceInstance getServiceInstance() {
+        return serviceInstance;
     }
 
     @Override
@@ -116,8 +99,8 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
     @Override
     public int hashCode() {
         return new HashCodeBuilder()
-                .append(ip)
-                .append(port)
+                .append(serviceInstance.getIp())
+                .append(serviceInstance.getPort())
                 .toHashCode();
     }
 
@@ -127,8 +110,8 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         if (object != null && BrpcChannel.class.isAssignableFrom(object.getClass())) {
             BrpcChannel rhs = (BrpcChannel) object;
             flag = new EqualsBuilder()
-                    .append(ip, rhs.getIp())
-                    .append(port, rhs.getPort())
+                    .append(serviceInstance.getIp(), rhs.getServiceInstance().getIp())
+                    .append(serviceInstance.getPort(), rhs.getServiceInstance().getPort())
                     .isEquals();
         }
         return flag;

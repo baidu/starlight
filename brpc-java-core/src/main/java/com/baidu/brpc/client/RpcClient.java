@@ -284,12 +284,12 @@ public class RpcClient {
             int maxConnections = brpcChannel.getCurrentMaxConnection() * 2;
             brpcChannel.updateMaxConnection(maxConnections);
             String errMsg = String.format("channel pool is exhausted, and double maxTotalConnection,server=%s:%d",
-                    brpcChannel.getIp(), brpcChannel.getPort());
+                    brpcChannel.getServiceInstance().getIp(), brpcChannel.getServiceInstance().getPort());
             LOG.debug(errMsg);
             throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
         } catch (IllegalStateException illegalState) {
             String errMsg = String.format("channel pool is closed, server=%s:%d",
-                    brpcChannel.getIp(), brpcChannel.getPort());
+                    brpcChannel.getServiceInstance().getIp(), brpcChannel.getServiceInstance().getPort());
             LOG.debug(errMsg);
             throw new RpcException(RpcException.UNKNOWN_EXCEPTION, errMsg);
         } catch (Exception connectedFailed) {
@@ -297,7 +297,9 @@ public class RpcClient {
                             + "active=%d,idle=%d,server=%s:%d, ex=%s",
                     brpcChannel.getActiveConnectionNum(),
                     brpcChannel.getIdleConnectionNum(),
-                    brpcChannel.getIp(), brpcChannel.getPort(), connectedFailed.getMessage());
+                    brpcChannel.getServiceInstance().getIp(),
+                    brpcChannel.getServiceInstance().getPort(),
+                    connectedFailed.getMessage());
             LOG.debug(errMsg);
             throw new RpcException(RpcException.UNKNOWN_EXCEPTION, errMsg);
         }

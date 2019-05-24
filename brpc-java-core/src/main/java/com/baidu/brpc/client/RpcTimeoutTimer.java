@@ -1,12 +1,17 @@
+/*
+ * Copyright (C) 2019 Baidu, Inc. All Rights Reserved.
+ */
 package com.baidu.brpc.client;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Response;
+
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Created by wanghongfei on 2019-04-18.
@@ -32,8 +37,8 @@ public class RpcTimeoutTimer implements TimerTask {
         RpcFuture future = channelInfo.removeRpcFuture(logId);
 
         if (future != null) {
-            String ip = future.getChannelInfo().getChannelGroup().getIp();
-            int port = future.getChannelInfo().getChannelGroup().getPort();
+            String ip = future.getChannelInfo().getChannelGroup().getServiceInstance().getIp();
+            int port = future.getChannelInfo().getChannelGroup().getServiceInstance().getPort();
             long elapseTime = System.currentTimeMillis() - future.getStartTime();
             String errMsg = String.format("request timeout,logId=%d,ip=%s,port=%d,elapse=%dms",
                     logId, ip, port, elapseTime);
