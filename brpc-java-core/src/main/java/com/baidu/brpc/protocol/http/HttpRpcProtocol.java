@@ -227,7 +227,8 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 hostPort = ((DnsNamingService) namingService).getHostPort();
             } else {
                 // 默认获取当前链接的 host:port 即可
-                hostPort = channelGroup.getIp() + ":" + channelGroup.getPort();
+                hostPort = channelGroup.getServiceInstance().getIp() + ":"
+                        + channelGroup.getServiceInstance().getPort();
             }
             // some http server decide what to do by the 'host' param in request header
             httpRequest.headers().set(HttpHeaderNames.HOST, hostPort);

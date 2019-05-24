@@ -11,6 +11,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.utils.CustomThreadFactory;
 
 import io.netty.channel.Channel;
@@ -27,13 +28,14 @@ public class BrpcSingleChannel extends AbstractBrpcChannel {
     private volatile Channel channel;
 
     private volatile Long lastTryConnectTime = 0L;
-    private volatile AtomicInteger retryCount = new AtomicInteger(0);
+    private AtomicInteger retryCount = new AtomicInteger(0);
     private int connectPeriod;
 
     private AtomicLong failedNum = new AtomicLong(0);
     private int readTimeOut;
     private int latencyWindowSize;
     private Queue<Integer> latencyWindow;
+
 
     private static final ExecutorService CONNECTION_SERVICE = Executors.newFixedThreadPool(3, new CustomThreadFactory(
             "single-channel-connect-thread"));
@@ -42,8 +44,8 @@ public class BrpcSingleChannel extends AbstractBrpcChannel {
         BrpcSingleChannel channelGroup;
         Channel oldChannel;
 
-        public ReConnectTask(BrpcSingleChannel channelGroup, Channel oldChannel) {
-            this.channelGroup = channelGroup;
+        public ReConnectTask(BrpcSingleChannel singleChannelGroup, Channel oldChannel) {
+            this.channelGroup = singleChannelGroup;
             this.oldChannel = oldChannel;
         }
 
@@ -57,14 +59,15 @@ public class BrpcSingleChannel extends AbstractBrpcChannel {
                     && channelGroup.retryCount.get() >= RETRY_THRESHOLD) {
                 return;
             }
-            synchronized(channelGroup) {
+            synchronized (channelGroup) {
                 if (oldChannel != channelGroup.channel) {
                     return;
                 }
                 Channel newChannel = null;
                 try {
-                    newChannel = channelGroup.createChannel(channelGroup.getIp(),
-                            channelGroup.getPort());
+                    newChannel = channelGroup.createChannel(
+                            channelGroup.getServiceInstance().getIp(),
+                            channelGroup.getServiceInstance().getPort());
                 } catch (Exception e) {
                     log.info("failed reconnecting");
                 }
@@ -78,8 +81,8 @@ public class BrpcSingleChannel extends AbstractBrpcChannel {
         }
     }
 
-    public BrpcSingleChannel(String ip, int port, RpcClient rpcClient) {
-        super(ip, port, rpcClient.getBootstrap(), rpcClient.getProtocol());
+    public BrpcSingleChannel(ServiceInstance serviceInstance, RpcClient rpcClient) {
+        super(serviceInstance, rpcClient.getBootstrap(), rpcClient.getProtocol());
         RpcClientOptions rpcClientOptions = rpcClient.getRpcClientOptions();
         this.connectPeriod = rpcClientOptions.getHealthyCheckIntervalMillis();
         this.readTimeOut = rpcClientOptions.getReadTimeoutMillis();
@@ -90,9 +93,9 @@ public class BrpcSingleChannel extends AbstractBrpcChannel {
     @Override
     public Channel getChannel() throws Exception, NoSuchElementException, IllegalStateException {
         if (isNonActive(channel)) {
-            synchronized(this) {
+            synchronized (this) {
                 if (isNonActive(channel)) {
-                    channel = createChannel(ip, port);
+                    channel = createChannel(serviceInstance.getIp(), serviceInstance.getPort());
                 }
             }
         }
@@ -136,7 +139,7 @@ public class BrpcSingleChannel extends AbstractBrpcChannel {
 
     private void refreshConnectionState(long currentTimeMillis, int retryCount) {
         this.retryCount = new AtomicInteger(retryCount);
-        this.lastTryConnectTime = currentTimeMillis;
+        lastTryConnectTime = currentTimeMillis;
     }
 
     private Channel doCreateChannel(String ip, int port) {

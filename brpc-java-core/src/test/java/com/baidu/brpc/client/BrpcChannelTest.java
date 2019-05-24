@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcPooledChannel;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.RpcOptionsUtils;
 import com.baidu.brpc.server.RpcServer;
 
@@ -43,12 +44,12 @@ public class BrpcChannelTest {
 
     @Before
     public void before() {
-        rpcServer = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
+        rpcServer = new RpcServer(8000);
         rpcServer.start();
         options = RpcOptionsUtils.getRpcClientOptions();
         options.setLatencyWindowSizeOfFairLoadBalance(2);
         rpcClient = new RpcClient("list://127.0.0.1:8000", options);
-        channelGroup = new BrpcPooledChannel("127.0.0.1", 8000, rpcClient);
+        channelGroup = new BrpcPooledChannel(new ServiceInstance("127.0.0.1", 8000), rpcClient);
     }
 
     @After

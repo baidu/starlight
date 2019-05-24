@@ -1,5 +1,17 @@
 /*
- * Copyright (C) 2019 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package com.baidu.brpc.client.loadbalance;
@@ -16,6 +28,7 @@ import org.junit.Test;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.RpcOptionsUtils;
 import com.baidu.brpc.server.RpcServer;
 
@@ -47,9 +60,9 @@ public class RandomStrategyTest {
         rpcServer3.start();
 
         rpcClient = new RpcClient(serviceUrl, RpcOptionsUtils.getRpcClientOptions());
-        instance1 = BrpcChannelFactory.createChannel("127.0.0.1", 8000, rpcClient);
-        instance2 = BrpcChannelFactory.createChannel("127.0.0.1", 8001, rpcClient);
-        instance3 = BrpcChannelFactory.createChannel("127.0.0.1", 8002, rpcClient);
+        instance1 = BrpcChannelFactory.createChannel(new ServiceInstance("127.0.0.1", 8000), rpcClient);
+        instance2 = BrpcChannelFactory.createChannel(new ServiceInstance("127.0.0.1", 8001), rpcClient);
+        instance3 = BrpcChannelFactory.createChannel(new ServiceInstance("127.0.0.1", 8002), rpcClient);
     }
 
     @AfterClass
@@ -90,11 +103,11 @@ public class RandomStrategyTest {
         Set<BrpcChannel> selectedInstances = new HashSet<BrpcChannel>();
         selectedInstances.add(instance3);
         instance = randomStrategy.selectInstance(null, instances, selectedInstances);
-        Assert.assertTrue(instance.getPort() != instance3.getPort());
+        Assert.assertTrue(instance.getServiceInstance().getPort() != instance3.getServiceInstance().getPort());
 
         selectedInstances.add(instance2);
         instance = randomStrategy.selectInstance(null, instances, selectedInstances);
-        Assert.assertTrue(instance.getPort() == instance1.getPort());
+        Assert.assertTrue(instance.getServiceInstance().getPort() == instance1.getServiceInstance().getPort());
 
         selectedInstances.add(instance1);
         instance = randomStrategy.selectInstance(null, instances, selectedInstances);

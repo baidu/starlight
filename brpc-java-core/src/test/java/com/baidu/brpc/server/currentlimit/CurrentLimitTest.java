@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.server.currentlimit;
 
+import com.baidu.brpc.RpcOptionsUtils;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
@@ -36,11 +37,11 @@ public class CurrentLimitTest {
 
     @BeforeClass
     public static void beforeClass() {
-        rpcServer1 = new RpcServer(8000);
+        rpcServer1 = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer1.registerService(new EchoServiceImpl());
         rpcServer1.getInterceptors().add(new CurrentLimitInterceptor(new TokenBucketCurrentLimiter(500, 500)));
 
-        rpcServer2 = new RpcServer(8001);
+        rpcServer2 = new RpcServer(8001, RpcOptionsUtils.getRpcServerOptions());
         rpcServer2.registerService(new EchoServiceImpl());
         rpcServer2.getInterceptors().add(new CurrentLimitInterceptor(new CounterCurrentLimiter(500)));
 
@@ -60,7 +61,8 @@ public class CurrentLimitTest {
 
     @Test
     public void test1Client2Server() {
-        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000,127.0.0.1:8001");
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8000,127.0.0.1:8001",
+                RpcOptionsUtils.getRpcClientOptions());
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         for (int i = 0; i < 100; i++) {

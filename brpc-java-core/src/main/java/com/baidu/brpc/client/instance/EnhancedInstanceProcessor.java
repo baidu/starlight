@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package com.baidu.brpc.client.instance;
+
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
 import java.net.Socket;
@@ -29,17 +35,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
+import com.baidu.brpc.thread.ClientHealthCheckTimerInstance;
 import com.baidu.brpc.client.loadbalance.FairStrategy;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
-import com.baidu.brpc.thread.ClientHealthCheckTimerInstance;
-
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
-import lombok.extern.slf4j.Slf4j;
+import com.baidu.brpc.client.RpcClient;
 
 @Slf4j
 public class EnhancedInstanceProcessor implements InstanceProcessor {
@@ -74,7 +75,8 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
                             Iterator<BrpcChannel> iter = unhealthyInstanceChannels.iterator();
                             while (iter.hasNext()) {
                                 BrpcChannel instance = iter.next();
-                                boolean isHealthy = isInstanceHealthy(instance.getIp(), instance.getPort());
+                                boolean isHealthy = isInstanceHealthy(instance.getServiceInstance().getIp(),
+                                        instance.getServiceInstance().getPort());
                                 if (isHealthy) {
                                     newHealthyInstanceChannels.add(instance);
                                 }
@@ -84,7 +86,8 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
                             iter = healthyInstanceChannels.iterator();
                             while (iter.hasNext()) {
                                 BrpcChannel instance = iter.next();
-                                boolean isHealthy = isInstanceHealthy(instance.getIp(), instance.getPort());
+                                boolean isHealthy = isInstanceHealthy(instance.getServiceInstance().getIp(),
+                                        instance.getServiceInstance().getPort());
                                 if (!isHealthy) {
                                     newUnhealthyInstanceChannels.add(instance);
                                 }
@@ -117,12 +120,11 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
         lock.lock();
         try {
             if (instances.add(instance)) {
-                BrpcChannel brpcChannel = BrpcChannelFactory.createChannel(
-                        instance.getIp(), instance.getPort(), rpcClient);
+                BrpcChannel brpcChannel = BrpcChannelFactory.createChannel(instance, rpcClient);
                 healthyInstanceChannels.add(brpcChannel);
                 instanceChannelMap.putIfAbsent(instance, brpcChannel);
             } else {
-                log.warn("endpoint already exist, {}:{}", instance.getIp(), instance.getPort());
+                log.debug("endpoint already exist, {}:{}", instance.getIp(), instance.getPort());
                 return;
             }
         } finally {
@@ -207,8 +209,7 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
                 Iterator<BrpcChannel> iterator = healthyInstanceChannels.iterator();
                 while (iterator.hasNext()) {
                     BrpcChannel brpcChannel = iterator.next();
-                    if (brpcChannel.getIp().equals(instance.getIp())
-                            && brpcChannel.getPort() == instance.getPort()) {
+                    if (brpcChannel.getServiceInstance().equals(instance)) {
                         healthyInstanceChannels.remove(brpcChannel);
                         brpcChannel.close();
                         removedInstanceChannels.add(brpcChannel);
@@ -220,8 +221,7 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
                     iterator = unhealthyInstanceChannels.iterator();
                     while (iterator.hasNext()) {
                         BrpcChannel brpcChannel = iterator.next();
-                        if (brpcChannel.getIp().equals(instance.getIp())
-                                && brpcChannel.getPort() == instance.getPort()) {
+                        if (brpcChannel.getServiceInstance().equals(instance)) {
                             unhealthyInstanceChannels.remove(brpcChannel);
                             brpcChannel.close();
                             removedInstanceChannels.add(brpcChannel);

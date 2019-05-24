@@ -15,7 +15,7 @@
  */
 package com.baidu.brpc.client.loadbalance;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -45,11 +45,11 @@ public class RandomStrategy implements LoadBalanceStrategy {
             return null;
         }
 
-        List<BrpcChannel> toBeSelectedInstances = null;
+        Collection<BrpcChannel> toBeSelectedInstances = null;
         if (selectedInstances == null) {
             toBeSelectedInstances = instances;
         } else {
-            toBeSelectedInstances = new ArrayList<BrpcChannel>(CollectionUtils.subtract(instances, selectedInstances));
+            toBeSelectedInstances = CollectionUtils.subtract(instances, selectedInstances);
         }
 
         int instanceNum = toBeSelectedInstances.size();
@@ -62,7 +62,7 @@ public class RandomStrategy implements LoadBalanceStrategy {
             return null;
         }
         int index = getRandomInt(instanceNum);
-        BrpcChannel brpcChannel = toBeSelectedInstances.get(index);
+        BrpcChannel brpcChannel = toBeSelectedInstances.toArray(new BrpcChannel[0])[index];
         return brpcChannel;
     }
 
