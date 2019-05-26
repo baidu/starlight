@@ -68,7 +68,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     private List<RpcProxyFactoryBean> rpcClients = new ArrayList<RpcProxyFactoryBean>();
 
     /**
-     * The port mapping expoters.
+     * The port mapping exporters.
      */
     private Map<Integer, RpcServiceExporter> portMappingExporters = new HashMap<Integer, RpcServiceExporter>();
 

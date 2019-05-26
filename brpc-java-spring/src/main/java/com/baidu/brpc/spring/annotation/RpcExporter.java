@@ -41,7 +41,7 @@ public @interface RpcExporter {
      *
      * @return the string
      */
-    String port();
+    String port() default "8080";
     
     /**
      * bean name of RPC server options bean type must be {@link com.baidu.brpc.server.RpcServerOptions}.
