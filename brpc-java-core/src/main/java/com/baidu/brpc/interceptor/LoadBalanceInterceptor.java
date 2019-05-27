@@ -41,12 +41,14 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
                 // if it is the initial request, not init HashSet, so it is more fast.
                 // therefore, it need LoadBalanceStrategy to judge if selectInstances is null.
                 if (currentTryTimes > 0) {
-                    if (request.getSelectedInstances() == null) {
-                        request.setSelectedInstances(new HashSet<BrpcChannel>(maxTryTimes - 1));
+                    if (request.getChannel() != null) {
+                        if (request.getSelectedInstances() == null) {
+                            request.setSelectedInstances(new HashSet<BrpcChannel>(maxTryTimes - 1));
+                        }
+                        BrpcChannel lastInstance = ChannelInfo
+                                .getClientChannelInfo(request.getChannel()).getChannelGroup();
+                        request.getSelectedInstances().add(lastInstance);
                     }
-                    BrpcChannel lastInstance = ChannelInfo
-                            .getClientChannelInfo(request.getChannel()).getChannelGroup();
-                    request.getSelectedInstances().add(lastInstance);
                 }
                 invokeRpc(request, response);
                 break;
