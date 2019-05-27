@@ -8,4 +8,12 @@ import lombok.Setter;
 @Getter
 public class RpcClientConfig extends RpcClientOptions {
     private String interceptorBeanName;
+
+    public RpcClientConfig() {
+    }
+
+    public RpcClientConfig(RpcClientConfig rhs) {
+        super(rhs);
+        this.interceptorBeanName = rhs.getInterceptorBeanName();
+    }
 }

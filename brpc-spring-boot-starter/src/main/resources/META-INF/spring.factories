@@ -1,2 +1,2 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-com.baidu.brpc.spring.boot.autoconfigure.BrpcAutoConfiguration
+  com.baidu.brpc.spring.boot.autoconfigure.BrpcAutoConfiguration

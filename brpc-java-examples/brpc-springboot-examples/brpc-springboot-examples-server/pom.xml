@@ -24,7 +24,7 @@
         <version>2.3.8-SNAPSHOT</version>
     </parent>
 
-    <artifactId>brpc-java-springboot-examples-server</artifactId>
+    <artifactId>brpc-springboot-examples-server</artifactId>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>

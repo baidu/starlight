@@ -3,7 +3,6 @@ package com.baidu.brpc.spring.boot.autoconfigure;
 import com.baidu.brpc.spring.annotation.RpcExporter;
 import org.springframework.beans.factory.BeanInitializationException;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.AutoConfigurationPackages;
 import org.springframework.context.annotation.AnnotationBeanNameGenerator;
@@ -38,15 +37,6 @@ public class RpcExporterRegister extends AbstractRegister implements ImportBeanD
                 throw new RuntimeException("interface already be exported by bean name:" + old);
             }
             registry.registerBeanDefinition(serviceBeanName, candidate);
-        }
-
-        for (Map.Entry<Class, String> entry : serviceExporterMap.entrySet()) {
-            BeanDefinition bd = BeanDefinitionBuilder.rootBeanDefinition(ServiceExporterBean.class)
-                    .addPropertyValue("serviceInterface", entry.getKey())
-                    .addPropertyReference("serviceBean", entry.getValue())
-                    .getBeanDefinition();
-            String beanName = entry.getValue() + "ServiceExporterBean";
-            registry.registerBeanDefinition(beanName, bd);
         }
     }
 

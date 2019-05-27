@@ -36,4 +36,13 @@ public class NamingOptions {
      * if true, naming service will throw exception when register/subscribe exceptions.
      */
     private boolean ignoreFailOfNamingService = false;
+
+    public NamingOptions() {
+    }
+
+    public NamingOptions(NamingOptions rhs) {
+        this.group = rhs.getGroup();
+        this.version = rhs.getVersion();
+        this.ignoreFailOfNamingService = rhs.isIgnoreFailOfNamingService();
+    }
 }

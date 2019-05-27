@@ -16,3 +16,10 @@ brpc:
     client:
       workThreadNum: 1
       ioThreadNum: 1
+  custom:
+    com.baidu.brpc.example.springboot.api.EchoService:
+      naming:
+        version: 2.0.0
+    com.baidu.brpc.example.springboot.api.AsyncEchoService:
+      naming:
+        version: 2.0.0

@@ -240,11 +240,11 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
      * To resolve annotation meta data info from target class.
      * 
      * @param clazz target class to resolve
-     * @param annotion marked annotation type
+     * @param annotation marked annotation type
      * @return all fields and methods matched target annotation type from specified class
      */
     private InjectionMetadata findAnnotationMetadata(final Class clazz,
-            final List<Class<? extends Annotation>> annotion) {
+            final List<Class<? extends Annotation>> annotation) {
         // Quick check on the concurrent map first, with minimal locking.
         InjectionMetadata metadata = this.injectionMetadataCache.get(clazz);
         if (metadata == null) {
@@ -253,8 +253,8 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
                 if (metadata == null) {
                     LinkedList<InjectionMetadata.InjectedElement> elements;
                     elements = new LinkedList<InjectionMetadata.InjectedElement>();
-                    parseFields(clazz, annotion, elements);
-                    parseMethods(clazz, annotion, elements);
+                    parseFields(clazz, annotation, elements);
+                    parseMethods(clazz, annotation, elements);
 
                     metadata = new InjectionMetadata(clazz, elements);
                     this.injectionMetadataCache.put(clazz, metadata);
@@ -297,14 +297,14 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
      * To parse all field to find out annotation info.
      *
      * @param clazz target class
-     * @param annotions the annotions
+     * @param annotations the annotations
      * @param elements injected element of all fields
      */
-    protected void parseFields(final Class<?> clazz, final List<Class<? extends Annotation>> annotions,
+    protected void parseFields(final Class<?> clazz, final List<Class<? extends Annotation>> annotations,
             final LinkedList<InjectionMetadata.InjectedElement> elements) {
         ReflectionUtils.doWithFields(clazz, new ReflectionUtils.FieldCallback() {
             public void doWith(Field field) {
-                for (Class<? extends Annotation> anno : annotions) {
+                for (Class<? extends Annotation> anno : annotations) {
                     Annotation annotation = field.getAnnotation(anno);
                     if (annotation != null) {
                         if (Modifier.isStatic(field.getModifiers())) {
@@ -443,7 +443,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
      * @throws Exception in case of any error
      */
     public void afterPropertiesSet() throws Exception {
-        Assert.notNull(getCallback(), "property 'callbck' must be set");
+        Assert.notNull(getCallback(), "property 'callback' must be set");
 
         propertyResource = PropertyPlaceholderConfigurerTool
                 .getRegisteredPropertyResourceConfigurer((ConfigurableListableBeanFactory) beanFactory);
