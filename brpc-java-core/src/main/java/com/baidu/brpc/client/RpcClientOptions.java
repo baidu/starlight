@@ -71,6 +71,9 @@ public class RpcClientOptions {
     private Options.CompressType compressType = Options.CompressType.COMPRESS_TYPE_NONE;
     private ChannelType channelType = ChannelType.POOLED_CONNECTION;
 
+    public RpcClientOptions(RpcClientOptions options) {
+        this.copyFrom(options);
+    }
 
     public void copyFrom(RpcClientOptions another) {
         this.activeInstancesRatioOfFairLoadBalance = another.activeInstancesRatioOfFairLoadBalance;

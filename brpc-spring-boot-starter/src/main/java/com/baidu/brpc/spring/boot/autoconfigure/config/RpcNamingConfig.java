@@ -13,36 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.baidu.brpc.spring.boot.autoconfigure.config;
 
-package com.baidu.brpc.naming;
-
+import com.baidu.brpc.naming.NamingOptions;
 import lombok.Getter;
 import lombok.Setter;
 
-@Setter
 @Getter
-public class NamingOptions {
-    /**
-     * identify different service implementation for the same interface.
-     */
-    private String group = "normal";
+@Setter
+public class RpcNamingConfig extends NamingOptions {
 
-    /**
-     * identify service version.
-     */
-    private String version = "1.0.0";
+    private String namingServiceUrl;
 
-    /**
-     * if true, naming service will throw exception when register/subscribe exceptions.
-     */
-    private boolean ignoreFailOfNamingService = false;
+    private String namingServiceFactory;
 
-    public NamingOptions() {
+    public RpcNamingConfig() {
     }
 
-    public NamingOptions(NamingOptions rhs) {
-        this.group = rhs.getGroup();
-        this.version = rhs.getVersion();
-        this.ignoreFailOfNamingService = rhs.isIgnoreFailOfNamingService();
+    public RpcNamingConfig(RpcNamingConfig rhs) {
+        super(rhs);
+        this.namingServiceUrl = rhs.getNamingServiceUrl();
+        this.namingServiceFactory = rhs.getNamingServiceFactory();
     }
 }

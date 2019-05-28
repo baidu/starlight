@@ -72,6 +72,10 @@ public class RpcServerOptions {
     // naming service url
     private String namingServiceUrl = "";
 
+    public RpcServerOptions(RpcServerOptions options) {
+        this.copyFrom(options);
+    }
+
     public void copyFrom(RpcServerOptions options) {
         this.acceptorThreadNum = options.acceptorThreadNum;
         this.backlog = options.backlog;

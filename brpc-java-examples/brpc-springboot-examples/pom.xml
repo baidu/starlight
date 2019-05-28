@@ -20,11 +20,11 @@
 
     <parent>
         <groupId>com.baidu</groupId>
-        <artifactId>brpc-java-parent</artifactId>
+        <artifactId>brpc-java-examples</artifactId>
         <version>2.3.8-SNAPSHOT</version>
     </parent>
 
-    <artifactId>brpc-java-examples</artifactId>
+    <artifactId>brpc-springboot-examples</artifactId>
     <packaging>pom</packaging>
 
     <name>${project.artifactId}</name>
@@ -36,8 +36,9 @@
     </properties>
 
     <modules>
-        <module>brpc-java-core-examples</module>
-        <module>brpc-springboot-examples</module>
+        <module>brpc-springboot-examples-api</module>
+        <module>brpc-springboot-examples-server</module>
+        <module>brpc-springboot-examples-client</module>
     </modules>
 
 </project>

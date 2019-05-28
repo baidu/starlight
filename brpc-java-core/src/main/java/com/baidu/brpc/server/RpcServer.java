@@ -18,6 +18,7 @@ package com.baidu.brpc.server;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -96,6 +97,7 @@ public class RpcServer {
     private List<Object> serviceList = new ArrayList<Object>();
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
     private ServerStatus serverStatus;
+    private AtomicBoolean stop = new AtomicBoolean(false);
 
     public RpcServer(int port) {
         this(null, port, new RpcServerOptions(), null, null);
@@ -303,24 +305,26 @@ public class RpcServer {
     }
 
     public void shutdown() {
-        if (namingService != null) {
-            for (RegisterInfo registerInfo : registerInfoList) {
-                namingService.unregister(registerInfo);
+        if (stop.compareAndSet(false, true)) {
+            if (namingService != null) {
+                for (RegisterInfo registerInfo : registerInfoList) {
+                    namingService.unregister(registerInfo);
+                }
             }
-        }
-        if (bossGroup != null) {
-            bossGroup.shutdownGracefully().syncUninterruptibly();
-        }
-        if (workerGroup != null) {
-            workerGroup.shutdownGracefully().syncUninterruptibly();
-        }
-        if (threadPool != null) {
-            threadPool.stop();
-        }
-        if (CollectionUtils.isNotEmpty(customThreadPools)) {
-            LOG.info("clean customized thread pool");
-            for (ThreadPool pool : customThreadPools) {
-                pool.stop();
+            if (bossGroup != null) {
+                bossGroup.shutdownGracefully().syncUninterruptibly();
+            }
+            if (workerGroup != null) {
+                workerGroup.shutdownGracefully().syncUninterruptibly();
+            }
+            if (threadPool != null) {
+                threadPool.stop();
+            }
+            if (CollectionUtils.isNotEmpty(customThreadPools)) {
+                LOG.info("clean customized thread pool");
+                for (ThreadPool pool : customThreadPools) {
+                    pool.stop();
+                }
             }
         }
     }
