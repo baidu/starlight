@@ -109,7 +109,11 @@ public class DecodeWorkTask implements Runnable {
         } catch (Exception ex) {
             // throw request
             log.warn("decode request failed:", ex);
-            response.setException(new RpcException(ex));
+            response.setException(ex);
+        } finally {
+            if (request != null && request.getException() != null) {
+                response.setException(request.getException());
+            }
         }
 
         if (request == null || response.getException() != null) {
