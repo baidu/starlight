@@ -24,7 +24,7 @@
         <version>2.3.8-SNAPSHOT</version>
     </parent>
 
-    <artifactId>brpc-springboot-examples</artifactId>
+    <artifactId>brpc-spring-boot-examples</artifactId>
     <packaging>pom</packaging>
 
     <name>${project.artifactId}</name>
@@ -36,9 +36,9 @@
     </properties>
 
     <modules>
-        <module>brpc-springboot-examples-api</module>
-        <module>brpc-springboot-examples-server</module>
-        <module>brpc-springboot-examples-client</module>
+        <module>brpc-spring-boot-examples-api</module>
+        <module>brpc-spring-boot-examples-server</module>
+        <module>brpc-spring-boot-examples-client</module>
     </modules>
 
 </project>

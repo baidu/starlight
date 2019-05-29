@@ -41,9 +41,9 @@
 
     <modules>
         <module>brpc-java-core</module>
-        <module>brpc-java-spring</module>
         <module>brpc-java-naming-zookeeper</module>
         <module>brpc-java-naming-consul</module>
+        <module>brpc-spring</module>
         <module>brpc-spring-boot-starter</module>
         <module>spring-cloud-brpc</module>
         <module>brpc-java-examples</module>
@@ -237,17 +237,17 @@
             </dependency>
             <dependency>
                 <groupId>com.baidu</groupId>
-                <artifactId>brpc-java-spring</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.baidu</groupId>
                 <artifactId>brpc-java-naming-zookeeper</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.baidu</groupId>
                 <artifactId>brpc-java-naming-consul</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.baidu</groupId>
+                <artifactId>brpc-spring</artifactId>
                 <version>${project.version}</version>
             </dependency>
             <dependency>

@@ -20,11 +20,11 @@
 
     <parent>
         <groupId>com.baidu</groupId>
-        <artifactId>brpc-springboot-examples</artifactId>
+        <artifactId>brpc-spring-boot-examples</artifactId>
         <version>2.3.8-SNAPSHOT</version>
     </parent>
 
-    <artifactId>brpc-springboot-examples-client</artifactId>
+    <artifactId>brpc-spring-boot-examples-client</artifactId>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
@@ -69,7 +69,7 @@
     <dependencies>
         <dependency>
             <groupId>com.baidu</groupId>
-            <artifactId>brpc-springboot-examples-api</artifactId>
+            <artifactId>brpc-spring-boot-examples-api</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

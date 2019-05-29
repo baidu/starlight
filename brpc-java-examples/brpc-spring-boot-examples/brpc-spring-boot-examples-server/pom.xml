@@ -20,11 +20,11 @@
 
     <parent>
         <groupId>com.baidu</groupId>
-        <artifactId>brpc-springboot-examples</artifactId>
+        <artifactId>brpc-spring-boot-examples</artifactId>
         <version>2.3.8-SNAPSHOT</version>
     </parent>
 
-    <artifactId>brpc-springboot-examples-api</artifactId>
+    <artifactId>brpc-spring-boot-examples-server</artifactId>
     <packaging>jar</packaging>
 
     <name>${project.artifactId}</name>
@@ -34,24 +34,6 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
-
-    <profiles>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-deploy-plugin</artifactId>
-                        <version>2.8.2</version>
-                        <configuration>
-                            <skip>true</skip>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 
     <dependencyManagement>
         <dependencies>
@@ -69,8 +51,21 @@
     <dependencies>
         <dependency>
             <groupId>com.baidu</groupId>
+            <artifactId>brpc-spring-boot-examples-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baidu</groupId>
             <artifactId>brpc-spring-boot-starter</artifactId>
-            <version>2.3.8-SNAPSHOT</version>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baidu</groupId>
+            <artifactId>brpc-java-naming-zookeeper</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter</artifactId>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
@@ -98,5 +93,25 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+
+    <build>
+        <finalName>${project.name}</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <mainClass>com.baidu.brpc.example.springboot.server.RpcServerTest</mainClass>
+                </configuration>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
 </project>

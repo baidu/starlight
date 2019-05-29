@@ -97,7 +97,7 @@
     <dependencies>
         <dependency>
             <groupId>com.baidu</groupId>
-            <artifactId>brpc-java-spring</artifactId>
+            <artifactId>brpc-spring</artifactId>
         </dependency>
 
         <dependency>

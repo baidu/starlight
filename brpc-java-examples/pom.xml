@@ -37,7 +37,7 @@
 
     <modules>
         <module>brpc-java-core-examples</module>
-        <module>brpc-springboot-examples</module>
+        <module>brpc-spring-boot-examples</module>
         <module>spring-cloud-brpc-examples</module>
     </modules>
 
