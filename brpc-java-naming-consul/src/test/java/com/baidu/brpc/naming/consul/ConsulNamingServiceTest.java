@@ -65,13 +65,13 @@ public class ConsulNamingServiceTest {
         RegisterInfo registerInfo = new RegisterInfo();
         registerInfo.setHost(host);
         registerInfo.setPort(port);
-        registerInfo.setService(EchoService.class.getName());
+        registerInfo.setInterfaceName(EchoService.class.getName());
         return registerInfo;
     }
 
     protected SubscribeInfo createSubscribeInfo(boolean ignoreFail) {
         SubscribeInfo subscribeInfo = new SubscribeInfo();
-        subscribeInfo.setService(EchoService.class.getName());
+        subscribeInfo.setInterfaceName(EchoService.class.getName());
         subscribeInfo.setIgnoreFailOfNamingService(ignoreFail);
         return subscribeInfo;
     }

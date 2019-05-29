@@ -37,6 +37,11 @@ public class NamingOptions {
      */
     private boolean ignoreFailOfNamingService = false;
 
+    /**
+     * use serviceId to identify all instances for this service.
+     */
+    private String serviceId = "";
+
     public NamingOptions() {
     }
 
@@ -44,5 +49,6 @@ public class NamingOptions {
         this.group = rhs.getGroup();
         this.version = rhs.getVersion();
         this.ignoreFailOfNamingService = rhs.isIgnoreFailOfNamingService();
+        this.serviceId = rhs.getServiceId();
     }
 }

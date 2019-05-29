@@ -149,8 +149,8 @@ public class ConsulNamingService implements NamingService {
             ConcurrentHashMap<String, List<ServiceInstance>> serviceUpdate
                     = lookupServiceUpdate(subscribeInfo.getGroup());
 
-            if (!serviceUpdate.isEmpty() && serviceUpdate.containsKey(subscribeInfo.getService())) {
-                instances = serviceUpdate.get(subscribeInfo.getService());
+            if (!serviceUpdate.isEmpty() && serviceUpdate.containsKey(subscribeInfo.getInterfaceName())) {
+                instances = serviceUpdate.get(subscribeInfo.getInterfaceName());
             }
         } catch (Exception ex) {
             log.warn("lookup end point list failed from {}, msg={}",
@@ -194,7 +194,7 @@ public class ConsulNamingService implements NamingService {
                                     || !currentInstances.isEmpty()) {
                                 List<ServiceInstance> lastInstances = new ArrayList<ServiceInstance>();
                                 if (instanceForGroup != null) {
-                                    lastInstances = instanceForGroup.get(subscribeInfo.getService());
+                                    lastInstances = instanceForGroup.get(subscribeInfo.getInterfaceName());
                                 }
 
                                 Collection<ServiceInstance> addList = CollectionUtils.subtract(
@@ -240,7 +240,7 @@ public class ConsulNamingService implements NamingService {
     }
 
     public String getSubscribePath(SubscribeInfo subscribeInfo) {
-        return subscribeInfo.getGroup() + "-" + subscribeInfo.getService() + "-" + subscribeInfo.getVersion();
+        return subscribeInfo.getGroup() + "-" + subscribeInfo.getInterfaceName() + "-" + subscribeInfo.getVersion();
     }
 
     @Override public void register(RegisterInfo registerInfo) {
@@ -286,7 +286,7 @@ public class ConsulNamingService implements NamingService {
         newService.setId(getRegisterPath(registerInfo));
         newService.setAddress(registerInfo.getHost());
         newService.setPort(registerInfo.getPort());
-        newService.setTags(Arrays.asList(registerInfo.getGroup(), registerInfo.getService()));
+        newService.setTags(Arrays.asList(registerInfo.getGroup(), registerInfo.getInterfaceName()));
         NewService.Check check = new NewService.Check();
         check.setTtl(this.consulInterval + "s");
         check.setDeregisterCriticalServiceAfter("3m");
@@ -299,7 +299,7 @@ public class ConsulNamingService implements NamingService {
     public String getRegisterPath(RegisterInfo registerInfo) {
         StringBuilder sb = new StringBuilder();
         sb.append(registerInfo.getHost()).append(":").append(registerInfo.getPort()).append("-")
-                .append(registerInfo.getService());
+                .append(registerInfo.getInterfaceName());
         return sb.toString();
 
     }

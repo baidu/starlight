@@ -47,7 +47,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
 
     @Override
     public List<ServiceInstance> lookup(SubscribeInfo info) {
-        String path = buildParentNodePath(info.getGroup(), info.getService(), info.getVersion());
+        String path = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
         List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
         try {
             List<String> childList = client.getChildren().forPath(path);
@@ -79,7 +79,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
     @Override
     public void subscribe(SubscribeInfo info, final NotifyListener listener) {
         try {
-            final String path = buildParentNodePath(info.getGroup(), info.getService(), info.getVersion());
+            final String path = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
             PathChildrenCache cache = new PathChildrenCache(client, path, true);
             cache.getListenable().addListener(new PathChildrenCacheListener() {
                 @Override
@@ -130,7 +130,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
 
     @Override
     public void register(RegisterInfo info) {
-        String parentPath = buildParentNodePath(info.getGroup(), info.getService(), info.getVersion());
+        String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
         String path = parentPath + "/" + info.getHost() + ":" + info.getPort();
         String pathData = buildStarRegisterPathData(info);
         try {
@@ -159,7 +159,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
 
     @Override
     public void unregister(RegisterInfo info) {
-        String parentPath = buildParentNodePath(info.getGroup(), info.getService(), info.getVersion());
+        String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
         String path = "/" + info.getHost() + ":" + info.getPort();
         try {
             client.delete().guaranteed().forPath(parentPath + path);
@@ -190,7 +190,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
     private String buildStarRegisterPathData(RegisterInfo registerInfo) {
         return "\"star://" + registerInfo.getHost() + ":" + registerInfo.getPort() + "?" +
                 "group=" + registerInfo.getGroup() + "&" +
-                "interface=" + registerInfo.getService() + "&" +
+                "interface=" + registerInfo.getInterfaceName() + "&" +
                 "version=" + registerInfo.getVersion() + "\"";
     }
 

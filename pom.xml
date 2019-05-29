@@ -45,6 +45,7 @@
         <module>brpc-java-naming-zookeeper</module>
         <module>brpc-java-naming-consul</module>
         <module>brpc-spring-boot-starter</module>
+        <module>spring-cloud-brpc</module>
         <module>brpc-java-examples</module>
     </modules>
 

@@ -258,7 +258,7 @@ public class ZookeeperNamingService implements NamingService {
         StringBuilder sb = new StringBuilder();
         sb.append("/");
         sb.append(subscribeInfo.getGroup()).append(":");
-        sb.append(subscribeInfo.getService()).append(":");
+        sb.append(subscribeInfo.getInterfaceName()).append(":");
         sb.append(subscribeInfo.getVersion());
         String path = sb.toString();
         return path;
@@ -268,7 +268,7 @@ public class ZookeeperNamingService implements NamingService {
         StringBuilder sb = new StringBuilder();
         sb.append("/");
         sb.append(registerInfo.getGroup()).append(":");
-        sb.append(registerInfo.getService()).append(":");
+        sb.append(registerInfo.getInterfaceName()).append(":");
         sb.append(registerInfo.getVersion());
         String path = sb.toString();
         return path;

@@ -259,18 +259,20 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
 
             rpcServiceExporter.setServicePort(port);
             rpcServiceExporter.copyFrom(brpcConfig.getServer());
-            rpcServiceExporter.setNamingServiceUrl(brpcConfig.getNaming().getNamingServiceUrl());
-            String namingServiceFactoryClassName = brpcConfig.getNaming().getNamingServiceFactory();
-            try {
-                NamingServiceFactory namingServiceFactory = (NamingServiceFactory)
-                        Class.forName(namingServiceFactoryClassName).newInstance();
-                rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-            } catch (Exception ex) {
-                throw new RuntimeException("initialize naming factory failed", ex);
+            if (brpcConfig.getNaming() != null) {
+                rpcServiceExporter.setNamingServiceUrl(brpcConfig.getNaming().getNamingServiceUrl());
+                String namingServiceFactoryClassName = brpcConfig.getNaming().getNamingServiceFactory();
+                try {
+                    NamingServiceFactory namingServiceFactory = (NamingServiceFactory)
+                            Class.forName(namingServiceFactoryClassName).newInstance();
+                    rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
+                } catch (Exception ex) {
+                    throw new RuntimeException("initialize naming factory failed", ex);
+                }
+                rpcServiceExporter.setGroup(brpcConfig.getNaming().getGroup());
+                rpcServiceExporter.setVersion(brpcConfig.getNaming().getVersion());
+                rpcServiceExporter.setIgnoreFailOfNamingService(brpcConfig.getNaming().isIgnoreFailOfNamingService());
             }
-            rpcServiceExporter.setGroup(brpcConfig.getNaming().getGroup());
-            rpcServiceExporter.setVersion(brpcConfig.getNaming().getVersion());
-            rpcServiceExporter.setIgnoreFailOfNamingService(brpcConfig.getNaming().isIgnoreFailOfNamingService());
         }
 
         // interceptor
@@ -319,7 +321,7 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
             // continue the following logic to create new factory bean
         }
 
-        rpcProxyFactoryBean = createRpcProxyFactoryBean(beanFactory, serviceInterface);
+        rpcProxyFactoryBean = createRpcProxyFactoryBean(rpcProxy, beanFactory, serviceInterface);
         rpcClients.add(rpcProxyFactoryBean);
         Object object = rpcProxyFactoryBean.getObject();
         if (protobufRpcAnnotationResolverListener != null) {
@@ -335,10 +337,12 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
      *
      * @return the rpc proxy factory bean
      */
-    private RpcProxyFactoryBean createRpcProxyFactoryBean(DefaultListableBeanFactory beanFactory,
-                                                            Class serviceInterface) {
+    private RpcProxyFactoryBean createRpcProxyFactoryBean(RpcProxy rpcProxy,
+                                                          DefaultListableBeanFactory beanFactory,
+                                                          Class serviceInterface) {
         GenericBeanDefinition beanDef = new GenericBeanDefinition();
         beanDef.setBeanClass(RpcProxyFactoryBean.class);
+        beanDef.setDependsOn("brpcApplicationContextUtils");
         MutablePropertyValues values = new MutablePropertyValues();
         BrpcConfig brpcConfig = getServiceConfig(beanFactory, serviceInterface);
         for (Field field : RpcClientOptions.class.getDeclaredFields()) {
@@ -350,20 +354,23 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
             }
         }
         values.addPropertyValue("serviceInterface", serviceInterface);
-        values.addPropertyValue("namingServiceUrl", brpcConfig.getNaming().getNamingServiceUrl());
-        values.addPropertyValue("group", brpcConfig.getNaming().getGroup());
-        values.addPropertyValue("version", brpcConfig.getNaming().getVersion());
-        values.addPropertyValue("ignoreFailOfNamingService", brpcConfig.getNaming().isIgnoreFailOfNamingService());
-
-        // namingServiceFactory
-        String namingServiceFactoryClassName = brpcConfig.getNaming().getNamingServiceFactory();
-        if (StringUtils.isNotBlank(namingServiceFactoryClassName)) {
-            try {
-                NamingServiceFactory namingServiceFactory = (NamingServiceFactory)
-                        Class.forName(namingServiceFactoryClassName).newInstance();
-                values.addPropertyValue("namingServiceFactory", namingServiceFactory);
-            } catch (Exception ex) {
-                throw new RuntimeException("initialize naming factory failed", ex);
+        values.addPropertyValue("serviceId", rpcProxy.name());
+        if (brpcConfig.getNaming() != null) {
+            values.addPropertyValue("namingServiceUrl", brpcConfig.getNaming().getNamingServiceUrl());
+            values.addPropertyValue("group", brpcConfig.getNaming().getGroup());
+            values.addPropertyValue("version", brpcConfig.getNaming().getVersion());
+            values.addPropertyValue("ignoreFailOfNamingService",
+                    brpcConfig.getNaming().isIgnoreFailOfNamingService());
+            // namingServiceFactory
+            String namingServiceFactoryClassName = brpcConfig.getNaming().getNamingServiceFactory();
+            if (StringUtils.isNotBlank(namingServiceFactoryClassName)) {
+                try {
+                    NamingServiceFactory namingServiceFactory = (NamingServiceFactory)
+                            Class.forName(namingServiceFactoryClassName).newInstance();
+                    values.addPropertyValue("namingServiceFactory", namingServiceFactory);
+                } catch (Exception ex) {
+                    throw new RuntimeException("initialize naming factory failed", ex);
+                }
             }
         }
 
