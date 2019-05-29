@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<configuration>
+
+    <springProperty scope="context"
+                    name="logDirectory"
+                    source="logging.directory"
+                    defaultValue="./logs"/>
+
+    <springProperty scope="context"
+                    name="rootLevel"
+                    source="logging.level.root"
+                    defaultValue="INFO"/>
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date [%thread] %-5level %logger{80} - %msg%n</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="FILE"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${logDirectory}/client-all.%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%date [%thread] %-5level %logger{80} - %msg%n</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <appender name="FILE-WARN"
+              class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${logDirectory}/client-warn.%d{yyyy-MM-dd}.log
+            </fileNamePattern>
+            <maxHistory>120</maxHistory>
+        </rollingPolicy>
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>WARN</level>
+        </filter>
+        <encoder>
+            <pattern>%date [%thread] %-5level %logger{80} - %msg%n</pattern>
+            <charset class="java.nio.charset.Charset">UTF-8</charset>
+        </encoder>
+    </appender>
+
+    <root>
+        <level value="${rootLevel}"/>
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="FILE"/>
+        <appender-ref ref="FILE-WARN"/>
+    </root>
+
+</configuration>
+

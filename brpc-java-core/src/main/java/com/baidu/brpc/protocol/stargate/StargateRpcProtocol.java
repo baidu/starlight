@@ -107,7 +107,7 @@ public class StargateRpcProtocol extends AbstractProtocol {
                 .Builder("star", NetUtils.getLogHost(), 0)
                 .param("version", request.getSubscribeInfo().getVersion())
                 .param("group", request.getSubscribeInfo().getGroup())
-                .param("interface", request.getSubscribeInfo().getService())
+                .param("interface", request.getSubscribeInfo().getInterfaceName())
                 .param("consumer.id", UUID.randomUUID().toString())
                 .build();
 

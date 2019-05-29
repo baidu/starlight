@@ -252,7 +252,7 @@ public class RpcServer {
                                 RpcServerOptions serverOptions) {
         serviceList.add(service);
         RegisterInfo registerInfo = new RegisterInfo();
-        registerInfo.setService(service.getClass().getInterfaces()[0].getName());
+        registerInfo.setInterfaceName(service.getClass().getInterfaces()[0].getName());
         registerInfo.setHost(NetUtils.getLocalAddress().getHostAddress());
         registerInfo.setPort(port);
         if (namingOptions != null) {

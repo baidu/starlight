@@ -80,4 +80,9 @@ public @interface RpcProxy {
      * @return the string
      */
     String interceptorBeanName() default "";
+
+    /**
+     * use name to identify all the instances for this service from registry.
+     */
+    String name() default "";
 }

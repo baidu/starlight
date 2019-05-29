@@ -29,12 +29,12 @@ import lombok.Setter;
 @EqualsAndHashCode
 public class RegisterInfo extends NamingOptions {
 
-    /** host info. */
     private String host;
 
-    /** The port. */
     private int port;
 
-    /** the interface class name. */
-    private String service;
+    /**
+     * the interface class name.
+     */
+    private String interfaceName;
 }

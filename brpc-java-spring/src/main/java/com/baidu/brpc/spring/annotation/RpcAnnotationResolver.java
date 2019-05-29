@@ -329,6 +329,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         values.addPropertyValue("group", rpcProxy.group());
         values.addPropertyValue("version", rpcProxy.version());
         values.addPropertyValue("ignoreFailOfNamingService", rpcProxy.ignoreFailOfNamingService());
+        values.addPropertyValue("serviceId", rpcProxy.name());
 
         // namingServiceFactory
         String namingServiceFactoryBeanName = parsePlaceholder(rpcProxy.namingServiceFactoryBeanName());

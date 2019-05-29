@@ -1,0 +1,28 @@
+server:
+  port: 8881
+
+spring:
+  application:
+    name: brpc-example-server
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://${spring.cloud.client.ip-address}:8889/eureka/,http://127.0.0.1:8890/eureka/
+    fetch-registry: true
+    registry-fetch-interval-seconds: 30
+
+management:
+  security:
+    enabled: false
+
+logging:
+  config: classpath:logback-spring.xml
+  directory: ./logs
+
+brpc:
+  global:
+    server:
+      port: 8002
+      workThreadNum: 1
+      ioThreadNum: 1

@@ -210,11 +210,12 @@ public class RpcClient {
 
         if (namingService != null) {
             subscribeInfo = new SubscribeInfo();
-            subscribeInfo.setService(serviceInterface.getName());
+            subscribeInfo.setInterfaceName(serviceInterface.getName());
             if (namingOptions != null) {
                 subscribeInfo.setGroup(namingOptions.getGroup());
                 subscribeInfo.setVersion(namingOptions.getVersion());
                 subscribeInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
+                subscribeInfo.setServiceId(namingOptions.getServiceId());
             }
             List<ServiceInstance> instances = this.namingService.lookup(subscribeInfo);
             instanceProcessor.addInstances(instances);

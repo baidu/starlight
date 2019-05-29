@@ -63,6 +63,11 @@ public class RpcProxyFactoryBean extends RpcClientOptions
      * if true, naming service will throw exception when register/subscribe exceptions.
      */
     private boolean ignoreFailOfNamingService = false;
+
+    /**
+     * use serviceId to identify all instances for this service.
+     */
+    private String serviceId;
     
 	/** The interceptors. */
 	private List<Interceptor> interceptors;
@@ -136,6 +141,7 @@ public class RpcProxyFactoryBean extends RpcClientOptions
         namingOptions.setGroup(group);
         namingOptions.setVersion(version);
         namingOptions.setIgnoreFailOfNamingService(ignoreFailOfNamingService);
+        namingOptions.setServiceId(serviceId);
         this.serviceProxy = BrpcProxy.getProxy(rpcClient, serviceInterface, namingOptions);
     }
 
