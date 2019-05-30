@@ -18,14 +18,18 @@ package com.baidu.brpc.protocol.http;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 
+import com.google.protobuf.Descriptors;
+import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
 import com.googlecode.protobuf.format.JsonFormat;
 import org.apache.commons.lang3.StringUtils;
@@ -93,7 +97,19 @@ public class HttpRpcProtocol extends AbstractProtocol {
      */
     private static final String LOG_ID = "log-id";
     private static final String PROTOCOL_TYPE = "protocol-type";
-    private static final JsonFormat jsonPbConverter = new JsonFormat();
+    private static final JsonFormat jsonPbConverter = new JsonFormat() {
+        protected void print(Message message, JsonGenerator generator) throws IOException {
+            for (Iterator<Map.Entry<Descriptors.FieldDescriptor, Object>> iter =
+                 message.getAllFields().entrySet().iterator(); iter.hasNext();) {
+                Map.Entry<Descriptors.FieldDescriptor, Object> field = iter.next();
+                printField(field.getKey(), field.getValue(), generator);
+                if (iter.hasNext()) {
+                    generator.print(",");
+                }
+            }
+            // ignore UnknownFields
+        }
+    };
     private static final Gson gson = (new GsonBuilder())
             .serializeNulls()
             .disableHtmlEscaping()
@@ -381,7 +397,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             httpRequest.setRpcMethodInfo(rpcMethodInfo);
             httpRequest.setTargetMethod(rpcMethodInfo.getMethod());
             httpRequest.setTarget(rpcMethodInfo.getTarget());
-            httpRequest.setArgs(parseRequestParam(protocolType, encoding, body, rpcMethodInfo));
+            httpRequest.setArgs(parseRequestParam(protocolType, body, rpcMethodInfo));
             return httpRequest;
         } finally {
             ((FullHttpRequest) packet).release();
@@ -637,7 +653,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
                     if (rpcMethodInfo instanceof ProtobufRpcMethodInfo) {
                         ProtobufRpcMethodInfo protobufRpcMethodInfo = (ProtobufRpcMethodInfo) rpcMethodInfo;
                         Message.Builder rspBuilder = protobufRpcMethodInfo.getOutputInstance().newBuilderForType();
-                        jsonPbConverter.merge(new ByteArrayInputStream(((String) body).getBytes(encoding)), rspBuilder);
+                        jsonPbConverter.merge((String) body, ExtensionRegistry.getEmptyRegistry(), rspBuilder);
                         response = rspBuilder.build();
                     } else {
                         response = gson.fromJson((String) body, rpcMethodInfo.getOutputClass());
@@ -658,7 +674,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return response;
     }
 
-    public Object[] parseRequestParam(int protocolType, String encoding, Object body, RpcMethodInfo rpcMethodInfo) {
+    public Object[] parseRequestParam(int protocolType, Object body, RpcMethodInfo rpcMethodInfo) {
         if (body == null) {
             return null;
         }
@@ -669,7 +685,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 if (rpcMethodInfo instanceof ProtobufRpcMethodInfo) {
                     ProtobufRpcMethodInfo protobufRpcMethodInfo = (ProtobufRpcMethodInfo) rpcMethodInfo;
                     Message.Builder argBuilder = protobufRpcMethodInfo.getInputInstance().newBuilderForType();
-                    jsonPbConverter.merge(new ByteArrayInputStream(((String) body).getBytes(encoding)), argBuilder);
+                    jsonPbConverter.merge((String) body, ExtensionRegistry.getEmptyRegistry(), argBuilder);
                     args[0] = argBuilder.build();
                 } else {
                     args[0] = gson.fromJson((String) body, rpcMethodInfo.getInputClasses()[0]);
