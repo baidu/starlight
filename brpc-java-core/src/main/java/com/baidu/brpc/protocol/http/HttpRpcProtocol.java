@@ -172,14 +172,18 @@ public class HttpRpcProtocol extends AbstractProtocol {
             // TODO: only parse header
             httpMessage = (HttpMessage) BrpcHttpObjectDecoder.getDecoder(isDecodingRequest).decode(ctx, byteBuf);
             if (httpMessage != null) {
-                String contentTypeAndEncoding = httpMessage.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
-                String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
-                int requestProtocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
-                if (requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
-                        && requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-                    // this protocol can only deal with http protobuf and http json request.
-                    httpMessage = null;
-                    throw new BadSchemaException();
+                String contentTypeAndEncoding = httpMessage.headers().get(HttpHeaderNames.CONTENT_TYPE);
+                // if content-type does not exist, it is /status request, so this protocol can deal with.
+                if (StringUtils.isNoneBlank(contentTypeAndEncoding)) {
+                    contentTypeAndEncoding = contentTypeAndEncoding.toLowerCase();
+                    String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
+                    int requestProtocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
+                    if (requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
+                            && requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
+                        // this protocol can only deal with http protobuf and http json request.
+                        httpMessage = null;
+                        throw new BadSchemaException();
+                    }
                 }
             }
         } catch (Exception e) {
