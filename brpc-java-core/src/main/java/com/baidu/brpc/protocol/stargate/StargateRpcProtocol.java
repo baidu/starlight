@@ -67,14 +67,6 @@ public class StargateRpcProtocol extends AbstractProtocol {
     private ServiceManager serviceManager = ServiceManager.getInstance();
     private boolean init = false;
 
-    public StargateRpcProtocol() {
-        // init Stargate protoStuff
-        // docs http://javadox.com/io.protostuff/protostuff-runtime/1.3.8/io/protostuff/runtime/RuntimeEnv.html
-        System.setProperty("protostuff.runtime.collection_schema_on_repeated_fields", "true");
-        System.setProperty("protostuff.runtime.morph_collection_interfaces", "true");
-        System.setProperty("protostuff.runtime.morph_map_interfaces", "true");
-    }
-
     public void initEnv() {
         // init Stargate protoStuff
         // docs http://javadox.com/io.protostuff/protostuff-runtime/1.3.8/io/protostuff/runtime/RuntimeEnv.html
