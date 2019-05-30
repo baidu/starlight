@@ -73,4 +73,9 @@ public abstract class AbstractProtocol implements Protocol {
     public void afterResponseSent(Request request, Response response, ChannelFuture channelFuture) {
         // By default, in tcp protocols, there's nothing to to
     }
+
+    @Override
+    public boolean isCoexistence() {
+        return false;
+    }
 }

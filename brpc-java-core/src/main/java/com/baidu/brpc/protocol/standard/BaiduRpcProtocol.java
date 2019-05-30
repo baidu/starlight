@@ -362,4 +362,9 @@ public class BaiduRpcProtocol extends AbstractProtocol {
         }
     }
 
+    @Override
+    public boolean isCoexistence() {
+        return true;
+    }
+
 }

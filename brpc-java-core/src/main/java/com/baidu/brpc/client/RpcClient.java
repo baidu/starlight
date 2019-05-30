@@ -127,7 +127,7 @@ public class RpcClient {
         Validate.notEmpty(serviceUrl);
         Validate.notNull(options);
 
-        ExtensionLoaderManager.getInstance().loadAllExtensions();
+        ExtensionLoaderManager.getInstance().loadAllExtensions(options.getEncoding());
         // parse naming
         BrpcURL url = new BrpcURL(serviceUrl);
         NamingServiceFactory namingServiceFactory
@@ -154,7 +154,7 @@ public class RpcClient {
         if (null == options) {
             options = new RpcClientOptions();
         }
-        ExtensionLoaderManager.getInstance().loadAllExtensions();
+        ExtensionLoaderManager.getInstance().loadAllExtensions(options.getEncoding());
         this.init(options, interceptors, true);
         instanceProcessor.addInstance(new ServiceInstance(endPoint));
     }
@@ -164,7 +164,7 @@ public class RpcClient {
     }
 
     public RpcClient(List<Endpoint> endPoints, RpcClientOptions options, List<Interceptor> interceptors) {
-        ExtensionLoaderManager.getInstance().loadAllExtensions();
+        ExtensionLoaderManager.getInstance().loadAllExtensions(options.getEncoding());
         this.init(options, interceptors, endPoints.size() == 1);
         for (Endpoint endpoint : endPoints) {
             instanceProcessor.addInstance(new ServiceInstance(endpoint));
@@ -427,7 +427,7 @@ public class RpcClient {
         if (interceptors != null) {
             this.interceptors.addAll(interceptors);
         }
-        this.protocol = ProtocolManager.instance().init(options.getEncoding()).getProtocol(options.getProtocolType());
+        this.protocol = ProtocolManager.getInstance().getProtocol(options.getProtocolType());
         fastFutureStore = FastFutureStore.getInstance(options.getFutureBufferSize());
         timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
 

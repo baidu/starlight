@@ -16,11 +16,8 @@
 
 package com.baidu.brpc.protocol.nshead;
 
-import java.io.IOException;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,10 +31,8 @@ import com.baidu.brpc.exceptions.NotEnoughDataException;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.AbstractProtocol;
-import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
 import com.baidu.brpc.server.ServiceManager;
 
@@ -46,20 +41,14 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 
 /**
- * 处理nshead协议，序列化使用protobuf
+ * nshead based protocol, the header format is {@link NSHead}
  */
 @SuppressWarnings("unchecked")
-public class NSHeadRpcProtocol extends AbstractProtocol {
+public abstract class NSHeadRpcProtocol extends AbstractProtocol {
     private static final Logger LOG = LoggerFactory.getLogger(NSHeadRpcProtocol.class);
-    private static final Gson gson = (new GsonBuilder())
-            .disableHtmlEscaping()
-            .serializeSpecialFloatingPointValues()
-            .create();
-    private int protocol;
-    private String encoding = "utf-8";
+    protected String encoding = "utf-8";
 
-    public NSHeadRpcProtocol(int protocol, String encoding) {
-        this.protocol = protocol;
+    public NSHeadRpcProtocol(String encoding) {
         if (encoding != null) {
             this.encoding = encoding;
         }
@@ -146,36 +135,6 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
         return false;
     }
 
-    private byte[] encodeBody(Object body, RpcMethodInfo rpcMethodInfo) {
-        Validate.notNull(body, "body must not be empty");
-
-        byte[] bytes;
-        if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE) {
-            try {
-                if (rpcMethodInfo.getTarget() != null) {
-                    // server端，所以是encode response
-                    bytes = rpcMethodInfo.outputEncode(body);
-                } else {
-                    bytes = rpcMethodInfo.inputEncode(body);
-                }
-            } catch (IOException ex) {
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex);
-            }
-        } else if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE) {
-            String json = gson.toJson(body);
-            try {
-                bytes = json.getBytes(this.encoding);
-            } catch (Exception e) {
-                LOG.error("can not serialize object using mcpack", e);
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
-            }
-        } else {
-            throw new RpcException(RpcException.SERVICE_EXCEPTION, "NSHeadRpcProtocol do not support " + protocol);
-        }
-
-        return bytes;
-    }
-
     @Override
     public NSHeadPacket decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
@@ -207,45 +166,8 @@ public class NSHeadRpcProtocol extends AbstractProtocol {
         }
     }
 
-    private Object decodeBody(ByteBuf bodyBuf, RpcMethodInfo rpcMethodInfo) {
-        try {
-            Object result;
-            if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE) {
-                try {
-                    if (rpcMethodInfo.getTarget() != null) {
-                        // server端，所以是decode request
-                        result = rpcMethodInfo.inputDecode(bodyBuf);
-                    } else {
-                        result = rpcMethodInfo.outputDecode(bodyBuf);
-                    }
-                } catch (IOException e) {
-                    LOG.warn("invoke parseFrom method error", e);
-                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
-                }
-            } else if (protocol == Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE) {
-                try {
-                    int readableBytes = bodyBuf.readableBytes();
-                    byte[] bodyBytes = new byte[readableBytes];
-                    bodyBuf.readBytes(bodyBytes);
-                    String jsonString = new String(bodyBytes, this.encoding);
-                    if (rpcMethodInfo.getTarget() != null) {
-                        // server端
-                        result = gson.fromJson(jsonString, rpcMethodInfo.getInputClasses()[0]);
-                    } else {
-                        result = gson.fromJson(jsonString, rpcMethodInfo.getOutputClass());
-                    }
-                } catch (Exception e) {
-                    LOG.error("can not deserialize object", e);
-                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
-                }
-            } else {
-                throw new RpcException(RpcException.SERVICE_EXCEPTION, "NSHeadRpcProtocol do not support " + protocol);
-            }
-            return result;
-        } finally {
-            if (bodyBuf != null) {
-                bodyBuf.release();
-            }
-        }
-    }
+    public abstract byte[] encodeBody(Object body, RpcMethodInfo rpcMethodInfo);
+
+    public abstract Object decodeBody(ByteBuf bodyBuf, RpcMethodInfo rpcMethodInfo);
+
 }

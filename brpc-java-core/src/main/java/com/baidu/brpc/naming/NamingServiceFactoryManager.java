@@ -1,8 +1,11 @@
 package com.baidu.brpc.naming;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class NamingServiceFactoryManager {
     private static volatile NamingServiceFactoryManager instance;
 
@@ -31,6 +34,7 @@ public class NamingServiceFactoryManager {
             throw new RuntimeException("naming service exist:" + namingServiceFactory.getName());
         }
         namingServiceFactoryMap.put(namingServiceFactory.getName(), namingServiceFactory);
+        log.info("register naming service:{} success", namingServiceFactory.getName());
     }
 
     public NamingServiceFactory getNamingServiceFactory(String name) {

@@ -2,6 +2,8 @@ package com.baidu.brpc.spi;
 
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.NamingServiceFactoryManager;
+import com.baidu.brpc.protocol.ProtocolFactory;
+import com.baidu.brpc.protocol.ProtocolManager;
 
 import java.util.ServiceLoader;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,17 +27,26 @@ public class ExtensionLoaderManager {
     /**
      * load all extensions with java spi
      */
-    public void loadAllExtensions() {
+    public void loadAllExtensions(String encoding) {
         if (load.compareAndSet(false, true)) {
-            loadNamingServiceFactory();
+            loadNamingService();
+            loadProtocol(encoding);
         }
     }
 
-    public void loadNamingServiceFactory() {
+    public void loadNamingService() {
         NamingServiceFactoryManager manager = NamingServiceFactoryManager.getInstance();
         ServiceLoader<NamingServiceFactory> namingServiceFactories = ServiceLoader.load(NamingServiceFactory.class);
         for (NamingServiceFactory namingServiceFactory : namingServiceFactories) {
             manager.registerNamingServiceFactory(namingServiceFactory);
+        }
+    }
+
+    public void loadProtocol(String encoding) {
+        ProtocolManager protocolManager = ProtocolManager.getInstance();
+        ServiceLoader<ProtocolFactory> protocolFactories = ServiceLoader.load(ProtocolFactory.class);
+        for (ProtocolFactory protocolFactory : protocolFactories) {
+            protocolManager.registerProtocol(protocolFactory, encoding);
         }
     }
 }

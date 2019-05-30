@@ -136,17 +136,16 @@ public class RpcServer {
         if (interceptors != null) {
             this.interceptors.addAll(interceptors);
         }
-        ExtensionLoaderManager.getInstance().loadAllExtensions();
+        ExtensionLoaderManager.getInstance().loadAllExtensions(options.getEncoding());
         if (StringUtils.isNotBlank(rpcServerOptions.getNamingServiceUrl())) {
             BrpcURL url = new BrpcURL(rpcServerOptions.getNamingServiceUrl());
             NamingServiceFactory namingServiceFactory = NamingServiceFactoryManager.getInstance()
                     .getNamingServiceFactory(url.getSchema());
             this.namingService = namingServiceFactory.createNamingService(url);
         }
-        // init protocol
-        ProtocolManager.instance().init(this.rpcServerOptions.getEncoding());
+        // find protocol
         if (rpcServerOptions.getProtocolType() != null) {
-            this.protocol = ProtocolManager.instance().getProtocol(rpcServerOptions.getProtocolType());
+            this.protocol = ProtocolManager.getInstance().getProtocol(rpcServerOptions.getProtocolType());
         }
 
         threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),

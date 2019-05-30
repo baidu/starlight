@@ -386,4 +386,10 @@ public class HuluRpcProtocol extends AbstractProtocol {
             fixHeaderBuf.release();
         }
     }
+
+    @Override
+    public boolean isCoexistence() {
+        return false;
+    }
+
 }

@@ -40,7 +40,19 @@ public class RpcClientTest {
         // sync call
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
-        EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello world")
+        String message =
+                "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
+                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello";
+        EchoRequest request = Echo.EchoRequest.newBuilder().setMessage(message)
                 .build();
         try {
             EchoResponse response = echoService.echo(request);

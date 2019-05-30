@@ -153,7 +153,19 @@ public class HttpRpcProtocol extends AbstractProtocol {
         ByteBuf byteBuf = in.retainedSlice(in.readableBytes());
 
         try {
+            // TODO: only parse header
             httpMessage = (HttpMessage) BrpcHttpObjectDecoder.getDecoder(isDecodingRequest).decode(ctx, byteBuf);
+            if (httpMessage != null) {
+                String contentTypeAndEncoding = httpMessage.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
+                String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
+                int requestProtocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
+                if (requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
+                        && requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
+                    // this protocol can only deal with http protobuf and http json request.
+                    httpMessage = null;
+                    throw new BadSchemaException();
+                }
+            }
         } catch (Exception e) {
             throw new BadSchemaException();
         } finally {
@@ -438,6 +450,11 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return false;
     }
 
+    @Override
+    public boolean isCoexistence() {
+        return true;
+    }
+
     public static int parseProtocolType(String contentType) {
         String contentType2 = contentType.toLowerCase();
         if (contentType2.equals(HttpRpcProtocol.CONTENT_TYPE_JSON)) {
@@ -469,7 +486,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return contentType;
     }
 
-    protected byte[] encodeBody(int protocolType, String encoding, Object body, RpcMethodInfo rpcMethodInfo) {
+    public byte[] encodeBody(int protocolType, String encoding, Object body, RpcMethodInfo rpcMethodInfo) {
         byte[] bodyBytes;
         try {
             switch (protocolType) {
@@ -506,7 +523,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return bodyBytes;
     }
 
-    protected Object decodeBody(int protocolType, String encoding, byte[] bytes) {
+    public Object decodeBody(int protocolType, String encoding, byte[] bytes) {
         Object body = null;
         try {
             switch (protocolType) {
@@ -531,7 +548,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return body;
     }
 
-    protected void addHttpHeaders(HttpHeaders headers, FullHttpRequest fullHttpRequest) {
+    public void addHttpHeaders(HttpHeaders headers, FullHttpRequest fullHttpRequest) {
         boolean keepAlive = HttpUtil.isKeepAlive(fullHttpRequest);
         if (keepAlive) {
             headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
@@ -545,7 +562,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
-    protected Object makeRequest(int id, String methodName, Object[] args) {
+    public Object makeRequest(int id, String methodName, Object[] args) {
         if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
             if (args == null || args.length == 0) {
                 return null;
@@ -572,7 +589,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
-    protected Object makeResponse(int protocolType, Response response) {
+    public Object makeResponse(int protocolType, Response response) {
         Long id = response.getLogId();
         if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
             return response.getResult();
@@ -596,13 +613,13 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
-    protected String buildHttpUri(String serviceName, String methodName) {
+    public String buildHttpUri(String serviceName, String methodName) {
         // uri格式为 /serviceName/methodName
         return "/" + serviceName + "/" + methodName;
     }
 
     // 解析log_id
-    protected long parseLogId(String headerLogId, Long channelAttachLogId) {
+    public long parseLogId(String headerLogId, Long channelAttachLogId) {
         // 以headerLogId为准，headerLogId为null则以channelAttachLogId为准
         if (headerLogId != null) {
             return Long.valueOf(headerLogId);
@@ -612,7 +629,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return -1;
     }
 
-    protected Object parseHttpResponse(Object body, RpcMethodInfo rpcMethodInfo) {
+    public Object parseHttpResponse(Object body, RpcMethodInfo rpcMethodInfo) {
         Object response;
         try {
             switch (protocolType) {
@@ -641,7 +658,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return response;
     }
 
-    protected Object[] parseRequestParam(int protocolType, String encoding, Object body, RpcMethodInfo rpcMethodInfo) {
+    public Object[] parseRequestParam(int protocolType, String encoding, Object body, RpcMethodInfo rpcMethodInfo) {
         if (body == null) {
             return null;
         }
