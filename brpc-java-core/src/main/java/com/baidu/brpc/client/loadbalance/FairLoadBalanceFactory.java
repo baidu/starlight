@@ -15,7 +15,15 @@
  */
 package com.baidu.brpc.client.loadbalance;
 
-public interface LoadBalanceFactory {
-    Integer getLoadBalanceType();
-    LoadBalanceStrategy createLoadBalance();
+public class FairLoadBalanceFactory implements LoadBalanceFactory {
+
+    @Override
+    public Integer getLoadBalanceType() {
+        return LoadBalanceStrategy.LOAD_BALANCE_FAIR;
+    }
+
+    @Override
+    public LoadBalanceStrategy createLoadBalance() {
+        return new FairStrategy();
+    }
 }

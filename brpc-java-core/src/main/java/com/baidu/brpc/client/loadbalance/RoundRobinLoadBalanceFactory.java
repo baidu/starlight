@@ -15,7 +15,15 @@
  */
 package com.baidu.brpc.client.loadbalance;
 
-public interface LoadBalanceFactory {
-    Integer getLoadBalanceType();
-    LoadBalanceStrategy createLoadBalance();
+public class RoundRobinLoadBalanceFactory implements LoadBalanceFactory {
+
+    @Override
+    public Integer getLoadBalanceType() {
+        return LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN;
+    }
+
+    @Override
+    public LoadBalanceStrategy createLoadBalance() {
+        return new RoundRobinStrategy();
+    }
 }

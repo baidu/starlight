@@ -1,5 +1,7 @@
 package com.baidu.brpc.spi;
 
+import com.baidu.brpc.client.loadbalance.LoadBalanceFactory;
+import com.baidu.brpc.client.loadbalance.LoadBalanceManager;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.NamingServiceFactoryManager;
 import com.baidu.brpc.protocol.ProtocolFactory;
@@ -31,6 +33,7 @@ public class ExtensionLoaderManager {
         if (load.compareAndSet(false, true)) {
             loadNamingService();
             loadProtocol(encoding);
+            loadLoadBalance();
         }
     }
 
@@ -49,4 +52,13 @@ public class ExtensionLoaderManager {
             protocolManager.registerProtocol(protocolFactory, encoding);
         }
     }
+
+    public void loadLoadBalance() {
+        LoadBalanceManager loadBalanceManager = LoadBalanceManager.getInstance();
+        ServiceLoader<LoadBalanceFactory> loadBalanceFactories = ServiceLoader.load(LoadBalanceFactory.class);
+        for (LoadBalanceFactory loadBalanceFactory : loadBalanceFactories) {
+            loadBalanceManager.registerLoadBalanceFactory(loadBalanceFactory);
+        }
+    }
+
 }
