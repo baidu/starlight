@@ -20,7 +20,6 @@ import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.NamingServiceFactory;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.DisposableBean;
@@ -45,9 +44,6 @@ public class RpcProxyFactoryBean extends RpcClientOptions
 
     /** naming service url */
     private String namingServiceUrl;
-
-    /* naming service factory */
-    private NamingServiceFactory namingServiceFactory;
 
     /**
      * identify different service implementation for the same interface.
@@ -135,7 +131,7 @@ public class RpcProxyFactoryBean extends RpcClientOptions
     @Override
     public void afterPropertiesSet() throws Exception {
         if (rpcClient == null) {
-            rpcClient = new RpcClient(namingServiceUrl, this, interceptors, namingServiceFactory);
+            rpcClient = new RpcClient(namingServiceUrl, this, interceptors);
         }
         NamingOptions namingOptions = new NamingOptions();
         namingOptions.setGroup(group);

@@ -16,6 +16,8 @@
 
 package com.baidu.brpc.client;
 
+import com.baidu.brpc.naming.*;
+import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -66,14 +68,6 @@ import com.baidu.brpc.client.loadbalance.RandomStrategy;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.interceptor.LoadBalanceInterceptor;
-import com.baidu.brpc.naming.BrpcURL;
-import com.baidu.brpc.naming.DefaultNamingServiceFactory;
-import com.baidu.brpc.naming.ListNamingService;
-import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.NamingService;
-import com.baidu.brpc.naming.NamingServiceFactory;
-import com.baidu.brpc.naming.NotifyListener;
-import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
@@ -114,15 +108,11 @@ public class RpcClient {
     private FastFutureStore fastFutureStore;
 
     public RpcClient(String namingServiceUrl) {
-        this(namingServiceUrl, new RpcClientOptions(), null, null);
+        this(namingServiceUrl, new RpcClientOptions(), null);
     }
 
     public RpcClient(String namingServiceUrl, RpcClientOptions options) {
-        this(namingServiceUrl, options, null, null);
-    }
-
-    public RpcClient(String namingServiceUrl, RpcClientOptions options, List<Interceptor> interceptors) {
-        this(namingServiceUrl, options, interceptors, null);
+        this(namingServiceUrl, options, null);
     }
 
     /**
@@ -133,18 +123,16 @@ public class RpcClient {
      */
     public RpcClient(String serviceUrl,
                      final RpcClientOptions options,
-                     List<Interceptor> interceptors,
-                     NamingServiceFactory namingServiceFactory) {
+                     List<Interceptor> interceptors) {
         Validate.notEmpty(serviceUrl);
         Validate.notNull(options);
 
+        ExtensionLoaderManager.getInstance().loadAllExtensions();
         // parse naming
         BrpcURL url = new BrpcURL(serviceUrl);
-        if (namingServiceFactory != null) {
-            this.namingService = namingServiceFactory.createNamingService(url);
-        } else {
-            this.namingService = new DefaultNamingServiceFactory().createNamingService(url);
-        }
+        NamingServiceFactory namingServiceFactory
+                = NamingServiceFactoryManager.getInstance().getNamingServiceFactory(url.getSchema());
+        this.namingService = namingServiceFactory.createNamingService(url);
         boolean singleServer = false;
         if (namingService instanceof ListNamingService) {
             List<ServiceInstance> instances = namingService.lookup(null);
@@ -159,10 +147,15 @@ public class RpcClient {
     }
 
     public RpcClient(Endpoint endPoint, RpcClientOptions options) {
+        this(endPoint, options, null);
+    }
+
+    public RpcClient(Endpoint endPoint, RpcClientOptions options, List<Interceptor> interceptors) {
         if (null == options) {
             options = new RpcClientOptions();
         }
-        this.init(options, null, true);
+        ExtensionLoaderManager.getInstance().loadAllExtensions();
+        this.init(options, interceptors, true);
         instanceProcessor.addInstance(new ServiceInstance(endPoint));
     }
 
@@ -170,8 +163,9 @@ public class RpcClient {
         this(endPoints, new RpcClientOptions(), null);
     }
 
-    public RpcClient(List<Endpoint> endPoints, RpcClientOptions option, List<Interceptor> interceptors) {
-        this.init(option, interceptors, endPoints.size() == 1);
+    public RpcClient(List<Endpoint> endPoints, RpcClientOptions options, List<Interceptor> interceptors) {
+        ExtensionLoaderManager.getInstance().loadAllExtensions();
+        this.init(options, interceptors, endPoints.size() == 1);
         for (Endpoint endpoint : endPoints) {
             instanceProcessor.addInstance(new ServiceInstance(endpoint));
         }

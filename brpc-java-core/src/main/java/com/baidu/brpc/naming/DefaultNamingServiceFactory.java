@@ -16,6 +16,13 @@
 package com.baidu.brpc.naming;
 
 public class DefaultNamingServiceFactory implements NamingServiceFactory {
+
+    @Override
+    public String getName() {
+        return "list";
+    }
+
+    @Override
     public NamingService createNamingService(BrpcURL url) {
         String schema = url.getSchema();
         if ("list".equals(schema)) {

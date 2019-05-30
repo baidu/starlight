@@ -178,16 +178,6 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         rpcServiceExporter.setVersion(rpcExporter.version());
         rpcServiceExporter.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
 
-        // namingServiceFactory
-        String namingServiceFactoryBeanName = parsePlaceholder(rpcExporter.namingServiceFactoryBeanName());
-        if (!StringUtils.isBlank(namingServiceFactoryBeanName)) {
-            NamingServiceFactory namingServiceFactory = beanFactory.getBean(
-                    namingServiceFactoryBeanName, NamingServiceFactory.class);
-            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-        } else {
-            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-        }
-
         // do register service
         if (rpcExporter.useSharedThreadPool()) {
             rpcServiceExporter.getRegisterServices().add(bean);
@@ -330,18 +320,6 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         values.addPropertyValue("version", rpcProxy.version());
         values.addPropertyValue("ignoreFailOfNamingService", rpcProxy.ignoreFailOfNamingService());
         values.addPropertyValue("serviceId", rpcProxy.name());
-
-        // namingServiceFactory
-        String namingServiceFactoryBeanName = parsePlaceholder(rpcProxy.namingServiceFactoryBeanName());
-        NamingServiceFactory actualNamingServiceFactory;
-        if (StringUtils.isNotBlank(namingServiceFactoryBeanName)) {
-            actualNamingServiceFactory = beanFactory.getBean(namingServiceFactoryBeanName, NamingServiceFactory.class);
-        } else if (namingServiceFactory != null) {
-            actualNamingServiceFactory = namingServiceFactory;
-        } else {
-            actualNamingServiceFactory = new DefaultNamingServiceFactory();
-        }
-        values.addPropertyValue("namingServiceFactory", actualNamingServiceFactory);
 
         // interceptor
         String interceptorName = parsePlaceholder(rpcProxy.interceptorBeanName());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.baidu.brpc.naming;
 
-package com.baidu.brpc.naming.zookeeper;
-
-import com.baidu.brpc.naming.BrpcURL;
-import com.baidu.brpc.naming.NamingService;
-import com.baidu.brpc.naming.NamingServiceFactory;
-
-public class ZookeeperNamingFactory implements NamingServiceFactory {
+public class FileNamingServiceFactory implements NamingServiceFactory {
 
     @Override
     public String getName() {
-        return "zookeeper";
+        return "file";
     }
 
     @Override
     public NamingService createNamingService(BrpcURL url) {
-        return new ZookeeperNamingService(url);
+        String schema = url.getSchema();
+        if ("file".equals(schema)) {
+            return new FileNamingService(url);
+        } else {
+            throw new IllegalArgumentException("schema is not valid:" + schema);
+        }
     }
 }

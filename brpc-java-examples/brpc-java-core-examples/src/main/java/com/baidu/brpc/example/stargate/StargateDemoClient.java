@@ -27,15 +27,12 @@ import com.baidu.brpc.utils.GsonUtils;
 public class StargateDemoClient {
 
     public static void main(String[] args) {
-        // 需要声明特殊的 Stargate 注册工厂
-        StargateNamingFactory starGateNamingFactory = new StargateNamingFactory();
-
         RpcClientOptions options = new RpcClientOptions();
         // Stargate 协议需要强指定协议类型，不可使用BRPC协议解析器
         options.setProtocolType(Options.ProtocolType.PROTOCOL_STARGATE_VALUE);
         options.setReadTimeoutMillis(1000);
         options.setWriteTimeoutMillis(1000);
-        RpcClient rpcClient = new RpcClient(StargateDemoConstant.namingUrl, options, null, starGateNamingFactory);
+        RpcClient rpcClient = new RpcClient(StargateDemoConstant.namingUrl, options);
 
         NamingOptions namingOptions = new NamingOptions();
         namingOptions.setGroup(StargateDemoConstant.group);

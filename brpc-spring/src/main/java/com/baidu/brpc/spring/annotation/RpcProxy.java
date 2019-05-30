@@ -49,13 +49,6 @@ public @interface RpcProxy {
     String namingServiceUrl() default "";
 
     /**
-     * bean name of {@link com.baidu.brpc.naming.NamingServiceFactory}.
-     *
-     * @return the string
-     */
-    String namingServiceFactoryBeanName() default "";
-
-    /**
      * group for naming service
      *
      */

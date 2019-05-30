@@ -21,6 +21,12 @@ import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 
 public class SpringCloudNamingFactory implements NamingServiceFactory {
+
+    @Override
+    public String getName() {
+        return "springcloud";
+    }
+
     @Override
     public NamingService createNamingService(BrpcURL url) {
         return new SpringCloudNamingService(url);

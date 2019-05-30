@@ -51,9 +51,6 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
     /** The service port. */
     private int servicePort;
 
-    /** The registry center service. */
-    private NamingServiceFactory namingServiceFactory;
-
     /**
      * identify different service implementation for the same interface.
      */
@@ -102,7 +99,7 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
             throw new IllegalArgumentException("No register service specified.");
         }
         
-        prRpcServer = new RpcServer(servicePort, this, interceptors, namingServiceFactory);
+        prRpcServer = new RpcServer(servicePort, this, interceptors);
         NamingOptions namingOptions = new NamingOptions();
         namingOptions.setGroup(group);
         namingOptions.setVersion(version);
