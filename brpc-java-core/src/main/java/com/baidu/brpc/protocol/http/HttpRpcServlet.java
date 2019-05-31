@@ -16,27 +16,21 @@
 
 package com.baidu.brpc.protocol.http;
 
-import java.io.IOException;
-import java.io.InputStream;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.protocol.HttpResponse;
+import com.baidu.brpc.protocol.*;
+import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.spi.ExtensionLoaderManager;
+import io.netty.handler.codec.http.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import com.baidu.brpc.protocol.*;
-import com.baidu.brpc.spi.ExtensionLoaderManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.server.ServiceManager;
-
-import io.netty.handler.codec.http.DefaultFullHttpRequest;
-import io.netty.handler.codec.http.FullHttpRequest;
-import io.netty.handler.codec.http.HttpHeaderNames;
-import io.netty.handler.codec.http.HttpMethod;
-import io.netty.handler.codec.http.HttpVersion;
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * 在paas场景下部署时，bns会绑定到主端口上。

@@ -136,7 +136,7 @@ public class RpcServer {
         if (interceptors != null) {
             this.interceptors.addAll(interceptors);
         }
-        ExtensionLoaderManager.getInstance().loadAllExtensions(options.getEncoding());
+        ExtensionLoaderManager.getInstance().loadAllExtensions(rpcServerOptions.getEncoding());
         if (StringUtils.isNotBlank(rpcServerOptions.getNamingServiceUrl())) {
             BrpcURL url = new BrpcURL(rpcServerOptions.getNamingServiceUrl());
             NamingServiceFactory namingServiceFactory = NamingServiceFactoryManager.getInstance()
