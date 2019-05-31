@@ -11,6 +11,10 @@ public class BaiduRpcProtocolFactory implements ProtocolFactory {
         return Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE;
     }
 
+    public Integer getPriority() {
+        return ProtocolFactory.DEFAULT_PRIORITY - 2;
+    }
+
     @Override
     public Protocol createProtocol(String encoding) {
         return new BaiduRpcProtocol();

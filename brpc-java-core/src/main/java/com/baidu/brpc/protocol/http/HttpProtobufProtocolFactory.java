@@ -11,6 +11,10 @@ public class HttpProtobufProtocolFactory implements ProtocolFactory {
         return Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE;
     }
 
+    public Integer getPriority() {
+        return ProtocolFactory.DEFAULT_PRIORITY - 1;
+    }
+
     @Override
     public Protocol createProtocol(String encoding) {
         return new HttpRpcProtocol(getProtocolType(), encoding);

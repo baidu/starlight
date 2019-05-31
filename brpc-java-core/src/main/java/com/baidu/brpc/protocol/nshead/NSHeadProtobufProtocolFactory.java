@@ -11,6 +11,10 @@ public class NSHeadProtobufProtocolFactory implements ProtocolFactory {
         return Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE;
     }
 
+    public Integer getPriority() {
+        return ProtocolFactory.DEFAULT_PRIORITY;
+    }
+
     @Override
     public Protocol createProtocol(String encoding) {
         return new NSHeadProtobufProtocol(encoding);

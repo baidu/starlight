@@ -11,6 +11,10 @@ public class SofaRpcProtocolFactory implements ProtocolFactory {
         return Options.ProtocolType.PROTOCOL_SOFA_PBRPC_VALUE;
     }
 
+    public Integer getPriority() {
+        return ProtocolFactory.DEFAULT_PRIORITY;
+    }
+
     @Override
     public Protocol createProtocol(String encoding) {
         return new SofaRpcProtocol();

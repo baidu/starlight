@@ -16,7 +16,6 @@
 
 package com.baidu.brpc.protocol.http;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -82,10 +81,8 @@ import io.netty.handler.codec.http.HttpVersion;
 
 /**
  * 处理http rpc协议，包括四种序列化格式：
- * 1、http + mcpack
- * 2、http + baidu_json
- * 3、http + protoc
- * 4、http + json
+ * 1、http + protobuf
+ * 2、http + json
  */
 public class HttpRpcProtocol extends AbstractProtocol {
 
@@ -128,8 +125,8 @@ public class HttpRpcProtocol extends AbstractProtocol {
     }
 
 
-    private int protocolType;
-    private String encoding;
+    protected int protocolType;
+    protected String encoding;
 
     public HttpRpcProtocol(int protocolType, String encoding) {
         this.protocolType = protocolType;
@@ -177,9 +174,9 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 if (StringUtils.isNoneBlank(contentTypeAndEncoding)) {
                     contentTypeAndEncoding = contentTypeAndEncoding.toLowerCase();
                     String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
-                    int requestProtocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
-                    if (requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
-                            && requestProtocolType != Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
+                    String contentType = splits[0];
+                    if (!contentType.equals(CONTENT_TYPE_PROTOBUF)
+                            && !contentType.equals(CONTENT_TYPE_JSON)) {
                         // this protocol can only deal with http protobuf and http json request.
                         httpMessage = null;
                         throw new BadSchemaException();
@@ -227,7 +224,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             if (httpRequestBodyBytes != null) {
                 nettyHttpRequest.content().writeBytes(httpRequestBodyBytes);
             }
-            String contentType = HttpRpcProtocol.getContentType(protocolType);
+            String contentType = getContentType(protocolType);
             nettyHttpRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType + "; charset=" + encoding);
             nettyHttpRequest.headers().set(HttpHeaderNames.CONTENT_LENGTH, httpRequestBodyBytes == null
                     ? 0 : httpRequestBodyBytes.length);
@@ -487,7 +484,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         }
     }
 
-    public static String getContentType(Integer protocolType) {
+    public String getContentType(Integer protocolType) {
         String contentType;
         switch (protocolType) {
             case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE: {
@@ -499,9 +496,9 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 break;
             }
             default:
-                LOG.warn("unkown protocolType={}", protocolType);
+                LOG.warn("unknown protocolType={}", protocolType);
                 throw new RpcException(RpcException.SERIALIZATION_EXCEPTION,
-                        "unkown protocolType=" + protocolType);
+                        "unknown protocolType=" + protocolType);
         }
         return contentType;
     }

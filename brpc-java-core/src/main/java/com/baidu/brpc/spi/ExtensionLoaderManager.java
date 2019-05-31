@@ -7,7 +7,7 @@ import com.baidu.brpc.naming.NamingServiceFactoryManager;
 import com.baidu.brpc.protocol.ProtocolFactory;
 import com.baidu.brpc.protocol.ProtocolManager;
 
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExtensionLoaderManager {
@@ -48,7 +48,17 @@ public class ExtensionLoaderManager {
     public void loadProtocol(String encoding) {
         ProtocolManager protocolManager = ProtocolManager.getInstance();
         ServiceLoader<ProtocolFactory> protocolFactories = ServiceLoader.load(ProtocolFactory.class);
+        List<ProtocolFactory> protocolFactoryList = new ArrayList<ProtocolFactory>();
         for (ProtocolFactory protocolFactory : protocolFactories) {
+            protocolFactoryList.add(protocolFactory);
+        }
+        Collections.sort(protocolFactoryList, new Comparator<ProtocolFactory>() {
+            @Override
+            public int compare(ProtocolFactory o1, ProtocolFactory o2) {
+                return o1.getPriority() - o2.getPriority();
+            }
+        });
+        for (ProtocolFactory protocolFactory : protocolFactoryList) {
             protocolManager.registerProtocol(protocolFactory, encoding);
         }
     }

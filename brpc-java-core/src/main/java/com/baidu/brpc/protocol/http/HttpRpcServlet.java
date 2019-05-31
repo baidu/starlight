@@ -24,16 +24,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.baidu.brpc.protocol.*;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.protocol.HttpResponse;
-import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.ProtocolManager;
-import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.ServiceManager;
 
 import io.netty.handler.codec.http.DefaultFullHttpRequest;
