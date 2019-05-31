@@ -117,4 +117,5 @@ public interface Protocol {
      */
     void afterResponseSent(Request request, Response response, ChannelFuture channelFuture);
 
+    boolean isCoexistence();
 }

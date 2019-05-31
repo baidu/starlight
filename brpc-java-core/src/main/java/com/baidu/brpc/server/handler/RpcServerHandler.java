@@ -120,10 +120,10 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
         if (protocol != null) {
             return protocol.decode(ctx, compositeByteBuf, true);
         }
-        ProtocolManager protocolManager = ProtocolManager.instance();
-        List<Protocol> protocols = protocolManager.getProtocols();
-        int protocolNum = protocolManager.getProtocolNum();
-        for (int i = 0; i < protocolNum; i++) {
+        ProtocolManager protocolManager = ProtocolManager.getInstance();
+        List<Protocol> protocols = protocolManager.getCoexistenceProtocols();
+        int protocolSize = protocolManager.getCoexistenceProtocolSize();
+        for (int i = 0; i < protocolSize; i++) {
             Protocol protocol1 = protocols.get(i);
             try {
                 Object packet = protocol1.decode(ctx, compositeByteBuf, true);

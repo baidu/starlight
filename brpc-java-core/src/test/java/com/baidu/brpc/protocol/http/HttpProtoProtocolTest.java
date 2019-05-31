@@ -20,16 +20,13 @@ import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Method;
 
+import com.baidu.brpc.protocol.*;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.protocol.HttpRequest;
-import com.baidu.brpc.protocol.HttpResponse;
 import com.baidu.brpc.protocol.Options.ProtocolType;
-import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.standard.Echo;
 import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
@@ -46,7 +43,8 @@ import io.netty.handler.codec.http.HttpVersion;
 
 public class HttpProtoProtocolTest {
 
-    private HttpRpcProtocol protocol = new HttpRpcProtocol(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE, "utf-8");
+    private HttpRpcProtocol protocol = new HttpRpcProtocol(
+            ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE, "utf-8");
 
     @Test
     public void testEncodeHttpRequest() throws Exception {
@@ -66,7 +64,8 @@ public class HttpProtoProtocolTest {
         ServiceManager serviceManager = ServiceManager.getInstance();
         serviceManager.registerService(new EchoServiceImpl(), null);
 
-        ByteBuf content = Unpooled.wrappedBuffer(encodeBody(Echo.EchoRequest.newBuilder().setMessage("hello").build()));
+        ByteBuf content = Unpooled.wrappedBuffer(encodeBody(
+                Echo.EchoRequest.newBuilder().setMessage("hello").build()));
 
         FullHttpRequest httpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET,
                 "/example.EchoService/Echo", content);

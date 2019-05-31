@@ -20,17 +20,19 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.naming.BrpcURL;
+import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NamingServiceFactory;
+import com.baidu.brpc.naming.NamingServiceFactoryManager;
+import com.baidu.brpc.naming.RegisterInfo;
+import com.baidu.brpc.spi.ExtensionLoaderManager;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.interceptor.ServerInvokeInterceptor;
-import com.baidu.brpc.naming.BrpcURL;
-import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.NamingService;
-import com.baidu.brpc.naming.NamingServiceFactory;
-import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
@@ -100,48 +102,28 @@ public class RpcServer {
     private AtomicBoolean stop = new AtomicBoolean(false);
 
     public RpcServer(int port) {
-        this(null, port, new RpcServerOptions(), null, null);
+        this(null, port, new RpcServerOptions(), null);
     }
 
     public RpcServer(String host, int port) {
-        this(host, port, new RpcServerOptions(), null, null);
+        this(host, port, new RpcServerOptions(), null);
     }
 
     public RpcServer(int port, RpcServerOptions options) {
-        this(port, options, null, null);
+        this(null, port, options, null);
     }
 
     public RpcServer(String host, int port, RpcServerOptions options) {
-        this(host, port, options, null, null);
+        this(host, port, options, null);
     }
 
     public RpcServer(int port, RpcServerOptions options, List<Interceptor> interceptors) {
         this(null, port, options, interceptors);
     }
 
-    public RpcServer(String host, int port, RpcServerOptions options, List<Interceptor> interceptors) {
-        this(host, port, options, interceptors, null);
-    }
-
-    public RpcServer(int port, RpcServerOptions options, NamingServiceFactory namingServiceFactory) {
-        this(null, port, options, null, namingServiceFactory);
-    }
-
-    public RpcServer(String host, int port, RpcServerOptions options, NamingServiceFactory namingServiceFactory) {
-        this(host, port, options, null, namingServiceFactory);
-    }
-
-    public RpcServer(int port,
-                     final RpcServerOptions options,
-                     List<Interceptor> interceptors,
-                     NamingServiceFactory namingServiceFactory) {
-        this(null, port, options, interceptors, namingServiceFactory);
-    }
-
     public RpcServer(String host, int port,
                      final RpcServerOptions options,
-                     List<Interceptor> interceptors,
-                     NamingServiceFactory namingServiceFactory) {
+                     List<Interceptor> interceptors) {
         this.host = host;
         this.port = port;
         if (options != null) {
@@ -154,15 +136,16 @@ public class RpcServer {
         if (interceptors != null) {
             this.interceptors.addAll(interceptors);
         }
-        if (namingServiceFactory != null
-                && StringUtils.isNotBlank(rpcServerOptions.getNamingServiceUrl())) {
+        ExtensionLoaderManager.getInstance().loadAllExtensions(options.getEncoding());
+        if (StringUtils.isNotBlank(rpcServerOptions.getNamingServiceUrl())) {
             BrpcURL url = new BrpcURL(rpcServerOptions.getNamingServiceUrl());
+            NamingServiceFactory namingServiceFactory = NamingServiceFactoryManager.getInstance()
+                    .getNamingServiceFactory(url.getSchema());
             this.namingService = namingServiceFactory.createNamingService(url);
         }
-        // init protocol
-        ProtocolManager.instance().init(this.rpcServerOptions.getEncoding());
+        // find protocol
         if (rpcServerOptions.getProtocolType() != null) {
-            this.protocol = ProtocolManager.instance().getProtocol(rpcServerOptions.getProtocolType());
+            this.protocol = ProtocolManager.getInstance().getProtocol(rpcServerOptions.getProtocolType());
         }
 
         threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),

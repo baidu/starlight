@@ -261,14 +261,6 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
             rpcServiceExporter.copyFrom(brpcConfig.getServer());
             if (brpcConfig.getNaming() != null) {
                 rpcServiceExporter.setNamingServiceUrl(brpcConfig.getNaming().getNamingServiceUrl());
-                String namingServiceFactoryClassName = brpcConfig.getNaming().getNamingServiceFactory();
-                try {
-                    NamingServiceFactory namingServiceFactory = (NamingServiceFactory)
-                            Class.forName(namingServiceFactoryClassName).newInstance();
-                    rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-                } catch (Exception ex) {
-                    throw new RuntimeException("initialize naming factory failed", ex);
-                }
                 rpcServiceExporter.setGroup(brpcConfig.getNaming().getGroup());
                 rpcServiceExporter.setVersion(brpcConfig.getNaming().getVersion());
                 rpcServiceExporter.setIgnoreFailOfNamingService(brpcConfig.getNaming().isIgnoreFailOfNamingService());
@@ -361,17 +353,6 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
             values.addPropertyValue("version", brpcConfig.getNaming().getVersion());
             values.addPropertyValue("ignoreFailOfNamingService",
                     brpcConfig.getNaming().isIgnoreFailOfNamingService());
-            // namingServiceFactory
-            String namingServiceFactoryClassName = brpcConfig.getNaming().getNamingServiceFactory();
-            if (StringUtils.isNotBlank(namingServiceFactoryClassName)) {
-                try {
-                    NamingServiceFactory namingServiceFactory = (NamingServiceFactory)
-                            Class.forName(namingServiceFactoryClassName).newInstance();
-                    values.addPropertyValue("namingServiceFactory", namingServiceFactory);
-                } catch (Exception ex) {
-                    throw new RuntimeException("initialize naming factory failed", ex);
-                }
-            }
         }
 
         // interceptor

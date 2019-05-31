@@ -16,7 +16,6 @@
 package com.baidu.brpc.example.stargate;
 
 import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.zookeeper.StargateNamingFactory;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
@@ -28,9 +27,7 @@ public class StargateDemoServer {
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_STARGATE_VALUE);
         serverOptions.setNamingServiceUrl(StargateDemoConstant.namingUrl);
 
-        StargateNamingFactory starGateNamingFactory = new StargateNamingFactory();
-        RpcServer rpcServer = new RpcServer(8898, serverOptions, null, starGateNamingFactory);
-
+        RpcServer rpcServer = new RpcServer(8898, serverOptions);
         StargateDemoService demoService = new StargateDemoServiceImpl();
 
         NamingOptions namingOptions = new NamingOptions();

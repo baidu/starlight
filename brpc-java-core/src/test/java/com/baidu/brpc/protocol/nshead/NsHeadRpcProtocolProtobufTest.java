@@ -25,7 +25,6 @@ import org.junit.Test;
 
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
-import com.baidu.brpc.protocol.Options.ProtocolType;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
@@ -40,8 +39,7 @@ import io.netty.buffer.Unpooled;
 
 public class NsHeadRpcProtocolProtobufTest {
 
-    private NSHeadRpcProtocol protocol = new NSHeadRpcProtocol(ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE,
-            "utf-8");
+    private NSHeadRpcProtocol protocol = new NSHeadProtobufProtocol("utf-8");
     @Before
     public void init() {
         if (ServiceManager.getInstance() != null) {

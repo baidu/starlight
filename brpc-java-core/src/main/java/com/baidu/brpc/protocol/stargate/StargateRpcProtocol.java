@@ -52,16 +52,6 @@ import java.util.UUID;
 @Slf4j
 public class StargateRpcProtocol extends AbstractProtocol {
 
-    private ServiceManager serviceManager = ServiceManager.getInstance();
-
-    public StargateRpcProtocol() {
-        // init Stargate protoStuff
-        // docs http://javadox.com/io.protostuff/protostuff-runtime/1.3.8/io/protostuff/runtime/RuntimeEnv.html
-        System.setProperty("protostuff.runtime.collection_schema_on_repeated_fields", "true");
-        System.setProperty("protostuff.runtime.morph_collection_interfaces", "true");
-        System.setProperty("protostuff.runtime.morph_map_interfaces", "true");
-    }
-
     private static final int FIXED_HEAD_LEN = 4;
 
     private static final NotEnoughDataException notEnoughDataException
@@ -73,6 +63,24 @@ public class StargateRpcProtocol extends AbstractProtocol {
             + "\n 3: server do not catch Exception."
             + "\n 4: API contains a type that Stargate does not support. eg:HashMap.keySet()"
             + "\n see http://wiki.baidu.com/display/STARGATE/FAQ";
+
+    private ServiceManager serviceManager = ServiceManager.getInstance();
+    private boolean init = false;
+
+    public void initEnv() {
+        // init Stargate protoStuff
+        // docs http://javadox.com/io.protostuff/protostuff-runtime/1.3.8/io/protostuff/runtime/RuntimeEnv.html
+        if (!init) {
+            synchronized (StargateRpcProtocol.class) {
+                if (!init) {
+                    System.setProperty("protostuff.runtime.collection_schema_on_repeated_fields", "true");
+                    System.setProperty("protostuff.runtime.morph_collection_interfaces", "true");
+                    System.setProperty("protostuff.runtime.morph_map_interfaces", "true");
+                    init = true;
+                }
+            }
+        }
+    }
 
     @Override
     public Object decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
@@ -124,6 +132,7 @@ public class StargateRpcProtocol extends AbstractProtocol {
         }
 
         try {
+            initEnv();
             Schema<StargateRpcRequestPacket> schema = RuntimeSchema.getSchema(StargateRpcRequestPacket.class);
             byte[] body = ProtobufIOUtil.toByteArray(requestPacket, schema, LinkedBuffer.allocate(500));
             byte[] head = buildHead(body);
@@ -172,6 +181,7 @@ public class StargateRpcProtocol extends AbstractProtocol {
     public Request decodeRequest(Object packet) throws BadSchemaException {
         try {
             StargateRpcRequestPacket requestPacket = new StargateRpcRequestPacket();
+            initEnv();
             Schema<StargateRpcRequestPacket> schema = RuntimeSchema.getSchema(StargateRpcRequestPacket.class);
             ProtobufIOUtil.mergeFrom((byte[]) packet, requestPacket, schema);
 

@@ -65,7 +65,7 @@ public class RpcClientTest {
 
         // sync call
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
+//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         try {
             Echo.EchoResponse response = echoService.echo(request);
@@ -79,7 +79,7 @@ public class RpcClientTest {
 
         // async call
         rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-//        rpcClient = new RpcClient(serviceUrl, clientOption, interceptors, new ZookeeperNamingFactory());
+//        rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         RpcCallback callback = new RpcCallback<Echo.EchoResponse>() {
             @Override
             public void success(Echo.EchoResponse response) {

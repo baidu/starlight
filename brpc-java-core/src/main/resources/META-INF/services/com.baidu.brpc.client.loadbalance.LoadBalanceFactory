@@ -1,0 +1,4 @@
+com.baidu.brpc.client.loadbalance.RandomLoadBalanceFactory
+com.baidu.brpc.client.loadbalance.RoundRobinLoadBalanceFactory
+com.baidu.brpc.client.loadbalance.WeightLoadBalanceFactory
+com.baidu.brpc.client.loadbalance.FairLoadBalanceFactory

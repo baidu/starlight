@@ -15,9 +15,12 @@
  */
 package com.baidu.brpc.client.loadbalance;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class LoadBalanceManager {
     private static volatile LoadBalanceManager instance;
     private Map<Integer, LoadBalanceFactory> loadBalanceFactoryMap;
@@ -35,14 +38,15 @@ public class LoadBalanceManager {
 
     private LoadBalanceManager() {
         loadBalanceFactoryMap = new HashMap<Integer, LoadBalanceFactory>();
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_RANDOM, new DefaultLoadBalanceFactory());
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN, new DefaultLoadBalanceFactory());
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_WEIGHT, new DefaultLoadBalanceFactory());
-        loadBalanceFactoryMap.put(LoadBalanceStrategy.LOAD_BALANCE_FAIR, new DefaultLoadBalanceFactory());
     }
 
-    public void registerLoadBalanceFactory(Integer loadBalanceType, LoadBalanceFactory factory) {
+    public void registerLoadBalanceFactory(LoadBalanceFactory factory) {
+        Integer loadBalanceType = factory.getLoadBalanceType();
+        if (loadBalanceFactoryMap.get(loadBalanceType) != null) {
+            throw new RuntimeException("load balance factory already exist:" + loadBalanceType);
+        }
         loadBalanceFactoryMap.put(loadBalanceType, factory);
+        log.info("register load balance factory:{} success", factory.getClass().getSimpleName());
     }
 
     public LoadBalanceFactory getLoadBalanceFactory(Integer loadBalanceType) {
@@ -54,6 +58,6 @@ public class LoadBalanceManager {
         if (factory == null) {
             throw new IllegalArgumentException("load balance not exist:" + loadBalanceType);
         }
-        return factory.createLoadBalance(loadBalanceType);
+        return factory.createLoadBalance();
     }
 }

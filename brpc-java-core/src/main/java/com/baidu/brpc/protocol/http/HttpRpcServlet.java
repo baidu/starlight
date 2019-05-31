@@ -24,6 +24,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import com.baidu.brpc.spi.ExtensionLoaderManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,7 +85,8 @@ public class HttpRpcServlet extends HttpServlet {
         httpRequest.headers().add(HttpHeaderNames.CONTENT_TYPE, contentType);
         httpRequest.content().writeBytes(bytes);
         int protocolType = HttpRpcProtocol.parseProtocolType(contentType);
-        Protocol protocol = ProtocolManager.instance().init(null).getProtocol(protocolType);
+        ExtensionLoaderManager.getInstance().loadAllExtensions(encoding);
+        Protocol protocol = ProtocolManager.getInstance().getProtocol(protocolType);
         Request request = null;
         Response response = new HttpResponse();
         String errorMsg = null;

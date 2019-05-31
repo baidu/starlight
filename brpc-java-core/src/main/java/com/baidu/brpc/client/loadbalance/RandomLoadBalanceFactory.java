@@ -13,19 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.baidu.brpc.naming;
+package com.baidu.brpc.client.loadbalance;
 
-public class DefaultNamingServiceFactory implements NamingServiceFactory {
-    public NamingService createNamingService(BrpcURL url) {
-        String schema = url.getSchema();
-        if ("list".equals(schema)) {
-            return new ListNamingService(url);
-        } else if ("file".equals(schema)) {
-            return new FileNamingService(url);
-        } else if ("dns".equals(schema)) {
-            return new DnsNamingService(url);
-        } else {
-            throw new IllegalArgumentException("schema is not valid:" + schema);
-        }
+public class RandomLoadBalanceFactory implements LoadBalanceFactory {
+
+    @Override
+    public Integer getLoadBalanceType() {
+        return LoadBalanceStrategy.LOAD_BALANCE_RANDOM;
+    }
+
+    @Override
+    public LoadBalanceStrategy createLoadBalance() {
+        return new RandomStrategy();
     }
 }

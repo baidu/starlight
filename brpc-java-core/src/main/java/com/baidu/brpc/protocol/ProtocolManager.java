@@ -16,13 +16,7 @@
 
 package com.baidu.brpc.protocol;
 
-import com.baidu.brpc.protocol.http.HttpRpcProtocol;
-import com.baidu.brpc.protocol.hulu.HuluRpcProtocol;
-import com.baidu.brpc.protocol.nshead.NSHeadRpcProtocol;
-import com.baidu.brpc.protocol.sofa.SofaRpcProtocol;
-import com.baidu.brpc.protocol.standard.BaiduRpcProtocol;
-import com.baidu.brpc.protocol.stargate.StargateRpcProtocol;
-import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -32,70 +26,51 @@ import java.util.HashMap;
 /**
  * Created by huwenwei on 2017/9/23.
  */
+@Slf4j
 public class ProtocolManager {
-    private Map<Integer, Protocol> protocolMap;
-    private List<Protocol> protocols;
-    private int protocolNum;
+    private Map<Integer, ProtocolFactory> protocolFactoryMap = new HashMap<Integer, ProtocolFactory>();
+    private Map<Integer, Protocol> protocolMap = new HashMap<Integer, Protocol>();
+    private List<Protocol> coexistenceProtocols = new ArrayList<Protocol>();
+    private int coexistenceProtocolSize = 0;
 
     private static ProtocolManager instance;
-    private boolean isInit;
 
-    /**
-     * no need to be thread safe, since it is called when bootstrap
-     */
-    public static ProtocolManager instance() {
+    public static ProtocolManager getInstance() {
         if (instance == null) {
-            instance = new ProtocolManager();
+            synchronized (ProtocolManager.class) {
+                if (instance == null) {
+                    instance = new ProtocolManager();
+                }
+            }
         }
         return instance;
     }
 
     private ProtocolManager() {
-
     }
 
-    public ProtocolManager init(String encoding) {
-        if (!isInit) {
-            protocolMap = new HashMap<Integer, Protocol>(64);
-            protocols = new ArrayList<Protocol>(64);
-            protocolMap.put(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE, new BaiduRpcProtocol());
-            protocolMap.put(Options.ProtocolType.PROTOCOL_SOFA_PBRPC_VALUE, new SofaRpcProtocol());
-            protocolMap.put(Options.ProtocolType.PROTOCOL_HULU_PBRPC_VALUE, new HuluRpcProtocol());
-            protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE,
-                    new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE,
-                    new HttpRpcProtocol(Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE,
-                    new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE, encoding));
-            protocolMap.put(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE,
-                    new NSHeadRpcProtocol(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE, encoding));
-            protocols.addAll(protocolMap.values());
-            protocolNum = protocols.size();
-            isInit = true;
-        }
-        return this;
-    }
-
-    // application can register custom protocol
-    public void registerProtocol(Integer protocolType, Protocol protocol) {
-        if (protocolMap.get(protocolType) != null) {
+    /**
+     * application can register custom protocol
+     */
+    public void registerProtocol(ProtocolFactory protocolFactory, String encoding) {
+        Integer protocolType = protocolFactory.getProtocolType();
+        if (protocolFactoryMap.get(protocolType) != null) {
             throw new RuntimeException("protocol exist, type=" + protocolType);
         }
+        Protocol protocol = protocolFactory.createProtocol(encoding);
         protocolMap.put(protocolType, protocol);
-        protocols.add(protocol);
-        protocolNum++;
+        if (protocol.isCoexistence()) {
+            coexistenceProtocols.add(protocol);
+            coexistenceProtocolSize++;
+        }
+        log.info("register protocol:{} success",
+                Options.ProtocolType.valueOf(protocolFactory.getProtocolType()).name());
     }
 
     public Protocol getProtocol(Integer protocolType) {
         Protocol protocol = protocolMap.get(protocolType);
         if (protocol != null) {
             return protocol;
-        }
-
-        // 不共存协议判断
-        // 如果有例如Stargate的协议，可能存在冲突情况，在指明协议的情况，使用类加载机制生产协议单例
-        if (Options.ProtocolType.PROTOCOL_STARGATE_VALUE == protocolType) {
-            return UncoexistenceStargate.INSTANCE.getProtocol();
         }
 
         throw new RuntimeException("protocol not exist, type=" + protocolType);
@@ -105,22 +80,12 @@ public class ProtocolManager {
         return protocolMap;
     }
 
-    public List<Protocol> getProtocols() {
-        return protocols;
+    public List<Protocol> getCoexistenceProtocols() {
+        return coexistenceProtocols;
     }
 
-    public int getProtocolNum() {
-        return protocolNum;
+    public int getCoexistenceProtocolSize() {
+        return coexistenceProtocolSize;
     }
 
-    @Getter
-    enum UncoexistenceStargate {
-        INSTANCE;
-
-        private Protocol protocol;
-
-        UncoexistenceStargate() {
-            protocol = new StargateRpcProtocol();
-        }
-    }
 }

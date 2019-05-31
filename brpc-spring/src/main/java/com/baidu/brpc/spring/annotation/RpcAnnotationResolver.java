@@ -28,7 +28,6 @@ import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
 import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.DefaultNamingServiceFactory;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.spring.RpcProxyFactoryBean;
@@ -178,16 +177,6 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         rpcServiceExporter.setVersion(rpcExporter.version());
         rpcServiceExporter.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
 
-        // namingServiceFactory
-        String namingServiceFactoryBeanName = parsePlaceholder(rpcExporter.namingServiceFactoryBeanName());
-        if (!StringUtils.isBlank(namingServiceFactoryBeanName)) {
-            NamingServiceFactory namingServiceFactory = beanFactory.getBean(
-                    namingServiceFactoryBeanName, NamingServiceFactory.class);
-            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-        } else {
-            rpcServiceExporter.setNamingServiceFactory(namingServiceFactory);
-        }
-
         // do register service
         if (rpcExporter.useSharedThreadPool()) {
             rpcServiceExporter.getRegisterServices().add(bean);
@@ -330,18 +319,6 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         values.addPropertyValue("version", rpcProxy.version());
         values.addPropertyValue("ignoreFailOfNamingService", rpcProxy.ignoreFailOfNamingService());
         values.addPropertyValue("serviceId", rpcProxy.name());
-
-        // namingServiceFactory
-        String namingServiceFactoryBeanName = parsePlaceholder(rpcProxy.namingServiceFactoryBeanName());
-        NamingServiceFactory actualNamingServiceFactory;
-        if (StringUtils.isNotBlank(namingServiceFactoryBeanName)) {
-            actualNamingServiceFactory = beanFactory.getBean(namingServiceFactoryBeanName, NamingServiceFactory.class);
-        } else if (namingServiceFactory != null) {
-            actualNamingServiceFactory = namingServiceFactory;
-        } else {
-            actualNamingServiceFactory = new DefaultNamingServiceFactory();
-        }
-        values.addPropertyValue("namingServiceFactory", actualNamingServiceFactory);
 
         // interceptor
         String interceptorName = parsePlaceholder(rpcProxy.interceptorBeanName());

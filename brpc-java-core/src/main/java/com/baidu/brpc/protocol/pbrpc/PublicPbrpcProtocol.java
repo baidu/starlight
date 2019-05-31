@@ -49,8 +49,6 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
 
     private static final CompressManager compressManager = CompressManager.getInstance();
 
-
-
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
 
@@ -285,5 +283,10 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
         byte[] nsHeadBytes = nsHead.toBytes();
         return Unpooled.wrappedBuffer(nsHeadBytes, request.getRpcMethodInfo().inputEncode(pbres));
 
+    }
+
+    @Override
+    public boolean isCoexistence() {
+        return false;
     }
 }

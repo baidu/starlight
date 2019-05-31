@@ -21,6 +21,12 @@ import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 
 public class ZookeeperNamingFactory implements NamingServiceFactory {
+
+    @Override
+    public String getName() {
+        return "zookeeper";
+    }
+
     @Override
     public NamingService createNamingService(BrpcURL url) {
         return new ZookeeperNamingService(url);

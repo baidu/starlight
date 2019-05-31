@@ -84,12 +84,6 @@ public class RpcLongConnectionClientTest {
                         + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
                         + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
                         + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
-                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
-                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
-                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
-                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
-                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
-                        + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello"
                         + "hellohellohellohellohellohellohellohellohellohellohellohellohellohellohellohello";
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage(message).build();
         Echo.EchoResponse response = echoService.echo(request);

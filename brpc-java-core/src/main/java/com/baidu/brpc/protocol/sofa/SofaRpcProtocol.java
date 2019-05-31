@@ -258,6 +258,11 @@ public class SofaRpcProtocol extends AbstractProtocol {
         return encode(responsePacket);
     }
 
+    @Override
+    public boolean isCoexistence() {
+        return true;
+    }
+
     protected ByteBuf encode(SofaRpcEncodePacket packet) throws Exception {
         // meta buf
         byte[] metaBytes = packet.getRpcMeta().toByteArray();

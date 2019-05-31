@@ -13,7 +13,6 @@ public class BrpcPropertySourceLocator implements PropertySourceLocator {
     @Override
     public PropertySource<?> locate(Environment environment) {
         Map<String, Object> properties = new HashMap<>();
-        properties.put("brpc.global.naming.namingServiceFactory", SpringCloudNamingFactory.class.getName());
         properties.put("brpc.global.naming.namingServiceUrl", "springcloud://discovery");
         MapPropertySource propertySource = new MapPropertySource("brpc", properties);
         return propertySource;
