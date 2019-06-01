@@ -3,7 +3,7 @@
 ![maven](https://img.shields.io/maven-central/v/com.baidu/brpc-java.svg)
 
 # 项目名称
-brpc-java是baidu rpc的java版本实现，主要用于java系统中的rpc交互，支持baidu rpc、nshead、sofa、hulu、http、stargate等协议。
+brpc-java是baidu rpc的java版本实现，支持baidu rpc、nshead、sofa、hulu、http、stargate等协议。
 
 # 核心功能点
 * 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议、public pbrpc、stargate协议。
