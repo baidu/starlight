@@ -7,14 +7,12 @@ brpc-java是baidu rpc的java版本实现，主要用于java系统中的rpc交互
 
 # 核心功能点
 * 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议、public pbrpc、stargate协议。
-* 可以灵活自定义任意协议，只需要实现Protocol接口，客户端和服务端可以分开实现。
-* 支持使用POJO替代protobuf生成的类来进行序列化（基于[jprotobuf](https://github.com/jhunters/jprotobuf)实现）。
-* 支持多种naming服务，比如zookeeper、List、File、DNS等，可以灵活扩展支持etcd、eureka、nacos等。
+* 支持SpringBoot starter，也支持SpringCloud的服务注册发现、用brpc-java替换Feign http调用，提升性能。
+* 支持多种naming服务，比如Zookeeper、Consul、List、File、DNS等，可以灵活扩展支持etcd、eureka、nacos等。
 * 支持多种负载均衡策略，比如fair、random、round robin、weight等。
-* 支持interceptor功能。
-* 支持server端限流：计数器、令牌桶等算法。
-* 支持snappy、gzip、zlib压缩。
-* 将RPC功能和Spring功能分离，既适用于一些无需spring的场景，也适用于包含Spring的场景。
+* 支持interceptor功能，支持计数器、令牌桶等server端限流算法。
+* rpc功能可独立使用，不是必须依赖Spring和注册中心功能。
+* 基于SPI机制可灵活扩展Protocol、NamingService和LoadBalance。
 
 ## 快速开始
 ### 开发环境
@@ -26,15 +24,31 @@ java 6+ && netty 4 && protobuf 2.5.0
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>2.3.7</version>
+    <version>2.4.0</version>
 </dependency>
 ```
 Spring环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
-    <artifactId>brpc-java-spring</artifactId>
-    <version>2.3.7</version>
+    <artifactId>brpc-spring</artifactId>
+    <version>2.4.0</version>
+</dependency>
+```
+SpringBoot环境：
+```xml
+<dependency>
+    <groupId>com.baidu</groupId>
+    <artifactId>brpc-spring-stater</artifactId>
+    <version>2.4.0</version>
+</dependency>
+```
+SpringCloud环境：
+```xml
+<dependency>
+    <groupId>com.baidu</groupId>
+    <artifactId>spring-cloud-brpc</artifactId>
+    <version>2.4.0</version>
 </dependency>
 ```
 Zookeeper注册中心：
@@ -42,7 +56,7 @@ Zookeeper注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-zookeeper</artifactId>
-    <version>2.3.7</version>
+    <version>2.4.0</version>
 </dependency>
 ```
 Consul注册中心：
@@ -50,7 +64,7 @@ Consul注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-consul</artifactId>
-    <version>2.3.7</version>
+    <version>2.4.0</version>
 </dependency>
 ```
 ### Server端使用
@@ -65,16 +79,8 @@ Consul注册中心：
 ### 与Spring集成
 * [Spring集成使用](https://github.com/baidu/brpc-java/blob/master/docs/cn/spring.md)
 
-### 服务注册发现
-* [Zookeeper注册中心](https://github.com/baidu/brpc-java/blob/master/docs/cn/zookeeper.md)
-
 ### 扩展
-* [新增协议](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
-* [新增服务发现](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
-* [新增负载均衡](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
-* [新增压缩算法](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
-* [新增拦截器](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
-* [新增限流算法](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
+* [扩展Protocol、NamingService、LoadBalance](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
 
 ### 一些设计
 #### 网络模型

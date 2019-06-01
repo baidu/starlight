@@ -33,7 +33,24 @@ import io.netty.channel.ChannelHandlerContext;
  */
 public interface Protocol {
 
-    /**************** 以下5个函数是客户端、服务端都要实现的。 *******************/
+    /**************** 客户端、服务端都要实现的函数。 *******************/
+
+    /**
+     * 客户端/服务端解析请求包成header+body buffer
+     * @param in 输入byte buf
+     * @return header+body buffer
+     * @throws BadSchemaException header格式不对
+     * @throws TooBigDataException body太大
+     * @throws NotEnoughDataException 可读长度不够，由于粘包拆包问题。
+     */
+    Object decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
+            throws BadSchemaException, TooBigDataException, NotEnoughDataException;
+
+    /**
+     * 该协议是否可以和其他协议共存。
+     * @return true可以共存，false不能共存。
+     */
+    boolean isCoexistence();
 
     /**
      * create a new request instance
@@ -57,18 +74,7 @@ public interface Protocol {
      */
     Response getResponse();
 
-    /**
-     * 客户端/服务端解析请求包成header+body buffer
-     * @param in 输入byte buf
-     * @return header+body buffer
-     * @throws BadSchemaException header格式不对
-     * @throws TooBigDataException body太大
-     * @throws NotEnoughDataException 可读长度不够，由于粘包拆包问题。
-     */
-    Object decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
-            throws BadSchemaException, TooBigDataException, NotEnoughDataException;
-
-    /**************** 以下4个函数是客户端需要实现的。 *******************/
+    /**************** 仅客户端需要实现的函数 *******************/
 
     /**
      * 客户端序列化请求对象
@@ -92,11 +98,11 @@ public interface Protocol {
 
     /**
      * 连接被归还入池的时机
-     * @return true代表请求发送后立即归还连接，无需等待响应
+     * @return true代表请求发送后立即归还连接，false表示收到响应后归还。
      */
     boolean returnChannelBeforeResponse();
 
-    /**************** 以下3个函数是服务端需要实现的。 *******************/
+    /**************** 仅服务端需要实现的函数 *******************/
 
     /**
      * 服务端反序列化rpc请求
@@ -116,6 +122,4 @@ public interface Protocol {
      * @param channelFuture the return value of writeAndFlush
      */
     void afterResponseSent(Request request, Response response, ChannelFuture channelFuture);
-
-    boolean isCoexistence();
 }

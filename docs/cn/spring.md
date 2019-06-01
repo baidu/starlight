@@ -3,24 +3,43 @@
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
-    <artifactId>brpc-java-spring</artifactId>
-    <version>2.0.0</version>
+    <artifactId>brpc-spring-starter</artifactId>
+    <version>2.4.0</version>
 </dependency>
 ```
 ## 接口声明跟非Spring用法一样
-## xml配置（Client/Server都需要）
-```xml
-<context:component-scan base-package="com.baidu.brpc.example.spring.server">
-<bean class="com.baidu.brpc.spring.annotation.CommonAnnotationBeanPostProcessor">
-    <property name="callback">
-        <bean class="com.baidu.brpc.spring.annotation.RpcAnnotationResolver" />
-    </property>
-</bean>
+## 在application.yml中添加配置：
+```yaml
+brpc:
+  global:
+    naming:
+      namingServiceUrl: zookeeper://127.0.0.1:2181/examples
+      namingServiceFactory: com.baidu.brpc.naming.zookeeper.ZookeeperNamingFactory
+      group: "normal"
+      version: 1.0.0
+      ignoreFailOfNamingService: false
+    server:
+      port: 8002
+      workThreadNum: 1
+      ioThreadNum: 1
+    client:
+      workThreadNum: 1
+      ioThreadNum: 1
+  custom:
+    com.baidu.brpc.example.springboot.api.EchoService:
+      naming:
+        version: 2.0.0
+    com.baidu.brpc.example.springboot.api.AsyncEchoService:
+      naming:
+        version: 2.0.0
 ```
+* brpc.global是默认配置，brpc.custom是具体接口的自定义配置。
+* brpc.global.server只有在使用RpcServer时才需要。
+* brpc.global.client只有在使用RpcClient时才需要。
+
 ## Server端使用@RpcExporter暴露服务
 ```java
-@Component
-@RpcExporter(port = "8012")
+@RpcExporter
 public class EchoServiceImpl implements EchoService {
     @Override
     public EchoResponse echo(EchoRequest request) {
@@ -35,19 +54,14 @@ public class EchoServiceImpl implements EchoService {
 ```java
 @Service
 public class EchoFacadeImpl implements EchoFacade {
-    @RpcProxy(serviceUrl = "list://127.0.0.1:8012",
-            rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
+    @RpcProxy
     private EchoService echoService;
  
     /**
      * async service interface proxy will create new RpcClient,
      * not used RpcClient of sync interface proxy.
      */
-    @RpcProxy(serviceUrl = "list://127.0.0.1:8012",
-            lookupStubOnStartup = false,
-            rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
+    @RpcProxy
     private AsyncEchoService echoService3;
  
     public EchoResponse echo(EchoRequest request) {

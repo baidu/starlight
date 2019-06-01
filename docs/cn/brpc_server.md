@@ -1,7 +1,7 @@
 ## 标准协议/hulu协议/sofa协议
 
 ### 示例程序
-[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java)
+[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java)
 
 ### 定义请求和响应结构proto
 ```java
@@ -22,7 +22,7 @@ service EchoService {
 ```
 
 也支持使用jprotobuf方式定义的普通java类作为request/response，具体使用例子请见:
-[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/jprotobuf/RpcServerTest.java)
+[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/jprotobuf/RpcServerTest.java)
 
 ### 定义java接口
 ```java

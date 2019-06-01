@@ -1,8 +1,8 @@
 ## 示例程序
 
-- [标准协议/hulu协议/sofa协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java)
-- [nshead协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/nshead/RpcServerTest.java)
-- [http协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/http/proto/RpcServerTest.java)
+- [标准协议/hulu协议/sofa协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/standard/RpcServerTest.java)
+- [nshead协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/nshead/RpcServerTest.java)
+- [http协议](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/http/proto/RpcServerTest.java)
 
 ## 定义接口类以及实现类
 
@@ -13,8 +13,8 @@
 ## 定义Main类
 server端启动主要分两步：
 
-- 配置RpcServerOptions：配置io线程数、工作线程数、是否是http请求等。
-- 初始化RpcServer实例：所需参数为端口、RpcServerOptions（可选）、以及interceptor（可选）、NamingService（可选）。
+- 配置RpcServerOptions：配置io线程数、工作线程数、协议类型等。
+- 初始化RpcServer实例：所需参数为端口、RpcServerOptions（可选）、以及interceptor（可选）。
 - 注册服务实例。
 
 具体代码如下：

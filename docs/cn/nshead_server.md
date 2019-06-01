@@ -1,10 +1,10 @@
 ## 示例程序
 
-[brpc-java-examples/src/main/java/com/baidu/brpc/example/nshead](https://github.com/baidu/brpc-java/tree/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/nshead)
+[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/nshead/RpcServerTest.java)
 
 ## 定义请求和响应类
 目前序列化方式使用protobuf，也支持使用jprotobuf方式定义的普通java类作为request/response，
-具体使用例子请见[brpc-java-examples/src/main/java/com/baidu/brpc/example/jprotobuf](https://github.com/baidu/brpc-java/tree/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/jprotobuf)。
+具体使用例子请见[jprotobuf](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/jprotobuf/RpcServerTest.java)。
 
 ```proto
 package example;
@@ -29,7 +29,7 @@ service EchoService {
 nshead接口类
 ```java
 public interface EchoService {
-    @NSHeadMeta(provider = "coeus-cpc")
+    @NSHeadMeta(provider = "custom-provider")
     Echo.EchoResponse echo(Echo.EchoRequest request);
 }
 ```
