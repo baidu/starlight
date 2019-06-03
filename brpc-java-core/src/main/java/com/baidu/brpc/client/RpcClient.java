@@ -95,7 +95,7 @@ public class RpcClient {
     private EventLoopGroup ioThreadPool;
     private Class serviceInterface;
     private SubscribeInfo subscribeInfo;
-    private AtomicBoolean isStop = new AtomicBoolean(false);
+    private AtomicBoolean stop = new AtomicBoolean(false);
     private InstanceProcessor instanceProcessor;
     /**
      * callBack thread when method invoke fail
@@ -230,7 +230,7 @@ public class RpcClient {
 
     public void stop() {
         // avoid stop multi times
-        if (isStop.compareAndSet(false, true)) {
+        if (stop.compareAndSet(false, true)) {
             if (namingService != null) {
                 namingService.unsubscribe(subscribeInfo);
             }
