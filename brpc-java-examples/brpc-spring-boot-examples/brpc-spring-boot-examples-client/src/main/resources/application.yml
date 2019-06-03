@@ -9,7 +9,6 @@ brpc:
   global:
     naming:
       namingServiceUrl: zookeeper://127.0.0.1:2181/examples
-      namingServiceFactory: com.baidu.brpc.naming.zookeeper.ZookeeperNamingFactory
       group: "normal"
       version: 1.0.0
       ignoreFailOfNamingService: false
