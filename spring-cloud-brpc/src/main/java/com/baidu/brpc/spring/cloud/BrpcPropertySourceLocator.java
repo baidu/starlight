@@ -9,11 +9,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class BrpcPropertySourceLocator implements PropertySourceLocator {
+    public static final String ENV_NAMING_URL_KEY = "brpc.global.naming.namingServiceUrl";
 
     @Override
     public PropertySource<?> locate(Environment environment) {
         Map<String, Object> properties = new HashMap<>();
-        properties.put("brpc.global.naming.namingServiceUrl", "springcloud://discovery");
+        properties.put(ENV_NAMING_URL_KEY,
+                SpringCloudNamingFactory.NAMING_PREFIX + "://discovery");
         MapPropertySource propertySource = new MapPropertySource("brpc", properties);
         return propertySource;
     }

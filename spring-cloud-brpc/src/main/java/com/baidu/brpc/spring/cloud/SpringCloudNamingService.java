@@ -62,7 +62,8 @@ public class SpringCloudNamingService implements NamingService {
         List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
         for (org.springframework.cloud.client.ServiceInstance discoveryInstance : discoveryInstances) {
             String host = discoveryInstance.getHost();
-            Integer port = Integer.valueOf(discoveryInstance.getMetadata().get("brpcPort"));
+            Integer port = Integer.valueOf(discoveryInstance.getMetadata().get(
+                    BrpcServiceRegistrationAutoConfiguration.META_DATA_PORT_KEY));
             ServiceInstance instance = new ServiceInstance(host, port);
             instances.add(instance);
         }

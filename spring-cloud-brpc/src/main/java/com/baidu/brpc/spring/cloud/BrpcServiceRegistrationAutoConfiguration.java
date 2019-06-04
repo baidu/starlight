@@ -21,6 +21,8 @@ import java.util.Map;
 @Configuration
 @AutoConfigureBefore(EurekaClientAutoConfiguration.class)
 public class BrpcServiceRegistrationAutoConfiguration implements PriorityOrdered {
+    public static final String ENV_PORT_KEY = "brpc.global.server.port";
+    public static final String META_DATA_PORT_KEY = "brpcPort";
 
     private ConfigurableEnvironment env;
 
@@ -45,9 +47,9 @@ public class BrpcServiceRegistrationAutoConfiguration implements PriorityOrdered
         EurekaInstanceConfigBean instance = new EurekaClientAutoConfiguration(env)
                 .eurekaInstanceConfigBean(inetUtils, managementMetadataProvider);
 
-        String brpcPort = env.getProperty("brpc.global.server.port");
+        String brpcPort = env.getProperty(ENV_PORT_KEY);
         if (StringUtils.isNoneBlank(brpcPort)) {
-            instance.getMetadataMap().put("brpcPort", brpcPort);
+            instance.getMetadataMap().put(META_DATA_PORT_KEY, brpcPort);
         }
         return instance;
     }
