@@ -39,7 +39,7 @@ SpringBoot环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
-    <artifactId>brpc-spring-stater</artifactId>
+    <artifactId>brpc-spring-boot-stater</artifactId>
     <version>2.4.0</version>
 </dependency>
 ```
