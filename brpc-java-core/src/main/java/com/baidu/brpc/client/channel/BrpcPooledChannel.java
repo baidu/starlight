@@ -41,6 +41,10 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BrpcPooledChannel extends AbstractBrpcChannel {
     private GenericObjectPool<Channel> channelFuturePool;
+    /**
+     * failedNum only effect balanceStrategy
+     * thread-unsafe type can be accepted, so not use AtomicLong which may affect performance partly
+     */
     private volatile long failedNum;
     private int readTimeOut;
     private int latencyWindowSize;
