@@ -125,7 +125,6 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
                 instanceChannelMap.putIfAbsent(instance, brpcChannel);
             } else {
                 log.debug("endpoint already exist, {}:{}", instance.getIp(), instance.getPort());
-                return;
             }
         } finally {
             lock.unlock();
@@ -206,28 +205,9 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
         try {
             if (instances.remove(instance)) {
                 List<BrpcChannel> removedInstanceChannels = new ArrayList<BrpcChannel>();
-                Iterator<BrpcChannel> iterator = healthyInstanceChannels.iterator();
-                while (iterator.hasNext()) {
-                    BrpcChannel brpcChannel = iterator.next();
-                    if (brpcChannel.getServiceInstance().equals(instance)) {
-                        healthyInstanceChannels.remove(brpcChannel);
-                        brpcChannel.close();
-                        removedInstanceChannels.add(brpcChannel);
-                        break;
-                    }
-                }
-
+                removeInstanceChannels(healthyInstanceChannels, instance, removedInstanceChannels);
                 if (removedInstanceChannels.size() == 0) {
-                    iterator = unhealthyInstanceChannels.iterator();
-                    while (iterator.hasNext()) {
-                        BrpcChannel brpcChannel = iterator.next();
-                        if (brpcChannel.getServiceInstance().equals(instance)) {
-                            unhealthyInstanceChannels.remove(brpcChannel);
-                            brpcChannel.close();
-                            removedInstanceChannels.add(brpcChannel);
-                            break;
-                        }
-                    }
+                    removeInstanceChannels(unhealthyInstanceChannels, instance, removedInstanceChannels);
                 }
 
                 instanceChannelMap.remove(instance);
@@ -245,4 +225,20 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
         }
     }
 
+    private void removeInstanceChannels(CopyOnWriteArrayList<BrpcChannel> checkedInstanceChannels,
+                                        ServiceInstance instance,
+                                        List<BrpcChannel> removedInstanceChannels) {
+
+        Iterator<BrpcChannel> iterator = checkedInstanceChannels.iterator();
+        while (iterator.hasNext()) {
+            BrpcChannel brpcChannel = iterator.next();
+            if (brpcChannel.getServiceInstance().equals(instance)) {
+                checkedInstanceChannels.remove(brpcChannel);
+                brpcChannel.close();
+                removedInstanceChannels.add(brpcChannel);
+                break;
+            }
+        }
+
+    }
 }

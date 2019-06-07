@@ -65,8 +65,7 @@ public class ChannelInfo {
 
     public static ChannelInfo getClientChannelInfo(Channel channel) {
         Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.CLIENT_CHANNEL_KEY);
-        ChannelInfo channelInfo = attribute.get();
-        return channelInfo;
+        return attribute.get();
     }
 
     public static ChannelInfo getOrCreateServerChannelInfo(Channel channel) {
@@ -82,8 +81,7 @@ public class ChannelInfo {
 
     public static ChannelInfo getServerChannelInfo(Channel channel) {
         Attribute<ChannelInfo> attribute = channel.attr(ChannelInfo.SERVER_CHANNEL_KEY);
-        ChannelInfo channelInfo = attribute.get();
-        return channelInfo;
+        return  attribute.get();
     }
 
     public long addRpcFuture(RpcFuture future) {
@@ -101,6 +99,7 @@ public class ChannelInfo {
 
     /**
      * return channel when fail
+     *
      * @param channelType
      */
     public void handleRequestFail(ChannelType channelType) {
@@ -181,12 +180,8 @@ public class ChannelInfo {
                 return true;
             }
 
-            if (currentChannel == chanInfo.channel) {
-                return false;
-            }
-
             // 不删除返回true
-            return true;
+            return currentChannel != chanInfo.channel;
         }
 
         @Override
