@@ -1,6 +1,7 @@
 package com.baidu.brpc.example.grpc;
 
 import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.server.grpc.GrpcServer;
 import lombok.extern.slf4j.Slf4j;
@@ -10,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class RpcServerTest {
-    public static void main(String[] args) throws InstantiationException, IllegalAccessException {
+    public static void main(String[] args) {
         int port = 50051;
         if (args.length == 1) {
             port = Integer.valueOf(args[0]);
@@ -24,7 +25,7 @@ public class RpcServerTest {
 //        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
 //        final RpcServer rpcServer = new RpcServer(port, options);
         final GrpcServer rpcServer = new GrpcServer(port, options);
-        rpcServer.registerService(new EchoService());
+        //rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();
 
         // make server keep running
