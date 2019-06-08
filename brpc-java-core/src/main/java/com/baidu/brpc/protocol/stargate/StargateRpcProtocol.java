@@ -55,14 +55,12 @@ public class StargateRpcProtocol extends AbstractProtocol {
     private static final int FIXED_HEAD_LEN = 4;
 
     private static final NotEnoughDataException notEnoughDataException
-            = new NotEnoughDataException("StarGate not enough data");
+            = new NotEnoughDataException("Stargate not enough data");
 
     private static final String SERIALIZATION_EXCEPTION = "decode error,this problem is usually caused by"
             + "\n 1: difference of api.jar between server and client."
-            + "\n 2: the version of stargate in brpc is 1.2.18 be care for."
-            + "\n 3: server do not catch Exception."
-            + "\n 4: API contains a type that Stargate does not support. eg:HashMap.keySet()"
-            + "\n see http://wiki.baidu.com/display/STARGATE/FAQ";
+            + "\n 2: server do not catch Exception."
+            + "\n 3: API contains a type that Stargate does not support. eg:HashMap.keySet()";
 
     private ServiceManager serviceManager = ServiceManager.getInstance();
     private boolean init = false;
