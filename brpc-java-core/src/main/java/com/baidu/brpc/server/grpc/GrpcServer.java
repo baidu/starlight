@@ -1,18 +1,27 @@
 package com.baidu.brpc.server.grpc;
 
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.NamingService;
-import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.server.RpcServer;
+import com.baidu.brpc.naming.*;
+import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.RpcServerOptions;
-import com.baidu.brpc.server.ServerStatus;
+import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.thread.ShutDownManager;
+import com.baidu.brpc.utils.CustomThreadFactory;
+import com.baidu.brpc.utils.NetUtils;
 import com.baidu.brpc.utils.ThreadPool;
-import com.sun.xml.internal.ws.api.client.ServiceInterceptor;
 import io.grpc.*;
+import io.grpc.internal.ServerListener;
 import io.grpc.netty.NettyServerBuilder;
+import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollMode;
+import io.netty.channel.nio.NioEventLoopGroup;
 import lombok.Getter;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,11 +66,12 @@ public class GrpcServer {
     private EventLoopGroup workerGroup;
     private List<ServerInterceptor> interceptors = new ArrayList<ServerInterceptor>();
     private ThreadPool threadPool;
+    private List<ThreadPool> customThreadPools = new ArrayList<ThreadPool>();
     private NamingService namingService;
     private List<Object> serviceList = new ArrayList<Object>();
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
-    private ServerStatus serverStatus;
-    private AtomicBoolean stop = new AtomicBoolean(false);
+    // private ServerStatus serverStatus;
+    private AtomicBoolean stop = new AtomicBoolean(true);
 
 
     private NettyServerBuilder nettyServerBuilder;
@@ -93,46 +103,143 @@ public class GrpcServer {
                 LOG.warn("init options failed, so use default");
             }
         }
-        if (interceptors != null) {
-            this.interceptors.addAll(interceptors);
-        }
-        if (nettyServerBuilder == null) {
-            if (host == null) {
-                nettyServerBuilder = NettyServerBuilder.forPort(port);
-            } else {
-                nettyServerBuilder = NettyServerBuilder.forAddress(new InetSocketAddress(host, port));
+
+        // check protocol setting
+        if (rpcServerOptions.getProtocolType() != null) {
+            if (rpcServerOptions.getProtocolType() != Options.ProtocolType.PROTOCOL_GRPC_VALUE) {
+                LOG.error("You are using rpcServerOptions, Please set ProtocolType to PROTOCOL_GRPC_VALUE in order to avoid confuse");
+                System.exit(-1);
             }
 
         }
 
-        //TODO Initialize naming service for service registration
+        if (interceptors != null) {
+            this.interceptors.addAll(interceptors);
+        }
+
+        // 判断是否在jarvis环境，若是jarvis环境则以环境变量port为准，否则以用户自定义的port为准
+        if (rpcServerOptions.getJarvisPortName() != null) {
+            if (System.getenv(rpcServerOptions.getJarvisPortName()) != null) {
+                this.port = Integer.valueOf(System.getenv(rpcServerOptions.getJarvisPortName()));
+            }
+        }
+
+        // Init NettyServerBuilder
+        if (host == null) {
+            nettyServerBuilder = NettyServerBuilder.forPort(port);
+        } else {
+            nettyServerBuilder = NettyServerBuilder.forAddress(new InetSocketAddress(host, port));
+        }
+
+
+        // Init NamingService
+        ExtensionLoaderManager.getInstance().loadAllExtensions(rpcServerOptions.getEncoding());
+        if (StringUtils.isNotBlank(rpcServerOptions.getNamingServiceUrl())) {
+            BrpcURL url = new BrpcURL(rpcServerOptions.getNamingServiceUrl());
+            NamingServiceFactory namingServiceFactory = NamingServiceFactoryManager.getInstance()
+                    .getNamingServiceFactory(url.getSchema());
+            this.namingService = namingServiceFactory.createNamingService(url);
+        }
+
+        if (Epoll.isAvailable()) {
+            bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
+                    new CustomThreadFactory("server-acceptor-thread"));
+            workerGroup = new EpollEventLoopGroup(rpcServerOptions.getIoThreadNum(),
+                    new CustomThreadFactory("server-io-thread"));
+            ((EpollEventLoopGroup) bossGroup).setIoRatio(100);
+            ((EpollEventLoopGroup) workerGroup).setIoRatio(100);
+            nettyServerBuilder.bossEventLoopGroup(bossGroup);
+            nettyServerBuilder.workerEventLoopGroup(workerGroup);
+            nettyServerBuilder.withChildOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
+            LOG.info("use epoll edge trigger mode");
+        } else {
+            bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
+                    new CustomThreadFactory("server-acceptor-thread"));
+            workerGroup = new NioEventLoopGroup(rpcServerOptions.getIoThreadNum(),
+                    new CustomThreadFactory("server-io-thread"));
+            ((NioEventLoopGroup) bossGroup).setIoRatio(100);
+            ((NioEventLoopGroup) workerGroup).setIoRatio(100);
+
+            nettyServerBuilder.bossEventLoopGroup(bossGroup);
+            nettyServerBuilder.workerEventLoopGroup(workerGroup);
+            LOG.info("use normal mode");
+        }
+
+        /**
+         * The setting "SO_BACKLOG" for BossGroup is 128,
+         * You should not set the following value unless you know what are you doing
+         *
+         * @see io.grpc.netty.NettyServer#start(ServerListener)
+         */
+        nettyServerBuilder.withChildOption(ChannelOption.SO_KEEPALIVE, rpcServerOptions.isKeepAlive());
+        nettyServerBuilder.withChildOption(ChannelOption.TCP_NODELAY, rpcServerOptions.isTcpNoDelay());
+        nettyServerBuilder.withChildOption(ChannelOption.SO_REUSEADDR, true);
+        nettyServerBuilder.withChildOption(ChannelOption.ALLOCATOR, PooledByteBufAllocator.DEFAULT);
+        nettyServerBuilder.withChildOption(ChannelOption.SO_LINGER, rpcServerOptions.getSoLinger());
+        nettyServerBuilder.withChildOption(ChannelOption.SO_SNDBUF, rpcServerOptions.getSendBufferSize());
+        nettyServerBuilder.withChildOption(ChannelOption.SO_RCVBUF, rpcServerOptions.getReceiveBufferSize());
+
+        // register shutdown hook to jvm
+        ShutDownManager.getInstance();
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                GrpcServer.this.shutdown();
+            }
+        }));
+
 
     }
 
     public void registerService(Object service) {
+        registerService(service, null, rpcServerOptions);
+    }
+
+    public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions serverOptions) {
         if (service instanceof BindableService) {
             BindableService bindableService = (BindableService) service;
             ServerServiceDefinition serviceDefinition = ServerInterceptors.interceptForward(bindableService, this.interceptors);
 
-            //TODO Get service definition from ServerServiceDefinition, in order to initialize RegisterInfo
-
+            // grpc context will take over the lifecycle of services
             nettyServerBuilder.addService(serviceDefinition);
+
+            RegisterInfo registerInfo = new RegisterInfo();
+            String interfaceName = serviceDefinition.getServiceDescriptor().getName();
+            registerInfo.setInterfaceName(interfaceName);
+            registerInfo.setHost(NetUtils.getLocalAddress().getHostAddress());
+            registerInfo.setPort(port);
+            if (namingOptions != null) {
+                registerInfo.setGroup(namingOptions.getGroup());
+                registerInfo.setVersion(namingOptions.getVersion());
+                registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
+            }
+            registerInfoList.add(registerInfo);
         }
     }
+
 
     public void start() {
 
         if (nettyServerBuilder != null) {
             this.grpcServer = nettyServerBuilder.build();
             try {
-                grpcServer.start();
-                stop.set(false);
-                grpcServer.awaitTermination();
+                if (stop.compareAndSet(true, false)) {
+                    grpcServer.start();
+
+                    //regist all service to naming service, for service discovery and load balance
+                    if (namingService != null) {
+                        for (RegisterInfo registerInfo : registerInfoList) {
+                            namingService.register(registerInfo);
+                        }
+                    }
+
+                    grpcServer.awaitTermination();
+                }
             } catch (IOException e) {
-                stop.set(true);
+                stop.compareAndSet(false, true);
                 e.printStackTrace();
             } catch (InterruptedException e) {
-                stop.set(true);
+                stop.compareAndSet(false, true);
                 e.printStackTrace();
             }
         }
@@ -140,9 +247,17 @@ public class GrpcServer {
     }
 
     public void shutdown() {
-        if (grpcServer != null) {
-            grpcServer.shutdown();
-            stop.set(true);
+
+        if (stop.compareAndSet(false, true)) {
+            if (namingService != null) {
+                for (RegisterInfo registerInfo : registerInfoList) {
+                    namingService.unregister(registerInfo);
+                }
+            }
+            if (grpcServer != null) {
+                grpcServer.shutdown();
+            }
         }
+
     }
 }
