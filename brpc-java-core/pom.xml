@@ -136,6 +136,15 @@
             <artifactId>protostuff-core</artifactId>
             <version>1.0.7</version>
         </dependency>
+
+        <!--grpc support-->
+        <!-- https://mvnrepository.com/artifact/io.grpc/grpc-netty-shaded -->
+        <dependency>
+            <groupId>io.grpc</groupId>
+            <artifactId>grpc-all</artifactId>
+            <version>1.21.0</version>
+        </dependency>
+
     </dependencies>
 
 </project>
