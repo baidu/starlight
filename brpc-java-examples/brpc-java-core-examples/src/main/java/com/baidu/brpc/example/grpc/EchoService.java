@@ -4,6 +4,11 @@ import com.baidu.brpc.example.standard.Echo;
 import com.baidu.brpc.example.standard.EchoServiceGrpc;
 import io.grpc.stub.StreamObserver;
 
+
+/**
+ * this is a classical grpc service implementation
+ * @author keweiwang@gmail.com
+ */
 public class EchoService extends EchoServiceGrpc.EchoServiceImplBase {
     @Override
     public void echo(Echo.EchoRequest request, StreamObserver<Echo.EchoResponse> responseObserver) {
