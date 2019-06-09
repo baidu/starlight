@@ -1,7 +1,6 @@
 package com.baidu.brpc.example.grpc;
 
 import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.server.grpc.GrpcServer;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +10,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class RpcServerTest {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InstantiationException, IllegalAccessException {
         int port = 50051;
         if (args.length == 1) {
             port = Integer.valueOf(args[0]);
