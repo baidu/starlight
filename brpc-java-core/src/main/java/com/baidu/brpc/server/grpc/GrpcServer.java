@@ -196,9 +196,15 @@ public class GrpcServer {
     }
 
     public void registerService(Object service, NamingOptions namingOptions, RpcServerOptions serverOptions) {
-        if (service instanceof BindableService) {
-            BindableService bindableService = (BindableService) service;
-            ServerServiceDefinition serviceDefinition = ServerInterceptors.interceptForward(bindableService, this.interceptors);
+        if (service instanceof BindableService || service instanceof ServerServiceDefinition) {
+            ServerServiceDefinition serviceDefinition;
+            if(service instanceof BindableService){
+                BindableService bindableService = (BindableService) service;
+                serviceDefinition =  ServerInterceptors.interceptForward(bindableService, this.interceptors);
+
+            } else {
+                serviceDefinition =  ServerInterceptors.interceptForward((ServerServiceDefinition)service, this.interceptors);
+            }
 
             // grpc context will take over the lifecycle of services
             nettyServerBuilder.addService(serviceDefinition);
