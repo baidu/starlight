@@ -8,6 +8,7 @@ import java.util.Map;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.nshead.NSHead;
+import com.baidu.brpc.protocol.push.SPHead;
 
 import io.netty.buffer.ByteBuf;
 import lombok.Getter;
@@ -25,6 +26,7 @@ public abstract class AbstractResponse implements Response {
     private ByteBuf binaryAttachment;
     private int compressType;
     private NSHead nsHead;
+    private SPHead spHead;
 
     public void reset() {
         logId = -1;

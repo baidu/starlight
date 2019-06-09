@@ -19,13 +19,13 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
-import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.nshead.NSHead;
+import com.baidu.brpc.protocol.push.SPHead;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -100,6 +100,10 @@ public interface Request {
     NSHead getNsHead();
 
     void setNsHead(NSHead nsHead);
+
+    SPHead getSpHead();
+
+    void setSpHead(SPHead spHead);
 
     Request retain();
 

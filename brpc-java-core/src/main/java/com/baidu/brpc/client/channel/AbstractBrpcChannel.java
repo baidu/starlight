@@ -4,16 +4,27 @@
 package com.baidu.brpc.client.channel;
 
 import java.net.InetSocketAddress;
+import java.util.HashMap;
 import java.util.Queue;
 
-import com.baidu.brpc.client.instance.ServiceInstance;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
+import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.MethodUtils;
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
+import com.baidu.brpc.protocol.RpcRequest;
+import com.baidu.brpc.protocol.push.RegistryContent;
+import com.baidu.brpc.protocol.push.SPHead;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
+import com.baidu.brpc.server.ChannelManager;
 
 import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -24,27 +35,68 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
     protected ServiceInstance serviceInstance;
     protected Bootstrap bootstrap;
     protected Protocol protocol;
+    protected RpcClient rpcClient;
 
-    public AbstractBrpcChannel(ServiceInstance serviceInstance, Bootstrap bootstrap, Protocol protocol) {
+    public AbstractBrpcChannel(ServiceInstance serviceInstance, Bootstrap bootstrap, Protocol protocol,
+                               RpcClient rpcClient) {
         this.serviceInstance = serviceInstance;
         this.bootstrap = bootstrap;
         this.protocol = protocol;
+        this.rpcClient = rpcClient;
     }
 
     @Override
     public void updateChannel(Channel channel) {
     }
 
+    // server push 模式下，  把client的clientName发送到server去
+    public void sendClientNameToServer(ChannelFuture channelFuture) {
+        RpcClientOptions rpcClientOptions = rpcClient.getRpcClientOptions();
+        if (!rpcClientOptions.isServerPush()) {
+            return;
+        }
+
+        if (!(protocol instanceof ServerPushProtocol)) {
+            return;
+        }
+
+        RpcRequest r = new RpcRequest();
+        SPHead spHead = new SPHead();
+        spHead.type = SPHead.TYPE_CLIENT_REGISTER_REQUEST; // 注册类型
+        r.setSpHead(spHead);
+        HashMap<String, Object> kv = new HashMap<String, Object>();
+        kv.put("clientName", rpcClientOptions.getClientName());
+        r.setKvAttachment(kv);
+        r.setServiceName("com.baidu.brpc.server.ChannelManager");
+        r.setMethodName("report");
+        RpcMethodInfo putChannel = MethodUtils.getRpcMethodInfo(ChannelManager.class, "report");
+        r.setRpcMethodInfo(putChannel);
+        RegistryContent registryContent = new RegistryContent();
+        registryContent.setClientName(rpcClient.getRpcClientOptions().getClientName());
+        r.setArgs(new Object[] {registryContent});
+        ByteBuf byteBuf;
+        try {
+            log.info("send sendClientNameToServer  , name:{}", rpcClientOptions.getClientName());
+            byteBuf = ((ServerPushProtocol) protocol).encodeRequest(r);
+        } catch (Exception e) {
+            log.error("send report packet to server, encode packet failed, msg={}", e);
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed");
+        }
+        channelFuture.channel().writeAndFlush(byteBuf);
+
+    }
 
     @Override
     public Channel connect(final String ip, final int port) {
-        ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
+        final ChannelFuture future = bootstrap.connect(new InetSocketAddress(ip, port));
         future.addListener(new ChannelFutureListener() {
             @Override
             public void operationComplete(ChannelFuture channelFuture) throws Exception {
                 if (channelFuture.isSuccess()) {
                     log.debug("future callback, connect to {}:{} success, channel={}",
                             ip, port, channelFuture.channel());
+                    // 发送clientName包到server
+                    sendClientNameToServer(future);
                 } else {
                     log.debug("future callback, connect to {}:{} failed due to {}",
                             ip, port, channelFuture.cause().getMessage());
@@ -56,7 +108,7 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
             return future.channel();
         } else {
             // throw exception when connect failed to the connection pool acquirer
-            log.warn("connect to {}:{} failed, msg={}", ip, port, future.cause().getMessage());
+            log.error("connect to {}:{} failed, msg={}", ip, port, future.cause().getMessage());
             throw new RpcException(future.cause());
         }
     }
@@ -73,7 +125,6 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
 
     @Override
     public void incFailedNum() {
-
     }
 
     @Override
@@ -83,12 +134,10 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
 
     @Override
     public void updateLatency(int latency) {
-
     }
 
     @Override
     public void updateLatencyWithReadTimeOut() {
-
     }
 
     @Override

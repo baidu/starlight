@@ -19,6 +19,7 @@ package com.baidu.brpc.client;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.protocol.Options;
+
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -30,6 +31,7 @@ import lombok.Setter;
 @Getter
 @NoArgsConstructor
 public class RpcClientOptions {
+
     private int protocolType = Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE;
     private int connectTimeoutMillis = 1000;
     private int readTimeoutMillis = 1000;
@@ -70,6 +72,8 @@ public class RpcClientOptions {
     private String encoding = "utf-8";
     private Options.CompressType compressType = Options.CompressType.COMPRESS_TYPE_NONE;
     private ChannelType channelType = ChannelType.POOLED_CONNECTION;
+    private boolean serverPush;
+    private String clientName;
 
     public RpcClientOptions(RpcClientOptions options) {
         this.copyFrom(options);
@@ -102,5 +106,24 @@ public class RpcClientOptions {
         this.timeBetweenEvictionRunsMillis = another.timeBetweenEvictionRunsMillis;
         this.workThreadNum = another.workThreadNum;
         this.writeTimeoutMillis = another.writeTimeoutMillis;
+        this.serverPush = another.serverPush;
+        this.clientName = another.clientName;
     }
+
+    public boolean isServerPush() {
+        return serverPush;
+    }
+
+    public void setServerPush(boolean serverPush) {
+        this.serverPush = serverPush;
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
+    }
+
 }

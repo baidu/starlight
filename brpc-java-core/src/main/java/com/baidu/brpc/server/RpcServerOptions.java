@@ -64,6 +64,13 @@ public class RpcServerOptions {
     private int workThreadNum = Runtime.getRuntime().availableProcessors();
     // The max size
     private int maxSize = Integer.MAX_VALUE;
+
+    private int maxTryTimes = 1;
+
+    public void setProtocolType(Integer protocolType) {
+        this.protocolType = protocolType;
+    }
+
     // server protocol type
     private Integer protocolType;
     private String encoding = "utf-8";

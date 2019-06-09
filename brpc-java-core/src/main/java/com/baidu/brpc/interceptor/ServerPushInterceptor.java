@@ -4,17 +4,15 @@
 
 package com.baidu.brpc.interceptor;
 
-import java.util.HashSet;
 import java.util.concurrent.TimeUnit;
 
-import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.AsyncAwareFuture;
-import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcFuture;
-import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.server.ChannelManager;
+import com.baidu.brpc.server.RpcServer;
 
 import io.netty.channel.Channel;
 import lombok.Setter;
@@ -26,30 +24,28 @@ import lombok.Setter;
  */
 
 @Setter
-public class LoadBalanceInterceptor extends AbstractInterceptor {
-    protected RpcClient rpcClient;
+public class ServerPushInterceptor extends AbstractInterceptor {
+
+    protected RpcServer rpcServer;
 
     @Override
     public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
         RpcException exception = null;
         int currentTryTimes = 0;
-        int maxTryTimes = rpcClient.getRpcClientOptions().getMaxTryTimes();
+        int maxTryTimes = rpcServer.getRpcServerOptions().getMaxTryTimes();
         while (currentTryTimes < maxTryTimes) {
             try {
-                // if it is a retry request, add the last selected instance to request,
-                // so that load balance strategy can exclude the selected instance.
-                // if it is the initial request, not init HashSet, so it is more fast.
-                // therefore, it need LoadBalanceStrategy to judge if selectInstances is null.
-                if (currentTryTimes > 0) {
-                    if (request.getChannel() != null) {
-                        if (request.getSelectedInstances() == null) {
-                            request.setSelectedInstances(new HashSet<BrpcChannel>(maxTryTimes - 1));
-                        }
-                        BrpcChannel lastInstance = ChannelInfo
-                                .getClientChannelInfo(request.getChannel()).getChannelGroup();
-                        request.getSelectedInstances().add(lastInstance);
-                    }
-                }
+                //   if (currentTryTimes > 0) {
+                //                    if (request.getChannel() != null) {
+                //                        if (request.getSelectedInstances() == null) {
+                //                            request.setSelectedInstances(new HashSet<BrpcChannel>(maxTryTimes -
+                // 1));
+                //                        }
+                //                        BrpcChannel lastInstance = ChannelInfo
+                //                                .getClientChannelInfo(request.getChannel()).getChannelGroup();
+                //                        request.getSelectedInstances().add(lastInstance);
+                //                    }
+                //  }
                 invokeRpc(request, response);
                 break;
             } catch (RpcException ex) {
@@ -75,20 +71,33 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
     }
 
     protected Channel selectChannel(Request request) {
-        // select instance by load balance, and select channel from instance.
-        Channel channel = rpcClient.selectChannel(request);
+        // select instance by server push
+        // Channel channel = rpcClient.selectChannel(request);
+
+        ChannelManager channelManager = ChannelManager.getInstance();
+        Object[] args = request.getArgs();
+        String clientName = (String) args[args.length - 1];
+        Channel channel = channelManager.getChannel(clientName);
         request.setChannel(channel);
         return channel;
     }
 
     protected void rpcCore(Request request, Response response) throws Exception {
-        // 这个 response没有logid
         // send request with the channel.
-        AsyncAwareFuture future = rpcClient.sendRequest(request);
+        AsyncAwareFuture future = rpcServer.sendServerPush(request);
         if (future.isAsync()) {
             response.setRpcFuture((RpcFuture) future);
         } else {
             response.setResult(future.get(request.getReadTimeoutMillis(), TimeUnit.MILLISECONDS));
         }
     }
+
+    public RpcServer getRpcServer() {
+        return rpcServer;
+    }
+
+    public void setRpcServer(RpcServer rpcServer) {
+        this.rpcServer = rpcServer;
+    }
+
 }
