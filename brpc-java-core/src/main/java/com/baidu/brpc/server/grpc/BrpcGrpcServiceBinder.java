@@ -2,10 +2,6 @@ package com.baidu.brpc.server.grpc;
 
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.GeneratedMessage;
-import io.grpc.MethodDescriptor;
-import io.grpc.ServerServiceDefinition;
-import io.grpc.ServiceDescriptor;
-import io.grpc.stub.ServerCalls;
 import io.grpc.stub.StreamObserver;
 
 import java.lang.reflect.Method;
@@ -13,13 +9,6 @@ import java.lang.reflect.Method;
 import static io.grpc.MethodDescriptor.generateFullMethodName;
 import static io.grpc.stub.ServerCalls.asyncUnaryCall;
 
-
-/**
- * bind brpc service to grpc server
- * @author keweiwang@gmail.com
- * @param <ReqT>
- * @param <RespT>
- */
 public class BrpcGrpcServiceBinder<ReqT extends GeneratedMessage, RespT extends GeneratedMessage> {
 
     private Object serviceInstance;
@@ -54,13 +43,13 @@ public class BrpcGrpcServiceBinder<ReqT extends GeneratedMessage, RespT extends 
     }
 
 
-    private MethodDescriptor getGrpcMethod() {
-        MethodDescriptor<ReqT, RespT> getGrpcMethodResult;
+    private io.grpc.MethodDescriptor getGrpcMethod() {
+        io.grpc.MethodDescriptor<ReqT, RespT> getGrpcMethodResult;
         if ((getGrpcMethodResult = getGrpcMethodInstance) == null) {
             synchronized (BrpcGrpcServiceBinder.class) {
                 if ((getGrpcMethodResult = getGrpcMethodInstance) == null) {
                     getGrpcMethodResult = getGrpcMethodInstance =
-                            MethodDescriptor.<ReqT, RespT>newBuilder()
+                            io.grpc.MethodDescriptor.<ReqT, RespT>newBuilder()
                                     .setType(io.grpc.MethodDescriptor.MethodType.UNARY)
                                     .setFullMethodName(generateFullMethodName(
                                             fullServiceName, methodName))
@@ -77,8 +66,8 @@ public class BrpcGrpcServiceBinder<ReqT extends GeneratedMessage, RespT extends 
 
     }
 
-    public final ServerServiceDefinition bindService(String methodName) {
-        return ServerServiceDefinition.builder(getServiceDescriptor())
+    public final io.grpc.ServerServiceDefinition bindService(String methodName) {
+        return io.grpc.ServerServiceDefinition.builder(getServiceDescriptor())
                 .addMethod(
                         getGrpcMethod(),
                         asyncUnaryCall(
@@ -90,8 +79,8 @@ public class BrpcGrpcServiceBinder<ReqT extends GeneratedMessage, RespT extends 
                 .build();
     }
 
-    private ServiceDescriptor getServiceDescriptor() {
-        ServiceDescriptor result;
+    public io.grpc.ServiceDescriptor getServiceDescriptor() {
+        io.grpc.ServiceDescriptor result;
         if ((result = getGrpcServiceDescriptorInstance) == null) {
 
             synchronized (BrpcGrpcServiceBinder.class) {
@@ -108,10 +97,10 @@ public class BrpcGrpcServiceBinder<ReqT extends GeneratedMessage, RespT extends 
     }
 
     final class MethodHandlers<ReqRawT, RespRawT> implements
-            ServerCalls.UnaryMethod<ReqRawT, RespRawT>,
-            ServerCalls.ServerStreamingMethod<ReqRawT, RespRawT>,
-            ServerCalls.ClientStreamingMethod<ReqRawT, RespRawT>,
-            ServerCalls.BidiStreamingMethod<ReqRawT, RespRawT> {
+            io.grpc.stub.ServerCalls.UnaryMethod<ReqRawT, RespRawT>,
+            io.grpc.stub.ServerCalls.ServerStreamingMethod<ReqRawT, RespRawT>,
+            io.grpc.stub.ServerCalls.ClientStreamingMethod<ReqRawT, RespRawT>,
+            io.grpc.stub.ServerCalls.BidiStreamingMethod<ReqRawT, RespRawT> {
 
         private Object serviceInstance;
 
