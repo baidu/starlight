@@ -338,6 +338,11 @@
                 <version>2.13.0</version>
             </dependency>
             <dependency>
+                <groupId>com.alibaba</groupId>
+                <artifactId>hessian-lite</artifactId>
+                <version>3.2.5</version>
+            </dependency>
+            <dependency>
                 <groupId>com.pszymczyk.consul</groupId>
                 <artifactId>embedded-consul</artifactId>
                 <version>1.1.0</version>

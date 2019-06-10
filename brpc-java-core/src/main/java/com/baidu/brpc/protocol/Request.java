@@ -142,4 +142,8 @@ public interface Request {
     Integer getWriteTimeoutMillis();
 
     void setWriteTimeoutMillis(Integer writeTimeoutMillis);
+
+    boolean isHeartbeat();
+
+    void setHeartbeat(boolean heartbeat);
 }

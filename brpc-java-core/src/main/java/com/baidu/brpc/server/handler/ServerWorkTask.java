@@ -56,7 +56,7 @@ public class ServerWorkTask implements Runnable {
             response.setRpcMethodInfo(request.getRpcMethodInfo());
         }
 
-        if (response.getException() == null) {
+        if (response.getException() == null && !request.isHeartbeat()) {
             try {
                 InterceptorChain interceptorChain = new DefaultInterceptorChain(rpcServer.getInterceptors());
                 interceptorChain.intercept(request, response);

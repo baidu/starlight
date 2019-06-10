@@ -57,6 +57,7 @@ public abstract class AbstractRequest implements Request {
     private String serviceTag;
     private Integer readTimeoutMillis;
     private Integer writeTimeoutMillis;
+    private boolean heartbeat;
 
     /**
      * 订阅信息，客户端请求时，将订阅的服务信息存入
@@ -88,6 +89,7 @@ public abstract class AbstractRequest implements Request {
         serviceTag = null;
         readTimeoutMillis = null;
         writeTimeoutMillis = null;
+        heartbeat = false;
     }
 
     @Override
