@@ -4,7 +4,6 @@
 package com.baidu.brpc.client.channel;
 
 import java.net.InetSocketAddress;
-import java.util.HashMap;
 import java.util.Queue;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -18,10 +17,9 @@ import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.RpcRequest;
-import com.baidu.brpc.protocol.push.RegistryContent;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushProtocol;
-import com.baidu.brpc.server.ChannelManager;
+import com.baidu.brpc.server.push.ClientManager;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -55,35 +53,54 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         if (!rpcClientOptions.isServerPush()) {
             return;
         }
-
         if (!(protocol instanceof ServerPushProtocol)) {
             return;
         }
+        // 提前设置
+        //        ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(channelFuture.channel());
+        //        channelInfo.setChannelGroup(this);
+        //        channelInfo.setProtocol(protocol);
 
         RpcRequest r = new RpcRequest();
+        r.setChannel(channelFuture.channel());
+        r.setReadTimeoutMillis(10 * 1000);
+        r.setWriteTimeoutMillis(10 * 1000);
         SPHead spHead = new SPHead();
-        spHead.type = SPHead.TYPE_CLIENT_REGISTER_REQUEST; // 注册类型
+        spHead.type = SPHead.TYPE_REQUEST; // 注册类型
         r.setSpHead(spHead);
-        HashMap<String, Object> kv = new HashMap<String, Object>();
-        kv.put("clientName", rpcClientOptions.getClientName());
-        r.setKvAttachment(kv);
-        r.setServiceName("com.baidu.brpc.server.ChannelManager");
-        r.setMethodName("report");
-        RpcMethodInfo putChannel = MethodUtils.getRpcMethodInfo(ChannelManager.class, "report");
+
+        String serviceName = "com.baidu.brpc.server.push.ClientManager";
+        String methodName = "registerClient";
+        r.setServiceName(serviceName);
+        r.setMethodName(methodName);
+        RpcMethodInfo putChannel = MethodUtils.getRpcMethodInfo(ClientManager.class, methodName);
         r.setRpcMethodInfo(putChannel);
-        RegistryContent registryContent = new RegistryContent();
-        registryContent.setClientName(rpcClient.getRpcClientOptions().getClientName());
-        r.setArgs(new Object[] {registryContent});
+        r.setArgs(new Object[] {rpcClient.getRpcClientOptions().getClientName()});
+
+        //        AsyncAwareFuture future = rpcClient.sendRequest(r);
+        //        try {
+        //            log.info("send client register to server , local :"+channelFuture.channel().remoteAddress()
+        // .toString());
+        //            Object o = future.get(1000 * 1000, TimeUnit.MILLISECONDS);
+        //            int x = 3;
+        //        } catch (Exception e) {
+        //            log.error("exception :", e);
+        //        }
+        //        if (future.isAsync()) {
+        //            response.setRpcFuture((RpcFuture) future);
+        //        } else {
+        //            response.setResult(future.get(request.getReadTimeoutMillis(), TimeUnit.MILLISECONDS));
+        //        }
+
         ByteBuf byteBuf;
         try {
             log.info("send sendClientNameToServer  , name:{}", rpcClientOptions.getClientName());
-            byteBuf = ((ServerPushProtocol) protocol).encodeRequest(r);
+            byteBuf = protocol.encodeRequest(r);
         } catch (Exception e) {
             log.error("send report packet to server, encode packet failed, msg={}", e);
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed");
         }
         channelFuture.channel().writeAndFlush(byteBuf);
-
     }
 
     @Override

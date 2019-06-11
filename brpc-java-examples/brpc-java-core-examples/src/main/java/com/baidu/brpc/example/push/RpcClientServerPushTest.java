@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.example.standard.push;
+package com.baidu.brpc.example.push;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -24,11 +24,10 @@ import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
+import com.baidu.brpc.example.push.userservice.UserPushApiImpl;
 import com.baidu.brpc.example.standard.EchoService;
-import com.baidu.brpc.example.standard.userservice.UserPushApiImpl;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.server.ServiceManager;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,11 +38,11 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class RpcClientServerPushTest {
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(1000);
+        clientOption.setWriteTimeoutMillis(20 * 1000);
+        clientOption.setReadTimeoutMillis(20 * 1000);
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(1);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
@@ -64,10 +63,15 @@ public class RpcClientServerPushTest {
 
         // sync call
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-
-        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         // 注册实现push方法
-        ServiceManager.getInstance().registerPushService(new UserPushApiImpl());
+        rpcClient.registerPushService(new UserPushApiImpl());
+        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
+
+        //  ClientManager clientManager = BrpcProxy.getProxy(rpcClient, ClientManager.class);
+        // Thread.sleep(3000);
+        // Response response = clientManager.registerClient("123");
+
+        // echoService.echoReport(new ReportBean());
 
         synchronized(RpcClientServerPushTest.class) {
             try {

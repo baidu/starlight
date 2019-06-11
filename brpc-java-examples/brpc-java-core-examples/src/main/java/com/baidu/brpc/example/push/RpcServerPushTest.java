@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.example.standard.push;
+package com.baidu.brpc.example.push;
 
-import com.baidu.brpc.client.BrpcProxy;
+import com.baidu.brpc.example.push.userservice.PushData;
+import com.baidu.brpc.example.push.userservice.PushResult;
+import com.baidu.brpc.example.push.userservice.UserPushApi;
 import com.baidu.brpc.example.standard.EchoServiceImpl;
-import com.baidu.brpc.example.standard.userservice.PushData;
-import com.baidu.brpc.example.standard.userservice.PushResult;
-import com.baidu.brpc.example.standard.userservice.UserPushApi;
 import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.server.BrpcPushProxy;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.utils.GsonUtils;
@@ -50,9 +50,9 @@ public class RpcServerPushTest {
         rpcServer.registerService(new EchoServiceImpl());
 
         // get push api
-        UserPushApi proxyPushApi = (UserPushApi) BrpcProxy.getProxy(rpcServer, UserPushApi.class);
+        UserPushApi proxyPushApi = (UserPushApi) BrpcPushProxy.getProxy(rpcServer, UserPushApi.class);
         rpcServer.start();
-
+        //
         Thread.sleep(13 * 1000);
         PushData p = new PushData();
         p.setData("pushpush");

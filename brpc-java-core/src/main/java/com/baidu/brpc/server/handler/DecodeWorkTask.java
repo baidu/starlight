@@ -28,10 +28,10 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.http.BrpcHttpResponseEncoder;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
+import com.baidu.brpc.protocol.push.DefaultServerPushProtocol;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushPacket;
 import com.baidu.brpc.protocol.push.ServerPushProtocol;
-import com.baidu.brpc.server.ChannelManager;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.ServerStatus;
 import com.baidu.brpc.utils.ThreadPool;
@@ -106,10 +106,7 @@ public class DecodeWorkTask implements Runnable {
             }
         } else if (protocol instanceof ServerPushProtocol) {
             SPHead spHead = ((ServerPushPacket) packet).getSpHead();
-            if (spHead.type == SPHead.TYPE_CLIENT_REGISTER_REQUEST) { // client注册
-                processRegisterRequest();
-                return;
-            } else if (spHead.type == SPHead.TYPE_RESPONSE) {
+            if (spHead.type == SPHead.TYPE_RESPONSE) {
                 processClientResponse();
                 return;
             } else {
@@ -154,21 +151,12 @@ public class DecodeWorkTask implements Runnable {
     }
 
     /**
-     * 注册请求处理
-     */
-    public void processRegisterRequest() {
-        ChannelManager manager = ChannelManager.getInstance();
-        String clientName = ((ServerPushProtocol) protocol).decodeClientNameByRegisterRequest(packet);
-        manager.putChannel(clientName, ctx.channel());
-    }
-
-    /**
      * 处理client的返回response
      */
     public void processClientResponse() {
         Response response;
         try {
-            response = ((ServerPushProtocol) protocol).decodeServerPushResponse(packet, ctx);
+            response = ((DefaultServerPushProtocol) protocol).decodeServerPushResponse(packet, ctx);
         } catch (Exception e) {
             log.warn("decode response failed:", e);
             return;

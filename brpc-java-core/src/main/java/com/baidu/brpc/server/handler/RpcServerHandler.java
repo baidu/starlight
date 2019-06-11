@@ -100,7 +100,7 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
 
     /**
      * 尝试用各个协议解析header。
-     * 目前所有的协议至少都需要12字节，所以第一个协议抛出not enough data异常后，就不重试剩余协议了。
+     * 所目前所有的协议至少都需要12字节，以第一个协议抛出not enough data异常后，就不重试剩余协议了。
      * 只要有一个协议抛too big data异常，就不再重试剩余协议。
      *
      * @param channelInfo      channel信息，包含protocol

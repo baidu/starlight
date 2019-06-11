@@ -5,6 +5,7 @@
 package com.baidu.brpc.server.handler;
 
 import java.lang.reflect.InvocationTargetException;
+import java.net.SocketAddress;
 
 import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.interceptor.DefaultInterceptorChain;
@@ -39,16 +40,18 @@ public class ServerWorkTask implements Runnable {
         RpcContext rpcContext = null;
         if (request != null) {
             request.setChannel(ctx.channel());
+            rpcContext = RpcContext.getContext();
+            rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
+            rpcContext.setChannel(ctx.channel());
+
             if (request.getBinaryAttachment() != null
                     || request.getKvAttachment() != null) {
-                rpcContext = RpcContext.getContext();
                 if (request.getBinaryAttachment() != null) {
                     rpcContext.setRequestBinaryAttachment(request.getBinaryAttachment());
                 }
                 if (request.getKvAttachment() != null) {
                     rpcContext.setRequestKvAttachment(request.getKvAttachment());
                 }
-                rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
             }
 
             // 处理 server push的注册请求
@@ -97,7 +100,10 @@ public class ServerWorkTask implements Runnable {
 
         try {
             ByteBuf byteBuf = protocol.encodeResponse(request, response);
+            int capacity = byteBuf.capacity();
             ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);
+            SocketAddress socketAddress = ctx.channel().remoteAddress();
+            log.trace("write and flushed , capacity:" + capacity + " , channel:" + socketAddress.toString());
             protocol.afterResponseSent(request, response, channelFuture);
         } catch (Exception ex) {
             log.warn("send response failed:", ex);

@@ -17,6 +17,6 @@ public class ServerPushProtocolFactory implements ProtocolFactory {
 
     @Override
     public Protocol createProtocol(String encoding) {
-        return new ServerPushProtocol(encoding);
+        return new DefaultServerPushProtocol(encoding);
     }
 }

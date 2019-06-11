@@ -89,6 +89,7 @@ import io.netty.util.Timer;
  */
 @SuppressWarnings("unchecked")
 public class RpcClient {
+
     private static final Logger LOG = LoggerFactory.getLogger(RpcClient.class);
 
     private RpcClientOptions rpcClientOptions = new RpcClientOptions();
@@ -105,6 +106,7 @@ public class RpcClient {
     private SubscribeInfo subscribeInfo;
     private AtomicBoolean stop = new AtomicBoolean(false);
     private InstanceProcessor instanceProcessor;
+    //   private ClientManager clientManager;
 
     /**
      * callBack thread when method invoke fail
@@ -117,12 +119,15 @@ public class RpcClient {
     private FastFutureStore fastFutureStore;
 
     /**
-     * 注册server push可以调用的接口
-     *
      * @param service
      */
     public void registerPushService(Object service) {
-        ServiceManager.getInstance().registerService(service);
+        ServiceManager.getInstance().registerPushService(service);
+        // 如果只注册了pushService，没有注册一个普通的服务的话， client不会主动和server建立连接， 这里主动进行连接
+        if (instanceProcessor.getInstances().size() == 0) {
+            List<ServiceInstance> lookup = namingService.lookup(new SubscribeInfo());
+            instanceProcessor.addInstances(lookup);
+        }
     }
 
     public RpcClient(String namingServiceUrl) {
@@ -229,6 +234,7 @@ public class RpcClient {
                 subscribeInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
                 subscribeInfo.setServiceId(namingOptions.getServiceId());
             }
+
             List<ServiceInstance> instances = this.namingService.lookup(subscribeInfo);
             instanceProcessor.addInstances(instances);
             this.namingService.subscribe(subscribeInfo, new NotifyListener() {

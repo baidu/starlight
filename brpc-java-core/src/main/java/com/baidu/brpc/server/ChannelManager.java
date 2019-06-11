@@ -89,4 +89,13 @@ public class ChannelManager {
             lock.writeLock().unlock();
         }
     }
+
+    public Map<String, List<Channel>> getChannelMap() {
+        return channelMap;
+    }
+
+    public void setChannelMap(Map<String, List<Channel>> channelMap) {
+        this.channelMap = channelMap;
+    }
+
 }

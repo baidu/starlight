@@ -4,7 +4,12 @@
 
 package com.baidu.brpc.interceptor;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.client.AsyncAwareFuture;
 import com.baidu.brpc.client.RpcFuture;
@@ -25,6 +30,8 @@ import lombok.Setter;
 
 @Setter
 public class ServerPushInterceptor extends AbstractInterceptor {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ServerPushInterceptor.class);
 
     protected RpcServer rpcServer;
 
@@ -78,6 +85,11 @@ public class ServerPushInterceptor extends AbstractInterceptor {
         Object[] args = request.getArgs();
         String clientName = (String) args[args.length - 1];
         Channel channel = channelManager.getChannel(clientName);
+        if (channel == null) {
+            Map<String, List<Channel>> channelMap = channelManager.getChannelMap();
+            LOG.error("cannot fand a valid channel by name:" + clientName);
+            throw new RpcException("cannot fand a valid channel by name:" + clientName);
+        }
         request.setChannel(channel);
         return channel;
     }

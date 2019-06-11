@@ -42,8 +42,10 @@ import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
 import com.baidu.brpc.server.handler.RpcServerHandler;
+import com.baidu.brpc.server.push.ClientManagerImpl;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
@@ -115,6 +117,7 @@ public class RpcServer {
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
     private ServerStatus serverStatus;
     private AtomicBoolean stop = new AtomicBoolean(false);
+    private ClientManagerImpl clientManagerImpl;
 
     public RpcServer(int port) {
         this(null, port, new RpcServerOptions(), null);
@@ -221,6 +224,11 @@ public class RpcServer {
                 RpcServer.this.shutdown();
             }
         }));
+
+        // 注册serverPush的内部服务接口
+        if (protocol instanceof ServerPushProtocol) {
+            registerService(new ClientManagerImpl());
+        }
     }
 
     public void registerService(Object service) {
@@ -266,6 +274,7 @@ public class RpcServer {
                     new CustomThreadFactory(service.getClass().getSimpleName() + "-work-thread"));
             customThreadPools.add(customThreadPool);
         }
+
         if (targetClass == null) {
             serviceManager.registerService(service, customThreadPool);
         } else {

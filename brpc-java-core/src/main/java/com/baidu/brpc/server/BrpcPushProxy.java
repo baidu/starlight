@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.client;
+package com.baidu.brpc.server;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,22 +25,28 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import org.apache.commons.lang3.Validate;
+
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.DefaultInterceptorChain;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.interceptor.InterceptorChain;
-import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.interceptor.ServerPushInterceptor;
+import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.nshead.NSHead;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.protocol.push.SPHead;
+import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ProtobufUtils;
 
+import io.netty.util.HashedWheelTimer;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -50,7 +57,7 @@ import net.sf.cglib.proxy.MethodProxy;
  */
 @SuppressWarnings("unchecked")
 @Slf4j
-public class BrpcProxy implements MethodInterceptor {
+public class BrpcPushProxy implements MethodInterceptor {
 
     private static final Set<String> notProxyMethodSet = new HashSet<String>();
 
@@ -66,18 +73,12 @@ public class BrpcProxy implements MethodInterceptor {
         notProxyMethodSet.add("finalize");
     }
 
-    private RpcClient rpcClient;
-
+    private RpcServer rpcServer;
+    private HashedWheelTimer timeoutTimer;
     private static Map<String, RpcMethodInfo> rpcMethodMap = new HashMap<String, RpcMethodInfo>();
 
-    /**
-     * 初始化时提前解析好method信息，在rpc交互时会更快。
-     *
-     * @param rpcClient rpc client对象
-     * @param clazz     rpc接口类
-     */
-    protected BrpcProxy(RpcClient rpcClient, Class clazz) {
-        this.rpcClient = rpcClient;
+    public static <T> T getProxy(RpcServer rpcServer, Class clazz) {
+
         Method[] methods = clazz.getMethods();
         for (Method method : methods) {
             if (notProxyMethodSet.contains(method.getName())) {
@@ -93,7 +94,7 @@ public class BrpcProxy implements MethodInterceptor {
                         "invalid params, the correct is ([RpcContext], Request, [Callback])");
             }
             if (Future.class.isAssignableFrom(method.getReturnType())
-                    && (!RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1]))) {
+                    && (paramLength < 1 || !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1]))) {
                 throw new IllegalArgumentException("returnType is Future, but last argument is not RpcCallback");
             }
 
@@ -132,20 +133,17 @@ public class BrpcProxy implements MethodInterceptor {
             log.debug("client serviceName={}, methodName={}",
                     method.getDeclaringClass().getName(), method.getName());
         }
-    }
 
-    public static <T> T getProxy(RpcClient rpcClient, Class clazz) {
-        return getProxy(rpcClient, clazz, null);
-    }
-
-    public static <T> T getProxy(RpcClient rpcClient, Class clazz, NamingOptions namingOptions) {
-        rpcClient.setServiceInterface(clazz, namingOptions);
-        rpcClient.getLoadBalanceInterceptor().setRpcClient(rpcClient);
-        rpcClient.getInterceptors().add(rpcClient.getLoadBalanceInterceptor());
         Enhancer en = new Enhancer();
         en.setSuperclass(clazz);
-        en.setCallback(new BrpcProxy(rpcClient, clazz));
+        en.setCallback(new BrpcPushProxy(rpcServer));
         return (T) en.create();
+    }
+
+    public BrpcPushProxy(RpcServer rpcServer) {
+        this.rpcServer = rpcServer;
+        timeoutTimer = new HashedWheelTimer(new CustomThreadFactory("timeout-timer-thread"));
+
     }
 
     /**
@@ -163,6 +161,7 @@ public class BrpcProxy implements MethodInterceptor {
     @Override
     public Object intercept(Object obj, Method method, Object[] args,
                             MethodProxy proxy) throws Throwable {
+        Validate.notNull(rpcServer);
         String methodName = method.getName();
         RpcMethodInfo rpcMethodInfo = rpcMethodMap.get(methodName);
         if (rpcMethodInfo == null) {
@@ -178,16 +177,16 @@ public class BrpcProxy implements MethodInterceptor {
         int writeTimeout = 10 * 1000;
         // 区分 server端push还是client端发请求
 
-        interceptors = rpcClient.getInterceptors();
-        request = rpcClient.getProtocol().createRequest();
-        response = rpcClient.getProtocol().getResponse();
+        request = rpcServer.getProtocol().createRequest();
+        response = rpcServer.getProtocol().getResponse();
         SPHead spHead = new SPHead();
-        spHead.type = SPHead.TYPE_REQUEST;
+        spHead.type = SPHead.TYPE_SERVER_PUSH_REQUEST;
         request.setSpHead(spHead);
-        request.setCompressType(rpcClient.getRpcClientOptions().getCompressType().getNumber());
-        request.setSubscribeInfo(rpcClient.getSubscribeInfo());
-        readTimeout = rpcClient.getRpcClientOptions().getReadTimeoutMillis();
-        writeTimeout = rpcClient.getRpcClientOptions().getWriteTimeoutMillis();
+        request.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE.getNumber());
+        interceptors = new ArrayList<Interceptor>();
+        ServerPushInterceptor serverPushInterceptor = new ServerPushInterceptor();
+        serverPushInterceptor.setRpcServer(rpcServer);
+        interceptors.add(serverPushInterceptor);
 
         try {
 

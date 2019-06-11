@@ -1,4 +1,4 @@
-package com.baidu.brpc.example.standard.userservice;
+package com.baidu.brpc.example.push.userservice;
 
 public class UserPushApiImpl implements UserPushApi {
 
