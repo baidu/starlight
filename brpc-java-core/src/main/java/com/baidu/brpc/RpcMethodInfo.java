@@ -53,7 +53,7 @@ public class RpcMethodInfo {
         this.methodName = metaInfo.getMethodName();
         this.method = method;
         Type[] inputClasses = method.getGenericParameterTypes();
-        if (inputClasses.length <= 0) {
+        if (inputClasses.length < 0) {
             throw new IllegalArgumentException("invalid params");
         }
         this.inputClasses = inputClasses;

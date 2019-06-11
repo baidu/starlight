@@ -40,7 +40,7 @@ public class ProtobufUtils {
     public static MessageType getMessageType(Method method) {
         Class<?>[] types = method.getParameterTypes();
         Class returnType = method.getReturnType();
-        if (types.length <= 0) {
+        if (types.length < 0) {
             throw new IllegalArgumentException("invalid rpc method params");
         }
 
