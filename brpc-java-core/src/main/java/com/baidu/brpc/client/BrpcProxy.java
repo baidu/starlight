@@ -83,12 +83,9 @@ public class BrpcProxy implements MethodInterceptor {
 
             Class[] parameterTypes = method.getParameterTypes();
             int paramLength = parameterTypes.length;
-            if (paramLength < 1) {
-                throw new IllegalArgumentException(
-                        "invalid params, the correct is ([RpcContext], Request, [Callback])");
-            }
-            if (Future.class.isAssignableFrom(method.getReturnType())
-                    && (!RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1]))) {
+            if (paramLength >= 1
+                    && Future.class.isAssignableFrom(method.getReturnType())
+                    && !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1])) {
                 throw new IllegalArgumentException("returnType is Future, but last argument is not RpcCallback");
             }
 
