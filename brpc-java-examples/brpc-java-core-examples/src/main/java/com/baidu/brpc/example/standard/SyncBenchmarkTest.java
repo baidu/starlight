@@ -137,8 +137,8 @@ public class SyncBenchmarkTest {
 
             while (!stop) {
                 try {
-                    RpcContext controller = new RpcContext();
-                    controller.setRequestBinaryAttachment(messageBytes);
+                    RpcContext rpcContext = RpcContext.getContext();
+                    rpcContext.setRequestBinaryAttachment(messageBytes);
                     long beginTime = System.nanoTime();
                     Echo.EchoResponse response = echoService.echo(request);
                     if (!response.getMessage().equals(request.getMessage())) {
@@ -146,8 +146,9 @@ public class SyncBenchmarkTest {
                     }
                     sendInfo.elapsedNs += (System.nanoTime() - beginTime);
                     sendInfo.successRequestNum++;
-                    if (controller.getResponseBinaryAttachment() != null) {
-                        ReferenceCountUtil.release(controller.getResponseBinaryAttachment());
+                    rpcContext = RpcContext.getContext();
+                    if (rpcContext.getResponseBinaryAttachment() != null) {
+                        ReferenceCountUtil.release(rpcContext.getResponseBinaryAttachment());
                     }
                 } catch (RpcException ex) {
                     log.info("send exception:" + ex.getMessage());
