@@ -22,9 +22,10 @@ import lombok.Setter;
 @Setter
 @Getter
 public class ServerPushPacket {
+
     private SPHead spHead; // spHead请求头
 
-    //  private ByteBuf bodyBuf; // body
+    private SPBody spBody; // body
 
     public SPBody getSpBody() {
         return spBody;
@@ -34,8 +35,6 @@ public class ServerPushPacket {
         this.spBody = spBody;
     }
 
-    private SPBody spBody; // body
-
     public SPHead getSpHead() {
         return spHead;
     }
@@ -43,13 +42,5 @@ public class ServerPushPacket {
     public void setSpHead(SPHead spHead) {
         this.spHead = spHead;
     }
-
-    //    public ByteBuf getBodyBuf() {
-    //        return bodyBuf;
-    //    }
-    //
-    //    public void setBodyBuf(ByteBuf bodyBuf) {
-    //        this.bodyBuf = bodyBuf;
-    //    }
 
 }

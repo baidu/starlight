@@ -28,6 +28,8 @@ import com.baidu.brpc.example.push.userservice.UserPushApiImpl;
 import com.baidu.brpc.example.standard.EchoService;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.server.entity.ReportBean;
+import com.baidu.brpc.utils.GsonUtils;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,7 +52,7 @@ public class RpcClientServerPushTest {
         clientOption.setMaxTotalConnections(1);
         // 打开server push功能
         clientOption.setServerPush(true);
-        clientOption.setClientName("clientName1");
+        clientOption.setClientName("c2");
 
         String serviceUrl = "list://127.0.0.1:8002";
         //        String serviceUrl = "zookeeper://127.0.0.1:2181";
@@ -61,17 +63,16 @@ public class RpcClientServerPushTest {
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
 
-        // sync call
+        // 创建客户端
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
+        // 首先建立一个普通rpc client服务, 与后端建立起连接
+        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         // 注册实现push方法
         rpcClient.registerPushService(new UserPushApiImpl());
-        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
 
-        //  ClientManager clientManager = BrpcProxy.getProxy(rpcClient, ClientManager.class);
-        // Thread.sleep(3000);
-        // Response response = clientManager.registerClient("123");
-
-        // echoService.echoReport(new ReportBean());
+        //  Thread.sleep(1000);
+        Object reportBean = echoService.echoReport(new ReportBean());
+        System.out.println("report result:" + GsonUtils.toJson(reportBean));
 
         synchronized(RpcClientServerPushTest.class) {
             try {

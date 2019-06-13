@@ -1,11 +1,12 @@
-package com.baidu.btcc.rpc.handler;
+package com.baidu.brpc.server.push;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.util.AttributeKey;
 
-public class ChannelContextHolder {
-    public static final AttributeKey<String> PARTICIPANT_KEY = AttributeKey.valueOf("participant");
-    private static final ThreadLocal<ChannelHandlerContext> CURRENT_CHANNEL = new ThreadLocal<>();
+public class PushChannelContextHolder {
+
+    public static final AttributeKey<String> CLIENTNAME_KEY = AttributeKey.valueOf("clientName");
+    private static final ThreadLocal<ChannelHandlerContext> CURRENT_CHANNEL = new ThreadLocal<ChannelHandlerContext>();
 
     public static void setCurrentChannel(ChannelHandlerContext ctx) {
         CURRENT_CHANNEL.set(ctx);

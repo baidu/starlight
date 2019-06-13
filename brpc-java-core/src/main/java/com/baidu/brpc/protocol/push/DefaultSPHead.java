@@ -16,35 +16,20 @@
 
 package com.baidu.brpc.protocol.push;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 
-import com.baidu.brpc.exceptions.BadSchemaException;
-
-import io.netty.buffer.ByteBuf;
-
 /**
- * * server push 产品线网络交互统一的包头，注释包含为(M)的为必须遵循的规范
- *
- * <p>
- * 2+2+4+16+4+4+4=36 byte in total.
+ * 2+2+8+16+4+4+4=36 byte in total.
  */
-public class SPHead {
+public class DefaultSPHead implements SPHead {
 
     public static final int SPHEAD_LENGTH = 40;
     public static final int SPHEAD_MAGIC_NUM = 0xfb201906;
     public static final int PROVIDER_LENGTH = 16;
 
-    public static final int TYPE_RESPONSE = 0;
-    public static final int TYPE_REQUEST = 1;
-    public static final int TYPE_CLIENT_REGISTER_REQUEST = 2;
-    public static final int TYPE_SERVER_PUSH_REQUEST = 3;
-
-    private static final byte[] ZEROS = new byte[PROVIDER_LENGTH];
+    public static final byte[] ZEROS = new byte[PROVIDER_LENGTH];
 
     public short id = 0x00; // 2
 
@@ -60,7 +45,7 @@ public class SPHead {
 
     public int bodyLength = 0; // 4
 
-    public SPHead(int logId, short id, short version, String provider, int bodyLength) {
+    public DefaultSPHead(int logId, short id, short version, String provider, int bodyLength) {
         this.logId = logId;
         this.id = id;
         this.version = version;
@@ -70,55 +55,32 @@ public class SPHead {
         this.bodyLength = bodyLength;
     }
 
-    public SPHead(int logId, int bodyLength) {
+    public DefaultSPHead(int logId, int bodyLength) {
         this.logId = logId;
         this.bodyLength = bodyLength;
     }
 
-    public SPHead() {
+    public DefaultSPHead() {
     }
 
-    public static SPHead fromByteBuf(ByteBuf buf) throws BadSchemaException {
-        SPHead head = new SPHead();
-        if (buf.readableBytes() < SPHEAD_LENGTH) {
-            throw new IllegalArgumentException("not enough bytes to read");
-        }
-        head.id = buf.readShortLE();
-        head.version = buf.readShortLE();
-        head.logId = buf.readLongLE();
-        byte[] bytes = new byte[PROVIDER_LENGTH];
-        buf.readBytes(bytes);
-        int n = 0;
-        while (n < bytes.length && bytes[n] != 0) {
-            n++;
-        }
-        head.provider = new String(bytes, 0, n);
-        head.magicNumber = buf.readIntLE();
-        if (head.magicNumber != SPHEAD_MAGIC_NUM) {
-            throw new BadSchemaException("nshead magic number does not match");
-        }
-        head.type = buf.readIntLE();
-        head.bodyLength = buf.readIntLE();
-        return head;
+    @Override
+    public long getLogId() {
+        return logId;
     }
 
-    public byte[] toBytes() {
-        ByteBuffer buf = ByteBuffer.allocate(SPHEAD_LENGTH);
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        buf.putShort(id);
-        buf.putShort(version);
-        buf.putLong(logId);
-        byte[] providerBytes = provider.getBytes();
-        if (providerBytes.length >= PROVIDER_LENGTH) {
-            buf.put(providerBytes, 0, PROVIDER_LENGTH);
-        } else {
-            buf.put(providerBytes, 0, providerBytes.length);
-            buf.put(ZEROS, 0, PROVIDER_LENGTH - providerBytes.length);
-        }
-        buf.putInt(magicNumber);
-        buf.putInt(type);
-        buf.putInt(bodyLength);
-        return buf.array();
+    @Override
+    public void setLogId(long logId) {
+        this.logId = logId;
+    }
+
+    @Override
+    public int getType() {
+        return type;
+    }
+
+    @Override
+    public void setType(int type) {
+        this.type = type;
     }
 
     @Override
@@ -135,10 +97,10 @@ public class SPHead {
         if (obj == null) {
             return false;
         }
-        if (!(obj instanceof SPHead)) {
+        if (!(obj instanceof DefaultSPHead)) {
             return false;
         }
-        SPHead other = (SPHead) obj;
+        DefaultSPHead other = (DefaultSPHead) obj;
         return new EqualsBuilder().append(id, other.id).append(version, other.version).append(logId, other.logId)
                 .append(type, other.type).append(bodyLength, other.bodyLength).isEquals();
     }

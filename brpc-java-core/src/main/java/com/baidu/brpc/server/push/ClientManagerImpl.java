@@ -8,6 +8,7 @@ import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.server.ChannelManager;
 
 import io.netty.channel.Channel;
+import io.netty.util.Attribute;
 
 public class ClientManagerImpl implements ClientManager {
 
@@ -20,6 +21,8 @@ public class ClientManagerImpl implements ClientManager {
         RpcContext context = RpcContext.getContext();
         Channel channel = context.getChannel();
         Validate.notNull(channel, "rpc context channel cannot be null");
+        Attribute<String> clientInfo = channel.attr(PushChannelContextHolder.CLIENTNAME_KEY);
+        clientInfo.set(clientName);
         ChannelManager.getInstance().putChannel(clientName, channel);
         LOG.info("finished save client Name , channel:" + channel.remoteAddress().toString());
         return Response.success();

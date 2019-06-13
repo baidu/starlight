@@ -43,6 +43,7 @@ import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.nshead.NSHead;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.protocol.push.SPHead;
+import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ProtobufUtils;
 
@@ -179,8 +180,8 @@ public class BrpcPushProxy implements MethodInterceptor {
 
         request = rpcServer.getProtocol().createRequest();
         response = rpcServer.getProtocol().getResponse();
-        SPHead spHead = new SPHead();
-        spHead.type = SPHead.TYPE_SERVER_PUSH_REQUEST;
+        SPHead spHead = ((ServerPushProtocol) rpcServer.getProtocol()).createSPHead();
+        spHead.setType(SPHead.TYPE_SERVER_PUSH_REQUEST);
         request.setSpHead(spHead);
         request.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE.getNumber());
         interceptors = new ArrayList<Interceptor>();

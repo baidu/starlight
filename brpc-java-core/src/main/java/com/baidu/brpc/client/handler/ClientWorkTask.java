@@ -27,7 +27,7 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushPacket;
-import com.baidu.brpc.protocol.push.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
 import com.baidu.brpc.server.ServiceManager;
 
 import io.netty.buffer.ByteBuf;
@@ -55,7 +55,7 @@ public class ClientWorkTask implements Runnable {
         if (protocol instanceof ServerPushProtocol) {
             // 区分类型
             SPHead spHead = ((ServerPushPacket) packet).getSpHead();
-            if (spHead.type == SPHead.TYPE_SERVER_PUSH_REQUEST) {
+            if (spHead.getType() == SPHead.TYPE_SERVER_PUSH_REQUEST) {
                 handlePushRequest();
                 return;
             }

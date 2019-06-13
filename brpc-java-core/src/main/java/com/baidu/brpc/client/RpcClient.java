@@ -123,10 +123,11 @@ public class RpcClient {
      */
     public void registerPushService(Object service) {
         ServiceManager.getInstance().registerPushService(service);
-        // 如果只注册了pushService，没有注册一个普通的服务的话， client不会主动和server建立连接， 这里主动进行连接
+
+        // 如果只注册了pushService，没有注册一个普通的服务的话， 报错
         if (instanceProcessor.getInstances().size() == 0) {
-            List<ServiceInstance> lookup = namingService.lookup(new SubscribeInfo());
-            instanceProcessor.addInstances(lookup);
+            LOG.error("there should be have normal servcies before register push service.");
+            throw new RpcException("there should be have normal services before register push service");
         }
     }
 

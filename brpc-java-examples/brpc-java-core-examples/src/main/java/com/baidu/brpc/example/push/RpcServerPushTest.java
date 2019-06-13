@@ -33,7 +33,11 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class RpcServerPushTest {
+
     public static void main(String[] args) throws InterruptedException {
+
+        //  org.apache.log4j.Logger.getLogger("com").setLevel(Level.ERROR);
+
         int port = 8002;
         if (args.length == 1) {
             port = Integer.valueOf(args[0]);
@@ -52,24 +56,27 @@ public class RpcServerPushTest {
         // get push api
         UserPushApi proxyPushApi = (UserPushApi) BrpcPushProxy.getProxy(rpcServer, UserPushApi.class);
         rpcServer.start();
-        //
+
         Thread.sleep(13 * 1000);
-        PushData p = new PushData();
-        p.setData("pushpush");
-        PushResult pushResult = proxyPushApi.clientReceive(p, "clientName1");
-        System.out.println("received push result:" + GsonUtils.toJson(pushResult));
 
-        Thread.sleep(5 * 1000);
-        p = new PushData();
-        p.setData("push test 2");
-        pushResult = proxyPushApi.clientReceive(p, "clientName1");
-        System.out.println("received push result:" + GsonUtils.toJson(pushResult));
-
-        synchronized(RpcServerPushTest.class) {
+        // push data
+        int i = 0;
+        while (true) {
+            i++;
+            PushData p = new PushData();
+            p.setData("pushData" + i);
+            String clientName = "c" + String.valueOf(i % 2 + 1);
+            log.info("pushing data to client:" + clientName);
             try {
-                RpcServerPushTest.class.wait();
-            } catch (Throwable e) {
+                // last param of api is clientName
+                PushResult pushResult = proxyPushApi.clientReceive(p, clientName);
+                log.info("received push result:" + GsonUtils.toJson(pushResult));
+            } catch (Exception e) {
+                log.error("push exception:", e);
             }
+
+            Thread.sleep(5 * 1000);
         }
+
     }
 }

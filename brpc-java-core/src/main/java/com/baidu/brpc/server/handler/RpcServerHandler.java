@@ -27,6 +27,7 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
+import com.baidu.brpc.server.ChannelManager;
 import com.baidu.brpc.server.RpcServer;
 
 import io.netty.buffer.ByteBuf;
@@ -95,6 +96,9 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
                 && !(cause instanceof IOException)) {
             log.info("service exception, ex={}", cause.getMessage());
         }
+        log.debug("meet exception, may be connection is closed, msg={}", cause.getMessage());
+        log.debug("remove from channel map");
+        ChannelManager.getInstance().removeChannel(ctx.channel());
         ctx.close();
     }
 
@@ -136,4 +140,12 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
         }
         throw new BadSchemaException("bad schema");
     }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        log.debug("channel is in active, remove from channel map");
+        ChannelManager.getInstance().removeChannel(ctx.channel());
+        ctx.fireChannelInactive();
+    }
+
 }

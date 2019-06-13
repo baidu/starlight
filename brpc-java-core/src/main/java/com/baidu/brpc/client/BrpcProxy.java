@@ -38,6 +38,7 @@ import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.nshead.NSHead;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.protocol.push.SPHead;
+import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
 import com.baidu.brpc.utils.ProtobufUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -173,14 +174,16 @@ public class BrpcProxy implements MethodInterceptor {
         List<Interceptor> interceptors = null;
         int readTimeout = 10 * 1000;
         int writeTimeout = 10 * 1000;
-        // 区分 server端push还是client端发请求
 
         interceptors = rpcClient.getInterceptors();
         request = rpcClient.getProtocol().createRequest();
         response = rpcClient.getProtocol().getResponse();
-        SPHead spHead = new SPHead();
-        spHead.type = SPHead.TYPE_REQUEST;
-        request.setSpHead(spHead);
+        if (rpcClient.getProtocol() instanceof ServerPushProtocol) {
+            SPHead spHead = ((ServerPushProtocol) rpcClient.getProtocol()).createSPHead();
+            spHead.setType(SPHead.TYPE_REQUEST);
+            request.setSpHead(spHead);
+        }
+
         request.setCompressType(rpcClient.getRpcClientOptions().getCompressType().getNumber());
         request.setSubscribeInfo(rpcClient.getSubscribeInfo());
         readTimeout = rpcClient.getRpcClientOptions().getReadTimeoutMillis();

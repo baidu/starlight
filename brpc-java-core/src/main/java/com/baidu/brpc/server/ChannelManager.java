@@ -12,7 +12,10 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.baidu.brpc.server.push.PushChannelContextHolder;
+
 import io.netty.channel.Channel;
+import io.netty.util.Attribute;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -36,10 +39,6 @@ public class ChannelManager {
     }
 
     private ChannelManager() {
-    }
-
-    public void report(String r) {
-        log.info("invoke report:" + r);
     }
 
     public void putChannel(String clientName, Channel channel) {
@@ -79,8 +78,17 @@ public class ChannelManager {
     }
 
     public void removeChannel(Channel channel) {
-        // todo
-        String participantName = "";
+
+        //        Set<Map.Entry<String, List<Channel>>> entries = channelMap.entrySet();
+        //        for(Map.Entry<String, List<Channel>> entry : entries){
+        //            List<Channel> list = entry.getValue();
+        //            if(CollectionUtils.isNotEmpty(list)){
+        //                list.remove(channel);
+        //            }
+        //        }
+
+        Attribute<String> participant = channel.attr(PushChannelContextHolder.CLIENTNAME_KEY);
+        String participantName = participant.get();
         if (StringUtils.isNotBlank(participantName)) {
             lock.writeLock().lock();
             List<Channel> channelList = channelMap.get(participantName);

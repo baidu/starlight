@@ -42,7 +42,7 @@ import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.protocol.push.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
 import com.baidu.brpc.server.handler.RpcServerHandler;
 import com.baidu.brpc.server.push.ClientManagerImpl;
@@ -363,7 +363,7 @@ public class RpcServer {
 
         // final long logId = FastFutureStore.getInstance(0).put(rpcFuture);
         request.setLogId(logId);
-        request.getSpHead().logId = logId;
+        request.getSpHead().setLogId(logId);
         // read write timeout
         final long readTimeout = request.getReadTimeoutMillis();
         final long writeTimeout = request.getWriteTimeoutMillis();

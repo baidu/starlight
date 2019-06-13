@@ -31,7 +31,7 @@ import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.protocol.push.DefaultServerPushProtocol;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushPacket;
-import com.baidu.brpc.protocol.push.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.ServerStatus;
 import com.baidu.brpc.utils.ThreadPool;
@@ -106,7 +106,7 @@ public class DecodeWorkTask implements Runnable {
             }
         } else if (protocol instanceof ServerPushProtocol) {
             SPHead spHead = ((ServerPushPacket) packet).getSpHead();
-            if (spHead.type == SPHead.TYPE_RESPONSE) {
+            if (spHead.getType() == SPHead.TYPE_RESPONSE) {
                 processClientResponse();
                 return;
             } else {

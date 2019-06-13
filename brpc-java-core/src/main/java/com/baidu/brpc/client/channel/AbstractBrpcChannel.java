@@ -10,6 +10,7 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import com.baidu.brpc.RpcMethodInfo;
+import com.baidu.brpc.client.FastFutureStore;
 import com.baidu.brpc.client.MethodUtils;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
@@ -18,7 +19,7 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.push.SPHead;
-import com.baidu.brpc.protocol.push.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
 import com.baidu.brpc.server.push.ClientManager;
 
 import io.netty.bootstrap.Bootstrap;
@@ -56,17 +57,13 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         if (!(protocol instanceof ServerPushProtocol)) {
             return;
         }
-        // 提前设置
-        //        ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(channelFuture.channel());
-        //        channelInfo.setChannelGroup(this);
-        //        channelInfo.setProtocol(protocol);
 
         RpcRequest r = new RpcRequest();
         r.setChannel(channelFuture.channel());
         r.setReadTimeoutMillis(10 * 1000);
         r.setWriteTimeoutMillis(10 * 1000);
-        SPHead spHead = new SPHead();
-        spHead.type = SPHead.TYPE_REQUEST; // 注册类型
+        SPHead spHead = ((ServerPushProtocol) protocol).createSPHead();
+        spHead.setType(SPHead.TYPE_REQUEST); // 注册类型
         r.setSpHead(spHead);
 
         String serviceName = "com.baidu.brpc.server.push.ClientManager";
@@ -77,12 +74,16 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         r.setRpcMethodInfo(putChannel);
         r.setArgs(new Object[] {rpcClient.getRpcClientOptions().getClientName()});
 
+        // generate logId
+        long logId = FastFutureStore.getInstance(0).genLogId();
+        // rpcFuture.setChannelInfo(channelInfo);
+        r.setLogId(logId);
+
         //        AsyncAwareFuture future = rpcClient.sendRequest(r);
         //        try {
         //            log.info("send client register to server , local :"+channelFuture.channel().remoteAddress()
         // .toString());
         //            Object o = future.get(1000 * 1000, TimeUnit.MILLISECONDS);
-        //            int x = 3;
         //        } catch (Exception e) {
         //            log.error("exception :", e);
         //        }
@@ -94,13 +95,17 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
 
         ByteBuf byteBuf;
         try {
-            log.info("send sendClientNameToServer  , name:{}", rpcClientOptions.getClientName());
+            log.info("send sendClientNameToServer  , name:{} , logId:{}", rpcClientOptions.getClientName(),
+                    r.getLogId());
             byteBuf = protocol.encodeRequest(r);
         } catch (Exception e) {
             log.error("send report packet to server, encode packet failed, msg={}", e);
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed");
         }
         channelFuture.channel().writeAndFlush(byteBuf);
+
+        //   Object o = rpcFuture.get(100 * 1000, TimeUnit.MILLISECONDS);
+
     }
 
     @Override

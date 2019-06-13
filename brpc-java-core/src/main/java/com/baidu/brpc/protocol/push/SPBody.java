@@ -4,33 +4,17 @@ import java.util.Map;
 
 public class SPBody {
 
-    private String id;
-
     private String serviceName;
 
     private String methodName;
 
     private Object[] parameters;
 
-    public Object getContent() {
-        return content;
-    }
-
-    public void setContent(Object content) {
-        this.content = content;
-    }
-
     private Object content;
 
     private Class<?>[] parameterTypes;
 
-    public String getId() {
-        return id;
-    }
-
-    public void setId(String id) {
-        this.id = id;
-    }
+    private Map<String, Object> attachments;
 
     public String getMethodName() {
         return methodName;
@@ -64,8 +48,6 @@ public class SPBody {
         this.attachments = attachments;
     }
 
-    private Map<String, Object> attachments;
-
     public String getServiceName() {
         return serviceName;
     }
@@ -73,5 +55,14 @@ public class SPBody {
     public void setServiceName(String serviceName) {
         this.serviceName = serviceName;
     }
+
+    public Object getContent() {
+        return content;
+    }
+
+    public void setContent(Object content) {
+        this.content = content;
+    }
+
 
 }
