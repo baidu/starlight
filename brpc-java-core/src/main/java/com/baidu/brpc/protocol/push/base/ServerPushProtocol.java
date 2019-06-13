@@ -4,6 +4,8 @@ import com.baidu.brpc.protocol.Protocol;
 
 public interface ServerPushProtocol extends Protocol {
 
+    public SPHead createSPHead();
 
+    public SPBody createSPBody();
 
 }
