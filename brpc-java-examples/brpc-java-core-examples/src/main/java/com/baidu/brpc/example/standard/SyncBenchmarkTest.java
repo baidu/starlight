@@ -54,10 +54,11 @@ public class SyncBenchmarkTest {
         options.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         options.setMaxTotalConnections(1000000);
         options.setMinIdleConnections(10);
-        options.setConnectTimeoutMillis(1000);
-        options.setWriteTimeoutMillis(1000);
-        options.setReadTimeoutMillis(1000);
+        options.setConnectTimeoutMillis(100);
+        options.setWriteTimeoutMillis(100);
+        options.setReadTimeoutMillis(100);
         options.setTcpNoDelay(false);
+        options.setMaxTryTimes(1);
         options.setChannelType(ChannelType.SINGLE_CONNECTION);
         RpcClient rpcClient = new RpcClient(args[0], options, null);
         int threadNum = Integer.parseInt(args[1]);
