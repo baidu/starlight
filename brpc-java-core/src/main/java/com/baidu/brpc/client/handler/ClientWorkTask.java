@@ -70,11 +70,11 @@ public class ClientWorkTask implements Runnable {
         }
 
         if (response.getRpcFuture() != null) {
-            log.info("handle response, logId={}", response.getLogId());
+            log.debug("handle response, logId={}", response.getLogId());
             RpcFuture future = response.getRpcFuture();
             future.handleResponse(response);
         } else {
-            log.info("rpcFuture is null, logId={}", response.getLogId());
+            log.debug("rpcFuture is null, logId={}", response.getLogId());
         }
     }
 

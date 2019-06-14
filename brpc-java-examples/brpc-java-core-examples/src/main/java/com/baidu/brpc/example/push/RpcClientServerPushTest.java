@@ -50,8 +50,7 @@ public class RpcClientServerPushTest {
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
         clientOption.setMaxTotalConnections(1);
-        // 打开server push功能
-        clientOption.setServerPush(true);
+        // 指定clientName
         clientOption.setClientName("c2");
 
         String serviceUrl = "list://127.0.0.1:8002";

@@ -108,7 +108,7 @@ public class FastFutureStore {
 
         if (currentCounter >= COUNTER_VALUE_BOUNDARY) {
             slotCounter.getAndSet(0);
-
+            currentCounter = slotCounter.getAndIncrement();
         }
         return currentCounter;
     }

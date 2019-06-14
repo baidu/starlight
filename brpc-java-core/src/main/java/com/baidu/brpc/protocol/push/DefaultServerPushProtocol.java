@@ -77,7 +77,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
      *
      * @throws Exception
      */
-    public Response decodeServerPushResponse(Object in, ChannelHandlerContext ctx) throws Exception {
+    public Response decodeServerPushResponse(Object in, ChannelHandlerContext ctx) {
         ServerPushPacket packet = (ServerPushPacket) in;
         RpcResponse rpcResponse = new RpcResponse();
         // channel info是在客户端生成连接池的时候生成的
@@ -297,11 +297,6 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
     @Override
     public SPHead createSPHead() {
         return new DefaultSPHead();
-    }
-
-    @Override
-    public SPBody createSPBody() {
-        return new SPBody();
     }
 
     @Override

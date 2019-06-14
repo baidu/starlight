@@ -72,7 +72,6 @@ public class RpcClientOptions {
     private String encoding = "utf-8";
     private Options.CompressType compressType = Options.CompressType.COMPRESS_TYPE_NONE;
     private ChannelType channelType = ChannelType.POOLED_CONNECTION;
-    private boolean serverPush;
     private String clientName;
 
     public RpcClientOptions(RpcClientOptions options) {
@@ -106,16 +105,7 @@ public class RpcClientOptions {
         this.timeBetweenEvictionRunsMillis = another.timeBetweenEvictionRunsMillis;
         this.workThreadNum = another.workThreadNum;
         this.writeTimeoutMillis = another.writeTimeoutMillis;
-        this.serverPush = another.serverPush;
         this.clientName = another.clientName;
-    }
-
-    public boolean isServerPush() {
-        return serverPush;
-    }
-
-    public void setServerPush(boolean serverPush) {
-        this.serverPush = serverPush;
     }
 
     public String getClientName() {
