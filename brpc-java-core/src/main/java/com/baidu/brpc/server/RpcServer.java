@@ -71,7 +71,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.HashedWheelTimer;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import io.netty.util.TimerTask;
@@ -118,6 +117,8 @@ public class RpcServer {
     private ServerStatus serverStatus;
     private AtomicBoolean stop = new AtomicBoolean(false);
     private ClientManagerImpl clientManagerImpl;
+
+    private Timer timeoutTimer;
 
     public RpcServer(int port) {
         this(null, port, new RpcServerOptions(), null);
@@ -224,6 +225,8 @@ public class RpcServer {
                 RpcServer.this.shutdown();
             }
         }));
+
+        timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
 
         // 注册serverPush的内部服务接口
         if (protocol instanceof ServerPushProtocol) {
@@ -369,8 +372,8 @@ public class RpcServer {
         final long writeTimeout = request.getWriteTimeoutMillis();
         // register timeout timer
         //  RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getLogId(), this);
-        HashedWheelTimer hashedWheelTimer = new HashedWheelTimer(new CustomThreadFactory("timeout-timer-thread"));
-        Timeout timeout = hashedWheelTimer.newTimeout(new TimerTask() {
+
+        Timeout timeout = timeoutTimer.newTimeout(new TimerTask() {
             @Override
             public void run(Timeout timeout) throws Exception {
                 long timeoutLogId = logId;
@@ -395,7 +398,6 @@ public class RpcServer {
             }
         }, readTimeout, TimeUnit.MILLISECONDS);
 
-        Timer timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
         //   Timeout timeout = timeoutTimer.newTimeout(timeoutTask, readTimeout, TimeUnit.MILLISECONDS);
 
         // set the missing parameters
@@ -420,7 +422,6 @@ public class RpcServer {
                 throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
             }
         } catch (Exception ex) {
-
             timeout.cancel();
             if (ex instanceof RpcException) {
                 throw (RpcException) ex;

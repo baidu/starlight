@@ -51,12 +51,6 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
     // server push 模式下，  把client的clientName发送到server去
     public void sendClientNameToServer(ChannelFuture channelFuture) {
         RpcClientOptions rpcClientOptions = rpcClient.getRpcClientOptions();
-        if (!rpcClientOptions.isServerPush()) {
-            return;
-        }
-        if (!(protocol instanceof ServerPushProtocol)) {
-            return;
-        }
 
         RpcRequest r = new RpcRequest();
         r.setChannel(channelFuture.channel());
@@ -79,23 +73,9 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         // rpcFuture.setChannelInfo(channelInfo);
         r.setLogId(logId);
 
-        //        AsyncAwareFuture future = rpcClient.sendRequest(r);
-        //        try {
-        //            log.info("send client register to server , local :"+channelFuture.channel().remoteAddress()
-        // .toString());
-        //            Object o = future.get(1000 * 1000, TimeUnit.MILLISECONDS);
-        //        } catch (Exception e) {
-        //            log.error("exception :", e);
-        //        }
-        //        if (future.isAsync()) {
-        //            response.setRpcFuture((RpcFuture) future);
-        //        } else {
-        //            response.setResult(future.get(request.getReadTimeoutMillis(), TimeUnit.MILLISECONDS));
-        //        }
-
         ByteBuf byteBuf;
         try {
-            log.info("send sendClientNameToServer  , name:{} , logId:{}", rpcClientOptions.getClientName(),
+            log.debug("send sendClientNameToServer  , name:{} , logId:{}", rpcClientOptions.getClientName(),
                     r.getLogId());
             byteBuf = protocol.encodeRequest(r);
         } catch (Exception e) {
@@ -118,7 +98,9 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
                     log.debug("future callback, connect to {}:{} success, channel={}",
                             ip, port, channelFuture.channel());
                     // 发送clientName包到server
-                    sendClientNameToServer(future);
+                    if (protocol instanceof ServerPushProtocol) {
+                        sendClientNameToServer(future);
+                    }
                 } else {
                     log.debug("future callback, connect to {}:{} failed due to {}",
                             ip, port, channelFuture.cause().getMessage());

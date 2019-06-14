@@ -28,7 +28,6 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.http.BrpcHttpResponseEncoder;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
-import com.baidu.brpc.protocol.push.DefaultServerPushProtocol;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushPacket;
 import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
@@ -156,7 +155,7 @@ public class DecodeWorkTask implements Runnable {
     public void processClientResponse() {
         Response response;
         try {
-            response = ((DefaultServerPushProtocol) protocol).decodeServerPushResponse(packet, ctx);
+            response = ((ServerPushProtocol) protocol).decodeServerPushResponse(packet, ctx);
         } catch (Exception e) {
             log.warn("decode response failed:", e);
             return;
