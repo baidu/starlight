@@ -24,6 +24,6 @@ public interface StargateDemoConstant {
     /**
      * star 并无特殊含义，单纯只是长得像
      */
-    String namingUrl = "star://10.64.72.52:8181/stargate";
+    String namingUrl = "star://127.0.0.1:2181/stargate";
 
 }
