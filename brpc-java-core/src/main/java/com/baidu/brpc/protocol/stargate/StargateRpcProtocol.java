@@ -67,7 +67,7 @@ public class StargateRpcProtocol extends AbstractProtocol {
             add("parameterTypes");
             add("localPort");
             add("remoteHost");
-            add("parameters");
+            add("parmeters");
             add("remotePort");
             add("methodName");
             add("consumer.start");
