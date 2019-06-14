@@ -67,9 +67,8 @@ public class HttpJsonProtocolTest {
         ByteBuf content = Unpooled.wrappedBuffer(new Gson().toJson("hello").getBytes());
 
         FullHttpRequest fullHttpRequest = new DefaultFullHttpRequest(HttpVersion.HTTP_1_0, HttpMethod.GET,
-                "/HelloWorldService/hello", content);
+                "/HelloWorldService/hello?k=v", content);
         fullHttpRequest.headers().set("log-id", 1);
-        fullHttpRequest.setUri("/HelloWorldService/hello");
         fullHttpRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8");
 
         Request request = protocol.decodeRequest(fullHttpRequest);
