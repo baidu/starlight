@@ -1,4 +1,4 @@
-package com.baidu.brpc.protocol.push;
+package com.baidu.brpc.protocol.push.impl;
 
 import java.util.Map;
 

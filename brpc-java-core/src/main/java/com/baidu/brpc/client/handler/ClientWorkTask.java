@@ -27,7 +27,7 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushPacket;
-import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.ServiceManager;
 
 import io.netty.buffer.ByteBuf;

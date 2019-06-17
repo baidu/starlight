@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.protocol.push;
+package com.baidu.brpc.protocol.push.impl;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
+import com.baidu.brpc.protocol.push.SPHead;
 
 /**
  * 2+2+8+16+4+4+4=36 byte in total.

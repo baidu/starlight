@@ -30,7 +30,7 @@ import com.baidu.brpc.protocol.http.BrpcHttpResponseEncoder;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushPacket;
-import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.ServerStatus;
 import com.baidu.brpc.utils.ThreadPool;

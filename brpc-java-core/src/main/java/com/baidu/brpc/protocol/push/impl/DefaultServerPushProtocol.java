@@ -1,8 +1,8 @@
-package com.baidu.brpc.protocol.push;
+package com.baidu.brpc.protocol.push.impl;
 
-import static com.baidu.brpc.protocol.push.DefaultSPHead.PROVIDER_LENGTH;
-import static com.baidu.brpc.protocol.push.DefaultSPHead.SPHEAD_LENGTH;
-import static com.baidu.brpc.protocol.push.DefaultSPHead.SPHEAD_MAGIC_NUM;
+import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.PROVIDER_LENGTH;
+import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.SPHEAD_LENGTH;
+import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.SPHEAD_MAGIC_NUM;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -24,7 +24,8 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.RpcResponse;
-import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.SPHead;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.PushServerRpcFutureManager;
 import com.baidu.brpc.server.ServiceManager;
 import com.dyuproject.protostuff.LinkedBuffer;
@@ -78,7 +79,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
      * @throws Exception
      */
     public Response decodeServerPushResponse(Object in, ChannelHandlerContext ctx) {
-        ServerPushPacket packet = (ServerPushPacket) in;
+        DefaultServerPushPacket packet = (DefaultServerPushPacket) in;
         RpcResponse rpcResponse = new RpcResponse();
         // channel info是在客户端生成连接池的时候生成的
         // ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
@@ -103,7 +104,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
 
     @Override
     public Response decodeResponse(Object in, ChannelHandlerContext ctx) throws Exception {
-        ServerPushPacket packet = (ServerPushPacket) in;
+        DefaultServerPushPacket packet = (DefaultServerPushPacket) in;
         DefaultSPHead spHead = (DefaultSPHead) packet.getSpHead();
         RpcResponse rpcResponse = new RpcResponse();
         // channel info是在客户端生成连接池的时候生成的
@@ -152,10 +153,10 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
     @Override
     public Request decodeRequest(Object packet) throws Exception {
         Request request = this.createRequest();
-        ServerPushPacket spPacket = (ServerPushPacket) packet;
+        DefaultServerPushPacket spPacket = (DefaultServerPushPacket) packet;
         SPBody spBody = spPacket.getSpBody();
         request.setLogId(spPacket.getSpHead().getLogId());
-        request.setSpHead(((ServerPushPacket) packet).getSpHead());
+        request.setSpHead(((DefaultServerPushPacket) packet).getSpHead());
         decodeRequestBody((spPacket).getSpBody(), request);
         //request.setTarget(rpcMethodInfo.getTarget());
         request.setArgs(spBody.getParameters());
@@ -171,12 +172,13 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
     }
 
     @Override
-    public ServerPushPacket decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest)
+    public DefaultServerPushPacket decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in,
+                                          boolean isDecodingRequest)
             throws BadSchemaException, TooBigDataException, NotEnoughDataException {
         if (in.readableBytes() < DefaultSPHead.SPHEAD_LENGTH) {
             throw new NotEnoughDataException();
         }
-        ServerPushPacket packet = new ServerPushPacket();
+        DefaultServerPushPacket packet = new DefaultServerPushPacket();
         ByteBuf fixHeaderBuf = in.retainedSlice(DefaultSPHead.SPHEAD_LENGTH);
         try {
 

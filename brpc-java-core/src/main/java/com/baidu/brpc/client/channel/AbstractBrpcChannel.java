@@ -19,7 +19,7 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.push.SPHead;
-import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.push.ClientManager;
 
 import io.netty.bootstrap.Bootstrap;

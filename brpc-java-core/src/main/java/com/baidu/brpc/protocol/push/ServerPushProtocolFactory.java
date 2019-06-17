@@ -3,6 +3,7 @@ package com.baidu.brpc.protocol.push;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolFactory;
+import com.baidu.brpc.protocol.push.impl.DefaultServerPushProtocol;
 
 public class ServerPushProtocolFactory implements ProtocolFactory {
 

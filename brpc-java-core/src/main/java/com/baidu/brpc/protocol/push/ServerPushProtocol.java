@@ -1,9 +1,8 @@
-package com.baidu.brpc.protocol.push.base;
+package com.baidu.brpc.protocol.push;
 
 import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.protocol.push.SPHead;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;

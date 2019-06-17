@@ -43,7 +43,7 @@ import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.nshead.NSHead;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.protocol.push.SPHead;
-import com.baidu.brpc.protocol.push.base.ServerPushProtocol;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ProtobufUtils;
 
