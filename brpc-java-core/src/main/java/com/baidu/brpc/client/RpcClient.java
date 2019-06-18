@@ -546,4 +546,12 @@ public class RpcClient {
     public SubscribeInfo getSubscribeInfo() {
         return subscribeInfo;
     }
+
+    public InstanceProcessor getInstanceProcessor() {
+        return instanceProcessor;
+    }
+
+    public void setInstanceProcessor(InstanceProcessor instanceProcessor) {
+        this.instanceProcessor = instanceProcessor;
+    }
 }
