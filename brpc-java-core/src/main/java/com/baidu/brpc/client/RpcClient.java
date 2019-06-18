@@ -531,10 +531,6 @@ public class RpcClient {
         return timeoutTimer;
     }
 
-    public InstanceProcessor getEndPointProcessor() {
-        return instanceProcessor;
-    }
-
     public LoadBalanceInterceptor getLoadBalanceInterceptor() {
         return loadBalanceInterceptor;
     }
