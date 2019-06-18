@@ -1,12 +1,7 @@
 package com.baidu.brpc.server;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -21,42 +16,44 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ChannelManager {
     private static volatile ChannelManager instance;
+    private static ChannelStoreManager storeManager;
+
 
     private ReadWriteLock lock = new ReentrantReadWriteLock();
-    private Map<String, List<Channel>> channelMap = new HashMap<String, List<Channel>>();
-    private Set<Channel> channelSet = new HashSet<Channel>();
-    private AtomicInteger index = new AtomicInteger(0);
+    private ChannelStoreManager innerStoreManager;
+
+    public static void setStoreManager(ChannelStoreManager manager) {
+        storeManager = manager;
+    }
 
     public static ChannelManager getInstance() {
         if (instance == null) {
-            synchronized(ChannelManager.class) {
+            synchronized (ChannelManager.class) {
                 if (instance == null) {
-                    instance = new ChannelManager();
+                    if (storeManager != null) {
+                        instance = new ChannelManager(storeManager);
+                    } else {
+                        instance = new ChannelManager(new DefaultChannelStoreManager());
+                    }
                 }
             }
         }
         return instance;
     }
 
-    private ChannelManager() {
+    private ChannelManager(ChannelStoreManager storeManager) {
+        this.innerStoreManager = storeManager;
     }
 
     public void putChannel(String clientName, Channel channel) {
         lock.writeLock().lock();
-        if (!channelSet.contains(channel)) {
-            List<Channel> channelList = channelMap.get(clientName);
-            if (channelList == null) {
-                channelList = new ArrayList<Channel>();
-                channelMap.put(clientName, channelList);
-            }
-            channelMap.get(clientName).add(channel);
-        }
+        innerStoreManager.putChannel(clientName, channel);
         lock.writeLock().unlock();
     }
 
     public Channel getChannel(String clientName) {
         if (log.isDebugEnabled()) {
-            for (Map.Entry<String, List<Channel>> entry : channelMap.entrySet()) {
+            for (Map.Entry<String, List<Channel>> entry : innerStoreManager.getChannelMap().entrySet()) {
                 log.debug("participantName={}, channelNum={}",
                         entry.getKey(),
                         entry.getValue() == null ? 0 : entry.getValue().size());
@@ -64,14 +61,7 @@ public class ChannelManager {
         }
         lock.readLock().lock();
         try {
-            List<Channel> channelList = channelMap.get(clientName);
-            if (channelList == null || channelList.size() == 0) {
-                log.info("no available connection for clientName={}", clientName);
-                return null;
-            }
-            int id = index.getAndIncrement() % channelList.size();
-            Channel channel = channelList.get(id);
-            return channel;
+            return innerStoreManager.getChannel(clientName);
         } finally {
             lock.readLock().unlock();
         }
@@ -79,31 +69,18 @@ public class ChannelManager {
 
     public void removeChannel(Channel channel) {
 
-        //        Set<Map.Entry<String, List<Channel>>> entries = channelMap.entrySet();
-        //        for(Map.Entry<String, List<Channel>> entry : entries){
-        //            List<Channel> list = entry.getValue();
-        //            if(CollectionUtils.isNotEmpty(list)){
-        //                list.remove(channel);
-        //            }
-        //        }
-
         Attribute<String> participant = channel.attr(PushChannelContextHolder.CLIENTNAME_KEY);
         String participantName = participant.get();
         if (StringUtils.isNotBlank(participantName)) {
             lock.writeLock().lock();
-            List<Channel> channelList = channelMap.get(participantName);
-            channelList.remove(channel);
-            channelSet.remove(channel);
+            innerStoreManager.removeChannel(channel);
             lock.writeLock().unlock();
         }
     }
 
     public Map<String, List<Channel>> getChannelMap() {
-        return channelMap;
+        return innerStoreManager.getChannelMap();
     }
 
-    public void setChannelMap(Map<String, List<Channel>> channelMap) {
-        this.channelMap = channelMap;
-    }
 
 }
