@@ -63,8 +63,7 @@ public class ProtocolManager {
             coexistenceProtocols.add(protocol);
             coexistenceProtocolSize++;
         }
-        log.info("register protocol:{} success",
-                Options.ProtocolType.valueOf(protocolFactory.getProtocolType()).name());
+        log.info("register protocol:{} success", protocolType);
     }
 
     public Protocol getProtocol(Integer protocolType) {
