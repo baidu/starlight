@@ -18,6 +18,7 @@ package com.baidu.brpc.client;
 
 import com.baidu.brpc.naming.*;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.utils.BrpcConstants;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -477,7 +478,7 @@ public class RpcClient {
             }
         };
 
-        if (Epoll.isAvailable()) {
+        if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             ioThreadPool = new EpollEventLoopGroup(options.getIoThreadNum(),
                     new CustomThreadFactory("client-io-thread"));
         } else {

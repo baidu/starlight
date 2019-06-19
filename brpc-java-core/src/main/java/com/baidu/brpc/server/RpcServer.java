@@ -27,6 +27,7 @@ import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.NamingServiceFactoryManager;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.utils.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,10 +39,6 @@ import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
 import com.baidu.brpc.server.handler.RpcServerHandler;
 import com.baidu.brpc.thread.ShutDownManager;
-import com.baidu.brpc.utils.CollectionUtils;
-import com.baidu.brpc.utils.CustomThreadFactory;
-import com.baidu.brpc.utils.NetUtils;
-import com.baidu.brpc.utils.ThreadPool;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -151,7 +148,7 @@ public class RpcServer {
         threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
                 new CustomThreadFactory("server-work-thread"));
         bootstrap = new ServerBootstrap();
-        if (Epoll.isAvailable()) {
+        if (rpcServerOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
             workerGroup = new EpollEventLoopGroup(rpcServerOptions.getIoThreadNum(),
@@ -161,7 +158,7 @@ public class RpcServer {
             bootstrap.channel(EpollServerSocketChannel.class);
             bootstrap.option(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
             bootstrap.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
-            LOG.info("use epoll edge trigger mode");
+            LOG.info("use netty epoll edge trigger mode");
         } else {
             bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
@@ -170,7 +167,7 @@ public class RpcServer {
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(NioServerSocketChannel.class);
-            LOG.info("use normal mode");
+            LOG.info("use jdk nio event mode");
         }
 
         bootstrap.option(ChannelOption.SO_BACKLOG, rpcServerOptions.getBacklog());
