@@ -79,11 +79,8 @@ public class ServerPushInterceptor extends AbstractInterceptor {
 
     protected Channel selectChannel(Request request) {
         // select instance by server push
-        // Channel channel = rpcClient.selectChannel(request);
-
         ChannelManager channelManager = ChannelManager.getInstance();
-        Object[] args = request.getArgs();
-        String clientName = (String) args[args.length - 1];
+        String clientName = request.getClientName();
         Channel channel = channelManager.getChannel(clientName);
         if (channel == null) {
             Map<String, List<Channel>> channelMap = channelManager.getChannelMap();

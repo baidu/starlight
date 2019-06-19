@@ -60,7 +60,7 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         spHead.setType(SPHead.TYPE_REQUEST); // 注册类型
         r.setSpHead(spHead);
 
-        String serviceName = "com.baidu.brpc.server.push.ClientManager";
+        String serviceName = ClientManager.class.getName();
         String methodName = "registerClient";
         r.setServiceName(serviceName);
         r.setMethodName(methodName);

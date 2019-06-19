@@ -108,12 +108,4 @@ public class RpcClientOptions {
         this.clientName = another.clientName;
     }
 
-    public String getClientName() {
-        return clientName;
-    }
-
-    public void setClientName(String clientName) {
-        this.clientName = clientName;
-    }
-
 }

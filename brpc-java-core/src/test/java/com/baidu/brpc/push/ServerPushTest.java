@@ -31,7 +31,7 @@ import com.baidu.brpc.protocol.standard.EchoService;
 import com.baidu.brpc.protocol.standard.EchoServiceImpl;
 import com.baidu.brpc.push.userservice.PushData;
 import com.baidu.brpc.push.userservice.PushResult;
-import com.baidu.brpc.push.userservice.UserPushApi;
+import com.baidu.brpc.push.userservice.ServerSideUserPushApi;
 import com.baidu.brpc.push.userservice.UserPushApiImpl;
 import com.baidu.brpc.server.BrpcPushProxy;
 import com.baidu.brpc.server.RpcServer;
@@ -66,10 +66,11 @@ public class ServerPushTest {
         Echo.EchoResponse response = echoService.echo(request);
         assertEquals("hello", response.getMessage());
 
-        UserPushApi pushApi = (UserPushApi) BrpcPushProxy.getProxy(rpcServer, UserPushApi.class);
+        ServerSideUserPushApi pushApi =
+                (ServerSideUserPushApi) BrpcPushProxy.getProxy(rpcServer, ServerSideUserPushApi.class);
         PushData p = new PushData();
         p.setData("abc");
-        PushResult pushResult = pushApi.clientReceive(p, "c1");
+        PushResult pushResult = pushApi.clientReceive("c1", p);
 
         assertEquals("got data:abc", pushResult.getResult());
 

@@ -13,7 +13,6 @@ import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.server.ChannelManager;
 import com.baidu.brpc.server.RpcServer;
 
 import io.netty.buffer.ByteBuf;
@@ -51,14 +50,6 @@ public class ServerWorkTask implements Runnable {
                 }
                 if (request.getKvAttachment() != null) {
                     rpcContext.setRequestKvAttachment(request.getKvAttachment());
-                }
-            }
-
-            // 处理 server push的注册请求
-            if (request.getKvAttachment() != null) {
-                String clientName = (String) request.getKvAttachment().get("clientName");
-                if (clientName != null) {
-                    ChannelManager.getInstance().putChannel(clientName, request.getChannel());
                 }
             }
 

@@ -4,9 +4,6 @@ import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.PROVIDER_LENGTH;
 import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.SPHEAD_LENGTH;
 import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.SPHEAD_MAGIC_NUM;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +16,7 @@ import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
+import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
@@ -93,7 +91,9 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         }
         rpcResponse.setRpcFuture(future);
 
-        Object responseBody = decodeResponseBody(packet.getSpBody());
+        ByteBuf bodyBuf = packet.getBodyBuf();
+        SPBody spBody = decodeBodyByteBuf(bodyBuf);
+        Object responseBody = spBody.getContent();
         if (responseBody == null) {
             return null;
         }
@@ -112,16 +112,13 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         Long logId = (long) packet.getSpHead().getLogId();
         rpcResponse.setLogId(logId);
         RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
-        LOG.trace("decodeResponse channelInfo.log id:{} ,packet.logId:{} ,service:{} find future:{}", logId,
-                packet.getSpHead().getLogId(),
-                packet.getSpBody().getServiceName(), future == null ? "null" :
-                        future.getRpcMethodInfo().getServiceName());
+
         if (future == null) {
             return rpcResponse;
         }
         rpcResponse.setRpcFuture(future);
-
-        Object responseBody = decodeResponseBody(packet.getSpBody());
+        SPBody spBody = decodeBodyByteBuf(packet.getBodyBuf());
+        Object responseBody = spBody.getContent();
         if (responseBody == null) {
             return null;
         }
@@ -154,10 +151,11 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
     public Request decodeRequest(Object packet) throws Exception {
         Request request = this.createRequest();
         DefaultServerPushPacket spPacket = (DefaultServerPushPacket) packet;
-        SPBody spBody = spPacket.getSpBody();
+        ByteBuf bodyBuf = ((DefaultServerPushPacket) packet).getBodyBuf();
         request.setLogId(spPacket.getSpHead().getLogId());
         request.setSpHead(((DefaultServerPushPacket) packet).getSpHead());
-        decodeRequestBody((spPacket).getSpBody(), request);
+        SPBody spBody = decodeBodyByteBuf(bodyBuf);
+        decodeRequestBody(spBody, request);
         //request.setTarget(rpcMethodInfo.getTarget());
         request.setArgs(spBody.getParameters());
         request.setMethodName(spBody.getMethodName());
@@ -197,19 +195,31 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
 
             in.skipBytes(DefaultSPHead.SPHEAD_LENGTH);
             ByteBuf bodyBuf = in.readRetainedSlice(bodyLength);
-            int readableBytes = bodyBuf.readableBytes();
-            byte[] bodyBytes = new byte[readableBytes];
-            bodyBuf.readBytes(bodyBytes);
-            Schema<SPBody> schema = RuntimeSchema.getSchema(SPBody.class);
-            SPBody spBody = new SPBody();
-            ProtobufIOUtil.mergeFrom((byte[]) bodyBytes, spBody, schema);
-            packet.setSpBody(spBody);
+            packet.setBodyBuf(bodyBuf);
             return packet;
         } catch (Exception e) {
             LOG.error("error:", e);
             throw new RuntimeException("decode failed:" + e.getMessage());
         } finally {
             fixHeaderBuf.release();
+        }
+    }
+
+    public SPBody decodeBodyByteBuf(ByteBuf bodyByteBuf) {
+        try {
+            int readableBytes = bodyByteBuf.readableBytes();
+            byte[] bodyBytes = new byte[readableBytes];
+            bodyByteBuf.readBytes(bodyBytes);
+            Schema<SPBody> schema = RuntimeSchema.getSchema(SPBody.class);
+            SPBody spBody = new SPBody();
+            ProtobufIOUtil.mergeFrom(bodyBytes, spBody, schema);
+            return spBody;
+        } catch (Exception e) {
+            throw new RpcException(e);
+        } finally {
+            if (bodyByteBuf != null) {
+                bodyByteBuf.release();
+            }
         }
     }
 
@@ -243,15 +253,15 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
 
     @Override
     public boolean isCoexistence() {
-        return false;
+        return true;
     }
 
     public byte[] encodeRequestBody(Request request, RpcMethodInfo rpcMethodInfo) {
         Validate.notNull(request, "body must not be empty");
 
         SPBody spBody = new SPBody();
-        spBody.setServiceName(rpcMethodInfo.getServiceName());
-        spBody.setMethodName(rpcMethodInfo.getMethodName());
+        spBody.setServiceName(request.getServiceName());
+        spBody.setMethodName(request.getMethodName());
         spBody.setParameters(request.getArgs());
         byte[] bytes;
 
@@ -275,9 +285,10 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         return bytes;
     }
 
-    public Object decodeResponseBody(SPBody body) {
-        return body.getContent();
-    }
+    //    public Object decodeResponseBody(ByteBuf body) {
+    //
+    //        return body.getContent();
+    //    }
 
     public void decodeRequestBody(SPBody body, Request request) {
         String serviceName = body.getServiceName();
@@ -329,22 +340,40 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
     @Override
     public byte[] headToBytes(SPHead spHead) {
         DefaultSPHead usedSpHead = (DefaultSPHead) spHead;
-        ByteBuffer buf = ByteBuffer.allocate(SPHEAD_LENGTH);
-        buf.order(ByteOrder.LITTLE_ENDIAN);
-        buf.putShort(usedSpHead.id);
-        buf.putShort(usedSpHead.version);
-        buf.putLong(usedSpHead.logId);
+        ByteBuf buffer = Unpooled.buffer(SPHEAD_LENGTH);
+        buffer.writeShortLE(usedSpHead.id);
+        buffer.writeShortLE(usedSpHead.version);
+        buffer.writeLongLE(usedSpHead.logId);
         byte[] providerBytes = usedSpHead.provider.getBytes();
+
         if (providerBytes.length >= PROVIDER_LENGTH) {
-            buf.put(providerBytes, 0, PROVIDER_LENGTH);
+            buffer.writeBytes(providerBytes, 0, PROVIDER_LENGTH);
         } else {
-            buf.put(providerBytes, 0, providerBytes.length);
-            buf.put(DefaultSPHead.ZEROS, 0, PROVIDER_LENGTH - providerBytes.length);
+            buffer.writeBytes(providerBytes, 0, providerBytes.length);
+            buffer.writeBytes(DefaultSPHead.ZEROS, 0, PROVIDER_LENGTH - providerBytes.length);
         }
-        buf.putInt(usedSpHead.magicNumber);
-        buf.putInt(usedSpHead.type);
-        buf.putInt(usedSpHead.bodyLength);
-        return buf.array();
+        buffer.writeIntLE(usedSpHead.magicNumber);
+        buffer.writeIntLE(usedSpHead.type);
+        buffer.writeIntLE(usedSpHead.bodyLength);
+        return buffer.array();
+        //        // buffer.order()
+        //
+        //        ByteBuffer buf = ByteBuffer.allocate(SPHEAD_LENGTH);
+        //        buf.order(ByteOrder.LITTLE_ENDIAN);
+        //        buf.putShort(usedSpHead.id);
+        //        buf.putShort(usedSpHead.version);
+        //        buf.putLong(usedSpHead.logId);
+        //        byte[] providerBytes = usedSpHead.provider.getBytes();
+        //        if (providerBytes.length >= PROVIDER_LENGTH) {
+        //            buf.put(providerBytes, 0, PROVIDER_LENGTH);
+        //        } else {
+        //            buf.put(providerBytes, 0, providerBytes.length);
+        //            buf.put(DefaultSPHead.ZEROS, 0, PROVIDER_LENGTH - providerBytes.length);
+        //        }
+        //        buf.putInt(usedSpHead.magicNumber);
+        //        buf.putInt(usedSpHead.type);
+        //        buf.putInt(usedSpHead.bodyLength);
+        //        return buf.array();
     }
 
 }

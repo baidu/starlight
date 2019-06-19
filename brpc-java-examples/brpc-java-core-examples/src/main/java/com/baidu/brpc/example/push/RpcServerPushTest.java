@@ -18,7 +18,7 @@ package com.baidu.brpc.example.push;
 
 import com.baidu.brpc.example.push.userservice.PushData;
 import com.baidu.brpc.example.push.userservice.PushResult;
-import com.baidu.brpc.example.push.userservice.UserPushApi;
+import com.baidu.brpc.example.push.userservice.ServerSideUserPushApi;
 import com.baidu.brpc.example.standard.EchoServiceImpl;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.BrpcPushProxy;
@@ -54,12 +54,13 @@ public class RpcServerPushTest {
         rpcServer.registerService(new EchoServiceImpl());
 
         // get push api
-        UserPushApi proxyPushApi = (UserPushApi) BrpcPushProxy.getProxy(rpcServer, UserPushApi.class);
+        ServerSideUserPushApi proxyPushApi =
+                (ServerSideUserPushApi) BrpcPushProxy.getProxy(rpcServer, ServerSideUserPushApi.class);
         rpcServer.start();
 
-        Thread.sleep(13 * 1000);
+        Thread.sleep(15 * 1000);
 
-        // push data
+        // push data to 2 clients : "c1" and "c2"
         int i = 0;
         while (true) {
             i++;
@@ -69,10 +70,10 @@ public class RpcServerPushTest {
             log.info("pushing data to client:" + clientName);
             try {
                 // last param of api is clientName
-                PushResult pushResult = proxyPushApi.clientReceive(p, clientName);
+                PushResult pushResult = proxyPushApi.clientReceive(clientName, p);
                 log.info("received push result:" + GsonUtils.toJson(pushResult));
             } catch (Exception e) {
-                log.error("push exception:", e);
+                log.error("push exception , please start up client c1 and c2", e);
             }
 
             Thread.sleep(5 * 1000);

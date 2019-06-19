@@ -18,6 +18,7 @@ package com.baidu.brpc.protocol.push.impl;
 
 import com.baidu.brpc.protocol.push.ServerPushPacket;
 
+import io.netty.buffer.ByteBuf;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,14 +26,6 @@ import lombok.Setter;
 @Getter
 public class DefaultServerPushPacket extends ServerPushPacket {
 
-    private SPBody spBody; // body
-
-    public SPBody getSpBody() {
-        return spBody;
-    }
-
-    public void setSpBody(SPBody spBody) {
-        this.spBody = spBody;
-    }
-
+    private ByteBuf bodyBuf; // body
+    
 }

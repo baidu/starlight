@@ -51,7 +51,7 @@ public class RpcClientServerPushTest {
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
         clientOption.setMaxTotalConnections(1);
         // 指定clientName
-        clientOption.setClientName("c2");
+        clientOption.setClientName("c1");
 
         String serviceUrl = "list://127.0.0.1:8002";
         //        String serviceUrl = "zookeeper://127.0.0.1:2181";
@@ -62,7 +62,7 @@ public class RpcClientServerPushTest {
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
 
-        // 创建客户端
+        // 创建客户端 c1
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         // 首先建立一个普通rpc client服务, 与后端建立起连接
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
@@ -71,7 +71,17 @@ public class RpcClientServerPushTest {
 
         //  Thread.sleep(1000);
         Object reportBean = echoService.echoReport(new ReportBean());
-        System.out.println("report result:" + GsonUtils.toJson(reportBean));
+        System.out.println("c1 echoReport:" + GsonUtils.toJson(reportBean));
+
+        Thread.sleep(2000);
+
+        // 创建客户端c2
+        clientOption.setClientName("c2");
+        RpcClient rpcClient2 = new RpcClient(serviceUrl, clientOption, interceptors);
+        EchoService echoService2 = BrpcProxy.getProxy(rpcClient2, EchoService.class);
+        rpcClient2.registerPushService(new UserPushApiImpl());
+        Object reportBean2 = echoService2.echoReport(new ReportBean());
+        System.out.println("c2 echoReport:" + GsonUtils.toJson(reportBean));
 
         synchronized(RpcClientServerPushTest.class) {
             try {
@@ -79,9 +89,7 @@ public class RpcClientServerPushTest {
             } catch (Throwable e) {
             }
         }
-
         rpcClient.stop();
-
     }
 
 }

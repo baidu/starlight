@@ -18,6 +18,7 @@ package com.baidu.brpc.server;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -148,7 +149,7 @@ public class BrpcPushProxy implements MethodInterceptor {
     }
 
     /**
-     * 调用用户接口时候， 实际执行的方法
+     * server push 调用用户接口时候， 实际执行的方法
      *
      * @param obj
      * @param method
@@ -170,6 +171,23 @@ public class BrpcPushProxy implements MethodInterceptor {
                     method.getDeclaringClass().getName(), methodName);
             return proxy.invokeSuper(obj, args);
         }
+
+        // 转换为父接口 ， 去掉第一个clientName参数，不传到client端
+        Method actualMethod;
+        Object[] actualArgs;
+        int argLength = args.length;
+        List<Object> argList = Arrays.asList(args);
+        List<Class<?>> paramTypeList = Arrays.asList(method.getParameterTypes());
+
+        argList = argList.subList(1, argLength);
+        paramTypeList = paramTypeList.subList(1, argLength);
+        argLength = argList.size();
+
+        actualArgs = argList.toArray();
+        actualMethod = method.getDeclaringClass().getMethod(
+                method.getName(), paramTypeList.toArray(new Class[0]));
+        //responseType = actualMethod.getGenericReturnType();
+
         Request request = null;
         Response response = null;
 
@@ -180,6 +198,7 @@ public class BrpcPushProxy implements MethodInterceptor {
 
         request = rpcServer.getProtocol().createRequest();
         response = rpcServer.getProtocol().getResponse();
+        request.setClientName((String) args[0]);
         SPHead spHead = ((ServerPushProtocol) rpcServer.getProtocol()).createSPHead();
         spHead.setType(SPHead.TYPE_SERVER_PUSH_REQUEST);
         request.setSpHead(spHead);
@@ -193,9 +212,9 @@ public class BrpcPushProxy implements MethodInterceptor {
 
             request.setTarget(obj);
             request.setRpcMethodInfo(rpcMethodInfo);
-            request.setTargetMethod(rpcMethodInfo.getMethod());
-            request.setServiceName(rpcMethodInfo.getServiceName());
-            request.setMethodName(rpcMethodInfo.getMethodName());
+            request.setTargetMethod(actualMethod);
+            request.setServiceName(actualMethod.getDeclaringClass().getName());
+            request.setMethodName(actualMethod.getName());
             NSHeadMeta nsHeadMeta = rpcMethodInfo.getNsHeadMeta();
             NSHead nsHead = nsHeadMeta == null ? new NSHead() : new NSHead(0, nsHeadMeta.id(), nsHeadMeta.version(),
                     nsHeadMeta.provider(), 0);
@@ -203,13 +222,13 @@ public class BrpcPushProxy implements MethodInterceptor {
 
             // parse request params
             RpcCallback callback = null;
-            int argLength = args.length;
+
             if (argLength > 1) {
                 int startIndex = 0;
                 int endIndex = argLength - 1;
                 // 异步调用
-                if (args[endIndex] instanceof RpcCallback) {
-                    callback = (RpcCallback) args[endIndex];
+                if (actualArgs[endIndex] instanceof RpcCallback) {
+                    callback = (RpcCallback) actualArgs[endIndex];
                     endIndex -= 1;
                     argLength -= 1;
                 }
@@ -220,13 +239,13 @@ public class BrpcPushProxy implements MethodInterceptor {
 
                 Object[] sendArgs = new Object[argLength];
                 for (int i = 0; startIndex <= endIndex; i++) {
-                    sendArgs[i] = args[startIndex++];
+                    sendArgs[i] = actualArgs[startIndex++];
                 }
                 request.setArgs(sendArgs);
                 request.setCallback(callback);
             } else {
                 // sync call
-                request.setArgs(args);
+                request.setArgs(actualArgs);
             }
 
             if (RpcContext.isSet()) {

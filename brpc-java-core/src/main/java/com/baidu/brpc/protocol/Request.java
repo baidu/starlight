@@ -146,4 +146,8 @@ public interface Request {
     Integer getWriteTimeoutMillis();
 
     void setWriteTimeoutMillis(Integer writeTimeoutMillis);
+
+    void setClientName(String clientName);
+
+    String getClientName();
 }
