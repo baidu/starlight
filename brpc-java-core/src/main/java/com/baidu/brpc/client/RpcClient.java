@@ -367,7 +367,6 @@ public class RpcClient {
         rpcFuture.setChannelInfo(channelInfo);
         // generate logId
         long logId = FastFutureStore.getInstance(0).put(rpcFuture);
-        rpcFuture.setChannelInfo(channelInfo);
         request.setLogId(logId);
 
         // read write timeout
