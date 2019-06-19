@@ -177,7 +177,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
         HttpRequest httpRequest = (HttpRequest) request;
-        String serviceName = httpRequest.getTargetMethod().getDeclaringClass().getSimpleName();
+        String serviceName = httpRequest.getTargetMethod().getDeclaringClass().getName();
         String methodName = httpRequest.getTargetMethod().getName();
         BrpcMeta rpcMeta = httpRequest.getTargetMethod().getAnnotation(BrpcMeta.class);
         if (rpcMeta != null) {
