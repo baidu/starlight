@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Future;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.Validate;
 
 import com.baidu.brpc.JprotobufRpcMethodInfo;
@@ -45,10 +46,8 @@ import com.baidu.brpc.protocol.nshead.NSHead;
 import com.baidu.brpc.protocol.nshead.NSHeadMeta;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushProtocol;
-import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ProtobufUtils;
 
-import io.netty.util.HashedWheelTimer;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.MethodInterceptor;
@@ -76,11 +75,16 @@ public class BrpcPushProxy implements MethodInterceptor {
     }
 
     private RpcServer rpcServer;
-    private HashedWheelTimer timeoutTimer;
     private static Map<String, RpcMethodInfo> rpcMethodMap = new HashMap<String, RpcMethodInfo>();
 
-    public static <T> T getProxy(RpcServer rpcServer, Class clazz) {
-
+    /**
+     * 初始化时提前解析好method信息，在rpc交互时会更快。
+     *
+     * @param rpcServer rpcServer
+     * @param clazz     rpc接口类
+     */
+    protected BrpcPushProxy(RpcServer rpcServer, Class clazz) {
+        this.rpcServer = rpcServer;
         Method[] methods = clazz.getMethods();
         for (Method method : methods) {
             if (notProxyMethodSet.contains(method.getName())) {
@@ -89,19 +93,18 @@ public class BrpcPushProxy implements MethodInterceptor {
                 continue;
             }
 
-            Class[] parameterTypes = method.getParameterTypes();
+            // 转换为父接口 ， 去掉第一个clientName参数，不传到client端
+            Class<?>[] oriTypes = method.getParameterTypes();
+            Class[] parameterTypes = ArrayUtils.subarray(oriTypes, 1, oriTypes.length);
             int paramLength = parameterTypes.length;
-            if (paramLength < 1) {
-                throw new IllegalArgumentException(
-                        "invalid params, the correct is ([RpcContext], Request, [Callback])");
-            }
-            if (Future.class.isAssignableFrom(method.getReturnType())
-                    && (paramLength < 1 || !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1]))) {
+            if (paramLength >= 1
+                    && Future.class.isAssignableFrom(method.getReturnType())
+                    && !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1])) {
                 throw new IllegalArgumentException("returnType is Future, but last argument is not RpcCallback");
             }
 
             Method syncMethod = method;
-            if (paramLength > 1) {
+            if (paramLength >= 1) {
                 int startIndex = 0;
                 int endIndex = paramLength - 1;
                 // has callback, async rpc
@@ -113,6 +116,7 @@ public class BrpcPushProxy implements MethodInterceptor {
                 for (int i = 0; startIndex <= endIndex; i++) {
                     actualParameterTypes[i] = parameterTypes[startIndex++];
                 }
+
                 try {
                     syncMethod = method.getDeclaringClass().getMethod(
                             method.getName(), actualParameterTypes);
@@ -135,18 +139,20 @@ public class BrpcPushProxy implements MethodInterceptor {
             log.debug("client serviceName={}, methodName={}",
                     method.getDeclaringClass().getName(), method.getName());
         }
+    }
 
+    public static <T> T getProxy(RpcServer rpcServer, Class clazz) {
         Enhancer en = new Enhancer();
         en.setSuperclass(clazz);
-        en.setCallback(new BrpcPushProxy(rpcServer));
+        en.setCallback(new BrpcPushProxy(rpcServer, clazz));
         return (T) en.create();
     }
 
-    public BrpcPushProxy(RpcServer rpcServer) {
-        this.rpcServer = rpcServer;
-        timeoutTimer = new HashedWheelTimer(new CustomThreadFactory("timeout-timer-thread"));
-
-    }
+    //    public BrpcPushProxy(RpcServer rpcServer) {
+    //        this.rpcServer = rpcServer;
+    //        timeoutTimer = new HashedWheelTimer(new CustomThreadFactory("timeout-timer-thread"));
+    //
+    //    }
 
     /**
      * server push 调用用户接口时候， 实际执行的方法
@@ -173,20 +179,12 @@ public class BrpcPushProxy implements MethodInterceptor {
         }
 
         // 转换为父接口 ， 去掉第一个clientName参数，不传到client端
-        Method actualMethod;
         Object[] actualArgs;
         int argLength = args.length;
         List<Object> argList = Arrays.asList(args);
-        List<Class<?>> paramTypeList = Arrays.asList(method.getParameterTypes());
-
         argList = argList.subList(1, argLength);
-        paramTypeList = paramTypeList.subList(1, argLength);
         argLength = argList.size();
-
         actualArgs = argList.toArray();
-        actualMethod = method.getDeclaringClass().getMethod(
-                method.getName(), paramTypeList.toArray(new Class[0]));
-        //responseType = actualMethod.getGenericReturnType();
 
         Request request = null;
         Response response = null;
@@ -212,9 +210,9 @@ public class BrpcPushProxy implements MethodInterceptor {
 
             request.setTarget(obj);
             request.setRpcMethodInfo(rpcMethodInfo);
-            request.setTargetMethod(actualMethod);
-            request.setServiceName(actualMethod.getDeclaringClass().getName());
-            request.setMethodName(actualMethod.getName());
+            request.setTargetMethod(rpcMethodInfo.getMethod());
+            request.setServiceName(rpcMethodInfo.getServiceName());
+            request.setMethodName(rpcMethodInfo.getMethodName());
             NSHeadMeta nsHeadMeta = rpcMethodInfo.getNsHeadMeta();
             NSHead nsHead = nsHeadMeta == null ? new NSHead() : new NSHead(0, nsHeadMeta.id(), nsHeadMeta.version(),
                     nsHeadMeta.provider(), 0);

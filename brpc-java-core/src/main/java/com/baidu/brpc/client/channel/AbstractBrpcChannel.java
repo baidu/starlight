@@ -14,6 +14,7 @@ import com.baidu.brpc.client.FastFutureStore;
 import com.baidu.brpc.client.MethodUtils;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Protocol;
@@ -64,12 +65,14 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         String methodName = "registerClient";
         r.setServiceName(serviceName);
         r.setMethodName(methodName);
-        RpcMethodInfo putChannel = MethodUtils.getRpcMethodInfo(ClientManager.class, methodName);
-        r.setRpcMethodInfo(putChannel);
+        RpcMethodInfo rpcMethodInfo = MethodUtils.getRpcMethodInfo(ClientManager.class, methodName);
+        r.setRpcMethodInfo(rpcMethodInfo);
         r.setArgs(new Object[] {rpcClient.getRpcClientOptions().getClientName()});
 
         // generate logId
-        long logId = FastFutureStore.getInstance(0).genLogId();
+        RpcFuture registerRpcFuture = new RpcFuture();
+        long logId = FastFutureStore.getInstance(0).put(registerRpcFuture);
+        registerRpcFuture.setLogId(logId);
         // rpcFuture.setChannelInfo(channelInfo);
         r.setLogId(logId);
 
@@ -83,8 +86,6 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed");
         }
         channelFuture.channel().writeAndFlush(byteBuf);
-
-        //   Object o = rpcFuture.get(100 * 1000, TimeUnit.MILLISECONDS);
 
     }
 

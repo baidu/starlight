@@ -13,7 +13,7 @@ public interface ServerPushProtocol extends Protocol {
 
     SPHead headFromByteBuf(ByteBuf buf) throws BadSchemaException;
 
-    byte[] headToBytes(SPHead spHead);
+    ByteBuf headToBytes(SPHead spHead);
 
     Response decodeServerPushResponse(Object in, ChannelHandlerContext ctx);
 

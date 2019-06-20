@@ -101,19 +101,6 @@ public class FastFutureStore {
     }
 
     /**
-     * @return
-     */
-    public long genLogId() {
-        long currentCounter = slotCounter.getAndIncrement();
-
-        if (currentCounter >= COUNTER_VALUE_BOUNDARY) {
-            slotCounter.getAndSet(0);
-            currentCounter = slotCounter.getAndIncrement();
-        }
-        return currentCounter;
-    }
-
-    /**
      * Add an object.
      *
      * @return Identifier of the added object
@@ -123,7 +110,12 @@ public class FastFutureStore {
 
         // loop until finding an empty slot
         while (true) {
-            long currentCounter = genLogId();
+            long currentCounter = slotCounter.getAndIncrement();
+
+            if (currentCounter >= COUNTER_VALUE_BOUNDARY) {
+                slotCounter.getAndSet(0);
+                continue;
+            }
 
             int slot = mapSlot(currentCounter);
 

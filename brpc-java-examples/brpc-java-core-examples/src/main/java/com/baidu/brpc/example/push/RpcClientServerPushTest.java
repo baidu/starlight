@@ -90,6 +90,7 @@ public class RpcClientServerPushTest {
             }
         }
         rpcClient.stop();
+        rpcClient2.stop();
     }
 
 }

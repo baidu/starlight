@@ -27,5 +27,5 @@ import lombok.Setter;
 public class DefaultServerPushPacket extends ServerPushPacket {
 
     private ByteBuf bodyBuf; // body
-    
+
 }
