@@ -19,15 +19,18 @@ import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
 import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.spring.RpcProxyFactoryBean;
 import com.baidu.brpc.spring.RpcServiceExporter;
 import com.baidu.brpc.spring.annotation.AbstractAnnotationParserCallback;
+import com.baidu.brpc.spring.annotation.NamingOption;
 import com.baidu.brpc.spring.annotation.RpcAnnotationResolverListener;
 import com.baidu.brpc.spring.annotation.RpcExporter;
 import com.baidu.brpc.spring.annotation.RpcProxy;
 import com.baidu.brpc.spring.boot.autoconfigure.config.BrpcConfig;
 import com.baidu.brpc.spring.boot.autoconfigure.config.BrpcProperties;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -256,15 +259,8 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
         if (rpcServiceExporter == null) {
             rpcServiceExporter = new RpcServiceExporter();
             portMappingExporters.put(port, rpcServiceExporter);
-
             rpcServiceExporter.setServicePort(port);
             rpcServiceExporter.copyFrom(brpcConfig.getServer());
-            if (brpcConfig.getNaming() != null) {
-                rpcServiceExporter.setNamingServiceUrl(brpcConfig.getNaming().getNamingServiceUrl());
-                rpcServiceExporter.setGroup(brpcConfig.getNaming().getGroup());
-                rpcServiceExporter.setVersion(brpcConfig.getNaming().getVersion());
-                rpcServiceExporter.setIgnoreFailOfNamingService(brpcConfig.getNaming().isIgnoreFailOfNamingService());
-            }
         }
 
         // interceptor
@@ -278,6 +274,32 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
                 rpcServiceExporter.setInterceptors(Arrays.asList(interceptor));
             }
         }
+
+        // naming options
+        NamingOptions namingOptions;
+        if (brpcConfig.getNaming() != null) {
+            // defaults to global NamingOptions
+            namingOptions = new NamingOptions(brpcConfig.getNaming());
+        } else {
+            namingOptions = new NamingOptions();
+        }
+        // Populate NamingOptions from the annotation
+        if (!rpcExporter.group().isEmpty()) {
+            namingOptions.setGroup(rpcExporter.group());
+        }
+        if (!rpcExporter.version().isEmpty()) {
+            namingOptions.setVersion(rpcExporter.version());
+        }
+        if (rpcExporter.extraOptions().length > 0) {
+            namingOptions.setExtra(new HashMap<String, String>());
+            for (int i = 0; i < rpcExporter.extraOptions().length; i++) {
+                NamingOption opt = rpcExporter.extraOptions()[i];
+                namingOptions.getExtra().put(opt.key(), opt.value());
+            }
+        }
+        namingOptions.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
+        rpcServiceExporter.getServiceNamingOptions().put(bean, namingOptions);
+
 
         if (brpcConfig.getServer() != null && brpcConfig.getServer().isUseSharedThreadPool()) {
             rpcServiceExporter.getCustomOptionsServiceMap().put(brpcConfig.getServer(), bean);

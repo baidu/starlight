@@ -19,17 +19,25 @@ package com.baidu.brpc.naming;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Setter
 @Getter
 public class NamingOptions {
     /**
      * identify different service implementation for the same interface.
+     *
+     * @deprecated use {@link #extra} instead
      */
+    @Deprecated
     private String group = "normal";
 
     /**
      * identify service version.
+     *
+     * @deprecated use {@link #extra} instead
      */
+    @Deprecated
     private String version = "1.0.0";
 
     /**
@@ -42,6 +50,11 @@ public class NamingOptions {
      */
     private String serviceId = "";
 
+    /**
+     * extra {@link NamingService} specific options
+     */
+    private Map<String, String> extra;
+
     public NamingOptions() {
     }
 
@@ -50,5 +63,6 @@ public class NamingOptions {
         this.version = rhs.getVersion();
         this.ignoreFailOfNamingService = rhs.isIgnoreFailOfNamingService();
         this.serviceId = rhs.getServiceId();
+        this.extra = rhs.extra;
     }
 }
