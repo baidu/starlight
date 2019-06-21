@@ -18,6 +18,7 @@ package com.baidu.brpc.client;
 
 import com.baidu.brpc.naming.*;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.utils.BrpcConstants;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -366,7 +367,6 @@ public class RpcClient {
         rpcFuture.setChannelInfo(channelInfo);
         // generate logId
         long logId = FastFutureStore.getInstance(0).put(rpcFuture);
-        rpcFuture.setChannelInfo(channelInfo);
         request.setLogId(logId);
 
         // read write timeout
@@ -452,7 +452,7 @@ public class RpcClient {
 
         // init netty bootstrap
         bootstrap = new Bootstrap();
-        if (Epoll.isAvailable()) {
+        if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             bootstrap.channel(EpollSocketChannel.class);
             bootstrap.option(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
         } else {
@@ -477,7 +477,7 @@ public class RpcClient {
             }
         };
 
-        if (Epoll.isAvailable()) {
+        if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             ioThreadPool = new EpollEventLoopGroup(options.getIoThreadNum(),
                     new CustomThreadFactory("client-io-thread"));
         } else {
@@ -531,10 +531,6 @@ public class RpcClient {
         return timeoutTimer;
     }
 
-    public InstanceProcessor getEndPointProcessor() {
-        return instanceProcessor;
-    }
-
     public LoadBalanceInterceptor getLoadBalanceInterceptor() {
         return loadBalanceInterceptor;
     }
@@ -545,5 +541,13 @@ public class RpcClient {
 
     public SubscribeInfo getSubscribeInfo() {
         return subscribeInfo;
+    }
+
+    public InstanceProcessor getInstanceProcessor() {
+        return instanceProcessor;
+    }
+
+    public void setInstanceProcessor(InstanceProcessor instanceProcessor) {
+        this.instanceProcessor = instanceProcessor;
     }
 }

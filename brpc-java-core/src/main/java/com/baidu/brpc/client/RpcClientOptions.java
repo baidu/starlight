@@ -19,6 +19,7 @@ package com.baidu.brpc.client;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.utils.BrpcConstants;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -65,6 +66,10 @@ public class RpcClientOptions {
     private int ioThreadNum = Runtime.getRuntime().availableProcessors();
     // threads used for deserialize rpc response and execute the callback
     private int workThreadNum = Runtime.getRuntime().availableProcessors();
+    /**
+     * io event type, netty or jdk
+     */
+    private int ioEventType = BrpcConstants.IO_EVENT_JDK;
     // FastFutureStore's max size
     private int futureBufferSize = 1000000;
     private String encoding = "utf-8";
