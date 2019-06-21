@@ -22,16 +22,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-
-import com.baidu.brpc.naming.BrpcURL;
-import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.NamingService;
-import com.baidu.brpc.naming.NamingServiceFactory;
-import com.baidu.brpc.naming.NamingServiceFactoryManager;
-import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.spi.ExtensionLoaderManager;
-import com.baidu.brpc.utils.*;
-
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,6 +49,11 @@ import com.baidu.brpc.server.push.ClientManagerImpl;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
+import com.baidu.brpc.utils.BrpcConstants;
+import com.baidu.brpc.utils.CollectionUtils;
+import com.baidu.brpc.utils.CustomThreadFactory;
+import com.baidu.brpc.utils.NetUtils;
+import com.baidu.brpc.utils.ThreadPool;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;

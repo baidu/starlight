@@ -19,7 +19,6 @@ package com.baidu.brpc.client;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.protocol.Options;
-
 import com.baidu.brpc.utils.BrpcConstants;
 
 import lombok.Getter;

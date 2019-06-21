@@ -16,6 +16,9 @@
 
 package com.baidu.brpc.example.standard;
 
+import java.io.IOException;
+import java.io.InputStream;
+
 import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
@@ -24,11 +27,9 @@ import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.protocol.Options;
+
 import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
-
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * Created by wenweihu86 on 2017/5/1.

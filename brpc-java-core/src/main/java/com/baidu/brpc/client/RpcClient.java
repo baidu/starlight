@@ -16,36 +16,6 @@
 
 package com.baidu.brpc.client;
 
-<<<<<<< HEAD
-=======
-import com.baidu.brpc.naming.*;
-import com.baidu.brpc.spi.ExtensionLoaderManager;
-import com.baidu.brpc.utils.BrpcConstants;
-import com.baidu.brpc.utils.CustomThreadFactory;
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
-import io.netty.channel.epoll.EpollChannelOption;
-import io.netty.channel.epoll.EpollEventLoopGroup;
-import io.netty.channel.epoll.EpollMode;
-import io.netty.channel.epoll.EpollSocketChannel;
-import io.netty.channel.nio.NioEventLoopGroup;
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
-import io.netty.channel.socket.SocketChannel;
-import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.timeout.IdleStateHandler;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-
->>>>>>> master
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -92,6 +62,7 @@ import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
+import com.baidu.brpc.utils.BrpcConstants;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ThreadPool;
 
@@ -102,7 +73,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollMode;
@@ -598,7 +568,6 @@ public class RpcClient {
     public SubscribeInfo getSubscribeInfo() {
         return subscribeInfo;
     }
-
 
     public InstanceProcessor getInstanceProcessor() {
         return instanceProcessor;
