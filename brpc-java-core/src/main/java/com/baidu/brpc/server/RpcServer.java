@@ -22,6 +22,16 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
+import com.baidu.brpc.naming.BrpcURL;
+import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NamingServiceFactory;
+import com.baidu.brpc.naming.NamingServiceFactoryManager;
+import com.baidu.brpc.naming.RegisterInfo;
+import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.utils.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +59,6 @@ import com.baidu.brpc.server.push.ClientManagerImpl;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
-import com.baidu.brpc.utils.CollectionUtils;
-import com.baidu.brpc.utils.CustomThreadFactory;
-import com.baidu.brpc.utils.NetUtils;
-import com.baidu.brpc.utils.ThreadPool;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBuf;
@@ -62,7 +68,6 @@ import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
-import io.netty.channel.epoll.Epoll;
 import io.netty.channel.epoll.EpollChannelOption;
 import io.netty.channel.epoll.EpollEventLoopGroup;
 import io.netty.channel.epoll.EpollMode;
@@ -170,7 +175,7 @@ public class RpcServer {
         threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
                 new CustomThreadFactory("server-work-thread"));
         bootstrap = new ServerBootstrap();
-        if (Epoll.isAvailable()) {
+        if (rpcServerOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
             workerGroup = new EpollEventLoopGroup(rpcServerOptions.getIoThreadNum(),
@@ -180,7 +185,7 @@ public class RpcServer {
             bootstrap.channel(EpollServerSocketChannel.class);
             bootstrap.option(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
             bootstrap.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
-            LOG.info("use epoll edge trigger mode");
+            LOG.info("use netty epoll edge trigger mode");
         } else {
             bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                     new CustomThreadFactory("server-acceptor-thread"));
@@ -189,7 +194,7 @@ public class RpcServer {
             ((NioEventLoopGroup) bossGroup).setIoRatio(100);
             ((NioEventLoopGroup) workerGroup).setIoRatio(100);
             bootstrap.channel(NioServerSocketChannel.class);
-            LOG.info("use normal mode");
+            LOG.info("use jdk nio event mode");
         }
 
         bootstrap.option(ChannelOption.SO_BACKLOG, rpcServerOptions.getBacklog());
@@ -262,7 +267,11 @@ public class RpcServer {
                                 RpcServerOptions serverOptions) {
         serviceList.add(service);
         RegisterInfo registerInfo = new RegisterInfo();
-        registerInfo.setInterfaceName(service.getClass().getInterfaces()[0].getName());
+        if (targetClass != null) {
+            registerInfo.setInterfaceName(targetClass.getInterfaces()[0].getName());
+        } else {
+            registerInfo.setInterfaceName(service.getClass().getInterfaces()[0].getName());
+        }
         registerInfo.setHost(NetUtils.getLocalAddress().getHostAddress());
         registerInfo.setPort(port);
         if (namingOptions != null) {

@@ -197,7 +197,7 @@ public class BenchmarkTest {
 
             while (!stop) {
                 try {
-                    RpcContext rpcContext = new RpcContext();
+                    RpcContext rpcContext = RpcContext.getContext();
                     rpcContext.setRequestBinaryAttachment(attachment);
                     echoService.echo(request, new EchoCallback(System.nanoTime(), sendInfo));
                 } catch (Exception ex) {

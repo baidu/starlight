@@ -16,6 +16,36 @@
 
 package com.baidu.brpc.client;
 
+<<<<<<< HEAD
+=======
+import com.baidu.brpc.naming.*;
+import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.utils.BrpcConstants;
+import com.baidu.brpc.utils.CustomThreadFactory;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.Epoll;
+import io.netty.channel.epoll.EpollChannelOption;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.epoll.EpollMode;
+import io.netty.channel.epoll.EpollSocketChannel;
+import io.netty.channel.nio.NioEventLoopGroup;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import io.netty.bootstrap.Bootstrap;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.socket.SocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+
+>>>>>>> master
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -392,7 +422,6 @@ public class RpcClient {
         rpcFuture.setChannelInfo(channelInfo);
         // generate logId
         long logId = FastFutureStore.getInstance(0).put(rpcFuture);
-        rpcFuture.setChannelInfo(channelInfo);
         request.setLogId(logId);
 
         // read write timeout
@@ -479,7 +508,7 @@ public class RpcClient {
 
         // init netty bootstrap
         bootstrap = new Bootstrap();
-        if (Epoll.isAvailable()) {
+        if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             bootstrap.channel(EpollSocketChannel.class);
             bootstrap.option(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
         } else {
@@ -504,7 +533,7 @@ public class RpcClient {
             }
         };
 
-        if (Epoll.isAvailable()) {
+        if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             ioThreadPool = new EpollEventLoopGroup(options.getIoThreadNum(),
                     new CustomThreadFactory("client-io-thread"));
         } else {
@@ -558,10 +587,6 @@ public class RpcClient {
         return timeoutTimer;
     }
 
-    public InstanceProcessor getEndPointProcessor() {
-        return instanceProcessor;
-    }
-
     public LoadBalanceInterceptor getLoadBalanceInterceptor() {
         return loadBalanceInterceptor;
     }
@@ -572,6 +597,15 @@ public class RpcClient {
 
     public SubscribeInfo getSubscribeInfo() {
         return subscribeInfo;
+    }
+
+
+    public InstanceProcessor getInstanceProcessor() {
+        return instanceProcessor;
+    }
+
+    public void setInstanceProcessor(InstanceProcessor instanceProcessor) {
+        this.instanceProcessor = instanceProcessor;
     }
 
 }

@@ -56,20 +56,20 @@ public class SingleConnectionClientTest {
                     if (((index / countInHalfMinute) & 1) == 1) {
                         return;
                     }
-                    RpcContext controller = new RpcContext();
-                    controller.setRequestBinaryAttachment("example attachment".getBytes());
+                    RpcContext rpcContext = RpcContext.getContext();
+                    rpcContext.setRequestBinaryAttachment("example attachment".getBytes());
                     Echo.EchoResponse response = echoService.echo(request);
                     // sample log
                     if (random.nextInt(10000) < 30) {
                         LOG.info("sync call service=EchoService.echo success, "
                                         + "request={},response={}",
                                 request.getMessage(), response.getMessage());
-
-                        if (controller.getResponseBinaryAttachment() != null) {
-                            LOG.info("attachment="
-                                    + new String(controller.getResponseBinaryAttachment().array()));
-                            ReferenceCountUtil.release(controller.getResponseBinaryAttachment());
-                        }
+                    }
+                    rpcContext = RpcContext.getContext();
+                    if (rpcContext.getResponseBinaryAttachment() != null) {
+                        LOG.info("attachment="
+                                + new String(rpcContext.getResponseBinaryAttachment().array()));
+                        ReferenceCountUtil.release(rpcContext.getResponseBinaryAttachment());
                     }
                 } catch (RpcException ex) {
                     if (random.nextInt(10000) < 30) {

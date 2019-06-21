@@ -22,6 +22,7 @@
         <groupId>com.baidu</groupId>
         <artifactId>brpc-java-parent</artifactId>
         <version>2.5.0</version>
+
     </parent>
 
     <artifactId>brpc-java</artifactId>
@@ -33,7 +34,6 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netty.version>4.1.30.Final</netty.version>
     </properties>
 
     <dependencies>
