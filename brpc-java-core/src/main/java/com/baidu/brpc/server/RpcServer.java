@@ -407,7 +407,7 @@ public class RpcServer {
             // netty will release the send buffer after sent.
             // we retain here, so it can be used when rpc retry.
             request.retain();
-            LOG.info("send request log id:" + request.getLogId());
+
             ByteBuf byteBuf = protocol.encodeRequest(request);
             ChannelFuture sendFuture = channel.writeAndFlush(byteBuf);
             // set RpcContext writeTimeout

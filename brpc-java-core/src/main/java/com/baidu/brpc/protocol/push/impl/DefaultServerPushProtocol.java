@@ -57,7 +57,9 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         Validate.notNull(bodyBuf);
         spHead.bodyLength = bodyBuf.readableBytes();
         spHead.logId = request.getLogId();
+
         ByteBuf headerBuf = headToBytes(spHead);
+
         return Unpooled.wrappedBuffer(headerBuf, bodyBuf);
     }
 
@@ -139,6 +141,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         spHead.logId = response.getLogId();
         spHead.type = SPHead.TYPE_RESPONSE;
         ByteBuf headerBuf = headToBytes(spHead);
+
         return Unpooled.wrappedBuffer(headerBuf, bodyBuf);
     }
 
@@ -192,9 +195,6 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
             ByteBuf bodyBuf = in.readRetainedSlice(bodyLength);
             packet.setBodyBuf(bodyBuf);
             return packet;
-        } catch (Exception e) {
-            LOG.error("error:", e);
-            throw new RuntimeException("decode failed:" + e.getMessage());
         } finally {
             fixHeaderBuf.release();
         }
@@ -262,7 +262,9 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
 
         Schema<SPBody> schema = RuntimeSchema.getSchema(SPBody.class);
         bytes = ProtobufIOUtil.toByteArray(spBody, schema, LinkedBuffer.allocate(500));
+
         return Unpooled.wrappedBuffer(bytes);
+
     }
 
     public ByteBuf encodeResponseBody(Object result, RpcMethodInfo rpcMethodInfo) {

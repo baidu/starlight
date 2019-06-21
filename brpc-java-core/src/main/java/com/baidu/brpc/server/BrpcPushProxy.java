@@ -85,7 +85,8 @@ public class BrpcPushProxy implements MethodInterceptor {
      */
     protected BrpcPushProxy(RpcServer rpcServer, Class clazz) {
         this.rpcServer = rpcServer;
-        Method[] methods = clazz.getMethods();
+
+        Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {
             if (notProxyMethodSet.contains(method.getName())) {
                 log.debug("{}:{} does not need to proxy",
@@ -93,36 +94,33 @@ public class BrpcPushProxy implements MethodInterceptor {
                 continue;
             }
 
-            // 转换为父接口 ， 去掉第一个clientName参数，不传到client端
             Class<?>[] oriTypes = method.getParameterTypes();
-            Class[] parameterTypes = ArrayUtils.subarray(oriTypes, 1, oriTypes.length);
-            int paramLength = parameterTypes.length;
-            if (paramLength >= 1
-                    && Future.class.isAssignableFrom(method.getReturnType())
-                    && !RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1])) {
+            if (oriTypes.length < 1) {
+                throw new IllegalArgumentException("number of arguments cannot be zero");
+            } else if (!String.class.isAssignableFrom(oriTypes[0])) {
+                throw new IllegalArgumentException("first arguments must be clientName (String)");
+            } else if (Future.class.isAssignableFrom(method.getReturnType())
+                    && !RpcCallback.class.isAssignableFrom(oriTypes[oriTypes.length - 1])) {
                 throw new IllegalArgumentException("returnType is Future, but last argument is not RpcCallback");
             }
+            // 转换为父接口 ， 去掉第一个clientName参数，不传到client端
+            Class[] paramTypesExcludeClientName = ArrayUtils.subarray(oriTypes, 1, oriTypes.length);
+            int paramLengthExcludeClientName = paramTypesExcludeClientName.length;
 
-            Method syncMethod = method;
-            if (paramLength >= 1) {
-                int startIndex = 0;
-                int endIndex = paramLength - 1;
-                // has callback, async rpc
-                if (RpcCallback.class.isAssignableFrom(parameterTypes[paramLength - 1])) {
-                    endIndex--;
-                    paramLength--;
+            Class[] actualArgTypes = paramTypesExcludeClientName;
+            if (paramLengthExcludeClientName >= 1) { // 如果有callback，则去掉callback，否则跟去掉clientName后的参数一致
+                if (RpcCallback.class.isAssignableFrom(paramTypesExcludeClientName[paramLengthExcludeClientName - 1])) {
+                    actualArgTypes = ArrayUtils.subarray(paramTypesExcludeClientName, 0,
+                            paramTypesExcludeClientName.length - 1);
                 }
-                Class[] actualParameterTypes = new Class[paramLength];
-                for (int i = 0; startIndex <= endIndex; i++) {
-                    actualParameterTypes[i] = parameterTypes[startIndex++];
-                }
+            }
 
-                try {
-                    syncMethod = method.getDeclaringClass().getMethod(
-                            method.getName(), actualParameterTypes);
-                } catch (NoSuchMethodException ex) {
-                    throw new IllegalArgumentException("can not find sync method:" + method.getName());
-                }
+            Method syncMethod;
+            try {
+                syncMethod = method.getDeclaringClass().getMethod(
+                        method.getName(), actualArgTypes);
+            } catch (NoSuchMethodException ex) {
+                throw new IllegalArgumentException("can not find sync method:" + method.getName());
             }
 
             RpcMethodInfo methodInfo;
