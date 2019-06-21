@@ -276,30 +276,7 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
         }
 
         // naming options
-        NamingOptions namingOptions;
-        if (brpcConfig.getNaming() != null) {
-            // defaults to global NamingOptions
-            namingOptions = new NamingOptions(brpcConfig.getNaming());
-        } else {
-            namingOptions = new NamingOptions();
-        }
-        // Populate NamingOptions from the annotation
-        if (!rpcExporter.group().isEmpty()) {
-            namingOptions.setGroup(rpcExporter.group());
-        }
-        if (!rpcExporter.version().isEmpty()) {
-            namingOptions.setVersion(rpcExporter.version());
-        }
-        if (rpcExporter.extraOptions().length > 0) {
-            namingOptions.setExtra(new HashMap<String, String>());
-            for (int i = 0; i < rpcExporter.extraOptions().length; i++) {
-                NamingOption opt = rpcExporter.extraOptions()[i];
-                namingOptions.getExtra().put(opt.key(), opt.value());
-            }
-        }
-        namingOptions.setIgnoreFailOfNamingService(rpcExporter.ignoreFailOfNamingService());
-        rpcServiceExporter.getServiceNamingOptions().put(bean, namingOptions);
-
+        rpcServiceExporter.getServiceNamingOptions().put(bean, brpcConfig.getNaming());
 
         if (brpcConfig.getServer() != null && brpcConfig.getServer().isUseSharedThreadPool()) {
             rpcServiceExporter.getCustomOptionsServiceMap().put(brpcConfig.getServer(), bean);

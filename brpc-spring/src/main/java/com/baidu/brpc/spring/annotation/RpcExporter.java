@@ -59,18 +59,12 @@ public @interface RpcExporter {
 
     /**
      * Group for naming service
-     *
-     * @deprecated Use {@link #extraOptions()} instead
      */
-    @Deprecated
     String group() default "normal";
 
     /**
      * Version for naming service
-     *
-     * @deprecated Use {@link #extraOptions()} instead
      */
-    @Deprecated
     String version() default "1.0.0";
 
     /**

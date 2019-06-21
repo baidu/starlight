@@ -26,18 +26,12 @@ import java.util.Map;
 public class NamingOptions {
     /**
      * identify different service implementation for the same interface.
-     *
-     * @deprecated use {@link #extra} instead
      */
-    @Deprecated
     private String group = "normal";
 
     /**
      * identify service version.
-     *
-     * @deprecated use {@link #extra} instead
      */
-    @Deprecated
     private String version = "1.0.0";
 
     /**
