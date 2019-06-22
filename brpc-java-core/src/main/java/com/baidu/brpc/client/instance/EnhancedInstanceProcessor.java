@@ -95,12 +95,28 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
 
                             lock.lock();
                             try {
-                                healthyInstanceChannels.addAll(newHealthyInstanceChannels);
-                                unhealthyInstanceChannels.removeAll(newHealthyInstanceChannels);
+                                if (newHealthyInstanceChannels.size() > 0) {
+                                    List<BrpcChannel> effectiveInstances = new ArrayList<BrpcChannel>();
+                                    for (BrpcChannel brpcChannel : newHealthyInstanceChannels) {
+                                        if (instances.contains(brpcChannel.getServiceInstance())) {
+                                            effectiveInstances.add(brpcChannel);
+                                        }
+                                    }
+                                    healthyInstanceChannels.addAll(effectiveInstances );
+                                    unhealthyInstanceChannels.removeAll(effectiveInstances);
+                                }
 
-                                healthyInstanceChannels.removeAll(newUnhealthyInstanceChannels);
-                                unhealthyInstanceChannels.addAll(newUnhealthyInstanceChannels);
-                                notifyInvalidInstance(newUnhealthyInstanceChannels);
+                                if (newUnhealthyInstanceChannels.size() > 0) {
+                                    List<BrpcChannel> effectiveInstances = new ArrayList<BrpcChannel>();
+                                    for (BrpcChannel brpcChannel : newUnhealthyInstanceChannels) {
+                                        if (instances.contains(brpcChannel.getServiceInstance())) {
+                                            effectiveInstances.add(brpcChannel);
+                                        }
+                                    }
+                                    healthyInstanceChannels.removeAll(effectiveInstances);
+                                    unhealthyInstanceChannels.addAll(effectiveInstances);
+                                    notifyInvalidInstance(effectiveInstances);
+                                }
                             } finally {
                                 lock.unlock();
                             }

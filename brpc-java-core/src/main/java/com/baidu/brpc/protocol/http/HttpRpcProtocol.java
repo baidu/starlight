@@ -177,7 +177,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
         HttpRequest httpRequest = (HttpRequest) request;
-        String serviceName = httpRequest.getTargetMethod().getDeclaringClass().getSimpleName();
+        String serviceName = httpRequest.getTargetMethod().getDeclaringClass().getName();
         String methodName = httpRequest.getTargetMethod().getName();
         BrpcMeta rpcMeta = httpRequest.getTargetMethod().getAnnotation(BrpcMeta.class);
         if (rpcMeta != null) {
@@ -311,7 +311,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
             long logId = parseLogId(httpRequest.headers().get(LOG_ID), null);
             httpRequest.setLogId(logId);
 
-            String uri = httpRequest.uri();
             String contentTypeAndEncoding = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
             String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
             int protocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
@@ -325,10 +324,11 @@ public class HttpRpcProtocol extends AbstractProtocol {
             httpRequest.headers().set(PROTOCOL_TYPE, protocolType);
             httpRequest.headers().set(HttpHeaderNames.CONTENT_ENCODING, encoding);
 
+
             ByteBuf byteBuf = httpRequest.content();
             int bodyLen = byteBuf.readableBytes();
             if (bodyLen == 0) {
-                String errMsg = String.format("body should not be null, uri:%s", uri);
+                String errMsg = String.format("body should not be null, uri:%s", httpRequest.uri());
                 LOG.warn(errMsg);
                 httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
                 return httpRequest;
@@ -339,13 +339,15 @@ public class HttpRpcProtocol extends AbstractProtocol {
             Object body = decodeBody(protocolType, encoding, requestBytes);
             httpRequest.setLogId(logId);
 
+            QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequest.uri());
+            String path = queryStringDecoder.path();
             String serviceName = null;
             String methodName = null;
             if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
                     || protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-                String[] uriSplit = uri.split("/");
+                String[] uriSplit = path.split("/");
                 if (uriSplit.length < 3) {
-                    String errMsg = String.format("url format is error, uri:%s", uri);
+                    String errMsg = String.format("url format is error, path:%s", path);
                     LOG.warn(errMsg);
                     httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
                     return httpRequest;
@@ -355,13 +357,12 @@ public class HttpRpcProtocol extends AbstractProtocol {
             } else {
                 JsonObject bodyObject = (JsonObject) body;
                 methodName = bodyObject.get("method").getAsString();
-                serviceName = uri;
-
+                serviceName = path;
             }
             ServiceManager serviceManager = ServiceManager.getInstance();
             RpcMethodInfo rpcMethodInfo = serviceManager.getService(serviceName, methodName);
             if (rpcMethodInfo == null) {
-                String errMsg = String.format("Fail to find path=%s", uri);
+                String errMsg = String.format("Fail to find path=%s", path);
                 LOG.warn(errMsg);
                 httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
                 return httpRequest;

@@ -95,6 +95,10 @@ public class ServerWorkTask implements Runnable {
         }
 
         if (rpcContext != null) {
+            if (rpcContext.getRequestBinaryAttachment() != null
+                    && rpcContext.getRequestBinaryAttachment().refCnt() > 0) {
+                rpcContext.getRequestBinaryAttachment().release();
+            }
             rpcContext.reset();
         }
     }

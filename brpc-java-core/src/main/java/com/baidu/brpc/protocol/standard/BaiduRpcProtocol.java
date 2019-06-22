@@ -276,17 +276,17 @@ public class BaiduRpcProtocol extends AbstractProtocol {
 
             // proto body
             Compress compress = compressManager.getCompress(compressType);
-            int protoSize = protoAndAttachmentBuf.readableBytes() - rpcMeta.getAttachmentSize();
-            ByteBuf protoBuf = protoAndAttachmentBuf.readSlice(protoSize);
-            Object proto = compress.uncompressInput(protoBuf, rpcMethodInfo);
-            request.setArgs(new Object[] {proto});
-
-            // attachment
-            if (rpcMeta.getAttachmentSize() > 0) {
+            if (rpcMeta.hasAttachmentSize() && rpcMeta.getAttachmentSize() > 0) {
+                int protoSize = protoAndAttachmentBuf.readableBytes() - rpcMeta.getAttachmentSize();
+                ByteBuf protoBuf = protoAndAttachmentBuf.readSlice(protoSize);
+                Object proto = compress.uncompressInput(protoBuf, rpcMethodInfo);
+                request.setArgs(new Object[] {proto});
                 request.setBinaryAttachment(protoAndAttachmentBuf);
                 protoAndAttachmentBuf = null;
+            } else {
+                Object proto = compress.uncompressInput(protoAndAttachmentBuf, rpcMethodInfo);
+                request.setArgs(new Object[] {proto});
             }
-
             return request;
         } finally {
             if (metaBuf != null) {
