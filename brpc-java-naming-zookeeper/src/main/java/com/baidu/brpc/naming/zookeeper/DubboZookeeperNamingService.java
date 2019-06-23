@@ -177,9 +177,13 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
                 .append(registerInfo.getPort())
                 .append("/")
                 .append(registerInfo.getInterfaceName())
-                .append("?")
-                .append("interface=")
-                .append(registerInfo.getInterfaceName());
+                .append("?category=providers")
+                .append("&interface=")
+                .append(registerInfo.getInterfaceName())
+                .append("&group=")
+                .append(registerInfo.getGroup())
+                .append("&version=")
+                .append(registerInfo.getVersion());
         try {
             String url = URLEncoder.encode(sb.toString(), "UTF-8");
             return url;

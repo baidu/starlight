@@ -91,13 +91,16 @@ public class DubboRpcProtocol extends AbstractProtocol {
         requestBody.setMethodName(request.getMethodName());
         requestBody.setParameterTypes(request.getTargetMethod().getParameterTypes());
         requestBody.setArguments(request.getArgs());
+
+        Map<String, String> kvAttachments = new HashMap<String, String>();
+        kvAttachments.put("group", request.getSubscribeInfo().getGroup());
         if (request.getKvAttachment() != null) {
-            Map<String, String> kvAttachments = new HashMap<String, String>(request.getKvAttachment().size());
             for (Map.Entry<String, Object> entry : request.getKvAttachment().entrySet()) {
                 kvAttachments.put(entry.getKey(), (String) entry.getValue());
             }
-            requestBody.setAttachments(kvAttachments);
         }
+        requestBody.setAttachments(kvAttachments);
+
         byte[] bodyBytes = requestBody.encodeRequestBody();
         header.setBodyLength(bodyBytes.length);
 
