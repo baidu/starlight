@@ -2,6 +2,8 @@ package com.baidu.brpc.protocol.dubbo;
 
 import com.alibaba.com.caucho.hessian.io.Hessian2Input;
 import com.alibaba.com.caucho.hessian.io.Hessian2Output;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -44,16 +46,18 @@ public class DubboRequestBody {
         return outputStream.toByteArray();
     }
 
-    public static DubboRequestBody decodeRequestBody(byte[] requestBodyBytes) throws IOException {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(requestBodyBytes);
-        Hessian2Input hessian2Input = new Hessian2Input(inputStream);
-        DubboRequestBody requestBody = new DubboRequestBody();
-        requestBody.setDubboProtocolVersion(hessian2Input.readString());
-        requestBody.setPath(hessian2Input.readString());
-        requestBody.setVersion(hessian2Input.readString());
-        requestBody.setMethodName(hessian2Input.readString());
-
+    public static DubboRequestBody decodeRequestBody(ByteBuf requestBodyBuf) throws IOException {
+        ByteBufInputStream inputStream = null;
         try {
+            inputStream = new ByteBufInputStream(requestBodyBuf, true);
+            Hessian2Input hessian2Input = new Hessian2Input(inputStream);
+            DubboRequestBody requestBody = new DubboRequestBody();
+            requestBody.setDubboProtocolVersion(hessian2Input.readString());
+            requestBody.setPath(hessian2Input.readString());
+            requestBody.setVersion(hessian2Input.readString());
+            requestBody.setMethodName(hessian2Input.readString());
+
+
             Object[] args;
             Class<?>[] pts;
             String desc = hessian2Input.readString();
@@ -80,10 +84,13 @@ public class DubboRequestBody {
             if (map != null && map.size() > 0) {
                 requestBody.getAttachments().putAll(map);
             }
+            return requestBody;
         } catch (ClassNotFoundException e) {
             throw new IOException("Read invocation data failed.", e);
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
+            }
         }
-
-        return requestBody;
     }
 }

@@ -27,11 +27,11 @@ import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.*;
 import com.baidu.brpc.server.ServiceManager;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayInputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,13 +66,12 @@ public class DubboRpcProtocol extends AbstractProtocol {
                 throw new TooBigDataException("dubbo too big body size:" + dubboHeader.getBodyLength());
             }
 
-            byte[] body = new byte[dubboHeader.getBodyLength()];
             in.skipBytes(DubboConstants.FIXED_HEAD_LEN);
-            in.readBytes(body);
+            ByteBuf bodyBuf = in.readRetainedSlice(dubboHeader.getBodyLength());
 
             DubboPacket dubboPacket = new DubboPacket();
             dubboPacket.setHeader(dubboHeader);
-            dubboPacket.setBodyBytes(body);
+            dubboPacket.setBodyBuf(bodyBuf);
             return dubboPacket;
         } finally {
             headerBuf.release();
@@ -122,7 +121,7 @@ public class DubboRpcProtocol extends AbstractProtocol {
         byte status = dubboHeader.getStatus();
         if (status == DubboConstants.RESPONSE_OK) {
             DubboResponseBody responseBody = DubboResponseBody.decodeResponseBody(
-                    dubboHeader, dubboPacket.getBodyBytes());
+                    dubboHeader, dubboPacket.getBodyBuf());
             response.setResult(responseBody.getResult());
             if (responseBody.getAttachments() != null) {
                 Map<String, Object> attachments = new HashMap<String, Object>();
@@ -132,10 +131,17 @@ public class DubboRpcProtocol extends AbstractProtocol {
                 response.setKvAttachment(attachments);
             }
         } else {
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(dubboPacket.getBodyBytes());
-            Hessian2Input hessian2Input = new Hessian2Input(inputStream);
-            String errorString = hessian2Input.readString();
-            response.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorString));
+            ByteBufInputStream inputStream = null;
+            try {
+                inputStream = new ByteBufInputStream(dubboPacket.getBodyBuf(), true);
+                Hessian2Input hessian2Input = new Hessian2Input(inputStream);
+                String errorString = hessian2Input.readString();
+                response.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errorString));
+            } finally {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            }
         }
         return response;
     }
@@ -144,21 +150,29 @@ public class DubboRpcProtocol extends AbstractProtocol {
     public Request decodeRequest(Object packet) throws Exception {
         Request request = new RpcRequest();
         DubboPacket dubboPacket = (DubboPacket) packet;
+        request.setLogId(dubboPacket.getHeader().getLogId());
         byte flag = dubboPacket.getHeader().getFlag();
         if ((flag & DubboConstants.FLAG_EVENT) != 0) {
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(dubboPacket.getBodyBytes());
-            Hessian2Input hessian2Input = new Hessian2Input(inputStream);
-            Object bodyObject = hessian2Input.readObject();
-            if (bodyObject == DubboConstants.HEARTBEAT_EVENT) {
-                request.setHeartbeat(true);
-            } else {
-                throw new RpcException("request body not null for event");
+            ByteBufInputStream inputStream = null;
+            try {
+                inputStream = new ByteBufInputStream(dubboPacket.getBodyBuf(), true);
+                Hessian2Input hessian2Input = new Hessian2Input(inputStream);
+                Object bodyObject = hessian2Input.readObject();
+                if (bodyObject == DubboConstants.HEARTBEAT_EVENT) {
+                    request.setHeartbeat(true);
+                } else {
+                    throw new RpcException("request body not null for event");
+                }
+                return request;
+            } finally {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
             }
-            return request;
         }
 
         try {
-            DubboRequestBody dubboRequestBody = DubboRequestBody.decodeRequestBody(dubboPacket.getBodyBytes());
+            DubboRequestBody dubboRequestBody = DubboRequestBody.decodeRequestBody(dubboPacket.getBodyBuf());
             String serviceName = dubboRequestBody.getPath();
             String methodName = dubboRequestBody.getMethodName();
             RpcMethodInfo rpcMethodInfo = serviceManager.getService(serviceName, methodName);

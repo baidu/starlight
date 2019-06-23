@@ -52,6 +52,7 @@ enum ProtocolType {
     PROTOCOL_HTTP_JSON = 30; // http + json
     PROTOCOL_NSHEAD_JSON = 31; // nshead + json
     PROTOCOL_STARGATE = 32; // Stargate
+    PROTOCOL_DUBBO = 34; // dubbo
 }
 
 enum CompressType {

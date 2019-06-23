@@ -8,5 +8,6 @@ import lombok.Setter;
 @Getter
 public class DubboPacket {
     private DubboHeader header;
-    private byte[] bodyBytes;
+    private ByteBuf bodyBuf;
+//    private byte[] bodyBytes;
 }

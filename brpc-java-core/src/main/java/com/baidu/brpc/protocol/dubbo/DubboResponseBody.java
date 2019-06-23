@@ -2,6 +2,8 @@ package com.baidu.brpc.protocol.dubbo;
 
 import com.alibaba.com.caucho.hessian.io.Hessian2Input;
 import com.alibaba.com.caucho.hessian.io.Hessian2Output;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufInputStream;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -48,18 +50,26 @@ public class DubboResponseBody {
     }
 
     public static DubboResponseBody decodeResponseBody(
-            DubboHeader header, byte[] responseBodyBytes) throws IOException {
-        ByteArrayInputStream inputStream = new ByteArrayInputStream(responseBodyBytes);
-        Hessian2Input hessian2Input = new Hessian2Input(inputStream);
-        DubboResponseBody responseBody = new DubboResponseBody();
-        responseBody.setResponseType((byte) hessian2Input.readInt());
-        responseBody.setResult(hessian2Input.readObject());
-        if (header.getFlag() == DubboConstants.RESPONSE_VALUE_WITH_ATTACHMENTS) {
-            Map<String, String> map = (Map<String, String>) hessian2Input.readObject(Map.class);
-            if (map != null && map.size() > 0) {
-                responseBody.getAttachments().putAll(map);
+            DubboHeader header, ByteBuf responseBodyBuf) throws IOException {
+        ByteBufInputStream inputStream = null;
+        try {
+            inputStream = new ByteBufInputStream(responseBodyBuf, true);
+            Hessian2Input hessian2Input = new Hessian2Input(inputStream);
+            DubboResponseBody responseBody = new DubboResponseBody();
+            responseBody.setResponseType((byte) hessian2Input.readInt());
+            responseBody.setResult(hessian2Input.readObject());
+            if (header.getFlag() == DubboConstants.RESPONSE_VALUE_WITH_ATTACHMENTS) {
+                Map<String, String> map = (Map<String, String>) hessian2Input.readObject(Map.class);
+                if (map != null && map.size() > 0) {
+                    responseBody.getAttachments().putAll(map);
+                }
+            }
+            return responseBody;
+        } finally {
+            if (inputStream != null) {
+                inputStream.close();
             }
         }
-        return responseBody;
     }
+
 }

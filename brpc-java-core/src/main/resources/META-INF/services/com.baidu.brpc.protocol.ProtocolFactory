@@ -4,5 +4,6 @@ com.baidu.brpc.protocol.hulu.HuluRpcProtocolFactory
 com.baidu.brpc.protocol.nshead.NSHeadJsonProtocolFactory
 com.baidu.brpc.protocol.nshead.NSHeadProtobufProtocolFactory
 com.baidu.brpc.protocol.stargate.StargateRpcProtocolFactory
+com.baidu.brpc.protocol.dubbo.DubboRpcProtocolFactory
 com.baidu.brpc.protocol.http.HttpProtobufProtocolFactory
 com.baidu.brpc.protocol.http.HttpJsonProtocolFactory

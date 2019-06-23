@@ -21,8 +21,6 @@ import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.naming.SubscribeInfo;
-import com.baidu.brpc.protocol.stargate.StargateConstants;
-import com.baidu.brpc.protocol.stargate.StargateURI;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -31,6 +29,9 @@ import org.apache.curator.framework.recipes.cache.PathChildrenCacheEvent;
 import org.apache.curator.framework.recipes.cache.PathChildrenCacheListener;
 import org.apache.zookeeper.CreateMode;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,25 +50,17 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
         try {
             List<String> childList = client.getChildren().forPath(path);
             for (String child : childList) {
-                // 跨过所有客户端节点
-                if (StargateConstants.ZK_CONSUMER_DIR.equals(child)) {
-                    continue;
-                }
-                String childPath = path + "/" + child;
-                try {
-                    String childData = new String(client.getData().forPath(childPath));
-                    StargateURI uri = new StargateURI.Builder(childData).build();
-                    instances.add(new ServiceInstance(uri.getHost(), uri.getPort()));
-                } catch (Exception getDataFailedException) {
-                    log.warn("get child data failed, path:{}, ex:", childPath, getDataFailedException);
-                }
+                String providerUrlString = URLDecoder.decode(child, "UTF-8");
+                BrpcURL url = new BrpcURL(providerUrlString);
+                ServiceInstance instance = new ServiceInstance(url.getHostPorts());
+                instances.add(instance);
             }
             log.info("lookup {} instances from {}", instances.size(), url);
         } catch (Exception ex) {
             log.warn("lookup service instance list failed from {}, msg={}",
                     url, ex.getMessage());
             if (!info.isIgnoreFailOfNamingService()) {
-                throw new RpcException("lookup end point list failed from zookeeper failed", ex);
+                throw new RpcException("lookup service instance list failed from zookeeper", ex);
             }
         }
         return instances;
@@ -84,21 +77,18 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
                     ChildData data = event.getData();
                     // 子节点信息，将监听的父节点信息擦除
                     String childNodePath = data.getPath().replace(path + "/", "");
-                    // 如果是客户端上线，不做处理
-                    if (StargateConstants.ZK_CONSUMER_DIR.equals(childNodePath)) {
-                        return;
-                    }
+                    String providerUrlString = URLDecoder.decode(childNodePath, "UTF-8");
+                    BrpcURL url = new BrpcURL(providerUrlString);
+                    ServiceInstance instance = new ServiceInstance(url.getHostPorts());
                     switch (event.getType()) {
                         case CHILD_ADDED: {
-                            ServiceInstance endPoint = new ServiceInstance(childNodePath);
-                            listener.notify(Collections.singletonList(endPoint),
+                            listener.notify(Collections.singletonList(instance),
                                     Collections.<ServiceInstance>emptyList());
                             break;
                         }
                         case CHILD_REMOVED: {
-                            ServiceInstance endPoint = new ServiceInstance(childNodePath);
                             listener.notify(Collections.<ServiceInstance>emptyList(),
-                                    Collections.singletonList(endPoint));
+                                    Collections.singletonList(instance));
                             break;
                         }
                         case CHILD_UPDATED:
@@ -110,10 +100,10 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
             cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
             failedSubscribes.remove(info);
             subscribeCacheMap.putIfAbsent(info, cache);
-            log.info("stargate subscribe success from {}", url);
+            log.info("dubbo subscribe success from {}", url);
         } catch (Exception ex) {
             if (!info.isIgnoreFailOfNamingService()) {
-                throw new RpcException("stargate subscribe failed from " + url, ex);
+                throw new RpcException("dubbo subscribe failed from " + url, ex);
             } else {
                 failedSubscribes.putIfAbsent(info, listener);
             }
@@ -128,11 +118,11 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
     @Override
     public void register(RegisterInfo info) {
         String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
-        String path = parentPath + "/" + info.getHost() + ":" + info.getPort();
-        String pathData = buildStarRegisterPathData(info);
+        String path = parentPath + "/" + buildRegisterPath(info);
+        String pathData = getRegisterPathData(info);
         try {
             if (client.checkExists().forPath(parentPath) == null) {
-                client.create().withMode(CreateMode.PERSISTENT).forPath(parentPath);
+                client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(parentPath);
             }
             if (client.checkExists().forPath(path) != null) {
                 try {
@@ -142,10 +132,10 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
                 }
             }
             client.create().withMode(CreateMode.EPHEMERAL).forPath(path, pathData.getBytes());
-            log.info("stargate register success to {}", url);
+            log.info("dubbo register success to {}", url);
         } catch (Exception ex) {
             if (!info.isIgnoreFailOfNamingService()) {
-                throw new RpcException("stargate Failed to register to " + url, ex);
+                throw new RpcException("dubbo Failed to register to " + url, ex);
             } else {
                 failedRegisters.add(info);
                 return;
@@ -157,13 +147,13 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
     @Override
     public void unregister(RegisterInfo info) {
         String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
-        String path = "/" + info.getHost() + ":" + info.getPort();
+        String path = "/" + buildRegisterPath(info);
         try {
             client.delete().guaranteed().forPath(parentPath + path);
-            log.info("stargate unregister success to {}", url);
+            log.info("dubbo unregister success to {}", url);
         } catch (Exception ex) {
             if (!info.isIgnoreFailOfNamingService()) {
-                throw new RpcException("stargate Failed to unregister from " + url, ex);
+                throw new RpcException("dubbo Failed to unregister from " + url, ex);
             } else {
                 failedUnregisters.add(info);
             }
@@ -171,21 +161,32 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
     }
 
     private String buildParentNodePath(String group, String serviceName, String version) {
-        return "/" + serviceName;
+        StringBuilder sb = new StringBuilder();
+        sb.append("/")
+                .append(serviceName)
+                .append("/providers");
+        return sb.toString();
     }
 
 
-    /**
-     * "star://127.0.0.1:8002?
-     * group=normal
-     * &interface=com.baidu.brpc.example.stargate.stargatedemoservice
-     * &version=1.0.0"
-     */
-    private String buildStarRegisterPathData(RegisterInfo registerInfo) {
-        return "\"star://" + registerInfo.getHost() + ":" + registerInfo.getPort() + "?" +
-                "group=" + registerInfo.getGroup() + "&" +
-                "interface=" + registerInfo.getInterfaceName() + "&" +
-                "version=" + registerInfo.getVersion() + "\"";
+    private String buildRegisterPath(RegisterInfo registerInfo) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("dubbo://")
+                .append(registerInfo.getHost())
+                .append(":")
+                .append(registerInfo.getPort())
+                .append("/")
+                .append(registerInfo.getInterfaceName())
+                .append("?")
+                .append("interface=")
+                .append(registerInfo.getInterfaceName());
+        try {
+            String url = URLEncoder.encode(sb.toString(), "UTF-8");
+            return url;
+        } catch (UnsupportedEncodingException ex) {
+            log.warn("encode register path failed:", ex);
+            throw new RuntimeException("encode register path failed", ex);
+        }
     }
 
 }

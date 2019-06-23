@@ -20,7 +20,7 @@ import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 
 public class DubboNamingFactory implements NamingServiceFactory {
-    private final static String DEFAULT_ROOT = "dubbo";
+    private final static String DEFAULT_ROOT = "/dubbo";
 
     @Override
     public String getName() {
