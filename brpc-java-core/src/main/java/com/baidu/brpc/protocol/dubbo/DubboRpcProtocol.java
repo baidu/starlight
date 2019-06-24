@@ -35,6 +35,9 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * dubbo protocol with hession2 serialization
+ */
 @Slf4j
 public class DubboRpcProtocol extends AbstractProtocol {
     protected static final byte FLAG_REQUEST = (byte) 0x80;

@@ -31,8 +31,8 @@ public class DubboClient {
         RpcClient rpcClient = new RpcClient("dubbo://127.0.0.1:2181", options);
 
         NamingOptions namingOptions = new NamingOptions();
-        namingOptions.setGroup("normal");
-        namingOptions.setVersion("1.0.0");
+        namingOptions.setGroup("");
+        namingOptions.setVersion("");
 
         EchoService echoService = RpcClient.getProxy(rpcClient, EchoService.class, namingOptions);
 

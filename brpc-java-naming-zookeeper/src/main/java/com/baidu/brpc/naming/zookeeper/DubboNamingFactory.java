@@ -19,6 +19,9 @@ import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 
+/**
+ * dubbo registry with zookeeper
+ */
 public class DubboNamingFactory implements NamingServiceFactory {
     private final static String DEFAULT_ROOT = "/dubbo";
 

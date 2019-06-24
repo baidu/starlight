@@ -31,8 +31,8 @@ public class DubboServer {
         EchoService service = new EchoServiceImpl();
 
         NamingOptions namingOptions = new NamingOptions();
-        namingOptions.setGroup("normal");
-        namingOptions.setVersion("1.0.0");
+        namingOptions.setGroup("");
+        namingOptions.setVersion("");
         rpcServer.registerService(service, namingOptions);
         rpcServer.start();
 
