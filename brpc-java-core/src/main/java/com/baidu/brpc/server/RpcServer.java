@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -244,6 +244,7 @@ public class RpcServer {
             registerInfo.setGroup(namingOptions.getGroup());
             registerInfo.setVersion(namingOptions.getVersion());
             registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
+            registerInfo.setExtra(namingOptions.getExtra());
         }
         ServiceManager serviceManager = ServiceManager.getInstance();
         ThreadPool customThreadPool = threadPool;
