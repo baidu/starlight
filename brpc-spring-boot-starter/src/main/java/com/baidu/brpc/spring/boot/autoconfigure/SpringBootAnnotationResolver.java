@@ -261,6 +261,9 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
             portMappingExporters.put(port, rpcServiceExporter);
             rpcServiceExporter.setServicePort(port);
             rpcServiceExporter.copyFrom(brpcConfig.getServer());
+            if (brpcConfig.getNaming() != null) {
+                rpcServiceExporter.setNamingServiceUrl(brpcConfig.getNaming().getNamingServiceUrl());
+            }
         }
 
         // interceptor
