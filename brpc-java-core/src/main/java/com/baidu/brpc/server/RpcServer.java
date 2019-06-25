@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.baidu.brpc.naming.NamingServiceFactoryManager;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.utils.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -222,7 +223,8 @@ public class RpcServer {
 
     /**
      * register service which can be accessed by client
-     * @param service the service object which implement rpc interface.
+     *
+     * @param service       the service object which implement rpc interface.
      * @param namingOptions register center info
      * @param serverOptions service own custom RpcServerOptions
      *                      if not null, the service will not use the shared thread pool.
@@ -230,15 +232,19 @@ public class RpcServer {
     public void registerService(Object service, Class targetClass, NamingOptions namingOptions,
                                 RpcServerOptions serverOptions) {
         serviceList.add(service);
-        RegisterInfo registerInfo = new RegisterInfo();
-        registerInfo.setInterfaceName(service.getClass().getInterfaces()[0].getName());
+        RegisterInfo registerInfo = null;
+        if (namingOptions != null) {
+            registerInfo = new RegisterInfo(namingOptions);
+        } else {
+            registerInfo = new RegisterInfo();
+        }
+        if (targetClass != null) {
+            registerInfo.setInterfaceName(targetClass.getInterfaces()[0].getName());
+        } else {
+            registerInfo.setInterfaceName(service.getClass().getInterfaces()[0].getName());
+        }
         registerInfo.setHost(NetUtils.getLocalAddress().getHostAddress());
         registerInfo.setPort(port);
-        if (namingOptions != null) {
-            registerInfo.setGroup(namingOptions.getGroup());
-            registerInfo.setVersion(namingOptions.getVersion());
-            registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
-        }
         ServiceManager serviceManager = ServiceManager.getInstance();
         ThreadPool customThreadPool = threadPool;
         if (serverOptions != null) {

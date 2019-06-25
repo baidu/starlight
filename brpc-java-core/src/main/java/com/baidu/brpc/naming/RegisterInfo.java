@@ -37,4 +37,18 @@ public class RegisterInfo extends NamingOptions {
      * the interface class name.
      */
     private String interfaceName;
+
+    public RegisterInfo() {
+    }
+
+    public RegisterInfo(RegisterInfo rhs) {
+        super(rhs);
+        this.host = rhs.getHost();
+        this.port = rhs.getPort();
+        this.interfaceName = rhs.getInterfaceName();
+    }
+
+    public RegisterInfo(NamingOptions namingOptions) {
+        super(namingOptions);
+    }
 }

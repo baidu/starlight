@@ -32,4 +32,17 @@ public class SubscribeInfo extends NamingOptions {
      * the interface class name.
      */
     private String interfaceName;
+
+    public SubscribeInfo() {
+    }
+
+    public SubscribeInfo(SubscribeInfo rhs) {
+        super(rhs);
+        this.interfaceName = rhs.getInterfaceName();
+    }
+
+    public SubscribeInfo(NamingOptions namingOptions) {
+        super(namingOptions);
+    }
+
 }
