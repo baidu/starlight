@@ -232,7 +232,12 @@ public class RpcServer {
     public void registerService(Object service, Class targetClass, NamingOptions namingOptions,
                                 RpcServerOptions serverOptions) {
         serviceList.add(service);
-        RegisterInfo registerInfo = new RegisterInfo();
+        RegisterInfo registerInfo = null;
+        if (namingOptions != null) {
+            registerInfo = new RegisterInfo(namingOptions);
+        } else {
+            registerInfo = new RegisterInfo();
+        }
         if (targetClass != null) {
             registerInfo.setInterfaceName(targetClass.getInterfaces()[0].getName());
         } else {
@@ -240,12 +245,6 @@ public class RpcServer {
         }
         registerInfo.setHost(NetUtils.getLocalAddress().getHostAddress());
         registerInfo.setPort(port);
-        if (namingOptions != null) {
-            registerInfo.setGroup(namingOptions.getGroup());
-            registerInfo.setVersion(namingOptions.getVersion());
-            registerInfo.setIgnoreFailOfNamingService(namingOptions.isIgnoreFailOfNamingService());
-            registerInfo.setExtra(namingOptions.getExtra());
-        }
         ServiceManager serviceManager = ServiceManager.getInstance();
         ThreadPool customThreadPool = threadPool;
         if (serverOptions != null) {
