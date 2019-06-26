@@ -85,6 +85,10 @@ public class BrpcPushProxy implements MethodInterceptor {
      */
     protected BrpcPushProxy(RpcServer rpcServer, Class clazz) {
         this.rpcServer = rpcServer;
+        // 检查 serve push 协议
+        if (!(rpcServer.getProtocol() instanceof ServerPushProtocol)) {
+            throw new RpcException(" server protocol should be serverPushProtocl");
+        }
 
         Method[] methods = clazz.getDeclaredMethods();
         for (Method method : methods) {

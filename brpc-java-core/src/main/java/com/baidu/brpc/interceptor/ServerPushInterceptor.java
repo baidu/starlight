@@ -4,8 +4,6 @@
 
 package com.baidu.brpc.interceptor;
 
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.slf4j.Logger;
@@ -83,9 +81,8 @@ public class ServerPushInterceptor extends AbstractInterceptor {
         String clientName = request.getClientName();
         Channel channel = channelManager.getChannel(clientName);
         if (channel == null) {
-            Map<String, List<Channel>> channelMap = channelManager.getChannelMap();
-            LOG.error("cannot fand a valid channel by name:" + clientName);
-            throw new RpcException("cannot fand a valid channel by name:" + clientName);
+            LOG.error("cannot found a valid channel by name:" + clientName);
+            throw new RpcException("cannot found a valid channel by name:" + clientName);
         }
         request.setChannel(channel);
         return channel;
