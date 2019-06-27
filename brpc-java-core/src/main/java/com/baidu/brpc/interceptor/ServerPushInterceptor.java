@@ -25,7 +25,6 @@ import lombok.Setter;
  * this interceptor is the last one of client interceptor list.
  * user can implement custom interceptor to replace it.
  */
-
 @Setter
 public class ServerPushInterceptor extends AbstractInterceptor {
 
@@ -40,6 +39,7 @@ public class ServerPushInterceptor extends AbstractInterceptor {
         int maxTryTimes = rpcServer.getRpcServerOptions().getMaxTryTimes();
         while (currentTryTimes < maxTryTimes) {
             try {
+
                 //   if (currentTryTimes > 0) {
                 //                    if (request.getChannel() != null) {
                 //                        if (request.getSelectedInstances() == null) {
@@ -81,8 +81,8 @@ public class ServerPushInterceptor extends AbstractInterceptor {
         String clientName = request.getClientName();
         Channel channel = channelManager.getChannel(clientName);
         if (channel == null) {
-            LOG.error("cannot found a valid channel by name:" + clientName);
-            throw new RpcException("cannot found a valid channel by name:" + clientName);
+            LOG.error("cannot find a valid channel by name:" + clientName);
+            throw new RpcException("cannot find a valid channel by name:" + clientName);
         }
         request.setChannel(channel);
         return channel;
