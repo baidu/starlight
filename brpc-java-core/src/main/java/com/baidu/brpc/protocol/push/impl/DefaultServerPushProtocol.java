@@ -116,6 +116,12 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
 
         if (future == null || future.getRpcMethodInfo() == null) { // rpc method info为null，表示register请求
+            try {
+                ByteBuf byteBuf = packet.getBodyBuf();
+                byteBuf.release();
+            } catch (Exception e) {
+                throw new RpcException(e);
+            }
             return rpcResponse;
         }
         rpcResponse.setRpcFuture(future);
