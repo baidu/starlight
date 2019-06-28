@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
+
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +37,7 @@ import org.springframework.util.Assert;
 
 /**
  * PBRPC exporter for standard PROTOBUF RPC implementation from jprotobuf-rpc-socket.
- * 
+ *
  * @author xiemalin
  * @since 2.17
  */
@@ -44,27 +45,15 @@ import org.springframework.util.Assert;
 @Getter
 @Slf4j
 public class RpcServiceExporter extends RpcServerOptions implements InitializingBean, DisposableBean {
-
-    /** The pr rpc server. */
+    /**
+     * The pr rpc server.
+     */
     private RpcServer prRpcServer;
-    
-    /** The service port. */
+
+    /**
+     * The service port.
+     */
     private int servicePort;
-
-    /**
-     * identify different service implementation for the same interface.
-     */
-    private String group = "normal";
-
-    /**
-     * identify service version.
-     */
-    private String version = "1.0.0";
-
-    /**
-     * if true, naming service will throw exception when register/subscribe exceptions.
-     */
-    private boolean ignoreFailOfNamingService = false;
 
     /**
      * the register services which use default thread pool
@@ -75,9 +64,16 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
      * the register services which use individual thread pool
      */
     private Map<RpcServerOptions, Object> customOptionsServiceMap = new HashMap<RpcServerOptions, Object>();
-    
-	/** The interceptor. */
-	private List<Interceptor> interceptors;
+
+    /**
+     * {@link NamingOptions} for services
+     */
+    private Map<Object, NamingOptions> serviceNamingOptions = new HashMap<Object, NamingOptions>();
+
+    /**
+     * The interceptor.
+     */
+    private List<Interceptor> interceptors;
 
     /* (non-Javadoc)
      * @see org.springframework.beans.factory.DisposableBean#destroy()
@@ -98,17 +94,16 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
         if (registerServices.size() == 0 && customOptionsServiceMap.size() == 0) {
             throw new IllegalArgumentException("No register service specified.");
         }
-        
+
         prRpcServer = new RpcServer(servicePort, this, interceptors);
-        NamingOptions namingOptions = new NamingOptions();
-        namingOptions.setGroup(group);
-        namingOptions.setVersion(version);
-        namingOptions.setIgnoreFailOfNamingService(ignoreFailOfNamingService);
 
         for (Object service : registerServices) {
+            NamingOptions namingOptions = serviceNamingOptions.get(service);
             prRpcServer.registerService(service, AopUtils.getTargetClass(service), namingOptions, null);
         }
+
         for (Map.Entry<RpcServerOptions, Object> entry : customOptionsServiceMap.entrySet()) {
+            NamingOptions namingOptions = serviceNamingOptions.get(entry.getValue());
             prRpcServer.registerService(entry.getValue(), AopUtils.getTargetClass(entry.getValue()), namingOptions,
                     entry.getKey());
         }

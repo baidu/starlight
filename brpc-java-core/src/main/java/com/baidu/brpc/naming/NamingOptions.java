@@ -19,6 +19,8 @@ package com.baidu.brpc.naming;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Setter
 @Getter
 public class NamingOptions {
@@ -42,6 +44,11 @@ public class NamingOptions {
      */
     private String serviceId = "";
 
+    /**
+     * extra {@link NamingService} specific options
+     */
+    private Map<String, String> extra;
+
     public NamingOptions() {
     }
 
@@ -50,5 +57,6 @@ public class NamingOptions {
         this.version = rhs.getVersion();
         this.ignoreFailOfNamingService = rhs.isIgnoreFailOfNamingService();
         this.serviceId = rhs.getServiceId();
+        this.extra = rhs.extra;
     }
 }

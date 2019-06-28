@@ -13,36 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.baidu.brpc.naming;
 
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
+package com.baidu.brpc.spring.annotation;
+
+
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 /**
- * POJO class of subscribe info.
- *
- * @author xiemalin
+ * Extra options for {@link com.baidu.brpc.naming.NamingService}
  */
-@Setter
-@Getter
-@EqualsAndHashCode
-public class SubscribeInfo extends NamingOptions {
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface NamingOption {
     /**
-     * the interface class name.
+     * Key of the option
      */
-    private String interfaceName;
+    String key() default "";
 
-    public SubscribeInfo() {
-    }
-
-    public SubscribeInfo(SubscribeInfo rhs) {
-        super(rhs);
-        this.interfaceName = rhs.getInterfaceName();
-    }
-
-    public SubscribeInfo(NamingOptions namingOptions) {
-        super(namingOptions);
-    }
-
+    /**
+     * Value of the option
+     */
+    String value() default "";
 }
