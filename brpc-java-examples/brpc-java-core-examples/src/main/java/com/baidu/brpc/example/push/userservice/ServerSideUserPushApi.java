@@ -10,6 +10,6 @@ public interface ServerSideUserPushApi extends UserPushApi {
      *
      * @return
      */
-    PushResult clientReceive(String clientName, PushData data);
+    PushResult clientReceive(String clientName, String extra, PushData data);
 
 }
