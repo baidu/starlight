@@ -55,7 +55,6 @@ public class BenchmarkClientRpcTest {
 
         String serviceUrl = args[0];
 //        String serviceUrl = "list://127.0.0.1:8012";
-//        String serviceUrl = "zookeeper://cq02-ecom-mawh5.cq02:8181";
 
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());

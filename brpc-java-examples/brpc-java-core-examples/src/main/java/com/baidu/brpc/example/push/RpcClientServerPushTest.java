@@ -56,7 +56,6 @@ public class RpcClientServerPushTest {
         clientOption.setClientName("c1");
 
         String serviceUrl = "list://127.0.0.1:8002";
-//                String serviceUrl = "zookeeper://cq02-ecom-mawh5.cq02:8181";
         if (args.length == 1) {
             serviceUrl = args[0];
         }
