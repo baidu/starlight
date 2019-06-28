@@ -25,20 +25,17 @@ import com.baidu.brpc.server.BrpcPushProxy;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.utils.GsonUtils;
-
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
  */
 @Slf4j
-public class RpcServerPushTest {
+public class RpcServerTest {
 
     public static void main(String[] args) throws InterruptedException {
 
-        //  org.apache.log4j.Logger.getLogger("com").setLevel(Level.ERROR);
-
-        int port = 8002;
+        int port = 8012;
         if (args.length == 1) {
             port = Integer.valueOf(args[0]);
         }
@@ -48,49 +45,23 @@ public class RpcServerPushTest {
         options.setSendBufferSize(64 * 1024 * 1024);
         options.setKeepAliveTime(20);
         options.setProtocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
-//        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
 
         final RpcServer rpcServer = new RpcServer(port, options);
 
         rpcServer.registerService(new EchoServiceImpl());
 
         // get push api
-        ServerSideUserPushApi proxyPushApi =
-                (ServerSideUserPushApi) BrpcPushProxy.getProxy(rpcServer, ServerSideUserPushApi.class);
+//        ServerSideUserPushApi proxyPushApi =
+//                (ServerSideUserPushApi) BrpcPushProxy.getProxy(rpcServer, ServerSideUserPushApi.class);
         rpcServer.start();
 
         Thread.sleep(15 * 1000);
 
-        // test clientname exist or not
-        try {
-            PushData p1 = new PushData();
-            p1.setData("hellooooo");
-            PushResult pushResultI = proxyPushApi.clientReceive("c3","c3", p1);
-            log.info("push result: {}" , GsonUtils.toJson(pushResultI) );
-        } catch (Exception e) {
-            log.error("case one--clientname not exist, exception: {}", e.getMessage());
-        }
-
-        // push data to 2 clients : "c1" and "c2"
-        int i = 0;
-        while (true) {
-            i++;
-            PushData p = new PushData();
-            p.setData("pushData" + i);
-            String clientName = "c" + String.valueOf(i % 2 + 1);
-            String extra = "c" + String.valueOf(i % 2 + 1);
-            log.info("pushing data to client:" + clientName);
+        synchronized(RpcServerTest.class) {
             try {
-                // last param of api is clientName
-                PushResult pushResult = proxyPushApi.clientReceive(clientName, extra, p);
-                // test clientname not exist.
-//                PushResult pushResult = proxyPushApi.clientReceive(clientName, p);
-                log.info("received push result:" + GsonUtils.toJson(pushResult));
-            } catch (Exception e) {
-                log.error("push exception , please start up client c1 and c2", e);
+                RpcServerTest.class.wait();
+            } catch (Throwable e) {
             }
-
-            Thread.sleep(5 * 1000);
         }
 
     }

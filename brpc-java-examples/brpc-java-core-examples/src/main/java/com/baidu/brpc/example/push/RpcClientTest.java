@@ -16,9 +16,6 @@
 
 package com.baidu.brpc.example.push;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
@@ -30,16 +27,17 @@ import com.baidu.brpc.example.standard.EchoService;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.entity.ReportBean;
-import com.baidu.brpc.utils.GsonUtils;
-
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by wenweihu86 on 2017/4/26.
  */
 @SuppressWarnings("unchecked")
 @Slf4j
-public class RpcClientServerPushTest {
+public class RpcClientTest {
 
     public static void main(String[] args) throws InterruptedException {
         RpcClientOptions clientOption = new RpcClientOptions();
@@ -47,15 +45,14 @@ public class RpcClientServerPushTest {
         clientOption.setWriteTimeoutMillis(20 * 1000);
         clientOption.setReadTimeoutMillis(20 * 1000);
         clientOption.setMaxTotalConnections(1000);
+//        clientOption.setMaxTotalConnections(1);
         clientOption.setMinIdleConnections(1);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
-        clientOption.setMaxTotalConnections(1);
 
-        // 指定clientName
-        clientOption.setClientName("c1");
 
-        String serviceUrl = "list://127.0.0.1:8002";
+        String serviceUrl = "list://127.0.0.1:8012";
+
         if (args.length == 1) {
             serviceUrl = args[0];
         }
@@ -63,38 +60,19 @@ public class RpcClientServerPushTest {
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
 
-        // 创建客户端 c1
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-        // 首先建立一个普通rpc client服务, 与后端建立起连接
-        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
-        // 注册实现push方法
-        rpcClient.registerPushService(new UserPushApiImpl());
+        clientOption.setClientName("Benchmark");
+        RpcClient rpcClientII = new RpcClient(serviceUrl, clientOption, interceptors);
+        BrpcProxy.getProxy(rpcClientII, EchoService.class);
+        rpcClientII.registerPushService(new UserPushApiImplII());
 
-        //  Thread.sleep(1000);
-        ReportBean request1 = new ReportBean();
-        request1.setClientName("c1");
-
-//        Object reportBean = echoService.echoReport(request1);
-//        System.out.println("c1 echoReport:" + GsonUtils.toJson(reportBean));
-
-        Thread.sleep(2000);
-
-        // 创建客户端c2
-        clientOption.setClientName("c1");
-        RpcClient rpcClient2 = new RpcClient(serviceUrl, clientOption, interceptors);
-        EchoService echoService2 = BrpcProxy.getProxy(rpcClient2, EchoService.class);
-        rpcClient2.registerPushService(new UserPushApiImpl());
-//        Object reportBean2 = echoService2.echoReport(new ReportBean());
-//        System.out.println("c2 echoReport:" + GsonUtils.toJson(reportBean2));
-
-        synchronized(RpcClientServerPushTest.class) {
+        synchronized(RpcClientTest.class) {
             try {
-                RpcClientServerPushTest.class.wait();
+                RpcClientTest.class.wait();
             } catch (Throwable e) {
             }
         }
-        rpcClient.stop();
-        rpcClient2.stop();
+
+        rpcClientII.stop();
     }
 
 }
