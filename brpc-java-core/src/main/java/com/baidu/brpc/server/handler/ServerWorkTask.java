@@ -38,16 +38,18 @@ public class ServerWorkTask implements Runnable {
         RpcContext rpcContext = null;
         if (request != null) {
             request.setChannel(ctx.channel());
+            rpcContext = RpcContext.getContext();
+            rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
+            rpcContext.setChannel(ctx.channel());
+
             if (request.getBinaryAttachment() != null
                     || request.getKvAttachment() != null) {
-                rpcContext = RpcContext.getContext();
                 if (request.getBinaryAttachment() != null) {
                     rpcContext.setRequestBinaryAttachment(request.getBinaryAttachment());
                 }
                 if (request.getKvAttachment() != null) {
                     rpcContext.setRequestKvAttachment(request.getKvAttachment());
                 }
-                rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
             }
 
             response.setLogId(request.getLogId());

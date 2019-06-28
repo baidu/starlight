@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.server.RpcServer;
 
 import io.netty.util.Timeout;
 import io.netty.util.TimerTask;
@@ -22,6 +23,7 @@ public class RpcTimeoutTimer implements TimerTask {
     private ChannelInfo channelInfo;
     private long logId;
     private RpcClient rpcClient;
+    private RpcServer rpcServer;
 
     public RpcTimeoutTimer(
             ChannelInfo channelInfo,
@@ -30,6 +32,15 @@ public class RpcTimeoutTimer implements TimerTask {
         this.channelInfo = channelInfo;
         this.logId = logId;
         this.rpcClient = rpcClient;
+    }
+
+    public RpcTimeoutTimer(
+            ChannelInfo channelInfo,
+            long logId,
+            RpcServer rpcServer) {
+        this.channelInfo = channelInfo;
+        this.logId = logId;
+        this.rpcServer = rpcServer;
     }
 
     @Override
@@ -43,7 +54,8 @@ public class RpcTimeoutTimer implements TimerTask {
             String errMsg = String.format("request timeout,logId=%d,ip=%s,port=%d,elapse=%dms",
                     logId, ip, port, elapseTime);
             LOG.info(errMsg);
-            Response response = rpcClient.getProtocol().createResponse();
+            Response response = rpcClient != null ? rpcClient.getProtocol().createResponse() :
+                    rpcServer.getProtocol().createResponse();
             response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
 
             future.handleResponse(response);

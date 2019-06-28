@@ -16,18 +16,18 @@
 
 package com.baidu.brpc.server;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.baidu.brpc.JprotobufRpcMethodInfo;
 import com.baidu.brpc.ProtobufRpcMethodInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.utils.ProtobufUtils;
 import com.baidu.brpc.utils.ThreadPool;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -74,6 +74,33 @@ public class ServiceManager {
         Class clazz = interfaces[0];
         Method[] methods = clazz.getDeclaredMethods();
         registerService(methods, service, threadPool);
+    }
+
+    public void registerPushService(Object service) {
+        registerService(service);
+    }
+
+    public void registerService(Object service) {
+        Class[] interfaces = service.getClass().getInterfaces();
+        if (interfaces.length != 1) {
+            LOG.error("service must implement one interface only");
+            throw new RuntimeException("service must implement one interface only");
+        }
+        Class clazz = interfaces[0];
+        Method[] methods = clazz.getDeclaredMethods();
+        ServiceManager serviceManager = ServiceManager.getInstance();
+        for (Method method : methods) {
+            RpcMethodInfo serviceInfo = new RpcMethodInfo(method);
+            String serviceName = method.getDeclaringClass().getName();
+            String methodName = method.getName();
+            serviceInfo.setServiceName(serviceName);
+            serviceInfo.setMethodName(methodName);
+            serviceInfo.setTarget(service);
+            serviceInfo.setMethod(method);
+            serviceManager.registerService(serviceInfo);
+            LOG.info("register service, serviceName={}, methodName={}",
+                    serviceInfo.getServiceName(), serviceInfo.getMethodName());
+        }
     }
 
     protected void registerService(Method[] methods, Object service, ThreadPool threadPool) {

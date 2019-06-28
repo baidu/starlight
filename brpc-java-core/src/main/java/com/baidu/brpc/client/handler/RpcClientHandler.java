@@ -16,6 +16,8 @@
 
 package com.baidu.brpc.client.handler;
 
+import java.net.SocketAddress;
+
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.exceptions.BadSchemaException;
@@ -53,7 +55,15 @@ public class RpcClientHandler extends SimpleChannelInboundHandler<Object> {
         int i = 0;
         while (channelInfo.getRecvBuf().readableBytes() > 0) {
             try {
+                SocketAddress socketAddress = ctx.channel().localAddress();
+
                 Object packet = channelInfo.getProtocol().decode(ctx, channelInfo.getRecvBuf(), false);
+
+                //                log.trace(" RpcClientHandler decode packet. serviceName:{} , log id:{} , res:{} ,
+                // local:{} ",
+                //                        p.getSpBody().getServiceName(), p.getSpHead().getLogId(),
+                //                        GsonUtils.toJson(p.getSpBody().getContent()
+                //                        ), s);
                 ClientWorkTask task = new ClientWorkTask(rpcClient, packet, channelInfo.getProtocol(), ctx);
                 tasks[i++] = task;
                 if (i == 64) {
