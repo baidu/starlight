@@ -9,6 +9,9 @@ brpc:
       group: "normal"
       version: 2.0.0
       ignoreFailOfNamingService: false
+      extra:
+        - key: weight
+          value: 10
     server:
       port: 8002
       workThreadNum: 1

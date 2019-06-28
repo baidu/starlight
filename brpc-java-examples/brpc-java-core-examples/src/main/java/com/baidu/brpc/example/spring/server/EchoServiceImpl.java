@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,9 @@ package com.baidu.brpc.example.spring.server;
 import com.baidu.brpc.example.spring.api.EchoRequest;
 import com.baidu.brpc.example.spring.api.EchoResponse;
 import com.baidu.brpc.example.spring.api.EchoService;
+import com.baidu.brpc.spring.annotation.NamingOption;
 import com.baidu.brpc.spring.annotation.RpcExporter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -28,7 +30,13 @@ import org.springframework.stereotype.Service;
 @RpcExporter(port = "8012",
         useSharedThreadPool = false,
         rpcServerOptionsBeanName = "rpcServerOptions",
-        interceptorBeanName = "customInterceptor")
+        interceptorBeanName = "customInterceptor",
+        extraOptions = {
+                // We can pass extra options to the NamingService
+                // `weight` is just an example here, currently we don't have any NamingService supports weight yet
+                @NamingOption(key = "weight", value = "10")
+        }
+)
 public class EchoServiceImpl implements EchoService {
     private static final Logger LOG = LoggerFactory.getLogger(EchoServiceImpl.class);
 

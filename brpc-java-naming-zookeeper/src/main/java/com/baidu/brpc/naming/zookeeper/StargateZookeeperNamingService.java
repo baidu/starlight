@@ -18,11 +18,16 @@ package com.baidu.brpc.naming.zookeeper;
 import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.BrpcURL;
+import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.stargate.StargateConstants;
 import com.baidu.brpc.protocol.stargate.StargateURI;
+
+import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
@@ -33,13 +38,27 @@ import org.apache.zookeeper.CreateMode;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * Stargate注册时，serviceName 为全小写
  */
 @Slf4j
 public class StargateZookeeperNamingService extends ZookeeperNamingService {
+    private static final String DEFAULT_VERSION = "1.0.0";
+    private static final String DEFAULT_GROUP = "normal";
+    private static final Set<String> IGNORED_EXTRA_KEYS = new HashSet<String>();
+    private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
+
+    static {
+        IGNORED_EXTRA_KEYS.add(StargateConstants.GROUP_KEY);
+        IGNORED_EXTRA_KEYS.add(StargateConstants.VERSION_KEY);
+        IGNORED_EXTRA_KEYS.add(StargateConstants.INTERFACE_KEY);
+        IGNORED_EXTRA_KEYS.add(StargateConstants.INTERFACE_SIMPLE_KEY);
+    }
 
     public StargateZookeeperNamingService(BrpcURL url) {
         super(url);
@@ -47,7 +66,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
 
     @Override
     public List<ServiceInstance> lookup(SubscribeInfo info) {
-        String path = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
+        String path = buildParentNodePath(resolveGroup(info), info.getInterfaceName(), resolveVersion(info));
         List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
         try {
             List<String> childList = client.getChildren().forPath(path);
@@ -79,7 +98,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
     @Override
     public void subscribe(SubscribeInfo info, final NotifyListener listener) {
         try {
-            final String path = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
+            final String path = buildParentNodePath(resolveGroup(info), info.getInterfaceName(), resolveVersion(info));
             PathChildrenCache cache = new PathChildrenCache(client, path, true);
             cache.getListenable().addListener(new PathChildrenCacheListener() {
                 @Override
@@ -130,7 +149,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
 
     @Override
     public void register(RegisterInfo info) {
-        String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
+        String parentPath = buildParentNodePath(resolveGroup(info), info.getInterfaceName(), resolveVersion(info));
         String path = parentPath + "/" + info.getHost() + ":" + info.getPort();
         String pathData = buildStarRegisterPathData(info);
         try {
@@ -159,7 +178,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
 
     @Override
     public void unregister(RegisterInfo info) {
-        String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
+        String parentPath = buildParentNodePath(resolveGroup(info), info.getInterfaceName(), resolveVersion(info));
         String path = "/" + info.getHost() + ":" + info.getPort();
         try {
             client.delete().guaranteed().forPath(parentPath + path);
@@ -182,16 +201,47 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
 
 
     /**
+     * Build the path data for registration.
+     * <p>
+     * Stargate protocol requires the data to be a JSON String containing
+     * a URI with the following scheme:
      * "star://127.0.0.1:8002?
      * group=normal
      * &interface=com.baidu.brpc.example.stargate.stargatedemoservice
      * &version=1.0.0"
      */
     private String buildStarRegisterPathData(RegisterInfo registerInfo) {
-        return "\"star://" + registerInfo.getHost() + ":" + registerInfo.getPort() + "?" +
-                "group=" + registerInfo.getGroup() + "&" +
-                "interface=" + registerInfo.getInterfaceName() + "&" +
-                "version=" + registerInfo.getVersion() + "\"";
+        Map<String, String> extraOptions = registerInfo.getExtra();
+        String group = resolveGroup(registerInfo);
+        String version = resolveVersion(registerInfo);
+        StargateURI.Builder builder = new StargateURI.Builder("star", registerInfo.getHost(), registerInfo.getPort());
+        builder.param(StargateConstants.GROUP_KEY, group);
+        builder.param(StargateConstants.VERSION_KEY, version);
+        builder.param(StargateConstants.INTERFACE_KEY, registerInfo.getInterfaceName());
+        if (extraOptions != null) {
+            for (Map.Entry<String, String> entry : extraOptions.entrySet()) {
+                if (IGNORED_EXTRA_KEYS.contains(entry.getKey())) {
+                    continue;
+                }
+                builder.param(entry.getKey(), entry.getValue());
+            }
+        }
+        String uriString = builder.build().toString();
+        return GSON.toJson(uriString);
+    }
+
+    private String resolveGroup(NamingOptions info) {
+        if (Strings.isNullOrEmpty(info.getGroup())) {
+            return DEFAULT_GROUP;
+        }
+        return info.getGroup();
+    }
+
+    private String resolveVersion(NamingOptions info) {
+        if (Strings.isNullOrEmpty(info.getVersion())) {
+            return DEFAULT_VERSION;
+        }
+        return info.getVersion();
     }
 
 }
