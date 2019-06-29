@@ -20,7 +20,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.RpcContext;
-import com.baidu.brpc.server.entity.ReportBean;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -58,11 +57,4 @@ public class EchoServiceImpl implements EchoService {
         return response;
     }
 
-    @Override
-    public ReportBean echoReport(ReportBean request) {
-        LOG.info("invoke echoReport");
-        ReportBean r = new ReportBean();
-        r.clientName = "response:" + request.clientName;
-        return r;
-    }
 }

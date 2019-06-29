@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.protocol.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,14 +39,10 @@ import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.NamingServiceFactoryManager;
 import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.ProtocolManager;
-import com.baidu.brpc.protocol.Request;
-import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
 import com.baidu.brpc.server.handler.RpcServerHandler;
-import com.baidu.brpc.server.push.ClientManagerImpl;
+import com.baidu.brpc.server.push.RegisterServiceImpl;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
@@ -81,7 +78,6 @@ import lombok.Getter;
  */
 @Getter
 public class RpcServer {
-
     private static final Logger LOG = LoggerFactory.getLogger(RpcServer.class);
 
     private RpcServerOptions rpcServerOptions = new RpcServerOptions();
@@ -109,6 +105,7 @@ public class RpcServer {
     private EventLoopGroup workerGroup;
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private Protocol protocol;
+    private Protocol defaultPushProtocol;
     private ThreadPool threadPool;
     private List<ThreadPool> customThreadPools = new ArrayList<ThreadPool>();
     private NamingService namingService;
@@ -116,7 +113,6 @@ public class RpcServer {
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
     private ServerStatus serverStatus;
     private AtomicBoolean stop = new AtomicBoolean(false);
-    private ClientManagerImpl clientManagerImpl;
 
     private Timer timeoutTimer;
 
@@ -165,6 +161,14 @@ public class RpcServer {
         // find protocol
         if (rpcServerOptions.getProtocolType() != null) {
             this.protocol = ProtocolManager.getInstance().getProtocol(rpcServerOptions.getProtocolType());
+            if (this.protocol instanceof ServerPushProtocol) {
+                if (rpcServerOptions.getProtocolType() == Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE) {
+                    this.defaultPushProtocol = this.protocol;
+                } else {
+                    this.defaultPushProtocol = ProtocolManager.getInstance().getProtocol(
+                            Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
+                }
+            }
         }
 
         threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
@@ -230,7 +234,7 @@ public class RpcServer {
 
         // 注册serverPush的内部服务接口
         if (protocol instanceof ServerPushProtocol) {
-            registerService(new ClientManagerImpl());
+            registerService(new RegisterServiceImpl());
         }
     }
 

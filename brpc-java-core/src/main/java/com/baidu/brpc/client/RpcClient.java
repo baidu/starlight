@@ -26,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.protocol.Options;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,13 +90,13 @@ import io.netty.util.Timer;
  */
 @SuppressWarnings("unchecked")
 public class RpcClient {
-
     private static final Logger LOG = LoggerFactory.getLogger(RpcClient.class);
 
     private RpcClientOptions rpcClientOptions = new RpcClientOptions();
     private Bootstrap bootstrap;
     private Timer timeoutTimer;
     private Protocol protocol;
+    private Protocol defaultPushProtocol;
     private LoadBalanceStrategy loadBalanceStrategy;
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private LoadBalanceInterceptor loadBalanceInterceptor = new LoadBalanceInterceptor();
@@ -106,8 +107,6 @@ public class RpcClient {
     private SubscribeInfo subscribeInfo;
     private AtomicBoolean stop = new AtomicBoolean(false);
     private InstanceProcessor instanceProcessor;
-    //   private ClientManager clientManager;
-
     /**
      * callBack thread when method invoke fail
      */
@@ -451,6 +450,12 @@ public class RpcClient {
             this.interceptors.addAll(interceptors);
         }
         this.protocol = ProtocolManager.getInstance().getProtocol(options.getProtocolType());
+        if (options.getProtocolType() == Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE) {
+            this.defaultPushProtocol = this.protocol;
+        } else {
+            this.defaultPushProtocol = ProtocolManager.getInstance().getProtocol(
+                    Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
+        }
         fastFutureStore = FastFutureStore.getInstance(options.getFutureBufferSize());
         timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
 
@@ -520,6 +525,10 @@ public class RpcClient {
 
     public Protocol getProtocol() {
         return protocol;
+    }
+
+    public Protocol getDefaultPushProtocol() {
+        return defaultPushProtocol;
     }
 
     public CopyOnWriteArrayList<BrpcChannel> getHealthyInstances() {

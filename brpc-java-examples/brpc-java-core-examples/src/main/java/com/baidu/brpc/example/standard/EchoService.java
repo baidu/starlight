@@ -17,7 +17,6 @@
 package com.baidu.brpc.example.standard;
 
 import com.baidu.brpc.protocol.BrpcMeta;
-import com.baidu.brpc.server.entity.ReportBean;
 
 /**
  * Created by wenweihu86 on 2017/4/25.
@@ -32,6 +31,4 @@ public interface EchoService {
     @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
     //    @BrpcMeta(serviceName = "EchoService", methodName = "0")
     Echo.EchoResponse echo(Echo.EchoRequest request);
-
-    ReportBean echoReport(ReportBean request);
 }

@@ -1,4 +1,4 @@
-package com.baidu.brpc.example.push.userservice;
+package com.baidu.brpc.example.push.push;
 
 public interface ServerSideUserPushApi extends UserPushApi {
 

@@ -22,17 +22,34 @@ package com.baidu.brpc.protocol.push;
 public interface SPHead {
 
     /**
-     * 请求返回结果
+     * 业务请求
      */
-    int TYPE_RESPONSE = 0;
+    int TYPE_REQUEST = 0;
+
     /**
-     * 请求
+     * 业务返回
      */
-    int TYPE_REQUEST = 1;
+    int TYPE_RESPONSE = 1;
+
     /**
      * server push的请求
      */
-    int TYPE_SERVER_PUSH_REQUEST = 3;
+    int TYPE_SERVER_PUSH_REQUEST = 2;
+
+    /**
+     * server push的返回
+     */
+    int TYPE_SERVER_PUSH_RESPONSE = 3;
+
+    /**
+     * register请求
+     */
+    int TYPE_REGISTER_REQUEST = 4;
+
+    /**
+     * register返回
+     */
+    int TYPE_REGISTER_RESPONSE = 5;
 
     long getLogId();
 

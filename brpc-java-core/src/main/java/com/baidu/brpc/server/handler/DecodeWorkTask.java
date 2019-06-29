@@ -108,8 +108,9 @@ public class DecodeWorkTask implements Runnable {
             if (spHead.getType() == SPHead.TYPE_RESPONSE) {
                 processClientResponse();
                 return;
-            } else {
-                // 普通client请求 继续流程
+            } else if (spHead.getType() == SPHead.TYPE_REGISTER_REQUEST) {
+                // register请求
+                this.protocol = rpcServer.getDefaultPushProtocol();
             }
         }
 

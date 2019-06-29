@@ -10,21 +10,20 @@ import com.baidu.brpc.server.ChannelManager;
 import io.netty.channel.Channel;
 import io.netty.util.Attribute;
 
-public class ClientManagerImpl implements ClientManager {
+public class RegisterServiceImpl implements RegisterService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ClientManagerImpl.class);
+    private static final Logger LOG = LoggerFactory.getLogger(RegisterServiceImpl.class);
 
     public Response registerClient(String clientName) {
-
-        LOG.info("invoke registerClient::clientName = [{}]", clientName);
-
+        LOG.debug("invoke registerClient::clientName = [{}]", clientName);
         RpcContext context = RpcContext.getContext();
         Channel channel = context.getChannel();
         Validate.notNull(channel, "rpc context channel cannot be null");
         Attribute<String> clientInfo = channel.attr(PushChannelContextHolder.CLIENTNAME_KEY);
         clientInfo.set(clientName);
         ChannelManager.getInstance().putChannel(clientName, channel);
-        LOG.info("finished save client Name , channel:" + channel.remoteAddress().toString());
+        LOG.info("register channel success, Name={}, channel={}",
+                clientName, channel.remoteAddress().toString());
         return Response.success();
     }
 }

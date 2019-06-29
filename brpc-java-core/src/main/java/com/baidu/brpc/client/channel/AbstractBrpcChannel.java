@@ -6,6 +6,7 @@ package com.baidu.brpc.client.channel;
 import java.net.InetSocketAddress;
 import java.util.Queue;
 
+import com.baidu.brpc.server.push.RegisterService;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
@@ -21,7 +22,6 @@ import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.RpcRequest;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushProtocol;
-import com.baidu.brpc.server.push.ClientManager;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -58,14 +58,14 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         r.setReadTimeoutMillis(10 * 1000);
         r.setWriteTimeoutMillis(10 * 1000);
         SPHead spHead = ((ServerPushProtocol) protocol).createSPHead();
-        spHead.setType(SPHead.TYPE_REQUEST); // 注册类型
+        spHead.setType(SPHead.TYPE_REGISTER_REQUEST); // 注册类型
         r.setSpHead(spHead);
 
-        String serviceName = ClientManager.class.getName();
+        String serviceName = RegisterService.class.getName();
         String methodName = "registerClient";
         r.setServiceName(serviceName);
         r.setMethodName(methodName);
-        RpcMethodInfo rpcMethodInfo = MethodUtils.getRpcMethodInfo(ClientManager.class, methodName);
+        RpcMethodInfo rpcMethodInfo = MethodUtils.getRpcMethodInfo(RegisterService.class, methodName);
         r.setRpcMethodInfo(rpcMethodInfo);
         r.setArgs(new Object[] {rpcClient.getRpcClientOptions().getClientName()});
 
@@ -78,15 +78,14 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
 
         ByteBuf byteBuf;
         try {
-            log.debug("send sendClientNameToServer  , name:{} , logId:{}", rpcClientOptions.getClientName(),
-                    r.getLogId());
-            byteBuf = protocol.encodeRequest(r);
+            log.debug("send sendClientNameToServer, name:{}, logId:{}",
+                    rpcClientOptions.getClientName(), r.getLogId());
+            byteBuf = rpcClient.getDefaultPushProtocol().encodeRequest(r);
         } catch (Exception e) {
             log.error("send report packet to server, encode packet failed, msg={}", e);
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed");
         }
         channelFuture.channel().writeAndFlush(byteBuf);
-
     }
 
     @Override

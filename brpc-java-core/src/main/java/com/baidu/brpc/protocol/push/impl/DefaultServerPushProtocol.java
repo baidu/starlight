@@ -5,8 +5,6 @@ import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.SPHEAD_LENGTH;
 import static com.baidu.brpc.protocol.push.impl.DefaultSPHead.SPHEAD_MAGIC_NUM;
 
 import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.RpcMethodInfo;
@@ -40,7 +38,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @SuppressWarnings("unchecked")
 public class DefaultServerPushProtocol implements ServerPushProtocol {
-    private static final Logger LOG = LoggerFactory.getLogger(DefaultServerPushProtocol.class);
     protected String encoding = "utf-8";
 
     public DefaultServerPushProtocol(String encoding) {

@@ -1,9 +1,9 @@
 package com.baidu.brpc.example.push;
 
 import com.baidu.brpc.example.push.normal.EchoServiceImpl;
-import com.baidu.brpc.example.push.userservice.PushData;
-import com.baidu.brpc.example.push.userservice.PushResult;
-import com.baidu.brpc.example.push.userservice.ServerSideUserPushApi;
+import com.baidu.brpc.example.push.push.PushData;
+import com.baidu.brpc.example.push.push.PushResult;
+import com.baidu.brpc.example.push.push.ServerSideUserPushApi;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.BrpcPushProxy;
 import com.baidu.brpc.server.RpcServer;

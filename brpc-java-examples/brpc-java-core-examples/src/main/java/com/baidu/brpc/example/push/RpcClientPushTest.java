@@ -16,20 +16,15 @@
 
 package com.baidu.brpc.example.push;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
-import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.example.push.normal.EchoRequest;
 import com.baidu.brpc.example.push.normal.EchoResponse;
 import com.baidu.brpc.example.push.normal.EchoService;
 import com.baidu.brpc.example.push.normal.EchoService2;
-import com.baidu.brpc.example.push.userservice.UserPushApiImpl;
-import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.example.push.push.UserPushApiImpl;
 import com.baidu.brpc.protocol.Options;
 
 import com.baidu.brpc.utils.GsonUtils;
