@@ -105,12 +105,9 @@ public class DecodeWorkTask implements Runnable {
             }
         } else if (protocol instanceof ServerPushProtocol) {
             SPHead spHead = ((ServerPushPacket) packet).getSpHead();
-            if (spHead.getType() == SPHead.TYPE_RESPONSE) {
+            if (spHead.getType() == SPHead.TYPE_PUSH_RESPONSE) {
                 processClientResponse();
                 return;
-            } else if (spHead.getType() == SPHead.TYPE_REGISTER_REQUEST) {
-                // register请求
-                this.protocol = rpcServer.getDefaultPushProtocol();
             }
         }
 

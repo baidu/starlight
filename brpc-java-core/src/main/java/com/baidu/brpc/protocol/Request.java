@@ -150,4 +150,8 @@ public interface Request {
     void setClientName(String clientName);
 
     String getClientName();
+
+    boolean isOneWay();
+
+    void setOneWay(boolean oneWay);
 }

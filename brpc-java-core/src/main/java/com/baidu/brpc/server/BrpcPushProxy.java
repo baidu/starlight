@@ -200,7 +200,7 @@ public class BrpcPushProxy implements MethodInterceptor {
         response = rpcServer.getProtocol().getResponse();
         request.setClientName((String) args[0]);
         SPHead spHead = ((ServerPushProtocol) rpcServer.getProtocol()).createSPHead();
-        spHead.setType(SPHead.TYPE_SERVER_PUSH_REQUEST);
+        spHead.setType(SPHead.TYPE_PUSH_REQUEST);
         request.setSpHead(spHead);
         request.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE.getNumber());
         interceptors = new ArrayList<Interceptor>();

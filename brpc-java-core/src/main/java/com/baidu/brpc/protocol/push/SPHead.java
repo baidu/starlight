@@ -34,12 +34,12 @@ public interface SPHead {
     /**
      * server push的请求
      */
-    int TYPE_SERVER_PUSH_REQUEST = 2;
+    int TYPE_PUSH_REQUEST = 2;
 
     /**
      * server push的返回
      */
-    int TYPE_SERVER_PUSH_RESPONSE = 3;
+    int TYPE_PUSH_RESPONSE = 3;
 
     /**
      * register请求

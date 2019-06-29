@@ -60,10 +60,11 @@ public abstract class AbstractRequest implements Request {
     private Integer readTimeoutMillis;
     private Integer writeTimeoutMillis;
     private String clientName;
+    private boolean oneWay; // if false, do not need send response.
 
     /**
      * 订阅信息，客户端请求时，将订阅的服务信息存入
-     * - StarGate使用
+     * - Stargate使用
      */
     private SubscribeInfo subscribeInfo;
 
@@ -91,6 +92,7 @@ public abstract class AbstractRequest implements Request {
         serviceTag = null;
         readTimeoutMillis = null;
         writeTimeoutMillis = null;
+        oneWay = false;
     }
 
     @Override

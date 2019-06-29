@@ -80,7 +80,7 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         try {
             log.debug("send sendClientNameToServer, name:{}, logId:{}",
                     rpcClientOptions.getClientName(), r.getLogId());
-            byteBuf = rpcClient.getDefaultPushProtocol().encodeRequest(r);
+            byteBuf = protocol.encodeRequest(r);
         } catch (Exception e) {
             log.error("send report packet to server, encode packet failed, msg={}", e);
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed");

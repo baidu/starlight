@@ -104,11 +104,10 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
     @Override
     public Response decodeResponse(Object in, ChannelHandlerContext ctx) throws Exception {
         DefaultServerPushPacket packet = (DefaultServerPushPacket) in;
-        DefaultSPHead spHead = (DefaultSPHead) packet.getSpHead();
         RpcResponse rpcResponse = new RpcResponse();
         // channel info是在客户端生成连接池的时候生成的
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        Long logId = (long) packet.getSpHead().getLogId();
+        Long logId = packet.getSpHead().getLogId();
         rpcResponse.setLogId(logId);
         RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
 
@@ -142,7 +141,16 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
             spHead.bodyLength = bodyBuf.readableBytes();
         }
         spHead.logId = response.getLogId();
-        spHead.type = SPHead.TYPE_RESPONSE;
+        switch (request.getSpHead().getType()) {
+            case SPHead.TYPE_PUSH_REQUEST:
+                spHead.type = SPHead.TYPE_PUSH_RESPONSE;
+                break;
+            case SPHead.TYPE_REGISTER_REQUEST:
+                spHead.type = SPHead.TYPE_REGISTER_RESPONSE;
+                break;
+            default:
+                spHead.type = SPHead.TYPE_RESPONSE;
+        }
         ByteBuf headerBuf = headToBytes(spHead);
 
         return Unpooled.wrappedBuffer(headerBuf, bodyBuf);
@@ -160,6 +168,11 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         ByteBuf bodyBuf = ((DefaultServerPushPacket) packet).getBodyBuf();
         request.setLogId(spPacket.getSpHead().getLogId());
         request.setSpHead(((DefaultServerPushPacket) packet).getSpHead());
+        // IMPORTANT: if register request, it do not need send response.
+        // and the request param is string.
+        if (request.getSpHead().getType() == SPHead.TYPE_REGISTER_REQUEST) {
+            request.setOneWay(true);
+        }
         SPBody spBody = decodeBodyByteBuf(bodyBuf);
         decodeRequestBody(spBody, request);
         return request;
@@ -260,6 +273,8 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         SPBody spBody = new SPBody();
         spBody.setServiceName(request.getServiceName());
         spBody.setMethodName(request.getMethodName());
+        // IMPORTANT: if it is register request, the argument is String.
+        // So the push protocol should deal with it specially.
         spBody.setParameters(request.getArgs());
         byte[] bytes;
 

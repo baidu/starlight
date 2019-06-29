@@ -26,7 +26,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.baidu.brpc.protocol.Options;
 import org.apache.commons.lang3.Validate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -96,7 +95,6 @@ public class RpcClient {
     private Bootstrap bootstrap;
     private Timer timeoutTimer;
     private Protocol protocol;
-    private Protocol defaultPushProtocol;
     private LoadBalanceStrategy loadBalanceStrategy;
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private LoadBalanceInterceptor loadBalanceInterceptor = new LoadBalanceInterceptor();
@@ -450,12 +448,6 @@ public class RpcClient {
             this.interceptors.addAll(interceptors);
         }
         this.protocol = ProtocolManager.getInstance().getProtocol(options.getProtocolType());
-        if (options.getProtocolType() == Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE) {
-            this.defaultPushProtocol = this.protocol;
-        } else {
-            this.defaultPushProtocol = ProtocolManager.getInstance().getProtocol(
-                    Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
-        }
         fastFutureStore = FastFutureStore.getInstance(options.getFutureBufferSize());
         timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
 
@@ -525,10 +517,6 @@ public class RpcClient {
 
     public Protocol getProtocol() {
         return protocol;
-    }
-
-    public Protocol getDefaultPushProtocol() {
-        return defaultPushProtocol;
     }
 
     public CopyOnWriteArrayList<BrpcChannel> getHealthyInstances() {

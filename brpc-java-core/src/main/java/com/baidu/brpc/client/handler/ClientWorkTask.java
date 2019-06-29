@@ -50,12 +50,11 @@ public class ClientWorkTask implements Runnable {
 
     @Override
     public void run() {
-
         // 只有server push协议下，有可能受到request类型
         if (protocol instanceof ServerPushProtocol) {
             // 区分类型
             SPHead spHead = ((ServerPushPacket) packet).getSpHead();
-            if (spHead.getType() == SPHead.TYPE_SERVER_PUSH_REQUEST) {
+            if (spHead.getType() == SPHead.TYPE_PUSH_REQUEST) {
                 handlePushRequest();
                 return;
             }
@@ -128,7 +127,6 @@ public class ClientWorkTask implements Runnable {
             log.error("exception :", e);
         }
         response.setResult(result);
-        // SPHead spHead = new SPHead((int) response.getLogId(), bodyBytes.length);
         try {
             ByteBuf byteBuf = protocol.encodeResponse(request, response);
             ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);

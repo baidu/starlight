@@ -105,7 +105,6 @@ public class RpcServer {
     private EventLoopGroup workerGroup;
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
     private Protocol protocol;
-    private Protocol defaultPushProtocol;
     private ThreadPool threadPool;
     private List<ThreadPool> customThreadPools = new ArrayList<ThreadPool>();
     private NamingService namingService;
@@ -161,14 +160,6 @@ public class RpcServer {
         // find protocol
         if (rpcServerOptions.getProtocolType() != null) {
             this.protocol = ProtocolManager.getInstance().getProtocol(rpcServerOptions.getProtocolType());
-            if (this.protocol instanceof ServerPushProtocol) {
-                if (rpcServerOptions.getProtocolType() == Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE) {
-                    this.defaultPushProtocol = this.protocol;
-                } else {
-                    this.defaultPushProtocol = ProtocolManager.getInstance().getProtocol(
-                            Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
-                }
-            }
         }
 
         threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
