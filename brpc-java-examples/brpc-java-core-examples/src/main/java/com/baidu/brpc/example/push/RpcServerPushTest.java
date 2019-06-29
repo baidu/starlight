@@ -16,10 +16,11 @@
 
 package com.baidu.brpc.example.push;
 
+import com.baidu.brpc.example.push.normal.EchoService2Impl;
+import com.baidu.brpc.example.push.normal.EchoServiceImpl;
 import com.baidu.brpc.example.push.userservice.PushData;
 import com.baidu.brpc.example.push.userservice.PushResult;
 import com.baidu.brpc.example.push.userservice.ServerSideUserPushApi;
-import com.baidu.brpc.example.standard.EchoServiceImpl;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.BrpcPushProxy;
 import com.baidu.brpc.server.RpcServer;
@@ -35,9 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 public class RpcServerPushTest {
 
     public static void main(String[] args) throws InterruptedException {
-
-        //  org.apache.log4j.Logger.getLogger("com").setLevel(Level.ERROR);
-
         int port = 8002;
         if (args.length == 1) {
             port = Integer.valueOf(args[0]);
@@ -51,15 +49,17 @@ public class RpcServerPushTest {
 //        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
 
         final RpcServer rpcServer = new RpcServer(port, options);
-
         rpcServer.registerService(new EchoServiceImpl());
+        rpcServer.registerService(new EchoService2Impl());
 
         // get push api
-        ServerSideUserPushApi proxyPushApi =
-                (ServerSideUserPushApi) BrpcPushProxy.getProxy(rpcServer, ServerSideUserPushApi.class);
+        ServerSideUserPushApi proxyPushApi = BrpcPushProxy.getProxy(rpcServer, ServerSideUserPushApi.class);
         rpcServer.start();
 
-        Thread.sleep(15 * 1000);
+        // wait until the client connected to server
+        while (!EchoServiceImpl.clientStarted || !EchoService2Impl.client2Started) {
+            Thread.sleep(1000);
+        }
 
         // test clientname exist or not
         try {
@@ -77,14 +77,13 @@ public class RpcServerPushTest {
             i++;
             PushData p = new PushData();
             p.setData("pushData" + i);
-            String clientName = "c" + String.valueOf(i % 2 + 1);
-            String extra = "c" + String.valueOf(i % 2 + 1);
+            int index = i % 2 + 1;
+            String clientName = "c" + index;
+            String extra = "c" + (index + 100);
             log.info("pushing data to client:" + clientName);
             try {
                 // last param of api is clientName
                 PushResult pushResult = proxyPushApi.clientReceive(clientName, extra, p);
-                // test clientname not exist.
-//                PushResult pushResult = proxyPushApi.clientReceive(clientName, p);
                 log.info("received push result:" + GsonUtils.toJson(pushResult));
             } catch (Exception e) {
                 log.error("push exception , please start up client c1 and c2", e);

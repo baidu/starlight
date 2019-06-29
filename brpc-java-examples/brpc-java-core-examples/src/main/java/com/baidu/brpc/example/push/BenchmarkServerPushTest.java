@@ -1,9 +1,9 @@
 package com.baidu.brpc.example.push;
 
+import com.baidu.brpc.example.push.normal.EchoServiceImpl;
 import com.baidu.brpc.example.push.userservice.PushData;
 import com.baidu.brpc.example.push.userservice.PushResult;
 import com.baidu.brpc.example.push.userservice.ServerSideUserPushApi;
-import com.baidu.brpc.example.standard.EchoServiceImpl;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.BrpcPushProxy;
 import com.baidu.brpc.server.RpcServer;
@@ -26,7 +26,7 @@ public class BenchmarkServerPushTest {
     private static volatile boolean stop = false;
 
     // rpc press: send pressure to RpcClientTest
-    // push & rpc press: send pressure to BenchmarkClientRpcTest
+    // push & rpc press: send pressure to BenchmarkClientPushTest
 
     public static void main(String[] args) throws InterruptedException {
 
@@ -50,7 +50,10 @@ public class BenchmarkServerPushTest {
         ServerSideUserPushApi pushApi = BrpcPushProxy.getProxy(rpcServer, ServerSideUserPushApi.class);
         rpcServer.start();
 
-        Thread.sleep(15 * 1000);
+        // wait until the client connected to server
+        while (!EchoServiceImpl.clientStarted) {
+            Thread.sleep(1000);
+        }
 
         byte[] messageBytes = null;
         try {
@@ -72,7 +75,7 @@ public class BenchmarkServerPushTest {
         for (int i = 0; i < threadNum; i++) {
             sendInfos[i] = new SendInfo();
 
-            threads[i] = new Thread(new ServerPushTask(rpcServer, messageBytes, sendInfos[i], pushApi));
+            threads[i] = new Thread(new ServerPushTask(messageBytes, sendInfos[i], pushApi));
             threads[i].start();
         }
 
@@ -115,12 +118,6 @@ public class BenchmarkServerPushTest {
                     (successNum - lastSuccessRequestNum) * 1000 * 1000 * 1000 / (endTime - beginTime),
                     (failNum - lastFailRequestNum) * 1000 * 1000 * 1000 / (endTime - beginTime),
                     averageElapsedNs);
-
-//            log.info("beginTime:{}, endTime:{}", beginTime, endTime);
-//            log.info("successNum:{}, failNum:{}, elapseNs:{}", successNum, failNum, elapseNs);
-//            log.info("lastSuccessRequestNum:{}, lastFailRequestNum:{}, lastElapsedNs:{}",
-//                    lastSuccessRequestNum, lastFailRequestNum, lastElapsedNs);
-
             lastSuccessRequestNum = successNum;
             lastFailRequestNum = failNum;
             lastElapsedNs = elapseNs;
@@ -136,20 +133,15 @@ public class BenchmarkServerPushTest {
             log.info(msg);
 
         }
-
-
     }
 
     public static class ServerPushTask implements Runnable {
-
-        private RpcServer rpcServer;
         private byte[] messageBytes;
         private SendInfo sendInfo;
         private ServerSideUserPushApi serverSideUserPushApi;
 
-        public ServerPushTask(RpcServer rpcServer, byte[] messageBytes,
+        public ServerPushTask(byte[] messageBytes,
                               SendInfo sendInfo, ServerSideUserPushApi serverSideUserPushApi) {
-            this.rpcServer = rpcServer;
             this.messageBytes = messageBytes;
             this.sendInfo = sendInfo;
             this.serverSideUserPushApi = serverSideUserPushApi;
@@ -160,11 +152,10 @@ public class BenchmarkServerPushTest {
             p.setData(new String(messageBytes));
 
             while (!stop) {
-
                 try {
                     long startTime = System.nanoTime();
                     PushResult r = serverSideUserPushApi.clientReceive("Benchmark",
-                            "Benchmark", p);
+                            "extra", p);
                     if (r != null && StringUtils.isNotEmpty(r.getResult()) ) {
                         sendInfo.successRequestNum++;
                         long elapseTimeNs = System.nanoTime() - startTime;

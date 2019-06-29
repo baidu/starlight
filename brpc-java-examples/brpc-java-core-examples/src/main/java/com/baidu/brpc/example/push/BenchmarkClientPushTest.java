@@ -1,18 +1,17 @@
 package com.baidu.brpc.example.push;
 
-import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
-import com.baidu.brpc.example.push.userservice.UserPushApiImplII;
-import com.baidu.brpc.example.standard.Echo;
-import com.baidu.brpc.example.standard.EchoServiceAsync;
+import com.baidu.brpc.example.push.normal.EchoRequest;
+import com.baidu.brpc.example.push.normal.EchoResponse;
+import com.baidu.brpc.example.push.normal.EchoServiceAsync;
+import com.baidu.brpc.example.push.userservice.UserPushApiImpl;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
-import io.netty.util.ReferenceCountUtil;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -21,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
-public class BenchmarkClientRpcTest {
+public class BenchmarkClientPushTest {
 
     public static class SendInfo {
         public long successRequestNum = 0;
@@ -43,13 +42,14 @@ public class BenchmarkClientRpcTest {
 
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
-        clientOption.setWriteTimeoutMillis(20 * 1000);
-        clientOption.setReadTimeoutMillis(20 * 1000);
+        clientOption.setWriteTimeoutMillis(1000);
+        clientOption.setReadTimeoutMillis(1000);
         clientOption.setMaxTotalConnections(1000);
 //        clientOption.setMaxTotalConnections(10);
-        clientOption.setMinIdleConnections(1);
+        clientOption.setMinIdleConnections(100);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
+        clientOption.setClientName("Benchmark");
 
         int threadNum = Integer.parseInt(args[1]);
 
@@ -59,10 +59,9 @@ public class BenchmarkClientRpcTest {
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
 
-        clientOption.setClientName("Benchmark");
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption);
         EchoServiceAsync echoService = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
-        rpcClient.registerPushService(new UserPushApiImplII());
+        rpcClient.registerPushService(new UserPushApiImpl());
 
         byte[] messageBytes = null;
         try {
@@ -81,8 +80,7 @@ public class BenchmarkClientRpcTest {
 
         for (int i = 0; i < threadNum; i++) {
             sendInfos[i] = new SendInfo();
-            threads[i] = new Thread(new ThreadTask(rpcClient, messageBytes, sendInfos[i],
-                    echoService));
+            threads[i] = new Thread(new ThreadTask(messageBytes, sendInfos[i], echoService), "Benchnark-" + i);
             threads[i].start();
         }
 
@@ -137,7 +135,7 @@ public class BenchmarkClientRpcTest {
         }
     }
 
-    public static class EchoCallback implements RpcCallback<Echo.EchoResponse> {
+    public static class EchoCallback implements RpcCallback<EchoResponse> {
         private long startTime;
         private SendInfo sendInfo;
 
@@ -147,17 +145,11 @@ public class BenchmarkClientRpcTest {
         }
 
         @Override
-        public void success(Echo.EchoResponse response) {
+        public void success(EchoResponse response) {
             if (response != null) {
                 sendInfo.successRequestNum++;
                 long elapseTimeNs = System.nanoTime() - startTime;
                 sendInfo.elapsedNs += elapseTimeNs;
-                if (RpcContext.isSet()) {
-                    RpcContext rpcContext = RpcContext.getContext();
-                    if (rpcContext.getResponseBinaryAttachment() != null) {
-                        ReferenceCountUtil.release(rpcContext.getResponseBinaryAttachment());
-                    }
-                }
                 log.debug("client async call success, elapseTimeNs={}, response={}",
                         System.nanoTime() - startTime, response.getMessage());
             } else {
@@ -174,15 +166,12 @@ public class BenchmarkClientRpcTest {
     }
 
     public static class ThreadTask implements Runnable {
-
-        private RpcClient rpcClient;
         private byte[] messageBytes;
         private SendInfo sendInfo;
         private EchoServiceAsync echoService;
 
-        public ThreadTask(RpcClient rpcClient, byte[] messageBytes,
+        public ThreadTask(byte[] messageBytes,
                           SendInfo sendInfo, EchoServiceAsync echoService) {
-            this.rpcClient = rpcClient;
             this.messageBytes = messageBytes;
             this.sendInfo = sendInfo;
             this.echoService = echoService;
@@ -190,15 +179,10 @@ public class BenchmarkClientRpcTest {
 
         public void run() {
             // build request
-            Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
-                    .setMessage(new String(messageBytes))
-                    .build();
-            byte[] attachment = "hello".getBytes();
-
+            EchoRequest request = new EchoRequest();
+            request.setMessage(new String(messageBytes));
             while (!stop) {
                 try {
-                    RpcContext rpcContext = RpcContext.getContext();
-                    rpcContext.setRequestBinaryAttachment(attachment);
                     echoService.echo(request, new EchoCallback(System.nanoTime(), sendInfo));
                 } catch (Exception ex) {
                     log.info("client send exception:", ex);

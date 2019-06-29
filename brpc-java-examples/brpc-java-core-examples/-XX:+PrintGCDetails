@@ -1,0 +1,118 @@
+2019-06-29 20:38:11,112 [main] INFO  com.baidu.brpc.naming.NamingServiceFactoryManager - register naming service:zookeeper success
+2019-06-29 20:38:11,115 [main] INFO  com.baidu.brpc.naming.NamingServiceFactoryManager - register naming service:star success
+2019-06-29 20:38:11,116 [main] INFO  com.baidu.brpc.naming.NamingServiceFactoryManager - register naming service:consul success
+2019-06-29 20:38:11,137 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:1 success
+2019-06-29 20:38:11,165 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:29 success
+2019-06-29 20:38:11,170 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:4 success
+2019-06-29 20:38:11,172 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:3 success
+2019-06-29 20:38:11,173 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:31 success
+2019-06-29 20:38:11,174 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:28 success
+2019-06-29 20:38:11,176 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:32 success
+2019-06-29 20:38:11,177 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:33 success
+2019-06-29 20:38:11,177 [main] INFO  com.baidu.brpc.protocol.ProtocolManager - register protocol:30 success
+2019-06-29 20:38:11,178 [main] INFO  com.baidu.brpc.client.loadbalance.LoadBalanceManager - register load balance factory:RandomLoadBalanceFactory success
+2019-06-29 20:38:11,178 [main] INFO  com.baidu.brpc.client.loadbalance.LoadBalanceManager - register load balance factory:RoundRobinLoadBalanceFactory success
+2019-06-29 20:38:11,178 [main] INFO  com.baidu.brpc.client.loadbalance.LoadBalanceManager - register load balance factory:WeightLoadBalanceFactory success
+2019-06-29 20:38:11,179 [main] INFO  com.baidu.brpc.client.loadbalance.LoadBalanceManager - register load balance factory:FairLoadBalanceFactory success
+2019-06-29 20:38:11,193 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:timeout-timer-thread-1
+2019-06-29 20:38:11,196 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:fairStrategy-timer-thread-1
+2019-06-29 20:38:11,199 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-1
+2019-06-29 20:38:11,199 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-2
+2019-06-29 20:38:11,199 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-3
+2019-06-29 20:38:11,199 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-4
+2019-06-29 20:38:11,199 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-5
+2019-06-29 20:38:11,200 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-6
+2019-06-29 20:38:11,200 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-7
+2019-06-29 20:38:11,200 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-8
+2019-06-29 20:38:11,200 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-9
+2019-06-29 20:38:11,200 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-10
+2019-06-29 20:38:11,200 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-11
+2019-06-29 20:38:11,201 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-work-thread-12
+2019-06-29 20:38:16,404 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-1
+2019-06-29 20:38:16,423 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-2
+2019-06-29 20:38:16,425 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-3
+2019-06-29 20:38:16,427 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-4
+2019-06-29 20:38:16,429 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-5
+2019-06-29 20:38:16,431 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-6
+2019-06-29 20:38:16,433 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-7
+2019-06-29 20:38:16,434 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-8
+2019-06-29 20:38:16,436 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-9
+2019-06-29 20:38:16,437 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-10
+2019-06-29 20:38:16,438 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-11
+2019-06-29 20:38:16,440 [main] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:client-io-thread-12
+2019-06-29 20:38:16,628 [main] INFO  com.baidu.brpc.server.ServiceManager - register service, serviceName=com.baidu.brpc.example.push.userservice.UserPushApi, methodName=clientReceive
+2019-06-29 20:38:17,632 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=8485,fail=0,average=1004681ns
+2019-06-29 20:38:18,633 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=12059,fail=0,average=746971ns
+2019-06-29 20:38:19,634 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=12522,fail=0,average=801337ns
+2019-06-29 20:38:20,639 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=13065,fail=0,average=732528ns
+2019-06-29 20:38:21,640 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=17165,fail=0,average=545610ns
+2019-06-29 20:38:22,095 [client-io-thread-4] INFO  com.baidu.brpc.client.handler.RpcClientHandler - null
+2019-06-29 20:38:22,095 [client-io-thread-3] INFO  com.baidu.brpc.client.handler.RpcClientHandler - null
+2019-06-29 20:38:22,097 [client-io-thread-3] INFO  com.baidu.brpc.utils.CustomThreadFactory - create thread:invalid-channel-callback-thread-1
+2019-06-29 20:38:22,641 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=16354,fail=0,average=1094828ns
+2019-06-29 20:38:23,643 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=26915,fail=0,average=440216ns
+2019-06-29 20:38:24,645 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=45574,fail=0,average=277782ns
+2019-06-29 20:38:25,650 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=41828,fail=0,average=630942ns
+2019-06-29 20:38:26,652 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=49972,fail=0,average=292952ns
+2019-06-29 20:38:27,656 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=46647,fail=0,average=555866ns
+2019-06-29 20:38:28,657 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=42750,fail=0,average=500193ns
+2019-06-29 20:38:29,659 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=42808,fail=0,average=416570ns
+2019-06-29 20:38:30,661 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=35113,fail=0,average=1172429ns
+2019-06-29 20:38:31,663 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=43657,fail=0,average=451929ns
+2019-06-29 20:38:32,664 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=43290,fail=0,average=396716ns
+2019-06-29 20:38:33,666 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40851,fail=0,average=737014ns
+2019-06-29 20:38:34,670 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40767,fail=0,average=483571ns
+2019-06-29 20:38:35,671 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40184,fail=0,average=445133ns
+2019-06-29 20:38:36,675 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39261,fail=0,average=801838ns
+2019-06-29 20:38:37,676 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=42977,fail=0,average=400137ns
+2019-06-29 20:38:38,677 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40874,fail=0,average=432537ns
+2019-06-29 20:38:39,680 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38846,fail=0,average=411559ns
+2019-06-29 20:38:40,684 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=29916,fail=0,average=1860861ns
+2019-06-29 20:38:41,687 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39290,fail=0,average=483513ns
+2019-06-29 20:38:42,688 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39255,fail=0,average=562909ns
+2019-06-29 20:38:43,691 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=35750,fail=0,average=980829ns
+2019-06-29 20:38:44,692 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=41953,fail=0,average=380019ns
+2019-06-29 20:38:45,695 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=42614,fail=0,average=352527ns
+2019-06-29 20:38:46,270 [client-io-thread-5] INFO  com.baidu.brpc.client.handler.RpcClientHandler - null
+2019-06-29 20:38:46,699 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39923,fail=0,average=844479ns
+2019-06-29 20:38:47,700 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37698,fail=0,average=644743ns, avgQps=37710
+2019-06-29 20:38:48,705 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40568,fail=0,average=564013ns, avgQps=39230
+2019-06-29 20:38:49,709 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=36372,fail=0,average=895711ns, avgQps=38312
+2019-06-29 20:38:50,712 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37928,fail=0,average=605457ns, avgQps=38240
+2019-06-29 20:38:51,715 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=36822,fail=0,average=518331ns, avgQps=37978
+2019-06-29 20:38:52,718 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38531,fail=0,average=446469ns, avgQps=38080
+2019-06-29 20:38:53,718 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39431,fail=0,average=939316ns, avgQps=38274
+2019-06-29 20:38:54,719 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37365,fail=0,average=575291ns, avgQps=38162
+2019-06-29 20:38:55,721 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38809,fail=0,average=713160ns, avgQps=38239
+2019-06-29 20:38:56,723 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37588,fail=0,average=1198579ns, avgQps=38179
+2019-06-29 20:38:57,726 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38141,fail=0,average=408813ns, avgQps=38184
+2019-06-29 20:38:58,731 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39446,fail=0,average=387688ns, avgQps=38302
+2019-06-29 20:38:59,734 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38783,fail=0,average=378195ns, avgQps=38349
+2019-06-29 20:39:00,735 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39324,fail=0,average=726100ns, avgQps=38419
+2019-06-29 20:39:01,736 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37670,fail=0,average=393616ns, avgQps=38369
+2019-06-29 20:39:02,741 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38157,fail=0,average=433550ns, avgQps=38367
+2019-06-29 20:39:03,742 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40294,fail=0,average=690551ns, avgQps=38481
+2019-06-29 20:39:04,742 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=41795,fail=0,average=368874ns, avgQps=38665
+2019-06-29 20:39:05,743 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40073,fail=0,average=374609ns, avgQps=38740
+2019-06-29 20:39:06,743 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=41052,fail=0,average=693050ns, avgQps=38855
+2019-06-29 20:39:07,744 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37116,fail=0,average=396222ns, avgQps=38773
+2019-06-29 20:39:08,745 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38755,fail=0,average=374775ns, avgQps=38773
+2019-06-29 20:39:09,746 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40591,fail=0,average=380560ns, avgQps=38852
+2019-06-29 20:39:10,746 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40214,fail=0,average=682924ns, avgQps=38910
+2019-06-29 20:39:11,747 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=41334,fail=0,average=323070ns, avgQps=39007
+2019-06-29 20:39:12,748 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=40714,fail=0,average=367564ns, avgQps=39073
+2019-06-29 20:39:13,748 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39722,fail=0,average=683194ns, avgQps=39098
+2019-06-29 20:39:14,749 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=42301,fail=0,average=328677ns, avgQps=39212
+2019-06-29 20:39:15,750 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=41037,fail=0,average=337063ns, avgQps=39276
+2019-06-29 20:39:16,751 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=41656,fail=0,average=709548ns, avgQps=39356
+2019-06-29 20:39:17,755 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=43474,fail=0,average=328152ns, avgQps=39494
+2019-06-29 20:39:18,758 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=39001,fail=0,average=368753ns, avgQps=39482
+2019-06-29 20:39:19,759 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38500,fail=0,average=712051ns, avgQps=39453
+2019-06-29 20:39:20,760 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38893,fail=0,average=353007ns, avgQps=39437
+2019-06-29 20:39:21,760 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37732,fail=0,average=443557ns, avgQps=39388
+2019-06-29 20:39:22,761 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=34292,fail=0,average=531480ns, avgQps=39247
+2019-06-29 20:39:23,762 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38233,fail=0,average=778892ns, avgQps=39219
+2019-06-29 20:39:24,762 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=38338,fail=0,average=371797ns, avgQps=39196
+2019-06-29 20:39:25,763 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=37545,fail=0,average=493416ns, avgQps=39154
+2019-06-29 20:39:26,763 [main] INFO  com.baidu.brpc.example.push.BenchmarkClientPushTest - success=31756,fail=0,average=1284968ns, avgQps=38969
+2019-06-29 20:39:27,700 [Thread-0] INFO  com.baidu.brpc.thread.ShutDownManager - Brpc do clean work...

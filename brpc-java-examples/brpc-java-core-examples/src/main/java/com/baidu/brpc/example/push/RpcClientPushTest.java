@@ -16,28 +16,31 @@
 
 package com.baidu.brpc.example.push;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
+import com.baidu.brpc.example.push.normal.EchoRequest;
+import com.baidu.brpc.example.push.normal.EchoResponse;
+import com.baidu.brpc.example.push.normal.EchoService;
+import com.baidu.brpc.example.push.normal.EchoService2;
 import com.baidu.brpc.example.push.userservice.UserPushApiImpl;
-import com.baidu.brpc.example.push.userservice.UserPushApiImplII;
-import com.baidu.brpc.example.standard.EchoService;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
-import com.baidu.brpc.server.entity.ReportBean;
-import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.baidu.brpc.utils.GsonUtils;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by wenweihu86 on 2017/4/26.
  */
 @SuppressWarnings("unchecked")
 @Slf4j
-public class RpcClientTest {
+public class RpcClientPushTest {
 
     public static void main(String[] args) throws InterruptedException {
         RpcClientOptions clientOption = new RpcClientOptions();
@@ -45,14 +48,15 @@ public class RpcClientTest {
         clientOption.setWriteTimeoutMillis(20 * 1000);
         clientOption.setReadTimeoutMillis(20 * 1000);
         clientOption.setMaxTotalConnections(1000);
-//        clientOption.setMaxTotalConnections(1);
         clientOption.setMinIdleConnections(1);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
+        clientOption.setMaxTotalConnections(1);
 
+        // 指定clientName
+        clientOption.setClientName("c1");
 
-        String serviceUrl = "list://127.0.0.1:8012";
-
+        String serviceUrl = "list://127.0.0.1:8002";
         if (args.length == 1) {
             serviceUrl = args[0];
         }
@@ -60,19 +64,36 @@ public class RpcClientTest {
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
 
-        clientOption.setClientName("Benchmark");
-        RpcClient rpcClientII = new RpcClient(serviceUrl, clientOption, interceptors);
-        BrpcProxy.getProxy(rpcClientII, EchoService.class);
-        rpcClientII.registerPushService(new UserPushApiImplII());
+        // 创建客户端 c1
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
+        // 首先建立一个普通rpc client服务, 与后端建立起连接
+        EchoService service1 = BrpcProxy.getProxy(rpcClient, EchoService.class);
+        // 注册实现push方法
+        rpcClient.registerPushService(new UserPushApiImpl());
 
-        synchronized(RpcClientTest.class) {
+        EchoRequest request = new EchoRequest();
+        request.setMessage("hello");
+        EchoResponse response = service1.echo(request);
+        System.out.println("res1=" + GsonUtils.toJson(response));
+
+        Thread.sleep(2000);
+
+        // 创建客户端c2
+        clientOption.setClientName("c2");
+        RpcClient rpcClient2 = new RpcClient(serviceUrl, clientOption, interceptors);
+        EchoService2 service2 = BrpcProxy.getProxy(rpcClient2, EchoService2.class);
+        rpcClient2.registerPushService(new UserPushApiImpl());
+        response = service2.echo(request);
+        System.out.println("res=2" + GsonUtils.toJson(response));
+
+        synchronized(RpcClientPushTest.class) {
             try {
-                RpcClientTest.class.wait();
+                RpcClientPushTest.class.wait();
             } catch (Throwable e) {
             }
         }
-
-        rpcClientII.stop();
+        rpcClient.stop();
+        rpcClient2.stop();
     }
 
 }
