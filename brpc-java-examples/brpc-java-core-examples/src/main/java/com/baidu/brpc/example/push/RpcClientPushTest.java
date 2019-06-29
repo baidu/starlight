@@ -61,30 +61,53 @@ public class RpcClientPushTest {
             serviceUrl = args[0];
         }
 
-        List<Interceptor> interceptors = new ArrayList<Interceptor>();
-        interceptors.add(new CustomInterceptor());
-
         // 创建客户端 c1
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption);
         // 首先建立一个普通rpc client服务, 与后端建立起连接
-        EchoService service1 = BrpcProxy.getProxy(rpcClient, EchoService.class);
+        final EchoService service1 = BrpcProxy.getProxy(rpcClient, EchoService.class);
         // 注册实现push方法
         rpcClient.registerPushService(new UserPushApiImpl());
 
-        EchoRequest request = new EchoRequest();
+        final EchoRequest request = new EchoRequest();
         request.setMessage("hello");
-        EchoResponse response = service1.echo(request);
-        System.out.println("res1=" + GsonUtils.toJson(response));
 
-        Thread.sleep(2000);
+        Thread thread1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    EchoResponse response = service1.echo(request);
+                    System.out.println("res1=" + GsonUtils.toJson(response));
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+        thread1.start();
 
         // 创建客户端c2
         clientOption.setClientName("c2");
-        RpcClient rpcClient2 = new RpcClient(serviceUrl, clientOption, interceptors);
-        EchoService2 service2 = BrpcProxy.getProxy(rpcClient2, EchoService2.class);
+        RpcClient rpcClient2 = new RpcClient(serviceUrl, clientOption);
+        final EchoService2 service2 = BrpcProxy.getProxy(rpcClient2, EchoService2.class);
         rpcClient2.registerPushService(new UserPushApiImpl());
-        response = service2.echo(request);
-        System.out.println("res=2" + GsonUtils.toJson(response));
+
+        Thread thread2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (true) {
+                    EchoResponse response = service2.echo(request);
+                    System.out.println("res=2" + GsonUtils.toJson(response));
+                    try {
+                        Thread.sleep(1000);
+                    } catch (InterruptedException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        });
+        thread2.start();
 
         synchronized(RpcClientPushTest.class) {
             try {
@@ -92,6 +115,9 @@ public class RpcClientPushTest {
             } catch (Throwable e) {
             }
         }
+
+        thread1.join();
+        thread2.join();
         rpcClient.stop();
         rpcClient2.stop();
     }

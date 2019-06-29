@@ -89,7 +89,7 @@ public class RpcServerPushTest {
                 log.error("push exception , please start up client c1 and c2", e);
             }
 
-            Thread.sleep(5 * 1000);
+            Thread.sleep(1000);
         }
 
     }
