@@ -1,6 +1,7 @@
 package com.baidu.brpc.example.grpc;
 
 import com.baidu.brpc.protocol.Options;
+import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.server.grpc.GrpcServer;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +23,9 @@ public class RpcServerTest {
         options.setKeepAliveTime(20);
         options.setProtocolType(Options.ProtocolType.PROTOCOL_GRPC_VALUE);
 //        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
-//        final RpcServer rpcServer = new RpcServer(port, options);
-        final GrpcServer rpcServer = new GrpcServer(port, options);
-        rpcServer.registerService(new EchoService());
+        final RpcServer rpcServer = new RpcServer(port, options);
+//        final GrpcServer rpcServer = new GrpcServer(port, options);
+        //rpcServer.registerService(new EchoService());
         rpcServer.start();
 
         // make server keep running
