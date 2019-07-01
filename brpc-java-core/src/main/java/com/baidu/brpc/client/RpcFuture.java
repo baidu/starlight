@@ -27,22 +27,22 @@ import lombok.Setter;
 public class RpcFuture<T> implements AsyncAwareFuture<T> {
     private static final Logger LOG = LoggerFactory.getLogger(RpcFuture.class);
 
-    private CountDownLatch latch;
-    private Timeout timeout;
+    protected CountDownLatch latch;
+    protected Timeout timeout;
 
-    private RpcCallback<T> callback;  // callback cannot be set after init
-    private ChannelInfo channelInfo;
-    private RpcClient rpcClient;
-    private RpcMethodInfo rpcMethodInfo;
+    protected RpcCallback<T> callback;  // callback cannot be set after init
+    protected ChannelInfo channelInfo;
+    protected RpcClient rpcClient;
+    protected RpcMethodInfo rpcMethodInfo;
 
-    private Response response;
-    private boolean isDone;
+    protected Response response;
+    protected boolean isDone;
     // record the time of request
     // used in FAIR load balancing
-    private long startTime;
-    private long endTime;
+    protected long startTime;
+    protected long endTime;
 
-    private volatile long logId;
+    protected volatile long logId;
 
     public RpcFuture() {
         this.latch = new CountDownLatch(1);
@@ -176,7 +176,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
         return super.toString() + "@logId = " + logId;
     }
 
-    private void setRpcContext() {
+    protected void setRpcContext() {
         if (response == null) {
             return;
         }

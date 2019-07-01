@@ -15,13 +15,12 @@
  */
 package com.baidu.brpc.client.channel;
 
-
 import java.util.NoSuchElementException;
 
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.RpcClient;
-
 import com.baidu.brpc.client.instance.ServiceInstance;
+
 import io.netty.channel.Channel;
 
 /**
@@ -33,13 +32,13 @@ public class BrpcShortChannel extends AbstractBrpcChannel {
     private volatile Channel channel;
 
     public BrpcShortChannel(ServiceInstance instance, RpcClient rpcClient) {
-        super(instance, rpcClient.getBootstrap(), rpcClient.getProtocol());
+        super(instance, rpcClient.getBootstrap(), rpcClient.getProtocol(), rpcClient);
     }
 
     @Override
     public Channel getChannel() throws Exception, NoSuchElementException, IllegalStateException {
         if (channel == null || !channel.isActive()) {
-            synchronized (this) {
+            synchronized(this) {
                 if (channel != null && !channel.isActive()) {
                     channel.close();
                     channel = null;

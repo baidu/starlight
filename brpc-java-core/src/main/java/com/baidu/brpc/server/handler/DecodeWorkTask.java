@@ -22,12 +22,15 @@ import static io.netty.handler.codec.http.HttpHeaderNames.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpResponseStatus.OK;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.protocol.http.BrpcHttpResponseEncoder;
 import com.baidu.brpc.protocol.http.HttpRpcProtocol;
+import com.baidu.brpc.protocol.push.SPHead;
+import com.baidu.brpc.protocol.push.ServerPushPacket;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.ServerStatus;
 import com.baidu.brpc.utils.ThreadPool;
@@ -100,6 +103,12 @@ public class DecodeWorkTask implements Runnable {
                 log.warn("send status info response failed:", ex);
                 return;
             }
+        } else if (protocol instanceof ServerPushProtocol) {
+            SPHead spHead = ((ServerPushPacket) packet).getSpHead();
+            if (spHead.getType() == SPHead.TYPE_PUSH_RESPONSE) {
+                processClientResponse();
+                return;
+            }
         }
 
         Request request = null;
@@ -137,4 +146,25 @@ public class DecodeWorkTask implements Runnable {
             threadPool.submit(workTask);
         }
     }
+
+    /**
+     * 处理client的返回response
+     */
+    public void processClientResponse() {
+        Response response;
+        try {
+            response = ((ServerPushProtocol) protocol).decodeServerPushResponse(packet, ctx);
+        } catch (Exception e) {
+            log.warn("decode response failed:", e);
+            return;
+        }
+        if (response.getRpcFuture() != null) {
+            log.debug("handle response, logId={}", response.getLogId());
+            RpcFuture future = response.getRpcFuture();
+            future.handleResponse(response);
+        } else {
+            log.warn("rpcFuture is null, logId={}", response.getLogId());
+        }
+    }
+
 }

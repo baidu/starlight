@@ -23,6 +23,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.util.ReflectionUtils;
 
 import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -30,6 +32,21 @@ import java.lang.reflect.Field;
 public class BrpcProperties implements EnvironmentAware {
     private BrpcConfig global;
     private Environment environment;
+
+    private static Map<String, String> extractMap(Environment env, String prefix) {
+        Map<String, String> result = new HashMap<String, String>();
+        int i = 0;
+        while (true) {
+            String key = env.getProperty(String.format("%s[%d].key", prefix, i));
+            String value = env.getProperty(String.format("%s[%d].value", prefix, i));
+            if (key == null || value == null) {
+                break;
+            }
+            result.put(key, value);
+            i++;
+        }
+        return result;
+    }
 
     public BrpcConfig getServiceConfig(Class<?> serviceInterface) {
         BrpcConfig brpcConfig = new BrpcConfig(global);
@@ -41,9 +58,15 @@ public class BrpcProperties implements EnvironmentAware {
         ReflectionUtils.doWithFields(RpcNamingConfig.class, new ReflectionUtils.FieldCallback() {
             @Override
             public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
-                StringBuilder sb = new StringBuilder(128);
-                String key = sb.append(prefix).append("naming.").append(field.getName()).toString();
-                Object value = environment.getProperty(key, field.getType());
+                Object value;
+                if (field.getName().equals("extra")) {
+                    // extra field is a list of {key, value} objects
+                    value = extractMap(environment, prefix + "naming.extra");
+                } else {
+                    StringBuilder sb = new StringBuilder(128);
+                    String key = sb.append(prefix).append("naming.").append(field.getName()).toString();
+                    value = environment.getProperty(key, field.getType());
+                }
                 if (value != null) {
                     try {
                         field.setAccessible(true);

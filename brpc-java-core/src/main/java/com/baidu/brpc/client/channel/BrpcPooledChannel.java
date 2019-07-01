@@ -20,14 +20,12 @@ import java.util.NoSuchElementException;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import com.baidu.brpc.client.instance.ServiceInstance;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.client.pool.ChannelPooledObjectFactory;
 
 import io.netty.channel.Channel;
@@ -56,8 +54,7 @@ public class BrpcPooledChannel extends AbstractBrpcChannel {
     private RpcClientOptions rpcClientOptions;
 
     public BrpcPooledChannel(ServiceInstance serviceInstance, RpcClient rpcClient) {
-        super(serviceInstance, rpcClient.getBootstrap(), rpcClient.getProtocol());
-
+        super(serviceInstance, rpcClient.getBootstrap(), rpcClient.getProtocol(), rpcClient);
         this.protocol = rpcClient.getProtocol();
         this.rpcClientOptions = rpcClient.getRpcClientOptions();
         this.readTimeOut = rpcClientOptions.getReadTimeoutMillis();
@@ -134,6 +131,7 @@ public class BrpcPooledChannel extends AbstractBrpcChannel {
         }
     }
 
+
     @Override
     public void updateMaxConnection(int num) {
 
@@ -161,4 +159,13 @@ public class BrpcPooledChannel extends AbstractBrpcChannel {
     public void updateLatencyWithReadTimeOut() {
         updateLatency(readTimeOut);
     }
+
+    public RpcClient getRpcClient() {
+        return rpcClient;
+    }
+
+    public void setRpcClient(RpcClient rpcClient) {
+        this.rpcClient = rpcClient;
+    }
+
 }

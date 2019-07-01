@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,14 @@
  */
 package com.baidu.brpc.spring.annotation;
 
+import com.baidu.brpc.spring.RpcServiceExporter;
+
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-
-import com.baidu.brpc.spring.RpcServiceExporter;
 
 /**
  * Annotation publish for {@link RpcServiceExporter}.
@@ -42,14 +42,14 @@ public @interface RpcExporter {
      * @return the string
      */
     String port() default "8080";
-    
+
     /**
      * bean name of RPC server options bean type must be {@link com.baidu.brpc.server.RpcServerOptions}.
      *
      * @return the string
      */
     String rpcServerOptionsBeanName() default "";
-    
+
     /**
      * bean name of RPC interceptor bean type must be {@link com.baidu.brpc.interceptor.Interceptor}.
      *
@@ -58,14 +58,12 @@ public @interface RpcExporter {
     String interceptorBeanName() default "";
 
     /**
-     * group for naming service
-     *
+     * Group for naming service
      */
     String group() default "normal";
 
     /**
-     * version for naming service
-     *
+     * Version for naming service
      */
     String version() default "1.0.0";
 
@@ -81,4 +79,12 @@ public @interface RpcExporter {
      * false: create individual thread pool for register service
      */
     boolean useSharedThreadPool() default true;
+
+    /**
+     * Extra naming options. This option is effective on service-scope.
+     * <p>
+     * This config may have different behavior depending on which NamingService is used,
+     * consult documentation of the specific {@link com.baidu.brpc.naming.NamingService} for detailed usage.
+     */
+    NamingOption[] extraOptions() default {};
 }
