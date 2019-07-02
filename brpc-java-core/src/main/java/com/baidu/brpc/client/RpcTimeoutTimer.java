@@ -57,7 +57,7 @@ public class RpcTimeoutTimer implements TimerTask {
             Response response = rpcClient != null ? rpcClient.getProtocol().createResponse() :
                     rpcServer.getProtocol().createResponse();
             response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
-
+            response.setRpcFuture(future);
             future.handleResponse(response);
         }
     }

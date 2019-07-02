@@ -349,16 +349,11 @@ public class RpcServer {
 
     public <T> AsyncAwareFuture<T> sendServerPush(Request request) {
         Channel channel = request.getChannel();
-        //   ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(channel);
-
-        //  protocol.beforeRequestSent(request, this, brpcChannel);
         ChannelInfo orCreateServerChannelInfo = ChannelInfo.getOrCreateServerChannelInfo(channel); // todo
-        //   BrpcChannel brpcChannel = channelInfo.getChannelGroup();
         // create RpcFuture object
         RpcFuture rpcFuture = new ServerPushRpcFuture();
         rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
         rpcFuture.setCallback(request.getCallback());
-        //rpcFuture.setRpcClient(this);
         rpcFuture.setChannelInfo(orCreateServerChannelInfo);
         // generate logId
         final long logId = PushServerRpcFutureManager.getInstance().putRpcFuture(rpcFuture);
@@ -369,9 +364,6 @@ public class RpcServer {
         // read write timeout
         final long readTimeout = request.getReadTimeoutMillis();
         final long writeTimeout = request.getWriteTimeoutMillis();
-        // register timeout timer
-        //  RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getLogId(), this);
-
         Timeout timeout = timeoutTimer.newTimeout(new TimerTask() {
             @Override
             public void run(Timeout timeout) throws Exception {
@@ -380,16 +372,14 @@ public class RpcServer {
                 RpcFuture rpcFuture = rpcFutureManager.removeRpcFuture(timeoutLogId);
 
                 if (rpcFuture != null) {
-
                     long elapseTime = System.currentTimeMillis() - rpcFuture.getStartTime();
                     String errMsg = String.format("request timeout,logId=%d,ip=%s,port=%d,elapse=%dms",
                             logId, "?", port, elapseTime);
                     LOG.info(errMsg);
                     Response response = protocol.createResponse();
                     response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
-
+                    response.setRpcFuture(rpcFuture);
                     rpcFuture.handleResponse(response);
-
                 } else {
                     LOG.error("timeout rpc is missing, logId={}", timeoutLogId);
                     throw new RpcException(RpcException.UNKNOWN_EXCEPTION, "timeout rpc is missing");
@@ -397,11 +387,8 @@ public class RpcServer {
             }
         }, readTimeout, TimeUnit.MILLISECONDS);
 
-        //   Timeout timeout = timeoutTimer.newTimeout(timeoutTask, readTimeout, TimeUnit.MILLISECONDS);
-
         // set the missing parameters
         rpcFuture.setTimeout(timeout);
-        // channelInfo.setLogId(rpcFuture.getLogId());
         try {
             // netty will release the send buffer after sent.
             // we retain here, so it can be used when rpc retry.
@@ -409,7 +396,6 @@ public class RpcServer {
 
             ByteBuf byteBuf = protocol.encodeRequest(request);
             ChannelFuture sendFuture = channel.writeAndFlush(byteBuf);
-            // set RpcContext writeTimeout
             sendFuture.awaitUninterruptibly(writeTimeout);
             if (!sendFuture.isSuccess()) {
                 if (!(sendFuture.cause() instanceof ClosedChannelException)) {
@@ -429,8 +415,6 @@ public class RpcServer {
             }
         }
 
-        // return channel
-        //channelInfo.handleRequestSuccess();
         return rpcFuture;
     }
 
