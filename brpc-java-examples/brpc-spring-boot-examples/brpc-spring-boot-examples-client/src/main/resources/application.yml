@@ -10,7 +10,7 @@ brpc:
     naming:
       namingServiceUrl: zookeeper://127.0.0.1:2181/examples
       group: "normal"
-      version: 1.0.0
+      version: 2.0.0
       ignoreFailOfNamingService: false
     client:
       workThreadNum: 1
