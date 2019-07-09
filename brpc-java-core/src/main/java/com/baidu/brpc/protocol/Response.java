@@ -9,6 +9,7 @@ import java.util.Map;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.nshead.NSHead;
+import com.baidu.brpc.protocol.push.SPHead;
 
 import io.netty.buffer.ByteBuf;
 
@@ -24,6 +25,8 @@ public interface Response {
     Throwable getException();
 
     NSHead getNsHead();
+
+    SPHead getSpHead();
 
     void setNsHead(NSHead nsHead);
 

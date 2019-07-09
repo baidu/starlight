@@ -16,18 +16,18 @@
 
 package com.baidu.brpc.client;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReferenceArray;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A lock-free datastructure faster than #{@link java.util.concurrent.ConcurrentHashMap} in certain circumstance.
  * When the underlying array runs out of space, FastFutureStore will downgrade to #{@link ConcurrentHashMap}
- *
+ * <p>
  * Created by wanghongfei on 2018/11/19.
  */
 public class FastFutureStore {
@@ -63,7 +63,7 @@ public class FastFutureStore {
     /**
      * The boundary between array-stored id and map-stored id.
      * Binary format: 0100 0000 0000 0000 ... ... 0000(64 bits).
-     *
+     * <p>
      * Ids less than(01xx xxxx ... xxx) this value should be stored in array.
      * Ids greater than(01xx xxxx ... xxx) this value should be stored in map.
      */
@@ -85,11 +85,12 @@ public class FastFutureStore {
      * Obtain singleton object
      *
      * @param cap Capacity of the internal array
+     *
      * @return The singleton instance.
      */
     public static FastFutureStore getInstance(int cap) {
         if (null == singletonInstance) {
-            synchronized (FastFutureStore.class) {
+            synchronized(FastFutureStore.class) {
                 if (null == singletonInstance) {
                     singletonInstance = new FastFutureStore(cap);
                 }
@@ -133,7 +134,6 @@ public class FastFutureStore {
         }
     }
 
-
     /**
      * Retrieve object identified by id
      *
@@ -147,11 +147,11 @@ public class FastFutureStore {
         return getFromArray(id);
     }
 
-
     /**
      * Retrieve and remove object identified by id
      *
      * @param id Identifier returned by #{@link #put(RpcFuture)}
+     *
      * @return null if nothing found
      */
     public RpcFuture getAndRemove(long id) {
@@ -161,7 +161,6 @@ public class FastFutureStore {
 
         return getAndRemoveArray(id);
     }
-
 
     /**
      * Return the count of the objects.
@@ -283,7 +282,6 @@ public class FastFutureStore {
         return arrayNotEmpty || mapNotEmpty;
     }
 
-
     private int mapSlot(long id) {
         return (int) (id % cap);
     }
@@ -297,6 +295,7 @@ public class FastFutureStore {
          * Action on a none-null element.
          *
          * @param fut The current element, may not be null
+         *
          * @return Indicate whether this element should be deleted. False: delete, True: reserve
          */
         boolean visitElement(RpcFuture fut);

@@ -82,7 +82,7 @@ public class BrpcSingleChannel extends AbstractBrpcChannel {
     }
 
     public BrpcSingleChannel(ServiceInstance serviceInstance, RpcClient rpcClient) {
-        super(serviceInstance, rpcClient.getBootstrap(), rpcClient.getProtocol());
+        super(serviceInstance, rpcClient.getBootstrap(), rpcClient.getProtocol(), rpcClient);
         RpcClientOptions rpcClientOptions = rpcClient.getRpcClientOptions();
         this.connectPeriod = rpcClientOptions.getHealthyCheckIntervalMillis();
         this.readTimeOut = rpcClientOptions.getReadTimeoutMillis();

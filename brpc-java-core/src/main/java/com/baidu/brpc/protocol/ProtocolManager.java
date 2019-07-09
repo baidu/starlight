@@ -16,12 +16,12 @@
 
 package com.baidu.brpc.protocol;
 
-import lombok.extern.slf4j.Slf4j;
-
-import java.util.List;
 import java.util.ArrayList;
-import java.util.Map;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Created by huwenwei on 2017/9/23.

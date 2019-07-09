@@ -12,6 +12,8 @@ import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.push.SPHead;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.RpcServer;
 
 import io.netty.buffer.ByteBuf;
@@ -38,16 +40,18 @@ public class ServerWorkTask implements Runnable {
         RpcContext rpcContext = null;
         if (request != null) {
             request.setChannel(ctx.channel());
+            rpcContext = RpcContext.getContext();
+            rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
+            rpcContext.setChannel(ctx.channel());
+
             if (request.getBinaryAttachment() != null
                     || request.getKvAttachment() != null) {
-                rpcContext = RpcContext.getContext();
                 if (request.getBinaryAttachment() != null) {
                     rpcContext.setRequestBinaryAttachment(request.getBinaryAttachment());
                 }
                 if (request.getKvAttachment() != null) {
                     rpcContext.setRequestKvAttachment(request.getKvAttachment());
                 }
-                rpcContext.setRemoteAddress(ctx.channel().remoteAddress());
             }
 
             response.setLogId(request.getLogId());
@@ -86,12 +90,14 @@ public class ServerWorkTask implements Runnable {
             }
         }
 
-        try {
-            ByteBuf byteBuf = protocol.encodeResponse(request, response);
-            ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);
-            protocol.afterResponseSent(request, response, channelFuture);
-        } catch (Exception ex) {
-            log.warn("send response failed:", ex);
+        if (!request.isOneWay()) {
+            try {
+                ByteBuf byteBuf = protocol.encodeResponse(request, response);
+                ChannelFuture channelFuture = ctx.channel().writeAndFlush(byteBuf);
+                protocol.afterResponseSent(request, response, channelFuture);
+            } catch (Exception ex) {
+                log.warn("send response failed:", ex);
+            }
         }
 
         if (rpcContext != null) {

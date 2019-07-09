@@ -15,6 +15,13 @@
  */
 package com.baidu.brpc.protocol.stargate;
 
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
@@ -33,13 +40,11 @@ import com.dyuproject.protostuff.LinkedBuffer;
 import com.dyuproject.protostuff.ProtobufIOUtil;
 import com.dyuproject.protostuff.Schema;
 import com.dyuproject.protostuff.runtime.RuntimeSchema;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
 import lombok.extern.slf4j.Slf4j;
-
-import java.lang.reflect.Method;
-import java.util.*;
 
 /**
  * Stargate Byte format

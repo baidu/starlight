@@ -188,6 +188,7 @@ public class ChannelInfo {
         public void actionAfterDelete(RpcFuture fut) {
             Response response = fut.getRpcClient().getProtocol().createResponse();
             response.setException(exception);
+            response.setRpcFuture(fut);
             fut.handleResponse(response);
         }
     }
