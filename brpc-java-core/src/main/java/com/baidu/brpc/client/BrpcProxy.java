@@ -69,7 +69,7 @@ public class BrpcProxy implements MethodInterceptor {
 
     private RpcClient rpcClient;
 
-    private static Map<String, RpcMethodInfo> rpcMethodMap = new HashMap<String, RpcMethodInfo>();
+    private Map<String, RpcMethodInfo> rpcMethodMap = new HashMap<String, RpcMethodInfo>();
 
     /**
      * 初始化时提前解析好method信息，在rpc交互时会更快。
