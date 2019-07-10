@@ -73,6 +73,7 @@ Consul注册中心：
 * [搭建标准协议/sofa协议/hulu协议server](https://github.com/baidu/brpc-java/blob/master/docs/cn/brpc_server.md)
 * [搭建nshead server](https://github.com/baidu/brpc-java/blob/master/docs/cn/nshead_server.md)
 * [搭建http server](https://github.com/baidu/brpc-java/blob/master/docs/cn/http_server.md)
+* [server push 推送用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/server_push.md)
 
 ### Client端使用
 * [client端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/client.md)
