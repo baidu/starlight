@@ -27,6 +27,7 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolManager;
+import com.baidu.brpc.server.ChannelManager;
 import com.baidu.brpc.server.RpcServer;
 
 import io.netty.buffer.ByteBuf;
@@ -95,12 +96,15 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
                 && !(cause instanceof IOException)) {
             log.info("service exception, ex={}", cause.getMessage());
         }
+        log.debug("meet exception, may be connection is closed, msg={}", cause.getMessage());
+        log.debug("remove from channel map");
+        ChannelManager.getInstance().removeChannel(ctx.channel());
         ctx.close();
     }
 
     /**
      * 尝试用各个协议解析header。
-     * 目前所有的协议至少都需要12字节，所以第一个协议抛出not enough data异常后，就不重试剩余协议了。
+     * 所目前所有的协议至少都需要12字节，以第一个协议抛出not enough data异常后，就不重试剩余协议了。
      * 只要有一个协议抛too big data异常，就不再重试剩余协议。
      *
      * @param channelInfo      channel信息，包含protocol
@@ -136,4 +140,12 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
         }
         throw new BadSchemaException("bad schema");
     }
+
+    @Override
+    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+        log.debug("channel is in active, remove from channel map");
+        ChannelManager.getInstance().removeChannel(ctx.channel());
+        ctx.fireChannelInactive();
+    }
+
 }

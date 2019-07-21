@@ -25,6 +25,7 @@ import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.SubscribeInfo;
 import com.baidu.brpc.protocol.nshead.NSHead;
+import com.baidu.brpc.protocol.push.SPHead;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -43,6 +44,7 @@ public abstract class AbstractRequest implements Request {
     private String methodName;
     private Object[] args;
     private NSHead nsHead;
+    private SPHead spHead;
     private Map<String, Object> kvAttachment;
     private ByteBuf binaryAttachment;
     private int compressType;
@@ -57,10 +59,12 @@ public abstract class AbstractRequest implements Request {
     private String serviceTag;
     private Integer readTimeoutMillis;
     private Integer writeTimeoutMillis;
+    private String clientName;
+    private boolean oneWay; // if false, do not need send response.
 
     /**
      * 订阅信息，客户端请求时，将订阅的服务信息存入
-     * - StarGate使用
+     * - Stargate使用
      */
     private SubscribeInfo subscribeInfo;
 
@@ -88,6 +92,7 @@ public abstract class AbstractRequest implements Request {
         serviceTag = null;
         readTimeoutMillis = null;
         writeTimeoutMillis = null;
+        oneWay = false;
     }
 
     @Override

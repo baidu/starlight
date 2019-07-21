@@ -8,6 +8,7 @@ brpc-java是baidu rpc的java版本实现，支持baidu rpc、nshead、sofa、hul
 # 核心功能点
 * 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议、public pbrpc、stargate协议。
 * 支持SpringBoot starter，也支持SpringCloud的服务注册发现、用brpc-java替换Feign http调用，提升性能。
+* 支持Server Push机制，并支持扩展Server Push协议。
 * 支持多种naming服务，比如Zookeeper、Consul、List、File、DNS等，可以灵活扩展支持etcd、eureka、nacos等。
 * 支持多种负载均衡策略，比如fair、random、round robin、weight等。
 * 支持interceptor功能，支持计数器、令牌桶等server端限流算法。
@@ -24,7 +25,7 @@ java 6+ && netty 4 && protobuf 2.5.0
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>2.4.5</version>
+    <version>2.5.1</version>
 </dependency>
 ```
 Spring环境：
@@ -32,7 +33,7 @@ Spring环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring</artifactId>
-    <version>2.4.5</version>
+    <version>2.5.1</version>
 </dependency>
 ```
 SpringBoot环境：
@@ -40,7 +41,7 @@ SpringBoot环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring-boot-stater</artifactId>
-    <version>2.4.5</version>
+    <version>2.5.1</version>
 </dependency>
 ```
 SpringCloud环境：
@@ -48,7 +49,7 @@ SpringCloud环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>spring-cloud-brpc</artifactId>
-    <version>2.4.5</version>
+    <version>2.5.1</version>
 </dependency>
 ```
 Zookeeper注册中心：
@@ -56,7 +57,7 @@ Zookeeper注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-zookeeper</artifactId>
-    <version>2.4.5</version>
+    <version>2.5.1</version>
 </dependency>
 ```
 Consul注册中心：
@@ -64,7 +65,7 @@ Consul注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-consul</artifactId>
-    <version>2.4.5</version>
+    <version>2.5.1</version>
 </dependency>
 ```
 ### Server端使用
@@ -72,6 +73,7 @@ Consul注册中心：
 * [搭建标准协议/sofa协议/hulu协议server](https://github.com/baidu/brpc-java/blob/master/docs/cn/brpc_server.md)
 * [搭建nshead server](https://github.com/baidu/brpc-java/blob/master/docs/cn/nshead_server.md)
 * [搭建http server](https://github.com/baidu/brpc-java/blob/master/docs/cn/http_server.md)
+* [server push 推送用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/server_push.md)
 
 ### Client端使用
 * [client端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/client.md)

@@ -16,33 +16,46 @@
 
 package com.baidu.brpc.server;
 
+import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.protocol.*;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.baidu.brpc.ChannelInfo;
+import com.baidu.brpc.client.AsyncAwareFuture;
+import com.baidu.brpc.client.RpcFuture;
+import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.interceptor.ServerInvokeInterceptor;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.naming.NamingServiceFactoryManager;
 import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.spi.ExtensionLoaderManager;
-import com.baidu.brpc.utils.*;
-
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.interceptor.ServerInvokeInterceptor;
-import com.baidu.brpc.protocol.Protocol;
-import com.baidu.brpc.protocol.ProtocolManager;
+import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.handler.RpcServerChannelIdleHandler;
 import com.baidu.brpc.server.handler.RpcServerHandler;
+import com.baidu.brpc.server.push.RegisterServiceImpl;
+import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
+import com.baidu.brpc.utils.BrpcConstants;
+import com.baidu.brpc.utils.CollectionUtils;
+import com.baidu.brpc.utils.CustomThreadFactory;
+import com.baidu.brpc.utils.NetUtils;
+import com.baidu.brpc.utils.ThreadPool;
 
 import io.netty.bootstrap.ServerBootstrap;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelOption;
@@ -55,6 +68,9 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
+import io.netty.util.TimerTask;
 import lombok.Getter;
 
 /**
@@ -62,7 +78,6 @@ import lombok.Getter;
  */
 @Getter
 public class RpcServer {
-
     private static final Logger LOG = LoggerFactory.getLogger(RpcServer.class);
 
     private RpcServerOptions rpcServerOptions = new RpcServerOptions();
@@ -97,6 +112,8 @@ public class RpcServer {
     private List<RegisterInfo> registerInfoList = new ArrayList<RegisterInfo>();
     private ServerStatus serverStatus;
     private AtomicBoolean stop = new AtomicBoolean(false);
+
+    private Timer timeoutTimer;
 
     public RpcServer(int port) {
         this(null, port, new RpcServerOptions(), null);
@@ -203,6 +220,13 @@ public class RpcServer {
                 RpcServer.this.shutdown();
             }
         }));
+
+        timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
+
+        // 注册serverPush的内部服务接口
+        if (protocol instanceof ServerPushProtocol) {
+            registerService(new RegisterServiceImpl());
+        }
     }
 
     public void registerService(Object service) {
@@ -252,6 +276,7 @@ public class RpcServer {
                     new CustomThreadFactory(service.getClass().getSimpleName() + "-work-thread"));
             customThreadPools.add(customThreadPool);
         }
+
         if (targetClass == null) {
             serviceManager.registerService(service, customThreadPool);
         } else {
@@ -312,6 +337,85 @@ public class RpcServer {
                 }
             }
         }
+    }
+
+    public Protocol getProtocol() {
+        return protocol;
+    }
+
+    public void setProtocol(Protocol protocol) {
+        this.protocol = protocol;
+    }
+
+    public <T> AsyncAwareFuture<T> sendServerPush(Request request) {
+        Channel channel = request.getChannel();
+        ChannelInfo orCreateServerChannelInfo = ChannelInfo.getOrCreateServerChannelInfo(channel); // todo
+        // create RpcFuture object
+        RpcFuture rpcFuture = new ServerPushRpcFuture();
+        rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
+        rpcFuture.setCallback(request.getCallback());
+        rpcFuture.setChannelInfo(orCreateServerChannelInfo);
+        // generate logId
+        final long logId = PushServerRpcFutureManager.getInstance().putRpcFuture(rpcFuture);
+
+        // final long logId = FastFutureStore.getInstance(0).put(rpcFuture);
+        request.setLogId(logId);
+        request.getSpHead().setLogId(logId);
+        // read write timeout
+        final long readTimeout = request.getReadTimeoutMillis();
+        final long writeTimeout = request.getWriteTimeoutMillis();
+        Timeout timeout = timeoutTimer.newTimeout(new TimerTask() {
+            @Override
+            public void run(Timeout timeout) throws Exception {
+                long timeoutLogId = logId;
+                PushServerRpcFutureManager rpcFutureManager = PushServerRpcFutureManager.getInstance();
+                RpcFuture rpcFuture = rpcFutureManager.removeRpcFuture(timeoutLogId);
+
+                if (rpcFuture != null) {
+                    long elapseTime = System.currentTimeMillis() - rpcFuture.getStartTime();
+                    String errMsg = String.format("request timeout,logId=%d,ip=%s,port=%d,elapse=%dms",
+                            logId, "?", port, elapseTime);
+                    LOG.info(errMsg);
+                    Response response = protocol.createResponse();
+                    response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
+                    response.setRpcFuture(rpcFuture);
+                    rpcFuture.handleResponse(response);
+                } else {
+                    LOG.error("timeout rpc is missing, logId={}", timeoutLogId);
+                    throw new RpcException(RpcException.UNKNOWN_EXCEPTION, "timeout rpc is missing");
+                }
+            }
+        }, readTimeout, TimeUnit.MILLISECONDS);
+
+        // set the missing parameters
+        rpcFuture.setTimeout(timeout);
+        try {
+            // netty will release the send buffer after sent.
+            // we retain here, so it can be used when rpc retry.
+            request.retain();
+
+            ByteBuf byteBuf = protocol.encodeRequest(request);
+            ChannelFuture sendFuture = channel.writeAndFlush(byteBuf);
+            sendFuture.awaitUninterruptibly(writeTimeout);
+            if (!sendFuture.isSuccess()) {
+                if (!(sendFuture.cause() instanceof ClosedChannelException)) {
+                    LOG.warn("send request failed, channelActive={}, ex=",
+                            channel.isActive(), sendFuture.cause());
+                }
+                String errMsg = String.format("send request failed, channelActive=%b, ex=%s",
+                        channel.isActive(), sendFuture.cause().getMessage());
+                throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
+            }
+        } catch (Exception ex) {
+            timeout.cancel();
+            if (ex instanceof RpcException) {
+                throw (RpcException) ex;
+            } else {
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex.getMessage());
+            }
+        }
+
+        return rpcFuture;
     }
 
 }

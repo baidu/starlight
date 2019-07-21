@@ -193,10 +193,10 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
     }
 
     /**
-     * stargate 注册或者订阅节点时，serviceName 为全小写
+     * stargate 注册或者订阅节点时，整个 Path 为小写
      */
     private String buildParentNodePath(String group, String serviceName, String version) {
-        return "/" + group + ":" + serviceName.toLowerCase() + ":" + version;
+        return ("/" + group + ":" + serviceName + ":" + version).toLowerCase();
     }
 
 
