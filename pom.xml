@@ -189,7 +189,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <protocVersion>2.5.0</protocVersion>
+                            <protocVersion>3.9.0</protocVersion>
                             <addSources>none</addSources>
                             <includeStdTypes>true</includeStdTypes>
                             <outputDirectory>src/main/java</outputDirectory>
@@ -205,7 +205,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <protocVersion>2.5.0</protocVersion>
+                            <protocVersion>3.9.0</protocVersion>
                             <includeStdTypes>true</includeStdTypes>
                             <addSources>none</addSources>
                             <outputDirectory>src/test/java</outputDirectory>
@@ -258,7 +258,7 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
-                <version>2.5.0</version>
+                <version>3.9.0</version>
             </dependency>
             <dependency>
                 <groupId>com.ecwid.consul</groupId>

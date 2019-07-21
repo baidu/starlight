@@ -19,6 +19,7 @@ StreamingRpcProto.java
 SofaRpcProto.java
 BaiduRpcProto.java
 Echo.java
+Echo3.java
 HuluRpcProto.java
 brpc-java-core/.factorypath
 brpc-java-examples/.factorypath
