@@ -173,7 +173,7 @@ public class SofaRpcProtocol extends AbstractProtocol {
                 }
             } catch (Exception ex) {
                 LOG.warn("decode response failed");
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode response failed");
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode response failed", ex);
             }
             return rpcResponse;
         } finally {

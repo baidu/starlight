@@ -411,7 +411,7 @@ public class RpcServer {
             if (ex instanceof RpcException) {
                 throw (RpcException) ex;
             } else {
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex.getMessage());
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, ex.getMessage(), ex);
             }
         }
 

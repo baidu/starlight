@@ -85,7 +85,7 @@ public class ConsulNamingService implements NamingService {
             this.client = new ConsulClient(hostPorts[0], Integer.parseInt(hostPorts[1]));
         } catch (Exception e) {
             throw new RpcException(RpcException.SERVICE_EXCEPTION,
-                    "wrong configuration of url, should be like test.bj:port");
+                    "wrong configuration of url, should be like test.bj:port", e);
         }
 
         this.retryInterval = url.getIntParameter(Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
