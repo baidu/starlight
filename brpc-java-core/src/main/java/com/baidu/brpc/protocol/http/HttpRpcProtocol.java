@@ -535,7 +535,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
                             "unkown protocolType=" + protocolType);
             }
         } catch (Exception ex) {
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "encode body failed");
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "encode body failed", ex);
         }
         return bodyBytes;
     }
@@ -560,7 +560,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             }
         } catch (Exception ex) {
             LOG.error("decodeBody failed", ex);
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode body failed");
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode body failed", ex);
         }
         return body;
     }

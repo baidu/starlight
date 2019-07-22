@@ -163,7 +163,7 @@ public class BaiduRpcProtocol extends AbstractProtocol {
                 }
             } catch (Exception ex) {
                 // 解析失败直接抛异常
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode response failed");
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode response failed", ex);
             }
             return rpcResponse;
         } finally {
