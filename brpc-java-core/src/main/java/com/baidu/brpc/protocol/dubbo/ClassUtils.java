@@ -16,10 +16,12 @@
  */
 package com.baidu.brpc.protocol.dubbo;
 
+import lombok.extern.slf4j.Slf4j;
 
 import java.lang.reflect.Array;
 import java.util.*;
 
+@Slf4j
 public class ClassUtils {
     /**
      * Suffix for array class names: "[]"
@@ -77,32 +79,37 @@ public class ClassUtils {
     }
 
     /**
-     * get class loader
+     * get class loader by the following steps until available.
+     * 1. thread context class loader.
+     * 2. class loader of this class.
+     * 3. system class loader.
      *
-     * @param clazz
+     * @param clazz current class
      * @return class loader
      */
     public static ClassLoader getClassLoader(Class<?> clazz) {
-        ClassLoader cl = null;
+        ClassLoader classLoader = null;
         try {
-            cl = Thread.currentThread().getContextClassLoader();
+            classLoader = Thread.currentThread().getContextClassLoader();
         } catch (Throwable ex) {
             // Cannot access thread context ClassLoader - falling back to system class loader...
+            log.warn("Cannot access thread context ClassLoader");
         }
-        if (cl == null) {
+        if (classLoader == null) {
             // No thread context class loader -> use class loader of this class.
-            cl = clazz.getClassLoader();
-            if (cl == null) {
+            classLoader = clazz.getClassLoader();
+            if (classLoader == null) {
                 // getClassLoader() returning null indicates the bootstrap ClassLoader
                 try {
-                    cl = ClassLoader.getSystemClassLoader();
+                    classLoader = ClassLoader.getSystemClassLoader();
                 } catch (Throwable ex) {
                     // Cannot access system ClassLoader - oh well, maybe the caller can live with null...
+                    log.warn("Cannot access system ClassLoader");
                 }
             }
         }
 
-        return cl;
+        return classLoader;
     }
 
     /**
