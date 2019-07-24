@@ -61,7 +61,7 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
             String errorMsg = "methodName must be integer when using pbrpc, "
                     + "it is equal to proto method sequence from 0";
             log.warn(errorMsg);
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg, ex);
         }
 
         // build head
@@ -174,7 +174,7 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
                 } catch (Exception ex) {
                     String errorMsg = String.format("decode failed, msg=%s", ex.getMessage());
                     log.error(errorMsg);
-                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
+                    throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg, ex);
                 }
 
                 rpcResponse.setResult(responseBody);
@@ -230,7 +230,7 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
             } catch (Exception ex) {
                 String errorMsg = String.format("decode failed, msg=%s", ex.getMessage());
                 log.error(errorMsg);
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg, ex);
             }
             return request;
         } finally {
