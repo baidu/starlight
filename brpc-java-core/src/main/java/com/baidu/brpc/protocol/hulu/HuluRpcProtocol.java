@@ -389,7 +389,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
 
     @Override
     public boolean isCoexistence() {
-        return false;
+        return true;
     }
 
 }
