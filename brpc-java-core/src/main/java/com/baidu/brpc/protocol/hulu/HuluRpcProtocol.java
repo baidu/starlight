@@ -95,7 +95,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
             String errorMsg = "methodName must be integer when using hulu rpc, "
                     + "it is equal to proto method sequence from 0";
             LOG.warn(errorMsg);
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg, ex);
         }
 
         if (request.getTraceId() != null) {
@@ -174,7 +174,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
                 }
             } catch (Exception ex) {
                 // 解析失败直接抛异常
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode response failed");
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "decode response failed", ex);
             }
             return rpcResponse;
         } finally {
@@ -256,7 +256,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
             } catch (Exception ex) {
                 String errorMsg = String.format("decode failed, msg=%s", ex.getMessage());
                 LOG.error(errorMsg);
-                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg);
+                throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, errorMsg, ex);
             }
             return request;
         } finally {
@@ -389,7 +389,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
 
     @Override
     public boolean isCoexistence() {
-        return false;
+        return true;
     }
 
 }

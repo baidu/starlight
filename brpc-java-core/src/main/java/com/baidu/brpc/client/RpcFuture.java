@@ -167,7 +167,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
             setRpcContext();
             return (T) response.getResult();
         } catch (InterruptedException e) {
-            throw new RpcException(RpcException.UNKNOWN_EXCEPTION);
+            throw new RpcException(RpcException.UNKNOWN_EXCEPTION, e);
         }
     }
 
