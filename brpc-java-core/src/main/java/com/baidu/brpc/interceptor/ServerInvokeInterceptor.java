@@ -19,9 +19,29 @@ package com.baidu.brpc.interceptor;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 
+import lombok.extern.slf4j.Slf4j;
+
+import java.lang.reflect.InvocationTargetException;
+
+@Slf4j
 public class ServerInvokeInterceptor extends AbstractInterceptor {
+
     @Override
     public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
-        response.setResult(request.getTargetMethod().invoke(request.getTarget(), request.getArgs()));
+        try {
+            response.setResult(request.getTargetMethod().invoke(request.getTarget(), request.getArgs()));
+        } catch (InvocationTargetException ex) {
+            Throwable targetException = ex.getTargetException();
+            if (targetException == null) {
+                targetException = ex;
+            }
+            String errorMsg = String.format("invoke method failed, msg=%s", targetException.getMessage());
+            log.warn(errorMsg, targetException);
+            response.setException(targetException);
+        } catch (Throwable ex) {
+            String errorMsg = String.format("invoke method failed, msg=%s", ex.getMessage());
+            log.warn(errorMsg, ex);
+            response.setException(ex);
+        }
     }
 }

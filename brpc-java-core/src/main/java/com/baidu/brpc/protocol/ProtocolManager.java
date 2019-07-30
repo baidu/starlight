@@ -59,6 +59,7 @@ public class ProtocolManager {
         }
         Protocol protocol = protocolFactory.createProtocol(encoding);
         protocolMap.put(protocolType, protocol);
+        protocolFactoryMap.put(protocolType, protocolFactory);
         if (protocol.isCoexistence()) {
             coexistenceProtocols.add(protocol);
             coexistenceProtocolSize++;
