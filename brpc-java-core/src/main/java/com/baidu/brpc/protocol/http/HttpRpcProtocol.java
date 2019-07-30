@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import com.baidu.brpc.protocol.standard.BaiduRpcProto;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -84,7 +85,7 @@ import io.netty.handler.codec.http.QueryStringDecoder;
  * 2、http + json
  */
 public class HttpRpcProtocol extends AbstractProtocol {
-
+    public static final String PROTOCOL_TYPE = "protocol-type";
     private static final Logger LOG = LoggerFactory.getLogger(HttpRpcProtocol.class);
     private static final String CONTENT_TYPE_JSON = "application/json";
     private static final String CONTENT_TYPE_PROTOBUF = "application/proto";
@@ -92,7 +93,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
      * 请求的唯一标识id
      */
     private static final String LOG_ID = "log-id";
-    private static final String PROTOCOL_TYPE = "protocol-type";
     private static final JsonFormat jsonPbConverter = new JsonFormat() {
         protected void print(Message message, JsonGenerator generator) throws IOException {
             for (Iterator<Map.Entry<Descriptors.FieldDescriptor, Object>> iter =
@@ -235,6 +235,13 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 }
                 nettyHttpRequest.headers().set(header.getKey(), header.getValue());
             }
+            if (request.getKvAttachment() != null) {
+                for (Map.Entry<String, Object> kv : request.getKvAttachment().entrySet()) {
+                    if (!prohibitedHeaders.contains(kv.getKey().toLowerCase())) {
+                        nettyHttpRequest.headers().set(kv.getKey(), kv.getValue());
+                    }
+                }
+            }
             BrpcHttpRequestEncoder encoder = new BrpcHttpRequestEncoder();
             return encoder.encode(nettyHttpRequest);
         } finally {
@@ -322,6 +329,14 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 response.setResult(null);
             }
 
+            // set response attachment
+            if (response.getKvAttachment() == null) {
+                response.setKvAttachment(new HashMap<String, Object>());
+            }
+            for (Map.Entry<String, String> entry : httpResponse.headers()) {
+                response.getKvAttachment().put(entry.getKey(), entry.getValue());
+            }
+
             return response;
         } finally {
             httpResponse.release();
@@ -350,6 +365,13 @@ public class HttpRpcProtocol extends AbstractProtocol {
             httpRequest.headers().set(PROTOCOL_TYPE, protocolType);
             httpRequest.headers().set(HttpHeaderNames.CONTENT_ENCODING, encoding);
 
+            // set http headers to attachment
+            if (httpRequest.getKvAttachment() == null) {
+                httpRequest.setKvAttachment(new HashMap<String, Object>());
+            }
+            for (Map.Entry<String, String> entry : httpRequest.headers()) {
+                httpRequest.getKvAttachment().put(entry.getKey(), entry.getValue());
+            }
 
             ByteBuf byteBuf = httpRequest.content();
             int bodyLen = byteBuf.readableBytes();
@@ -416,7 +438,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
                         new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
             } else {
                 httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-                addHttpHeaders(httpResponse.headers(), httpRequest);
+                addHttpResponseHeaders(httpResponse, response, httpRequest);
                 int protocolType = Integer.parseInt(httpRequest.headers().get(PROTOCOL_TYPE));
                 Object body = makeResponse(protocolType, response);
                 // encode body
@@ -565,17 +587,30 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return body;
     }
 
-    public void addHttpHeaders(HttpHeaders headers, FullHttpRequest fullHttpRequest) {
+    /**
+     * fill http response headers
+     * @param fullHttpResponse netty http response
+     * @param response brpc standard response
+     * @param fullHttpRequest netty http request
+     */
+    public void addHttpResponseHeaders(FullHttpResponse fullHttpResponse,
+                                       Response response,
+                                       FullHttpRequest fullHttpRequest) {
         boolean keepAlive = HttpUtil.isKeepAlive(fullHttpRequest);
         if (keepAlive) {
-            headers.set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+            fullHttpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
         }
-        headers.set(HttpHeaderNames.CONTENT_TYPE, fullHttpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE));
+        fullHttpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, fullHttpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE));
         if (fullHttpRequest.headers().contains("callId")) {
-            headers.set("callId", fullHttpRequest.headers().get("callId"));
+            fullHttpResponse.headers().set("callId", fullHttpRequest.headers().get("callId"));
         }
         if (fullHttpRequest.headers().contains(LOG_ID)) {
-            headers.set(LOG_ID, fullHttpRequest.headers().get(LOG_ID));
+            fullHttpResponse.headers().set(LOG_ID, fullHttpRequest.headers().get(LOG_ID));
+        }
+        if (response.getKvAttachment() != null) {
+            for (Map.Entry<String, Object> entry : response.getKvAttachment().entrySet()) {
+                fullHttpResponse.headers().set(entry.getKey(), entry.getValue());
+            }
         }
     }
 
