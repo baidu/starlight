@@ -19,6 +19,7 @@ package com.baidu.brpc.protocol.http;
 import static org.junit.Assert.assertEquals;
 
 import java.lang.reflect.Method;
+import java.util.HashMap;
 
 import com.baidu.brpc.protocol.*;
 import org.junit.Assert;
@@ -53,6 +54,8 @@ public class HttpProtoProtocolTest {
         request.setArgs(new Object[] {Echo.EchoRequest.newBuilder().setMessage("hello").build()});
         request.setLogId(1L);
         request.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
+        request.setKvAttachment(new HashMap<String, Object>());
+        request.getKvAttachment().put("key", "value");
         ByteBuf buf = protocol.encodeRequest(request);
         Assert.assertTrue(buf.readableBytes() > 0);
         System.out.println(buf.readableBytes());
@@ -72,22 +75,24 @@ public class HttpProtoProtocolTest {
         httpRequest.headers().set("log-id", 1);
         httpRequest.setUri("/example.EchoService/Echo");
         httpRequest.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/proto; charset=utf-8");
+        httpRequest.headers().set("key", "value");
 
         Request request = protocol.decodeRequest(httpRequest);
-
         assertEquals("example.EchoService", request.getRpcMethodInfo().getServiceName());
         assertEquals("Echo", request.getRpcMethodInfo().getMethodName());
         assertEquals(EchoService.class.getMethods()[0], request.getTargetMethod());
         assertEquals(EchoServiceImpl.class, request.getTarget().getClass());
+        assertEquals(request.getKvAttachment().get("key"), "value");
     }
 
     @Test
     public void testEncodeHttpResponse() throws Exception {
-
         HttpRequest request = new HttpRequest();
         String contentType = "application/proto; charset=utf-8";
         request.headers().set(HttpHeaderNames.CONTENT_TYPE, contentType);
         request.headers().set(HttpHeaderNames.CONTENT_ENCODING, "utf-8");
+        request.headers().set(HttpRpcProtocol.PROTOCOL_TYPE,
+                Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         request.setRpcMethodInfo(new ProtobufRpcMethodInfo(EchoService.class.getMethods()[0]));
         Response response = new HttpResponse();
         response.setResult(Echo.EchoResponse.newBuilder().setMessage("hello").build());
@@ -97,7 +102,6 @@ public class HttpProtoProtocolTest {
         response.setRpcMethodInfo(methodInfo);
 
         protocol.encodeResponse(request, response);
-
     }
 
     public byte[] encodeBody(Object body) throws Exception {
