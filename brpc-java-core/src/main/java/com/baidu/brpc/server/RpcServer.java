@@ -342,6 +342,10 @@ public class RpcServer {
         }
     }
 
+    public boolean isShutdown() {
+        return stop.get();
+    }
+
     public Protocol getProtocol() {
         return protocol;
     }

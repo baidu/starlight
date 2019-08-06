@@ -269,6 +269,10 @@ public class RpcClient {
         }
     }
 
+    public boolean isShutdown() {
+        return stop.get();
+    }
+
     /**
      * select instance by load balance and select channel from the instance.
      * when user call this function explicitly, he should return the channel to avoid connection leak.
