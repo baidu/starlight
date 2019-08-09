@@ -44,6 +44,7 @@ import com.baidu.brpc.client.loadbalance.LoadBalanceManager;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.client.loadbalance.RandomStrategy;
 import com.baidu.brpc.exceptions.RpcException;
+import com.baidu.brpc.interceptor.ClientTraceInterceptor;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.interceptor.LoadBalanceInterceptor;
 import com.baidu.brpc.naming.BrpcURL;
@@ -268,6 +269,10 @@ public class RpcClient {
         }
     }
 
+    public boolean isShutdown() {
+        return stop.get();
+    }
+
     /**
      * select instance by load balance and select channel from the instance.
      * when user call this function explicitly, he should return the channel to avoid connection leak.
@@ -337,7 +342,6 @@ public class RpcClient {
      * select channel from endpoint which is selected by custom load balance.
      *
      * @param endpoint ip:port
-     *
      * @return netty channel
      */
     public Channel selectChannel(Endpoint endpoint) {
@@ -447,6 +451,7 @@ public class RpcClient {
         if (interceptors != null) {
             this.interceptors.addAll(interceptors);
         }
+        this.interceptors.add(new ClientTraceInterceptor());
         this.protocol = ProtocolManager.getInstance().getProtocol(options.getProtocolType());
         fastFutureStore = FastFutureStore.getInstance(options.getFutureBufferSize());
         timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();

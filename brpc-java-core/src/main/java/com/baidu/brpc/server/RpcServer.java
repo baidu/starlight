@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.interceptor.ServerTraceInterceptor;
 import com.baidu.brpc.protocol.*;
+
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -286,6 +288,7 @@ public class RpcServer {
     }
 
     public void start() {
+        this.interceptors.add(0, new ServerTraceInterceptor());
         this.interceptors.add(new ServerInvokeInterceptor());
         try {
             // 判断是否在jarvis环境，若是jarvis环境则以环境变量port为准，否则以用户自定义的port为准
@@ -337,6 +340,10 @@ public class RpcServer {
                 }
             }
         }
+    }
+
+    public boolean isShutdown() {
+        return stop.get();
     }
 
     public Protocol getProtocol() {
