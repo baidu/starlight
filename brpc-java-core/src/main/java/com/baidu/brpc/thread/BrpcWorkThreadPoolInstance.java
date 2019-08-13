@@ -27,6 +27,8 @@ public class BrpcWorkThreadPoolInstance {
 
     private static volatile ThreadPool workThreadPool;
 
+    private static String name = "brpc-work-thread";
+
     private BrpcWorkThreadPoolInstance() {
 
     }
@@ -40,7 +42,7 @@ public class BrpcWorkThreadPoolInstance {
             synchronized (BrpcWorkThreadPoolInstance.class) {
                 if (workThreadPool == null) {
                     workThreadPool = new ThreadPool(threadNum,
-                            new CustomThreadFactory("brpc-work-thread"));
+                            new CustomThreadFactory(name));
                 }
             }
         }
@@ -53,5 +55,12 @@ public class BrpcWorkThreadPoolInstance {
 
     }
 
+    public static String getName() {
+        return name;
+    }
+
+    public static void setName(String name) {
+        BrpcWorkThreadPoolInstance.name = name;
+    }
 
 }

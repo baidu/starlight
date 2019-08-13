@@ -84,6 +84,7 @@ public class RpcServerOptions {
     private String jarvisPortName;
     // naming service url
     private String namingServiceUrl = "";
+    private boolean threadPoolSharing = false;
 
     public RpcServerOptions(RpcServerOptions options) {
         this.copyFrom(options);

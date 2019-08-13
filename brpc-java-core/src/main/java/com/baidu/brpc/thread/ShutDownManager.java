@@ -16,12 +16,13 @@
 
 package com.baidu.brpc.thread;
 
+import java.util.concurrent.ExecutorService;
+
 import com.baidu.brpc.utils.ThreadPool;
+
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.Timer;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.ExecutorService;
 
 @Slf4j
 public class ShutDownManager {
@@ -36,7 +37,8 @@ public class ShutDownManager {
             public void run() {
                 log.info("Brpc do clean work...");
 
-                EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getInstance();
+                EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getEpollInstance();
+                EventLoopGroup nioInstance = BrpcIoThreadPoolInstance.getNioInstance();
                 ThreadPool workThread = BrpcWorkThreadPoolInstance.getInstance();
                 ExecutorService clientCallBackThread = ClientCallBackThreadPoolInstance.getInstance();
                 Timer clientHealthCheckerTimer = ClientHealthCheckTimerInstance.getInstance();
@@ -50,6 +52,9 @@ public class ShutDownManager {
                 }
                 if (workThread != null) {
                     workThread.stop();
+                }
+                if (nioInstance != null) {
+                    nioInstance.shutdownGracefully();
                 }
                 if (clientHealthCheckerTimer != null) {
                     clientHealthCheckerTimer.stop();
