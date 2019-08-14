@@ -16,14 +16,14 @@
 
 package com.baidu.brpc.utils;
 
-import lombok.Getter;
-import lombok.Setter;
-
 import java.util.ArrayList;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import lombok.Getter;
+import lombok.Setter;
 
 /**
  * Since {@linkplain java.util.concurrent.ExecutorService ExecutorService} is a
@@ -45,6 +45,7 @@ public final class ThreadPool {
     private Condition isProducerNotFullCondition;
     private Condition isProducerNotEmptyCondition;
     private ArrayList<Thread> threads;
+
     private volatile boolean stopped;
 
     public ThreadPool(int initialThreadNum, ThreadFactory threadFactory) {
@@ -211,5 +212,10 @@ public final class ThreadPool {
         private int producerQueueSize;
         private int consumerQueueSize;
     }
+
+    public boolean isStopped() {
+        return stopped;
+    }
+
 }
 

@@ -18,6 +18,9 @@ import com.baidu.brpc.push.userservice.UserPushApiImpl;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.utils.ThreadPool;
+
+import io.netty.channel.EventLoopGroup;
 
 public class GlobalThreadPoolSharingTest {
 
@@ -63,17 +66,51 @@ public class GlobalThreadPoolSharingTest {
         Assert.assertTrue(rpcClient1.getIoThreadPool() == rpcClient3.getIoThreadPool());
 
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
-        Echo.EchoResponse response = echoService1.echo(request);
-        Echo.EchoResponse response2 = echoService2.echo(request);
-        Echo.EchoResponse response3 = echoService3.echo(request);
-        assertEquals("hello", response.getMessage());
-        assertEquals("hello", response2.getMessage());
-        assertEquals("hello", response3.getMessage());
+        for (int i = 0; i < 1000; i++) {
+            Echo.EchoResponse response = echoService1.echo(request);
+            Echo.EchoResponse response2 = echoService2.echo(request);
+            Echo.EchoResponse response3 = echoService3.echo(request);
+            assertEquals("hello", response.getMessage());
+            assertEquals("hello", response2.getMessage());
+            assertEquals("hello", response3.getMessage());
+        }
+
+        // test shutndown and stop
 
         rpcClient1.stop();
         rpcClient2.stop();
         rpcClient3.stop();
         rpcServer1.shutdown();
         rpcServer2.shutdown();
+        // client
+        ThreadPool workThreadPool = rpcClient1.getWorkThreadPool();
+        EventLoopGroup ioThreadPool = rpcClient1.getIoThreadPool();
+        Assert.assertFalse(workThreadPool.isStopped());
+        Assert.assertFalse(ioThreadPool.isShutdown());
+
+        // server
+        EventLoopGroup r1BossGroup = rpcServer1.getBossGroup();
+        EventLoopGroup r1WorkerGroup = rpcServer1.getWorkerGroup();
+        ThreadPool r1ThreadPool = rpcServer1.getThreadPool();
+
+        Assert.assertFalse(r1BossGroup.isShutdown());
+        Assert.assertFalse(r1WorkerGroup.isShutdown());
+        Assert.assertFalse(r1ThreadPool.isStopped());
+
+        ShutDownManager.shutdownGlobalThreadPools();
+
+        try {
+            Thread.sleep(5 * 1000L);
+        } catch (InterruptedException e) {
+            // do nothing
+        }
+
+        Assert.assertTrue(workThreadPool.isStopped());
+        Assert.assertTrue(ioThreadPool.isShutdown());
+
+        Assert.assertTrue(r1BossGroup.isShutdown());
+        Assert.assertTrue(r1WorkerGroup.isShutdown());
+        Assert.assertTrue(r1ThreadPool.isStopped());
+
     }
 }
