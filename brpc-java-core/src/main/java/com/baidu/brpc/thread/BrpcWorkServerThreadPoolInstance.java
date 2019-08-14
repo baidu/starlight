@@ -19,17 +19,16 @@ package com.baidu.brpc.thread;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ThreadPool;
 
-
 /**
  * client & server work thread pool single instance
  */
-public class BrpcWorkThreadPoolInstance {
+public class BrpcWorkServerThreadPoolInstance {
 
     private static volatile ThreadPool workThreadPool;
 
-    private static String name = "brpc-work-thread";
+    private static String name = "brpc-server-work-thread";
 
-    private BrpcWorkThreadPoolInstance() {
+    private BrpcWorkServerThreadPoolInstance() {
 
     }
 
@@ -39,7 +38,7 @@ public class BrpcWorkThreadPoolInstance {
     public static ThreadPool getOrCreateInstance(int threadNum) {
 
         if (workThreadPool == null) {
-            synchronized (BrpcWorkThreadPoolInstance.class) {
+            synchronized(BrpcWorkServerThreadPoolInstance.class) {
                 if (workThreadPool == null) {
                     workThreadPool = new ThreadPool(threadNum,
                             new CustomThreadFactory(name));
@@ -60,7 +59,7 @@ public class BrpcWorkThreadPoolInstance {
     }
 
     public static void setName(String name) {
-        BrpcWorkThreadPoolInstance.name = name;
+        BrpcWorkServerThreadPoolInstance.name = name;
     }
 
 }

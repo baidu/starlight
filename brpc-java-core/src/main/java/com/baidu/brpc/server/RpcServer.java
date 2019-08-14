@@ -49,7 +49,7 @@ import com.baidu.brpc.server.handler.RpcServerHandler;
 import com.baidu.brpc.server.push.RegisterServiceImpl;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.thread.BrpcBossGroupInstance;
-import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
+import com.baidu.brpc.thread.BrpcWorkServerThreadPoolInstance;
 import com.baidu.brpc.thread.BrpcWorkerGroupInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
@@ -169,16 +169,15 @@ public class RpcServer {
             this.protocol = ProtocolManager.getInstance().getProtocol(rpcServerOptions.getProtocolType());
         }
         bootstrap = new ServerBootstrap();
-        if (rpcServerOptions.isThreadPoolSharing()) {
-            BrpcWorkThreadPoolInstance.setName("server-work-thread");
-            threadPool = BrpcWorkThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getWorkThreadNum());
+        if (rpcServerOptions.isGlobalThreadPoolSharing()) {
+            threadPool = BrpcWorkServerThreadPoolInstance.getOrCreateInstance(rpcServerOptions.getWorkThreadNum());
         } else {
             threadPool = new ThreadPool(rpcServerOptions.getWorkThreadNum(),
                     new CustomThreadFactory("server-work-thread"));
         }
 
         if (rpcServerOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
-            if (rpcServerOptions.isThreadPoolSharing()) {
+            if (rpcServerOptions.isGlobalThreadPoolSharing()) {
                 bossGroup = BrpcBossGroupInstance.getOrCreateEpollInstance(rpcServerOptions.getAcceptorThreadNum());
                 workerGroup = BrpcWorkerGroupInstance.getOrCreateEpollInstance(rpcServerOptions.getAcceptorThreadNum());
             } else {
@@ -194,7 +193,7 @@ public class RpcServer {
             bootstrap.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
             LOG.info("use netty epoll edge trigger mode");
         } else {
-            if (rpcServerOptions.isThreadPoolSharing()) {
+            if (rpcServerOptions.isGlobalThreadPoolSharing()) {
                 bossGroup = BrpcBossGroupInstance.getOrCreateNioInstance(rpcServerOptions.getAcceptorThreadNum());
                 workerGroup = BrpcWorkerGroupInstance.getOrCreateNioInstance(rpcServerOptions.getAcceptorThreadNum());
             } else {
@@ -344,13 +343,13 @@ public class RpcServer {
                     namingService.unregister(registerInfo);
                 }
             }
-            if (bossGroup != null) {
+            if (bossGroup != null && !rpcServerOptions.isGlobalThreadPoolSharing()) {
                 bossGroup.shutdownGracefully().syncUninterruptibly();
             }
-            if (workerGroup != null) {
+            if (workerGroup != null && !rpcServerOptions.isGlobalThreadPoolSharing()) {
                 workerGroup.shutdownGracefully().syncUninterruptibly();
             }
-            if (threadPool != null) {
+            if (threadPool != null && !rpcServerOptions.isGlobalThreadPoolSharing()) {
                 threadPool.stop();
             }
             if (CollectionUtils.isNotEmpty(customThreadPools)) {

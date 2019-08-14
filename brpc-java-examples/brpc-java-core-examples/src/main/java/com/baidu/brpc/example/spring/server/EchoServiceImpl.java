@@ -16,19 +16,19 @@
 
 package com.baidu.brpc.example.spring.server;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
+
 import com.baidu.brpc.example.spring.api.EchoRequest;
 import com.baidu.brpc.example.spring.api.EchoResponse;
 import com.baidu.brpc.example.spring.api.EchoService;
 import com.baidu.brpc.spring.annotation.NamingOption;
 import com.baidu.brpc.spring.annotation.RpcExporter;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Service;
-
 @Service("echoServiceImpl")
 @RpcExporter(port = "8012",
-        useSharedThreadPool = false,
+        useServiceSharedThreadPool = false,
         rpcServerOptionsBeanName = "rpcServerOptions",
         interceptorBeanName = "customInterceptor",
         extraOptions = {

@@ -61,7 +61,7 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.server.ServiceManager;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
 import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
-import com.baidu.brpc.thread.BrpcWorkThreadPoolInstance;
+import com.baidu.brpc.thread.BrpcWorkClientThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
@@ -263,10 +263,10 @@ public class RpcClient {
             if (loadBalanceStrategy != null) {
                 loadBalanceStrategy.destroy();
             }
-            if (ioThreadPool != null) {
+            if (ioThreadPool != null && !rpcClientOptions.isGlobalThreadPoolSharing()) {
                 ioThreadPool.shutdownGracefully().syncUninterruptibly();
             }
-            if (workThreadPool != null) {
+            if (workThreadPool != null && !rpcClientOptions.isGlobalThreadPoolSharing()) {
                 workThreadPool.stop();
             }
         }
@@ -474,9 +474,10 @@ public class RpcClient {
 
         // init once
         ShutDownManager.getInstance();
-        boolean threadPoolSharing = rpcClientOptions.isThreadPoolSharing();
+        boolean threadPoolSharing = rpcClientOptions.isGlobalThreadPoolSharing();
         if (threadPoolSharing) {
-            this.workThreadPool = BrpcWorkThreadPoolInstance.getOrCreateInstance(rpcClientOptions.getWorkThreadNum());
+            this.workThreadPool =
+                    BrpcWorkClientThreadPoolInstance.getOrCreateInstance(rpcClientOptions.getWorkThreadNum());
             if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
                 ioThreadPool = BrpcIoThreadPoolInstance.getOrCreateEpollInstance(options.getIoThreadNum());
             } else {

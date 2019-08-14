@@ -25,6 +25,18 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.PropertyValues;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
+
 import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
 import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import com.baidu.brpc.client.RpcClientOptions;
@@ -37,17 +49,6 @@ import com.baidu.brpc.spring.RpcServiceExporter;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.MutablePropertyValues;
-import org.springframework.beans.PropertyValues;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
 
 /**
  * Supports annotation resolver for {@link RpcProxy} and {@link RpcExporter}.
@@ -152,7 +153,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
             rpcServiceExporter.setNamingServiceUrl(namingServiceUrl);
         }
 
-        if (rpcExporter.useSharedThreadPool()) {
+        if (rpcExporter.useServiceSharedThreadPool()) {
             try {
                 rpcServiceExporter.copyFrom(rpcServerOptions);
             } catch (Exception ex) {
@@ -195,7 +196,7 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         rpcServiceExporter.getServiceNamingOptions().put(bean, namingOptions);
 
         // do register service
-        if (rpcExporter.useSharedThreadPool()) {
+        if (rpcExporter.useServiceSharedThreadPool()) {
             rpcServiceExporter.getRegisterServices().add(bean);
         } else {
             rpcServiceExporter.getCustomOptionsServiceMap().put(rpcServerOptions, bean);

@@ -80,7 +80,7 @@ public class RpcClientOptions {
     private String clientName;
 
     // share worker thread poll and event thread pool between multi RpcClients
-    private boolean threadPoolSharing = false;
+    private boolean globalThreadPoolSharing = false;
 
     public RpcClientOptions(RpcClientOptions options) {
         this.copyFrom(options);
