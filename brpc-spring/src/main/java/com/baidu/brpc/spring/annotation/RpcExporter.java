@@ -15,14 +15,14 @@
  */
 package com.baidu.brpc.spring.annotation;
 
-import com.baidu.brpc.spring.RpcServiceExporter;
-
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+
+import com.baidu.brpc.spring.RpcServiceExporter;
 
 /**
  * Annotation publish for {@link RpcServiceExporter}.
@@ -77,8 +77,10 @@ public @interface RpcExporter {
     /**
      * true: use the shared thread pool
      * false: create individual thread pool for register service
+     * attention here - it is not global share thread pool between multi RpcClient/RpcServer , if you want to use
+     * global thread pool , see rpc options.
      */
-    boolean useSharedThreadPool() default true;
+    boolean useServiceSharedThreadPool() default true;
 
     /**
      * Extra naming options. This option is effective on service-scope.

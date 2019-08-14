@@ -60,6 +60,8 @@ import com.baidu.brpc.protocol.ProtocolManager;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.server.ServiceManager;
 import com.baidu.brpc.spi.ExtensionLoaderManager;
+import com.baidu.brpc.thread.BrpcIoThreadPoolInstance;
+import com.baidu.brpc.thread.BrpcWorkClientThreadPoolInstance;
 import com.baidu.brpc.thread.ClientCallBackThreadPoolInstance;
 import com.baidu.brpc.thread.ClientTimeoutTimerInstance;
 import com.baidu.brpc.thread.ShutDownManager;
@@ -106,6 +108,7 @@ public class RpcClient {
     private SubscribeInfo subscribeInfo;
     private AtomicBoolean stop = new AtomicBoolean(false);
     private InstanceProcessor instanceProcessor;
+
     /**
      * callBack thread when method invoke fail
      */
@@ -260,10 +263,10 @@ public class RpcClient {
             if (loadBalanceStrategy != null) {
                 loadBalanceStrategy.destroy();
             }
-            if (ioThreadPool != null) {
+            if (ioThreadPool != null && !rpcClientOptions.isGlobalThreadPoolSharing()) {
                 ioThreadPool.shutdownGracefully().syncUninterruptibly();
             }
-            if (workThreadPool != null) {
+            if (workThreadPool != null && !rpcClientOptions.isGlobalThreadPoolSharing()) {
                 workThreadPool.stop();
             }
         }
@@ -342,6 +345,7 @@ public class RpcClient {
      * select channel from endpoint which is selected by custom load balance.
      *
      * @param endpoint ip:port
+     *
      * @return netty channel
      */
     public Channel selectChannel(Endpoint endpoint) {
@@ -470,9 +474,27 @@ public class RpcClient {
 
         // init once
         ShutDownManager.getInstance();
+        boolean threadPoolSharing = rpcClientOptions.isGlobalThreadPoolSharing();
+        if (threadPoolSharing) {
+            this.workThreadPool =
+                    BrpcWorkClientThreadPoolInstance.getOrCreateInstance(rpcClientOptions.getWorkThreadNum());
+            if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
+                ioThreadPool = BrpcIoThreadPoolInstance.getOrCreateEpollInstance(options.getIoThreadNum());
+            } else {
+                ioThreadPool = BrpcIoThreadPoolInstance.getOrCreateNioInstance(options.getIoThreadNum());
+            }
+        } else {
+            this.workThreadPool = new ThreadPool(rpcClientOptions.getWorkThreadNum(),
+                    new CustomThreadFactory("client-work-thread"));
+            if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
+                ioThreadPool = new EpollEventLoopGroup(options.getIoThreadNum(),
+                        new CustomThreadFactory("client-io-thread"));
+            } else {
+                ioThreadPool = new NioEventLoopGroup(options.getIoThreadNum(),
+                        new CustomThreadFactory("client-io-thread"));
+            }
+        }
 
-        this.workThreadPool = new ThreadPool(rpcClientOptions.getWorkThreadNum(),
-                new CustomThreadFactory("client-work-thread"));
         this.callbackThread = ClientCallBackThreadPoolInstance.getOrCreateInstance(1);
 
         // init netty bootstrap
@@ -502,13 +524,6 @@ public class RpcClient {
             }
         };
 
-        if (rpcClientOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
-            ioThreadPool = new EpollEventLoopGroup(options.getIoThreadNum(),
-                    new CustomThreadFactory("client-io-thread"));
-        } else {
-            ioThreadPool = new NioEventLoopGroup(options.getIoThreadNum(),
-                    new CustomThreadFactory("client-io-thread"));
-        }
         bootstrap.group(ioThreadPool).handler(initializer);
     }
 

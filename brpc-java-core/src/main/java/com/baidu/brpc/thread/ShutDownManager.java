@@ -16,12 +16,15 @@
 
 package com.baidu.brpc.thread;
 
+import java.util.concurrent.ExecutorService;
+
 import com.baidu.brpc.utils.ThreadPool;
+
 import io.netty.channel.EventLoopGroup;
+import io.netty.channel.epoll.EpollEventLoopGroup;
+import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.util.Timer;
 import lombok.extern.slf4j.Slf4j;
-
-import java.util.concurrent.ExecutorService;
 
 @Slf4j
 public class ShutDownManager {
@@ -36,8 +39,15 @@ public class ShutDownManager {
             public void run() {
                 log.info("Brpc do clean work...");
 
-                EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getInstance();
-                ThreadPool workThread = BrpcWorkThreadPoolInstance.getInstance();
+                EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getEpollInstance();
+                EventLoopGroup nioInstance = BrpcIoThreadPoolInstance.getNioInstance();
+                ThreadPool clientWorkThreadPool = BrpcWorkClientThreadPoolInstance.getInstance();
+                ThreadPool serverWorkThreadPool = BrpcWorkServerThreadPoolInstance.getInstance();
+
+                EpollEventLoopGroup epollBossGroup = BrpcBossGroupInstance.getEpollInstance();
+                NioEventLoopGroup nioBossGroup = BrpcBossGroupInstance.getNioInstance();
+                EpollEventLoopGroup epollWorkerGroup = BrpcWorkerGroupInstance.getEpollInstance();
+                NioEventLoopGroup nioWorkerGroup = BrpcWorkerGroupInstance.getNioInstance();
                 ExecutorService clientCallBackThread = ClientCallBackThreadPoolInstance.getInstance();
                 Timer clientHealthCheckerTimer = ClientHealthCheckTimerInstance.getInstance();
                 Timer clientTimeOutTimer = ClientTimeoutTimerInstance.getInstance();
@@ -48,14 +58,32 @@ public class ShutDownManager {
                 if (ioThread != null) {
                     ioThread.shutdownGracefully();
                 }
-                if (workThread != null) {
-                    workThread.stop();
+                if (clientWorkThreadPool != null) {
+                    clientWorkThreadPool.stop();
+                }
+                if (nioInstance != null) {
+                    nioInstance.shutdownGracefully();
+                }
+                if (epollBossGroup != null) {
+                    epollBossGroup.shutdownGracefully();
+                }
+                if (nioBossGroup != null) {
+                    nioBossGroup.shutdownGracefully();
+                }
+                if (epollWorkerGroup != null) {
+                    epollWorkerGroup.shutdownGracefully();
+                }
+                if (nioWorkerGroup != null) {
+                    nioWorkerGroup.shutdownGracefully();
                 }
                 if (clientHealthCheckerTimer != null) {
                     clientHealthCheckerTimer.stop();
                 }
                 if (clientTimeOutTimer != null) {
                     clientTimeOutTimer.stop();
+                }
+                if (serverWorkThreadPool != null) {
+                    serverWorkThreadPool.stop();
                 }
             }
         }));
@@ -68,7 +96,7 @@ public class ShutDownManager {
     public static ShutDownManager getInstance() {
 
         if (clientShutDownManager == null) {
-            synchronized (ShutDownManager.class) {
+            synchronized(ShutDownManager.class) {
                 if (clientShutDownManager == null) {
                     clientShutDownManager = new ShutDownManager();
                 }
