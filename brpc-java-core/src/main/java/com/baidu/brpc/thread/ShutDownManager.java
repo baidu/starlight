@@ -38,55 +38,60 @@ public class ShutDownManager {
             @Override
             public void run() {
                 log.info("Brpc do clean work...");
+                shutdownGlobalThreadPools();
 
-                EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getEpollInstance();
-                EventLoopGroup nioInstance = BrpcIoThreadPoolInstance.getNioInstance();
-                ThreadPool clientWorkThreadPool = BrpcWorkClientThreadPoolInstance.getInstance();
-                ThreadPool serverWorkThreadPool = BrpcWorkServerThreadPoolInstance.getInstance();
-
-                EpollEventLoopGroup epollBossGroup = BrpcBossGroupInstance.getEpollInstance();
-                NioEventLoopGroup nioBossGroup = BrpcBossGroupInstance.getNioInstance();
-                EpollEventLoopGroup epollWorkerGroup = BrpcWorkerGroupInstance.getEpollInstance();
-                NioEventLoopGroup nioWorkerGroup = BrpcWorkerGroupInstance.getNioInstance();
-                ExecutorService clientCallBackThread = ClientCallBackThreadPoolInstance.getInstance();
-                Timer clientHealthCheckerTimer = ClientHealthCheckTimerInstance.getInstance();
-                Timer clientTimeOutTimer = ClientTimeoutTimerInstance.getInstance();
-
-                if (clientCallBackThread != null) {
-                    clientCallBackThread.shutdownNow();
-                }
-                if (ioThread != null) {
-                    ioThread.shutdownGracefully();
-                }
-                if (clientWorkThreadPool != null) {
-                    clientWorkThreadPool.stop();
-                }
-                if (nioInstance != null) {
-                    nioInstance.shutdownGracefully();
-                }
-                if (epollBossGroup != null) {
-                    epollBossGroup.shutdownGracefully();
-                }
-                if (nioBossGroup != null) {
-                    nioBossGroup.shutdownGracefully();
-                }
-                if (epollWorkerGroup != null) {
-                    epollWorkerGroup.shutdownGracefully();
-                }
-                if (nioWorkerGroup != null) {
-                    nioWorkerGroup.shutdownGracefully();
-                }
-                if (clientHealthCheckerTimer != null) {
-                    clientHealthCheckerTimer.stop();
-                }
-                if (clientTimeOutTimer != null) {
-                    clientTimeOutTimer.stop();
-                }
-                if (serverWorkThreadPool != null) {
-                    serverWorkThreadPool.stop();
-                }
             }
         }));
+    }
+
+    public static void shutdownGlobalThreadPools() {
+        log.info("invoke shutdownGlobalThreadPools");
+        EventLoopGroup ioThread = BrpcIoThreadPoolInstance.getEpollInstance();
+        EventLoopGroup nioInstance = BrpcIoThreadPoolInstance.getNioInstance();
+        ThreadPool clientWorkThreadPool = BrpcWorkClientThreadPoolInstance.getInstance();
+        ThreadPool serverWorkThreadPool = BrpcWorkServerThreadPoolInstance.getInstance();
+
+        EpollEventLoopGroup epollBossGroup = BrpcBossGroupInstance.getEpollInstance();
+        NioEventLoopGroup nioBossGroup = BrpcBossGroupInstance.getNioInstance();
+        EpollEventLoopGroup epollWorkerGroup = BrpcWorkerGroupInstance.getEpollInstance();
+        NioEventLoopGroup nioWorkerGroup = BrpcWorkerGroupInstance.getNioInstance();
+        ExecutorService clientCallBackThread = ClientCallBackThreadPoolInstance.getInstance();
+        Timer clientHealthCheckerTimer = ClientHealthCheckTimerInstance.getInstance();
+        Timer clientTimeOutTimer = ClientTimeoutTimerInstance.getInstance();
+
+        if (clientCallBackThread != null) {
+            clientCallBackThread.shutdownNow();
+        }
+        if (ioThread != null) {
+            ioThread.shutdownGracefully();
+        }
+        if (clientWorkThreadPool != null) {
+            clientWorkThreadPool.stop();
+        }
+        if (nioInstance != null) {
+            nioInstance.shutdownGracefully();
+        }
+        if (epollBossGroup != null) {
+            epollBossGroup.shutdownGracefully();
+        }
+        if (nioBossGroup != null) {
+            nioBossGroup.shutdownGracefully();
+        }
+        if (epollWorkerGroup != null) {
+            epollWorkerGroup.shutdownGracefully();
+        }
+        if (nioWorkerGroup != null) {
+            nioWorkerGroup.shutdownGracefully();
+        }
+        if (clientHealthCheckerTimer != null) {
+            clientHealthCheckerTimer.stop();
+        }
+        if (clientTimeOutTimer != null) {
+            clientTimeOutTimer.stop();
+        }
+        if (serverWorkThreadPool != null) {
+            serverWorkThreadPool.stop();
+        }
     }
 
     private ShutDownManager() {

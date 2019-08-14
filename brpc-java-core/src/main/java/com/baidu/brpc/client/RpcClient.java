@@ -86,11 +86,13 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
+import lombok.Getter;
 
 /**
  * Created by huwenwei on 2017/4/25.
  */
 @SuppressWarnings("unchecked")
+@Getter
 public class RpcClient {
     private static final Logger LOG = LoggerFactory.getLogger(RpcClient.class);
 
