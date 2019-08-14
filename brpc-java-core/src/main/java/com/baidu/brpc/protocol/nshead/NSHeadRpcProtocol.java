@@ -70,9 +70,9 @@ public abstract class NSHeadRpcProtocol extends AbstractProtocol {
         RpcResponse rpcResponse = new RpcResponse();
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
         Long logId = channelInfo.getLogId();
-        if (packet.getNsHead().logId != 0) {
-            logId = (long) packet.getNsHead().logId;
-        }
+//        if (packet.getNsHead().logId != 0) {
+//            logId = (long) packet.getNsHead().logId;
+//        }
         rpcResponse.setLogId(logId);
         RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
         if (future == null) {
