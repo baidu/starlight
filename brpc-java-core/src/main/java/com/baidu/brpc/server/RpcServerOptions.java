@@ -109,6 +109,7 @@ public class RpcServerOptions {
         this.tcpNoDelay = options.tcpNoDelay;
         this.workThreadNum = options.workThreadNum;
         this.writerIdleTime = options.writerIdleTime;
+        this.globalThreadPoolSharing = options.globalThreadPoolSharing;
     }
 
 }

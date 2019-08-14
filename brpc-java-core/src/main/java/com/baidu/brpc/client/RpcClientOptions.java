@@ -114,6 +114,7 @@ public class RpcClientOptions {
         this.workThreadNum = another.workThreadNum;
         this.writeTimeoutMillis = another.writeTimeoutMillis;
         this.clientName = another.clientName;
+        this.globalThreadPoolSharing = another.globalThreadPoolSharing;
     }
 
 }
