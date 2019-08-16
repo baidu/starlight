@@ -212,6 +212,7 @@ public class StargateRpcProtocol extends AbstractProtocol {
 
             Request request = new RpcRequest();
             request.setArgs(requestPacket.getParameters());
+            request.setServiceName(serviceName);
             request.setMethodName(methodName);
             request.setRpcMethodInfo(rpcMethodInfo);
             request.setTarget(rpcMethodInfo.getTarget());
