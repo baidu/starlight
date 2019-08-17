@@ -67,6 +67,7 @@ public class ServerWorkTask implements Runnable {
             }
 
             response.setLogId(request.getLogId());
+            response.setCorrelationId(request.getCorrelationId());
             response.setCompressType(request.getCompressType());
             response.setException(request.getException());
             response.setRpcMethodInfo(request.getRpcMethodInfo());

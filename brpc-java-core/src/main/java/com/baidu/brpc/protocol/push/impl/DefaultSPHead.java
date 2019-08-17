@@ -23,11 +23,11 @@ import org.apache.commons.lang3.builder.ToStringBuilder;
 import com.baidu.brpc.protocol.push.SPHead;
 
 /**
- * 2+2+8+16+4+4+4=36 byte in total.
+ * 2+2+8+8+16+4+4+4=48 byte in total.
  */
 public class DefaultSPHead implements SPHead {
 
-    public static final int SPHEAD_LENGTH = 40;
+    public static final int SPHEAD_LENGTH = 48;
     public static final int SPHEAD_MAGIC_NUM = 0xfb201906;
     public static final int PROVIDER_LENGTH = 16;
 
@@ -39,6 +39,8 @@ public class DefaultSPHead implements SPHead {
 
     public long logId; // 8
 
+    public long correlationId; // 8
+
     public String provider = ""; // 16
 
     public int magicNumber = SPHEAD_MAGIC_NUM; // 4
@@ -47,8 +49,9 @@ public class DefaultSPHead implements SPHead {
 
     public int bodyLength = 0; // 4
 
-    public DefaultSPHead(int logId, short id, short version, String provider, int bodyLength) {
+    public DefaultSPHead(int logId, int correlationId, short id, short version, String provider, int bodyLength) {
         this.logId = logId;
+        this.correlationId = correlationId;
         this.id = id;
         this.version = version;
         if (provider != null) {
@@ -57,8 +60,8 @@ public class DefaultSPHead implements SPHead {
         this.bodyLength = bodyLength;
     }
 
-    public DefaultSPHead(int logId, int bodyLength) {
-        this.logId = logId;
+    public DefaultSPHead(int correlationId, int bodyLength) {
+        this.correlationId = correlationId;
         this.bodyLength = bodyLength;
     }
 
@@ -73,6 +76,16 @@ public class DefaultSPHead implements SPHead {
     @Override
     public void setLogId(long logId) {
         this.logId = logId;
+    }
+
+    @Override
+    public long getCorrelationId() {
+        return correlationId;
+    }
+
+    @Override
+    public void setCorrelationId(long correlationId) {
+        this.correlationId = correlationId;
     }
 
     @Override
@@ -104,6 +117,7 @@ public class DefaultSPHead implements SPHead {
         }
         DefaultSPHead other = (DefaultSPHead) obj;
         return new EqualsBuilder().append(id, other.id).append(version, other.version).append(logId, other.logId)
+                .append(correlationId, other.correlationId)
                 .append(type, other.type).append(bodyLength, other.bodyLength).isEquals();
     }
 
@@ -111,7 +125,9 @@ public class DefaultSPHead implements SPHead {
     public String toString() {
         return new ToStringBuilder(this).append("id", Integer.toHexString(id))
                 .append("version", Integer.toHexString(version))
-                .append("logId", Long.toHexString(logId) + "(" + logId + ")").append("provider", provider)
+                .append("logId", Long.toHexString(logId) + "(" + logId + ")")
+                .append("correlationId", Long.toHexString(correlationId) + "(" + correlationId + ")")
+                .append("provider", provider)
                 .append("magicNumber", Integer.toHexString(magicNumber))
                 .append("type", Integer.toHexString(type))
                 .append("bodyLength", Integer.toHexString(bodyLength)).toString();

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.baidu.brpc.RpcOptionsUtils;
@@ -32,6 +33,7 @@ public class GlobalThreadPoolSharingTest {
     }
 
     @Test
+    @Ignore
     public void testShareGlobalThreadPool() {
         RpcServerOptions rpcServerOptions = RpcOptionsUtils.getRpcServerOptions();
         rpcServerOptions.setProtocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);

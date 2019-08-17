@@ -45,6 +45,18 @@ public interface Request {
 
     void setMsg(Object o);
 
+    /**
+     * used to find RpcFuture, application can not set it.
+     * @return rpc future id
+     */
+    long getCorrelationId();
+
+    void setCorrelationId(long correlationId);
+
+    /**
+     * used to identify request for application, application can set it.
+     * @return application request id
+     */
     long getLogId();
 
     void setLogId(long logId);

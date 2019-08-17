@@ -29,8 +29,8 @@ public class CustomInterceptor extends AbstractInterceptor {
     private static final Logger LOG = LoggerFactory.getLogger(CustomInterceptor.class);
 
     public boolean handleRequest(Request rpcRequest) {
-        LOG.info("request intercepted, logId={}, service={}, method={}",
-                rpcRequest.getLogId(),
+        LOG.info("request intercepted, correlationId={}, service={}, method={}",
+                rpcRequest.getCorrelationId(),
                 rpcRequest.getTarget().getClass().getSimpleName(),
                 rpcRequest.getTargetMethod().getName());
         return true;
@@ -38,24 +38,24 @@ public class CustomInterceptor extends AbstractInterceptor {
 
     @Override
     public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
-        LOG.info("around intercepted, before proceed, logId={}, service={}, method={}",
-                request.getLogId(),
+        LOG.info("around intercepted, before proceed, correlationId={}, service={}, method={}",
+                request.getCorrelationId(),
                 request.getTarget().getClass().getSimpleName(),
                 request.getTargetMethod().getName());
 
         // invoke the interceptor list
         chain.intercept(request, response);
 
-        LOG.info("around intercepted, after proceed, logId={}, service={}, method={}",
-                request.getLogId(),
+        LOG.info("around intercepted, after proceed, correlationId={}, service={}, method={}",
+                request.getCorrelationId(),
                 request.getTarget().getClass().getSimpleName(),
                 request.getTargetMethod().getName());
     }
 
     public void handleResponse(Response response) {
         if (response != null) {
-            LOG.info("reponse intercepted, logId={}, result={}",
-                    response.getLogId(), response.getResult());
+            LOG.info("reponse intercepted, correlationId={}, result={}",
+                    response.getCorrelationId(), response.getResult());
         }
     }
 }

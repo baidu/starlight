@@ -394,20 +394,19 @@ public class RpcClient {
         rpcFuture.setCallback(request.getCallback());
         rpcFuture.setRpcClient(this);
         rpcFuture.setChannelInfo(channelInfo);
-        // generate logId
-        long logId = FastFutureStore.getInstance(0).put(rpcFuture);
-        request.setLogId(logId);
+        // generate correlationId
+        long correlationId = FastFutureStore.getInstance(0).put(rpcFuture);
+        request.setCorrelationId(correlationId);
+        channelInfo.setCorrelationId(rpcFuture.getCorrelationId());
 
         // read write timeout
         final long readTimeout = request.getReadTimeoutMillis();
         final long writeTimeout = request.getWriteTimeoutMillis();
         // register timeout timer
-        RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getLogId(), this);
+        RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getCorrelationId(), this);
         Timeout timeout = timeoutTimer.newTimeout(timeoutTask, readTimeout, TimeUnit.MILLISECONDS);
-
         // set the missing parameters
         rpcFuture.setTimeout(timeout);
-        channelInfo.setLogId(rpcFuture.getLogId());
         try {
             // netty will release the send buffer after sent.
             // we retain here, so it can be used when rpc retry.

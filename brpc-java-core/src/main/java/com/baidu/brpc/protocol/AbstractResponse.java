@@ -17,6 +17,9 @@ import lombok.Setter;
 @Getter
 @Setter
 public abstract class AbstractResponse implements Response {
+    // used to find RpcFuture, application can not set it.
+    private long correlationId;
+    // used to identify request for application, application can set it.
     private long logId;
     private Object result;
     private Throwable exception;
@@ -29,6 +32,7 @@ public abstract class AbstractResponse implements Response {
     private SPHead spHead;
 
     public void reset() {
+        correlationId = -1;
         logId = -1;
         result = null;
         exception = null;

@@ -381,33 +381,32 @@ public class RpcServer {
         rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
         rpcFuture.setCallback(request.getCallback());
         rpcFuture.setChannelInfo(orCreateServerChannelInfo);
-        // generate logId
-        final long logId = PushServerRpcFutureManager.getInstance().putRpcFuture(rpcFuture);
+        // generate correlationId
+        final long correlationId = PushServerRpcFutureManager.getInstance().putRpcFuture(rpcFuture);
 
-        // final long logId = FastFutureStore.getInstance(0).put(rpcFuture);
-        request.setLogId(logId);
-        request.getSpHead().setLogId(logId);
+        request.setCorrelationId(correlationId);
+        request.getSpHead().setCorrelationId(correlationId);
         // read write timeout
         final long readTimeout = request.getReadTimeoutMillis();
         final long writeTimeout = request.getWriteTimeoutMillis();
         Timeout timeout = timeoutTimer.newTimeout(new TimerTask() {
             @Override
             public void run(Timeout timeout) throws Exception {
-                long timeoutLogId = logId;
+                long timeoutCorrelationId = correlationId;
                 PushServerRpcFutureManager rpcFutureManager = PushServerRpcFutureManager.getInstance();
-                RpcFuture rpcFuture = rpcFutureManager.removeRpcFuture(timeoutLogId);
+                RpcFuture rpcFuture = rpcFutureManager.removeRpcFuture(timeoutCorrelationId);
 
                 if (rpcFuture != null) {
                     long elapseTime = System.currentTimeMillis() - rpcFuture.getStartTime();
-                    String errMsg = String.format("request timeout,logId=%d,ip=%s,port=%d,elapse=%dms",
-                            logId, "?", port, elapseTime);
+                    String errMsg = String.format("request timeout,correlationId=%d,ip=%s,port=%d,elapse=%dms",
+                            timeoutCorrelationId, "?", port, elapseTime);
                     LOG.info(errMsg);
                     Response response = protocol.createResponse();
                     response.setException(new RpcException(RpcException.TIMEOUT_EXCEPTION, errMsg));
                     response.setRpcFuture(rpcFuture);
                     rpcFuture.handleResponse(response);
                 } else {
-                    LOG.error("timeout rpc is missing, logId={}", timeoutLogId);
+                    LOG.error("timeout rpc is missing, correlationId={}", timeoutCorrelationId);
                     throw new RpcException(RpcException.UNKNOWN_EXCEPTION, "timeout rpc is missing");
                 }
             }

@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.example.standard;
 
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
@@ -43,7 +44,7 @@ public class RpcClientTest {
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(1000);
+        clientOption.setReadTimeoutMillis(5000);
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
@@ -67,6 +68,7 @@ public class RpcClientTest {
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
 //        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
+        RpcContext.getContext().setLogId(1234);
         try {
             Echo.EchoResponse response = echoService.echo(request);
             System.out.printf("sync call service=EchoService.echo success, "

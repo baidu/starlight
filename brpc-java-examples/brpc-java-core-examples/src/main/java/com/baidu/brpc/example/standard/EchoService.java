@@ -29,6 +29,6 @@ public interface EchoService {
      * serviceName默认是类名，不需要加包名，methodName是proto文件Service内对应方法index，默认从0开始。
      */
     @BrpcMeta(serviceName = "example.EchoService", methodName = "Echo")
-    //    @BrpcMeta(serviceName = "EchoService", methodName = "0")
+//    @BrpcMeta(serviceName = "EchoService", methodName = "0")
     Echo.EchoResponse echo(Echo.EchoRequest request);
 }

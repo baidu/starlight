@@ -36,6 +36,9 @@ import lombok.Setter;
 @Getter
 public abstract class AbstractRequest implements Request {
     private Object msg;
+    // used to find RpcFuture, application can not set it.
+    private long correlationId;
+    // used to identify request for application, application can set it.
     private long logId;
     private Object target;
     private Method targetMethod;

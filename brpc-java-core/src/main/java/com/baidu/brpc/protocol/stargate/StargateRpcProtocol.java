@@ -146,7 +146,7 @@ public class StargateRpcProtocol extends AbstractProtocol {
                 method.getName(),
                 method.getParameterTypes(),
                 request.getArgs());
-        requestPacket.setId(request.getLogId() + "");
+        requestPacket.setId(request.getCorrelationId() + "");
 
         if (request.getKvAttachment() != null && !request.getKvAttachment().isEmpty()) {
             requestPacket.setAttachments(request.getKvAttachment());
@@ -178,14 +178,14 @@ public class StargateRpcProtocol extends AbstractProtocol {
             try {
                 Response response = new RpcResponse();
                 response.setResult(rpcResponse.getResult());
-                long logId = Long.parseLong(rpcResponse.getId());
+                long correlationId = Long.parseLong(rpcResponse.getId());
                 ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-                RpcFuture future = channelInfo.removeRpcFuture(logId);
+                RpcFuture future = channelInfo.removeRpcFuture(correlationId);
                 if (future == null) {
                     return response;
                 }
                 response.setRpcFuture(future);
-                response.setLogId(logId);
+                response.setCorrelationId(correlationId);
                 response.setKvAttachment(rpcResponse.getAttachments());
                 return response;
             } catch (NumberFormatException n) {

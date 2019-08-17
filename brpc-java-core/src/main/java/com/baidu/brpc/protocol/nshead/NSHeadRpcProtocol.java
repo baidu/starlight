@@ -69,12 +69,9 @@ public abstract class NSHeadRpcProtocol extends AbstractProtocol {
         NSHeadPacket packet = (NSHeadPacket) in;
         RpcResponse rpcResponse = new RpcResponse();
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        Long logId = channelInfo.getLogId();
-//        if (packet.getNsHead().logId != 0) {
-//            logId = (long) packet.getNsHead().logId;
-//        }
-        rpcResponse.setLogId(logId);
-        RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
+        Long correlationId = channelInfo.getCorrelationId();
+        rpcResponse.setCorrelationId(correlationId);
+        RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getCorrelationId());
         if (future == null) {
             return rpcResponse;
         }

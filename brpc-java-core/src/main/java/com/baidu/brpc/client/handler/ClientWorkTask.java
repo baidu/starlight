@@ -69,11 +69,11 @@ public class ClientWorkTask implements Runnable {
         }
 
         if (response.getRpcFuture() != null) {
-            log.debug("handle response, logId={}", response.getLogId());
+            log.debug("handle response, correlationId={}", response.getCorrelationId());
             RpcFuture future = response.getRpcFuture();
             future.handleResponse(response);
         } else {
-            log.warn("rpcFuture is null, server return to slow, logId={}", response.getLogId());
+            log.warn("rpcFuture is null, server return to slow, correlationId={}", response.getCorrelationId());
         }
     }
 
@@ -111,6 +111,7 @@ public class ClientWorkTask implements Runnable {
         }
 
         response.setLogId(request.getLogId());
+        response.setCorrelationId(request.getCorrelationId());
         response.setCompressType(request.getCompressType());
         response.setException(request.getException());
         response.setRpcMethodInfo(request.getRpcMethodInfo());

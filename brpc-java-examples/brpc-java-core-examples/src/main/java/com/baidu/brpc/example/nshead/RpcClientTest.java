@@ -1,5 +1,6 @@
 package com.baidu.brpc.example.nshead;
 
+import com.baidu.brpc.RpcContext;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
@@ -29,11 +30,9 @@ public class RpcClientTest {
         // sync call
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
 
+        RpcContext.getContext().setLogId(1234);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello world").build();
-
         EchoResponse response = echoService.echo(request);
-
-
         System.out.println("--------nshead protobuf sync call response-----------------");
         System.out.println(response.getMessage());
         rpcClient.stop();

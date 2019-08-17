@@ -25,7 +25,7 @@ public class RpcClientTest {
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(500000);
+        clientOption.setReadTimeoutMillis(500);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setMaxTryTimes(1);
 
