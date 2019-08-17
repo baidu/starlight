@@ -79,6 +79,9 @@ public class RpcClientOptions {
     private ChannelType channelType = ChannelType.POOLED_CONNECTION;
     private String clientName;
 
+    // share worker thread poll and event thread pool between multi RpcClients
+    private boolean globalThreadPoolSharing = false;
+
     public RpcClientOptions(RpcClientOptions options) {
         this.copyFrom(options);
     }
@@ -111,6 +114,7 @@ public class RpcClientOptions {
         this.workThreadNum = another.workThreadNum;
         this.writeTimeoutMillis = another.writeTimeoutMillis;
         this.clientName = another.clientName;
+        this.globalThreadPoolSharing = another.globalThreadPoolSharing;
     }
 
 }

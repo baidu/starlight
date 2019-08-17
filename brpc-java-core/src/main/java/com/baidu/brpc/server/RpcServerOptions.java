@@ -84,6 +84,8 @@ public class RpcServerOptions {
     private String jarvisPortName;
     // naming service url
     private String namingServiceUrl = "";
+    // share global thread pool between multi rpcServer
+    private boolean globalThreadPoolSharing = false;
 
     public RpcServerOptions(RpcServerOptions options) {
         this.copyFrom(options);
@@ -107,6 +109,7 @@ public class RpcServerOptions {
         this.tcpNoDelay = options.tcpNoDelay;
         this.workThreadNum = options.workThreadNum;
         this.writerIdleTime = options.writerIdleTime;
+        this.globalThreadPoolSharing = options.globalThreadPoolSharing;
     }
 
 }

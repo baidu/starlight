@@ -26,13 +26,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
  * client & server io thread pool single instance
  */
 
-public class BrpcIoThreadPoolInstance {
+public class BrpcBossGroupInstance {
 
     private static volatile EpollEventLoopGroup epollThreadPool;
 
     private static volatile NioEventLoopGroup nioThreadPool;
 
-    private BrpcIoThreadPoolInstance() {
+    private BrpcBossGroupInstance() {
 
     }
 
@@ -41,10 +41,10 @@ public class BrpcIoThreadPoolInstance {
      */
     public static EventLoopGroup getOrCreateEpollInstance(int threadNum) {
         if (epollThreadPool == null) {
-            synchronized (BrpcIoThreadPoolInstance.class) {
+            synchronized(BrpcBossGroupInstance.class) {
                 if (epollThreadPool == null) {
                     epollThreadPool = new EpollEventLoopGroup(threadNum,
-                                new CustomThreadFactory("brpc-io-thread"));
+                            new CustomThreadFactory("server-acceptor-thread"));
 
                 }
             }
@@ -57,10 +57,10 @@ public class BrpcIoThreadPoolInstance {
      */
     public static EventLoopGroup getOrCreateNioInstance(int threadNum) {
         if (nioThreadPool == null) {
-            synchronized(BrpcIoThreadPoolInstance.class) {
+            synchronized(BrpcBossGroupInstance.class) {
                 if (nioThreadPool == null) {
                     nioThreadPool = new NioEventLoopGroup(threadNum,
-                            new CustomThreadFactory("brpc-io-thread"));
+                            new CustomThreadFactory("server-acceptor-thread"));
 
                 }
             }
