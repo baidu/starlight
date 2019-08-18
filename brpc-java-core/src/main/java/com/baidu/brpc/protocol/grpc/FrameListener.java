@@ -49,22 +49,4 @@ public class FrameListener extends Http2EventAdapter {
         return data.readableBytes() + padding;
     }
 
-    @Override
-    public void onRstStreamRead(ChannelHandlerContext ctx, final int streamId, long errorCode) throws Http2Exception {
-       /*Http2ResetFrame resetFrame = new DefaultHttp2ResetFrame(errorCode).stream(new Http2FrameStream() {
-           @Override
-           public int id() {
-               return streamId;
-           }
-
-           @Override
-           public Http2Stream.State state() {
-               return null;
-           }
-       });*/
-
-      // ctx.writeAndFlush(resetFrame);
-        new DefaultHttp2FrameWriter().writeRstStream(ctx,streamId,errorCode,ctx.newPromise());
-    }
-
 }
