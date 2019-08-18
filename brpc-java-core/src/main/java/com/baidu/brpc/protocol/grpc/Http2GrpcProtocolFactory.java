@@ -1,9 +1,8 @@
-package com.baidu.brpc.protocol.http2;
+package com.baidu.brpc.protocol.grpc;
 
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.ProtocolFactory;
-import com.baidu.brpc.protocol.http.HttpRpcProtocol;
 
 public class Http2GrpcProtocolFactory implements ProtocolFactory {
 
