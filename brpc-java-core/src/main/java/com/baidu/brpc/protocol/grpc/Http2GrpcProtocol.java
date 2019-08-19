@@ -6,7 +6,6 @@ import com.baidu.brpc.compress.Compress;
 import com.baidu.brpc.compress.CompressManager;
 import com.baidu.brpc.exceptions.BadSchemaException;
 import com.baidu.brpc.exceptions.NotEnoughDataException;
-import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.exceptions.TooBigDataException;
 import com.baidu.brpc.protocol.AbstractProtocol;
 import com.baidu.brpc.protocol.Options;
@@ -22,7 +21,6 @@ import io.netty.handler.codec.http2.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -42,7 +40,6 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
         Http2ConnectionHandler handler = handlerMap.get(channelId);
 
-        final List<Object> dataFrameList = new ArrayList<Object>();
         try {
             if (handler == null) {
 
@@ -65,7 +62,7 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
             FrameListener frameListener = new FrameListener();
             handler.decoder().frameListener(frameListener);
-            handler.decode(ctx, readyToDecode, dataFrameList);
+            handler.decode(ctx, readyToDecode, new ArrayList());
 
             Http2GrpcRequest request = frameListener.getHttp2GrpcRequest();
 
@@ -104,19 +101,20 @@ public class Http2GrpcProtocol extends AbstractProtocol {
                 return request;
             }
 
-            return dataFrameList;
-
         } catch (Exception e) {
             e.printStackTrace();
             try {
-                handler.close(ctx, ctx.newPromise());
+                if (handler != null) {
+                    handler.close(ctx, ctx.newPromise());
+                }
             } catch (Exception ex) {
                 ex.printStackTrace();
+            } finally {
+                handlerMap.remove(channelId);
             }
-            handlerMap.remove(channelId);
         }
 
-        return dataFrameList;
+        return null;
     }
 
     @Override
@@ -131,16 +129,6 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
-
-        Request request = new Http2GrpcRequest();
-        request.setMsg(packet);
-        request.setException(new RpcException());
-        if (packet instanceof ArrayList) {
-            return null;
-        } else if (packet instanceof Request) {
-            return (Request) packet;
-        }
-
         return (Request) packet;
     }
 
@@ -171,9 +159,9 @@ public class Http2GrpcProtocol extends AbstractProtocol {
                 ByteBuf protoBuf = compress.compressOutput(responseProto, response.getRpcMethodInfo());
                 ByteBuf resultDataBuf = ctx.alloc().buffer(2 + 4 + protoBuf.readableBytes());
 
-                resultDataBuf.writeShort(0);
-                resultDataBuf.writeMedium(protoBuf.readableBytes());
-                resultDataBuf.writeBytes(protoBuf);
+                resultDataBuf.writeShort(0); // compress flag (0 means no compress)
+                resultDataBuf.writeMedium(protoBuf.readableBytes()); // data length
+                resultDataBuf.writeBytes(protoBuf); // data content
 
 
                 ChannelPromise promise = ctx.newPromise();
