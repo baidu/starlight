@@ -53,7 +53,7 @@ enum ProtocolType {
     PROTOCOL_NSHEAD_JSON = 31; // nshead + json
     PROTOCOL_STARGATE = 32; // Stargate
     PROTOCOL_SERVER_PUSH = 33; // StarGate
-    PROTOCOL_GRPC = 34; // StarGate
+    PROTOCOL_GRPC = 34; // Grpc + Proto
 }
 
 enum CompressType {
