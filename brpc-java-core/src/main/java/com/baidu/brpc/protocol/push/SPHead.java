@@ -55,6 +55,10 @@ public interface SPHead {
 
     void setLogId(long logId);
 
+    long getCorrelationId();
+
+    void setCorrelationId(long correlationId);
+
     int getType();
 
     void setType(int type);

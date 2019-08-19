@@ -23,9 +23,9 @@ public class PushServerRpcFutureManager {
     }
 
     public long putRpcFuture(RpcFuture future) {
-        long logId = pendingRpc.put(future);
-        future.setLogId(logId);
-        return logId;
+        long correlationId = pendingRpc.put(future);
+        future.setCorrelationId(correlationId);
+        return correlationId;
     }
 
     public RpcFuture getRpcFuture(Long logId) {

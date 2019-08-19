@@ -45,7 +45,10 @@ public class RpcContext {
 
     private Integer writeTimeoutMillis;
 
-    private Integer nsHeadLogId;
+    /**
+     * logId of protocol, application can set it.
+     */
+    private Integer logId;
 
     /**
      * set custom service instance tag,
@@ -66,7 +69,7 @@ public class RpcContext {
     public void reset() {
         readTimeoutMillis = null;
         writeTimeoutMillis = null;
-        nsHeadLogId = null;
+        logId = null;
         requestKvAttachment = null;
         requestBinaryAttachment = null;
         responseBinaryAttachment = null;

@@ -143,7 +143,7 @@ public class ServiceManager {
 
     private String buildServiceKey(String serviceName, String methodName) {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(serviceName.toLowerCase()).append(".").append(methodName);
+        stringBuilder.append(serviceName.toLowerCase()).append(".").append(methodName.toLowerCase());
         return stringBuilder.toString();
     }
 }

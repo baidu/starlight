@@ -69,21 +69,21 @@ public abstract class AbstractBrpcChannel implements BrpcChannel {
         r.setRpcMethodInfo(rpcMethodInfo);
         r.setArgs(new Object[] {rpcClient.getRpcClientOptions().getClientName()});
 
-        // generate logId
+        // generate correlationId
         RpcFuture registerRpcFuture = new RpcFuture();
-        long logId = FastFutureStore.getInstance(0).put(registerRpcFuture);
-        registerRpcFuture.setLogId(logId);
+        long correlationId = FastFutureStore.getInstance(0).put(registerRpcFuture);
+        registerRpcFuture.setCorrelationId(correlationId);
         // rpcFuture.setChannelInfo(channelInfo);
-        r.setLogId(logId);
+        r.setCorrelationId(correlationId);
 
         ByteBuf byteBuf;
         try {
-            log.debug("send sendClientNameToServer, name:{}, logId:{}",
-                    rpcClientOptions.getClientName(), r.getLogId());
+            log.debug("send sendClientNameToServer, name:{}, correlationId:{}",
+                    rpcClientOptions.getClientName(), r.getCorrelationId());
             byteBuf = protocol.encodeRequest(r);
         } catch (Exception e) {
-            log.error("send report packet to server, encode packet failed, msg={}", e);
-            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed", e);
+            log.error("send report packet to server, encode packet failed, msg:", e);
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "rpc encode failed:", e);
         }
         channelFuture.channel().writeAndFlush(byteBuf);
     }

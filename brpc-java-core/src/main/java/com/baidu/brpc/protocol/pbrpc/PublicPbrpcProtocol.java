@@ -81,7 +81,7 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
         bodyBuilder.setCharset(CHARSET);
         bodyBuilder.setService(request.getServiceName());
         bodyBuilder.setMethodId(methodIndex);
-        bodyBuilder.setId(request.getLogId());
+        bodyBuilder.setId(request.getCorrelationId());
 
         Compress compress = compressManager.getCompress(request.getCompressType());
         ByteBuf protoBuf = compress.compressInput(request.getArgs()[0], request.getRpcMethodInfo());
@@ -157,8 +157,8 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
                 rpcResponse.setException(new RpcException(head.getText()));
             } else {
 
-                rpcResponse.setLogId(body.getId());
-                RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
+                rpcResponse.setCorrelationId(body.getId());
+                RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getCorrelationId());
                 if (future == null) {
                     return rpcResponse;
                 }
@@ -202,7 +202,8 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
             RequestBody body = pbRequest.getRequestBody(0);
             RequestHead head = pbRequest.getRequestHead();
 
-            request.setLogId(body.getId());
+            request.setCorrelationId(body.getId());
+            request.setLogId(head.getLogId());
             int compressType = head.getCompressType();
             request.setCompressType(compressType);
 
@@ -250,7 +251,7 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
         ResponseBody.Builder bodyBuilder = ResponseBody.newBuilder();
 
         bodyBuilder.setVersion(VERSION);
-        bodyBuilder.setId(request.getLogId());
+        bodyBuilder.setId(request.getCorrelationId());
         if (response.getException() != null) {
             headBuilder.setCode(BaiduRpcErrno.Errno.EINTERNAL_VALUE);
             headBuilder.setText(response.getException().getMessage());

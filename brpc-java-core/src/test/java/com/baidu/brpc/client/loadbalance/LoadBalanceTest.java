@@ -72,7 +72,7 @@ public class LoadBalanceTest {
     public void testRandomStrategy() {
         RpcClientOptions clientOption = RpcOptionsUtils.getRpcClientOptions();
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_RANDOM);
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, null);
+        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption);
         final Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello").build();
         final EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         for (int i = 0; i < 10; i++) {

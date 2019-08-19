@@ -257,8 +257,8 @@ public class BrpcPushProxy implements MethodInterceptor {
                 if (rpcContext.getRequestBinaryAttachment() != null) {
                     request.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
                 }
-                if (rpcContext.getNsHeadLogId() != null) {
-                    request.getNsHead().logId = rpcContext.getNsHeadLogId();
+                if (rpcContext.getLogId() != null) {
+                    request.getNsHead().logId = rpcContext.getLogId();
                 }
                 if (rpcContext.getServiceTag() != null) {
                     request.setServiceTag(rpcContext.getServiceTag());

@@ -42,15 +42,15 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     protected long startTime;
     protected long endTime;
 
-    protected volatile long logId;
+    protected volatile long correlationId;
 
     public RpcFuture() {
         this.latch = new CountDownLatch(1);
         this.startTime = System.currentTimeMillis();
     }
 
-    public RpcFuture(long logId) {
-        this.logId = logId;
+    public RpcFuture(long correlationId) {
+        this.correlationId = correlationId;
         this.latch = new CountDownLatch(1);
         this.startTime = System.currentTimeMillis();
     }
@@ -144,11 +144,11 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     @Override
     public T get() throws InterruptedException {
         latch.await();
+        if (response != null && response.getException() != null) {
+            throw new RpcException(response.getException());
+        }
         if (response == null) {
             throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
-        }
-        if (response.getException() != null) {
-            throw new RpcException(response.getException());
         }
         setRpcContext();
         return (T) response.getResult();
@@ -158,9 +158,10 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
     public T get(long timeout, TimeUnit unit) {
         try {
             boolean ret = latch.await(timeout, unit);
-            if (!ret || response == null) {
-                throw new RpcException(RpcException.TIMEOUT_EXCEPTION);
+            if (!ret) {
+                throw new RpcException(RpcException.TIMEOUT_EXCEPTION, "timeout");
             }
+            assert response != null;
             if (response.getException() != null) {
                 throw new RpcException(response.getException());
             }
@@ -173,7 +174,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
 
     @Override
     public String toString() {
-        return super.toString() + "@logId = " + logId;
+        return super.toString() + "@correlationId = " + correlationId;
     }
 
     protected void setRpcContext() {

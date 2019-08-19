@@ -122,7 +122,7 @@ public class FastFutureStore {
             // try to put object into current slot
             boolean success = futArray.compareAndSet(slot, null, fut);
             if (success) {
-                fut.setLogId(currentCounter);
+                fut.setCorrelationId(currentCounter);
                 return currentCounter;
             }
 
@@ -231,7 +231,7 @@ public class FastFutureStore {
         // get the old value
         RpcFuture prev = futArray.get(slot);
         // remove only when RpcFuture.logId is equal with current id
-        if (null != prev && prev.getLogId() == id) {
+        if (null != prev && prev.getCorrelationId() == id) {
             futArray.set(slot, null);
             return prev;
         }

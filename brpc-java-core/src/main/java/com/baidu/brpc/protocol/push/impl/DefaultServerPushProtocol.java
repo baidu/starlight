@@ -54,6 +54,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         Validate.notNull(bodyBuf);
         spHead.bodyLength = bodyBuf.readableBytes();
         spHead.logId = request.getLogId();
+        spHead.setCorrelationId(request.getCorrelationId());
 
         ByteBuf headerBuf = headToBytes(spHead);
 
@@ -78,12 +79,10 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
     public Response decodeServerPushResponse(Object in, ChannelHandlerContext ctx) {
         DefaultServerPushPacket packet = (DefaultServerPushPacket) in;
         RpcResponse rpcResponse = new RpcResponse();
-        // channel info是在客户端生成连接池的时候生成的
-        // ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        Long logId = (long) packet.getSpHead().getLogId();
+        Long correlationId = packet.getSpHead().getCorrelationId();
 
-        RpcFuture future = PushServerRpcFutureManager.getInstance().removeRpcFuture(logId);
-        rpcResponse.setLogId(logId);
+        RpcFuture future = PushServerRpcFutureManager.getInstance().removeRpcFuture(correlationId);
+        rpcResponse.setCorrelationId(correlationId);
 
         if (future == null) {
             return rpcResponse;
@@ -107,11 +106,12 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         RpcResponse rpcResponse = new RpcResponse();
         // channel info是在客户端生成连接池的时候生成的
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-        Long logId = packet.getSpHead().getLogId();
-        rpcResponse.setLogId(logId);
-        RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
+        Long correlationId = packet.getSpHead().getCorrelationId();
+        rpcResponse.setCorrelationId(correlationId);
+        RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getCorrelationId());
 
-        if (future == null || future.getRpcMethodInfo() == null) { // rpc method info为null，表示register请求
+        if (future == null || future.getRpcMethodInfo() == null) {
+            // rpc method info为null，表示register请求
             try {
                 ByteBuf byteBuf = packet.getBodyBuf();
                 byteBuf.release();
@@ -136,11 +136,11 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         ByteBuf bodyBuf = encodeResponseBody(response.getResult(), response.getRpcMethodInfo());
         DefaultSPHead spHead = (DefaultSPHead) response.getSpHead();
         if (spHead == null) {
-            spHead = new DefaultSPHead((int) response.getLogId(), bodyBuf.readableBytes());
+            spHead = new DefaultSPHead((int) response.getCorrelationId(), bodyBuf.readableBytes());
         } else {
             spHead.bodyLength = bodyBuf.readableBytes();
         }
-        spHead.logId = response.getLogId();
+        spHead.correlationId = response.getCorrelationId();
         switch (request.getSpHead().getType()) {
             case SPHead.TYPE_PUSH_REQUEST:
                 spHead.type = SPHead.TYPE_PUSH_RESPONSE;
@@ -167,6 +167,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         DefaultServerPushPacket spPacket = (DefaultServerPushPacket) packet;
         ByteBuf bodyBuf = ((DefaultServerPushPacket) packet).getBodyBuf();
         request.setLogId(spPacket.getSpHead().getLogId());
+        request.setCorrelationId(spPacket.getSpHead().getCorrelationId());
         request.setSpHead(((DefaultServerPushPacket) packet).getSpHead());
         // IMPORTANT: if register request, it do not need send response.
         // and the request param is string.
@@ -327,6 +328,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         head.id = buf.readShortLE();
         head.version = buf.readShortLE();
         head.logId = buf.readLongLE();
+        head.correlationId = buf.readLongLE();
         byte[] bytes = new byte[PROVIDER_LENGTH];
         buf.readBytes(bytes);
         int n = 0;
@@ -350,6 +352,7 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         buffer.writeShortLE(usedSpHead.id);
         buffer.writeShortLE(usedSpHead.version);
         buffer.writeLongLE(usedSpHead.logId);
+        buffer.writeLongLE(usedSpHead.correlationId);
         byte[] providerBytes = usedSpHead.provider.getBytes();
 
         if (providerBytes.length >= PROVIDER_LENGTH) {

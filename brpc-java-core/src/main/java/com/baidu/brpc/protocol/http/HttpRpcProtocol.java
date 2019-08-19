@@ -93,7 +93,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
     /**
      * 请求的唯一标识id
      */
-    private static final String LOG_ID = "log-id";
+    private static final String CORRELATION_ID = "correlationId";
     private static final JsonFormat jsonPbConverter = new JsonFormat() {
         protected void print(Message message, JsonGenerator generator) throws IOException {
             for (Iterator<Map.Entry<Descriptors.FieldDescriptor, Object>> iter =
@@ -121,7 +121,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         prohibitedHeaders.add(HttpHeaderNames.CONTENT_TYPE.toString());
         prohibitedHeaders.add(HttpHeaderNames.CONTENT_LENGTH.toString());
         prohibitedHeaders.add(HttpHeaderNames.CONNECTION.toString());
-        prohibitedHeaders.add(LOG_ID);
+        prohibitedHeaders.add(CORRELATION_ID);
     }
 
 
@@ -163,7 +163,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
         HttpMessage httpMessage = null;
         // I don't know the length of http header, so here copy all readable bytes to decode
         ByteBuf byteBuf = in.retainedSlice(in.readableBytes());
-
+        boolean decodeSuccess = false;
         try {
             // TODO: only parse header
             httpMessage = (HttpMessage) BrpcHttpObjectDecoder.getDecoder(isDecodingRequest).decode(ctx, byteBuf);
@@ -186,12 +186,12 @@ public class HttpRpcProtocol extends AbstractProtocol {
                         throw new BadSchemaException();
                     }
                 }
+                decodeSuccess = true;
             }
         } catch (Exception e) {
             throw new BadSchemaException();
         } finally {
-            if (httpMessage != null) {
-                // decode success
+            if (decodeSuccess) {
                 in.skipBytes(byteBuf.readerIndex());
             }
             byteBuf.release();
@@ -233,7 +233,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             nettyHttpRequest.headers().set(HttpHeaderNames.CONTENT_LENGTH, httpRequestBodyBytes == null
                     ? 0 : httpRequestBodyBytes.length);
             nettyHttpRequest.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
-            nettyHttpRequest.headers().set(LOG_ID, httpRequest.getLogId());
+            nettyHttpRequest.headers().set(CORRELATION_ID, httpRequest.getCorrelationId());
             for (Map.Entry<String, String> header : httpRequest.headers()) {
                 if (prohibitedHeaders.contains(header.getKey().toLowerCase())) {
                     continue;
@@ -280,10 +280,10 @@ public class HttpRpcProtocol extends AbstractProtocol {
         FullHttpResponse httpResponse = (FullHttpResponse) msg;
         try {
             ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-            Long logId = parseLogId(httpResponse.headers().get(LOG_ID), channelInfo.getLogId());
+            Long correlationId = parseCorrelationId(httpResponse.headers().get(CORRELATION_ID), channelInfo.getCorrelationId());
             HttpResponse response = new HttpResponse();
-            response.setLogId(logId);
-            RpcFuture future = channelInfo.removeRpcFuture(response.getLogId());
+            response.setCorrelationId(correlationId);
+            RpcFuture future = channelInfo.removeRpcFuture(response.getCorrelationId());
             if (future == null) {
                 return response;
             }
@@ -346,7 +346,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
         } finally {
             httpResponse.release();
         }
-
     }
 
     @Override
@@ -354,8 +353,8 @@ public class HttpRpcProtocol extends AbstractProtocol {
         try {
             HttpRequest httpRequest = (HttpRequest) this.createRequest();
             httpRequest.setMsg(packet);
-            long logId = parseLogId(httpRequest.headers().get(LOG_ID), null);
-            httpRequest.setLogId(logId);
+            long correlationId = parseCorrelationId(httpRequest.headers().get(CORRELATION_ID), null);
+            httpRequest.setCorrelationId(correlationId);
 
             String contentTypeAndEncoding = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
             String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
@@ -388,9 +387,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             }
             byte[] requestBytes = new byte[bodyLen];
             byteBuf.readBytes(requestBytes, 0, bodyLen);
-
             Object body = decodeBody(protocolType, encoding, requestBytes);
-            httpRequest.setLogId(logId);
 
             QueryStringDecoder queryStringDecoder = new QueryStringDecoder(httpRequest.uri());
             String path = queryStringDecoder.path();
@@ -605,12 +602,13 @@ public class HttpRpcProtocol extends AbstractProtocol {
         if (keepAlive) {
             fullHttpResponse.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
         }
-        fullHttpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE, fullHttpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE));
+        fullHttpResponse.headers().set(HttpHeaderNames.CONTENT_TYPE,
+                fullHttpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE));
         if (fullHttpRequest.headers().contains("callId")) {
             fullHttpResponse.headers().set("callId", fullHttpRequest.headers().get("callId"));
         }
-        if (fullHttpRequest.headers().contains(LOG_ID)) {
-            fullHttpResponse.headers().set(LOG_ID, fullHttpRequest.headers().get(LOG_ID));
+        if (fullHttpRequest.headers().contains(CORRELATION_ID)) {
+            fullHttpResponse.headers().set(CORRELATION_ID, fullHttpRequest.headers().get(CORRELATION_ID));
         }
         if (response.getKvAttachment() != null) {
             for (Map.Entry<String, Object> entry : response.getKvAttachment().entrySet()) {
@@ -675,13 +673,13 @@ public class HttpRpcProtocol extends AbstractProtocol {
         return "/" + serviceName + "/" + methodName;
     }
 
-    // 解析log_id
-    public long parseLogId(String headerLogId, Long channelAttachLogId) {
-        // 以headerLogId为准，headerLogId为null则以channelAttachLogId为准
-        if (headerLogId != null) {
-            return Long.valueOf(headerLogId);
-        } else if (channelAttachLogId != null) {
-            return channelAttachLogId;
+    // 解析correlationId
+    public long parseCorrelationId(String headerCorrelationId, Long channelAttachCorrelationId) {
+        // 以headerCorrelationId为准，headerCorrelationId为null则以channelAttachCorrelationId为准
+        if (headerCorrelationId != null) {
+            return Long.valueOf(headerCorrelationId);
+        } else if (channelAttachCorrelationId != null) {
+            return channelAttachCorrelationId;
         }
         return -1;
     }

@@ -80,7 +80,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
     public ByteBuf encodeRequest(Request request) throws Exception {
         HuluRpcEncodePacket requestPacket = new HuluRpcEncodePacket();
         HuluRpcProto.HuluRpcRequestMeta.Builder metaBuilder = HuluRpcProto.HuluRpcRequestMeta.newBuilder();
-        metaBuilder.setCorrelationId(request.getLogId());
+        metaBuilder.setCorrelationId(request.getCorrelationId());
         metaBuilder.setLogId(request.getLogId());
         int compressType = request.getCompressType();
         metaBuilder.setCompressType(compressType);
@@ -139,11 +139,11 @@ public class HuluRpcProtocol extends AbstractProtocol {
             RpcResponse rpcResponse = new RpcResponse();
             HuluRpcProto.HuluRpcResponseMeta responseMeta = (HuluRpcProto.HuluRpcResponseMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcResponseMetaInstance);
-            Long logId = responseMeta.getCorrelationId();
-            rpcResponse.setLogId(logId);
+            Long correlationId = responseMeta.getCorrelationId();
+            rpcResponse.setCorrelationId(correlationId);
 
             ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
-            RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getLogId());
+            RpcFuture future = channelInfo.removeRpcFuture(rpcResponse.getCorrelationId());
             if (future == null) {
                 return rpcResponse;
             }
@@ -198,7 +198,8 @@ public class HuluRpcProtocol extends AbstractProtocol {
         try {
             HuluRpcProto.HuluRpcRequestMeta requestMeta = (HuluRpcProto.HuluRpcRequestMeta) ProtobufUtils.parseFrom(
                     metaBuf, defaultRpcRequestMetaInstance);
-            request.setLogId(requestMeta.getCorrelationId());
+            request.setCorrelationId(requestMeta.getCorrelationId());
+            request.setLogId(requestMeta.getLogId());
             int compressType = requestMeta.getCompressType();
             request.setCompressType(compressType);
 
@@ -273,7 +274,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
     public ByteBuf encodeResponse(Request request, Response response) throws Exception {
         HuluRpcEncodePacket responsePacket = new HuluRpcEncodePacket();
         HuluRpcProto.HuluRpcResponseMeta.Builder metaBuilder = HuluRpcProto.HuluRpcResponseMeta.newBuilder();
-        metaBuilder.setCorrelationId(response.getLogId());
+        metaBuilder.setCorrelationId(response.getCorrelationId());
         int compressType = response.getCompressType();
         metaBuilder.setCompressType(compressType);
 
