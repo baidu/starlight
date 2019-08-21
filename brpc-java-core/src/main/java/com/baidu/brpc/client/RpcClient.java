@@ -16,20 +16,6 @@
 
 package com.baidu.brpc.client;
 
-import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import org.apache.commons.lang3.Validate;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.ChannelType;
@@ -68,7 +54,6 @@ import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.BrpcConstants;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ThreadPool;
-
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
@@ -87,6 +72,19 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import lombok.Getter;
+import org.apache.commons.lang3.Validate;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -120,19 +118,6 @@ public class RpcClient {
      * 保存单例的引用
      */
     private FastFutureStore fastFutureStore;
-
-    /**
-     * @param service
-     */
-    public void registerPushService(Object service) {
-        ServiceManager.getInstance().registerPushService(service);
-
-        // 如果只注册了pushService，没有注册一个普通的服务的话， 报错
-        if (instanceProcessor.getInstances().size() == 0) {
-            LOG.error("there should be have normal servcies before register push service.");
-            throw new RpcException("there should be have normal services before register push service");
-        }
-    }
 
     public RpcClient(String namingServiceUrl) {
         this(namingServiceUrl, new RpcClientOptions(), null);
@@ -204,6 +189,19 @@ public class RpcClient {
 
     public static <T> T getProxy(RpcClient rpcClient, Class clazz) {
         return BrpcProxy.getProxy(rpcClient, clazz, null);
+    }
+
+    /**
+     * @param service
+     */
+    public void registerPushService(Object service) {
+        ServiceManager.getInstance().registerPushService(service);
+
+        // 如果只注册了pushService，没有注册一个普通的服务的话， 报错
+        if (instanceProcessor.getInstances().size() == 0) {
+            LOG.error("there should be have normal servcies before register push service.");
+            throw new RpcException("there should be have normal services before register push service");
+        }
     }
 
     public <T> T getProxy(Class clazz, NamingOptions namingOptions) {
@@ -347,7 +345,6 @@ public class RpcClient {
      * select channel from endpoint which is selected by custom load balance.
      *
      * @param endpoint ip:port
-     *
      * @return netty channel
      */
     public Channel selectChannel(Endpoint endpoint) {
@@ -383,20 +380,30 @@ public class RpcClient {
     }
 
     public <T> AsyncAwareFuture<T> sendRequest(Request request) {
-        Channel channel = request.getChannel();
+        RpcFuture rpcFuture = new RpcFuture();
+        // generate correlationId
+        long correlationId = FastFutureStore.getInstance(0).put(rpcFuture);
+        request.setCorrelationId(correlationId);
+        ByteBuf byteBuf;
+        try {
+            byteBuf = protocol.encodeRequest(request);
+        } catch (Throwable t) {
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, t.getMessage(), t);
+        }
+        // retain for retry
+        request.retain();
+        // select instance by load balance, and select channel from instance.
+        Channel channel = selectChannel(request);
+        request.setChannel(channel);
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(channel);
         BrpcChannel brpcChannel = channelInfo.getChannelGroup();
         protocol.beforeRequestSent(request, this, brpcChannel);
 
         // create RpcFuture object
-        RpcFuture rpcFuture = new RpcFuture();
         rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
         rpcFuture.setCallback(request.getCallback());
         rpcFuture.setRpcClient(this);
         rpcFuture.setChannelInfo(channelInfo);
-        // generate correlationId
-        long correlationId = FastFutureStore.getInstance(0).put(rpcFuture);
-        request.setCorrelationId(correlationId);
         channelInfo.setCorrelationId(rpcFuture.getCorrelationId());
 
         // read write timeout
@@ -410,8 +417,7 @@ public class RpcClient {
         try {
             // netty will release the send buffer after sent.
             // we retain here, so it can be used when rpc retry.
-            request.retain();
-            ByteBuf byteBuf = protocol.encodeRequest(request);
+
             ChannelFuture sendFuture = channel.writeAndFlush(byteBuf);
             // set RpcContext writeTimeout
             sendFuture.awaitUninterruptibly(writeTimeout);
