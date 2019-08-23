@@ -431,7 +431,7 @@ public class RpcClient {
                 throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
             }
         } catch (Exception ex) {
-            channelInfo.handleRequestFail(rpcClientOptions.getChannelType());
+            channelInfo.handleRequestFail(rpcClientOptions.getChannelType(), correlationId);
             timeout.cancel();
             if (ex instanceof RpcException) {
                 throw (RpcException) ex;

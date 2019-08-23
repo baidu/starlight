@@ -102,14 +102,14 @@ public class ChannelInfo {
      *
      * @param channelType
      */
-    public void handleRequestFail(ChannelType channelType) {
+    public void handleRequestFail(ChannelType channelType, long correlationId) {
+        removeRpcFuture(correlationId);
         if (channelType != ChannelType.SHORT_CONNECTION) {
             channelGroup.incFailedNum();
             returnChannelAfterRequest();
         } else {
             channelGroup.close();
         }
-
     }
 
     /**
