@@ -93,7 +93,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
     /**
      * 请求的唯一标识id
      */
-    private static final String CORRELATION_ID = "correlationId";
+    private static final String CORRELATION_ID = "correlation-id";
     private static final JsonFormat jsonPbConverter = new JsonFormat() {
         protected void print(Message message, JsonGenerator generator) throws IOException {
             for (Iterator<Map.Entry<Descriptors.FieldDescriptor, Object>> iter =
