@@ -240,6 +240,7 @@ public class BrpcProxy implements MethodInterceptor {
                 }
                 if (rpcContext.getLogId() != null) {
                     request.getNsHead().logId = rpcContext.getLogId();
+                    request.setLogId(rpcContext.getLogId());
                 }
                 if (rpcContext.getServiceTag() != null) {
                     request.setServiceTag(rpcContext.getServiceTag());
