@@ -73,7 +73,7 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
 
 
     protected void rpcCore(Request request, Response response) throws Exception {
-        // 这个 response没有logid
+        // 这个 response没有correlationId
         // send request with the channel.
         AsyncAwareFuture future = rpcClient.sendRequest(request);
         if (future.isAsync()) {

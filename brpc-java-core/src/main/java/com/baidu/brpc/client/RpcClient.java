@@ -380,46 +380,44 @@ public class RpcClient {
     }
 
     public <T> AsyncAwareFuture<T> sendRequest(Request request) {
+        // create RpcFuture object
         RpcFuture rpcFuture = new RpcFuture();
+        rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
+        rpcFuture.setCallback(request.getCallback());
+        rpcFuture.setRpcClient(this);
         // generate correlationId
         long correlationId = FastFutureStore.getInstance(0).put(rpcFuture);
         request.setCorrelationId(correlationId);
+
+        // encode
         ByteBuf byteBuf;
         try {
             byteBuf = protocol.encodeRequest(request);
         } catch (Throwable t) {
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, t.getMessage(), t);
         }
-        // retain for retry
-        request.retain();
+
         // select instance by load balance, and select channel from instance.
         Channel channel = selectChannel(request);
         request.setChannel(channel);
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(channel);
+        channelInfo.setCorrelationId(rpcFuture.getCorrelationId());
+        rpcFuture.setChannelInfo(channelInfo);
         BrpcChannel brpcChannel = channelInfo.getChannelGroup();
         protocol.beforeRequestSent(request, this, brpcChannel);
 
-        // create RpcFuture object
-        rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
-        rpcFuture.setCallback(request.getCallback());
-        rpcFuture.setRpcClient(this);
-        rpcFuture.setChannelInfo(channelInfo);
-        channelInfo.setCorrelationId(rpcFuture.getCorrelationId());
-
-        // read write timeout
+        // register timeout timer
         final long readTimeout = request.getReadTimeoutMillis();
         final long writeTimeout = request.getWriteTimeoutMillis();
-        // register timeout timer
         RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getCorrelationId(), this);
         Timeout timeout = timeoutTimer.newTimeout(timeoutTask, readTimeout, TimeUnit.MILLISECONDS);
-        // set the missing parameters
         rpcFuture.setTimeout(timeout);
+
         try {
             // netty will release the send buffer after sent.
             // we retain here, so it can be used when rpc retry.
-
+            request.retain();
             ChannelFuture sendFuture = channel.writeAndFlush(byteBuf);
-            // set RpcContext writeTimeout
             sendFuture.awaitUninterruptibly(writeTimeout);
             if (!sendFuture.isSuccess()) {
                 if (!(sendFuture.cause() instanceof ClosedChannelException)) {
@@ -442,7 +440,6 @@ public class RpcClient {
 
         // return channel
         channelInfo.handleRequestSuccess();
-
         return rpcFuture;
     }
 
