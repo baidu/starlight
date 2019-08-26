@@ -21,6 +21,7 @@ import java.util.Set;
 
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.client.RpcCallback;
+import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.SubscribeInfo;

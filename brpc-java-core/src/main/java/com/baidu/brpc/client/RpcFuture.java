@@ -7,6 +7,7 @@ package com.baidu.brpc.client;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import com.baidu.brpc.protocol.Request;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,6 +62,17 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
                      ChannelInfo channelInfo,
                      RpcClient rpcClient) {
         init(timeout, rpcMethodInfo, callback, channelInfo, rpcClient);
+    }
+
+    public static RpcFuture createRpcFuture(Request request, RpcClient rpcClient) {
+        // create RpcFuture object
+        RpcFuture rpcFuture = new RpcFuture();
+        rpcFuture.setRpcMethodInfo(request.getRpcMethodInfo());
+        rpcFuture.setCallback(request.getCallback());
+        rpcFuture.setRpcClient(rpcClient);
+        // generate correlationId
+        FastFutureStore.getInstance(0).put(rpcFuture);
+        return rpcFuture;
     }
 
     public void init(Timeout timeout,

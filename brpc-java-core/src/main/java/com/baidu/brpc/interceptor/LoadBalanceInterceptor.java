@@ -12,6 +12,8 @@ import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.Channel;
 import lombok.Setter;
 
 import java.util.HashSet;
@@ -68,14 +70,33 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
     }
 
     protected void invokeRpc(Request request, Response response) throws Exception {
-        rpcCore(request, response);
+        // create RpcFuture object
+        RpcFuture rpcFuture = RpcFuture.createRpcFuture(request, rpcClient);
+
+        // encode
+        request.setCorrelationId(rpcFuture.getCorrelationId());
+        ByteBuf byteBuf;
+        try {
+            byteBuf = rpcClient.getProtocol().encodeRequest(request);
+        } catch (Throwable t) {
+            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, t.getMessage(), t);
+        }
+
+        // select instance by load balance, and select channel from instance.
+        Channel channel = rpcClient.selectChannel(request);
+        request.setChannel(channel);
+
+        rpcCore(request, byteBuf, rpcFuture, response);
     }
 
 
-    protected void rpcCore(Request request, Response response) throws Exception {
+    protected void rpcCore(Request request,
+                           ByteBuf byteBuf,
+                           RpcFuture rpcFuture,
+                           Response response) throws Exception {
         // 这个 response没有correlationId
         // send request with the channel.
-        AsyncAwareFuture future = rpcClient.sendRequest(request);
+        AsyncAwareFuture future = rpcClient.sendRequestCore(request, byteBuf, rpcFuture);
         if (future.isAsync()) {
             response.setRpcFuture((RpcFuture) future);
         } else {
