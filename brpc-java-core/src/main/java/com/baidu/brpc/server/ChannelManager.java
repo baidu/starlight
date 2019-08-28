@@ -18,7 +18,6 @@ public class ChannelManager {
     private static volatile ChannelManager instance;
     private static ChannelStoreManager storeManager;
 
-
     private ReadWriteLock lock = new ReentrantReadWriteLock();
     private ChannelStoreManager innerStoreManager;
 
@@ -47,8 +46,11 @@ public class ChannelManager {
 
     public void putChannel(String clientName, Channel channel) {
         lock.writeLock().lock();
-        innerStoreManager.putChannel(clientName, channel);
-        lock.writeLock().unlock();
+        try {
+            innerStoreManager.putChannel(clientName, channel);
+        } finally {
+            lock.writeLock().unlock();
+        }
     }
 
     public Channel getChannel(String clientName) {
@@ -73,8 +75,11 @@ public class ChannelManager {
         String participantName = participant.get();
         if (StringUtils.isNotBlank(participantName)) {
             lock.writeLock().lock();
-            innerStoreManager.removeChannel(channel);
-            lock.writeLock().unlock();
+            try {
+                innerStoreManager.removeChannel(channel);
+            } finally {
+                lock.writeLock().unlock();
+            }
         }
     }
 
