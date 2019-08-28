@@ -70,10 +70,8 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
     }
 
     protected void invokeRpc(Request request, Response response) throws Exception {
-        // create RpcFuture object
-        RpcFuture rpcFuture = RpcFuture.createRpcFuture(request, rpcClient);
-
         // encode
+        RpcFuture rpcFuture = RpcFuture.createRpcFuture(request, rpcClient);
         request.setCorrelationId(rpcFuture.getCorrelationId());
         ByteBuf byteBuf;
         try {
