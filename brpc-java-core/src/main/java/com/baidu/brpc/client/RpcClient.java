@@ -55,7 +55,6 @@ import com.baidu.brpc.utils.BrpcConstants;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.ThreadPool;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -379,15 +378,13 @@ public class RpcClient {
         channelInfo.getChannelGroup().removeChannel(channel);
     }
 
-    public <T> AsyncAwareFuture<T> sendRequest(Request request) {
-        // create RpcFuture object
+    public void encodeAndLoadBalance(Request request) {
+        // encode request
         RpcFuture rpcFuture = RpcFuture.createRpcFuture(request, this);
-
-        // encode
+        request.setRpcFuture(rpcFuture);
         request.setCorrelationId(rpcFuture.getCorrelationId());
-        ByteBuf byteBuf;
         try {
-            byteBuf = protocol.encodeRequest(request);
+            request.setSendBuf(protocol.encodeRequest(request));
         } catch (Throwable t) {
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, t.getMessage(), t);
         }
@@ -395,26 +392,24 @@ public class RpcClient {
         // select instance by load balance, and select channel from instance.
         Channel channel = selectChannel(request);
         request.setChannel(channel);
-
-        return sendRequestCore(request, byteBuf, rpcFuture);
     }
 
-    public <T> AsyncAwareFuture<T> sendRequestCore(Request request, ByteBuf byteBuf, RpcFuture rpcFuture) {
+    public <T> AsyncAwareFuture<T> sendRequest(Request request) {
         ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(request.getChannel());
-        channelInfo.setCorrelationId(rpcFuture.getCorrelationId());
-        rpcFuture.setChannelInfo(channelInfo);
+        channelInfo.setCorrelationId(request.getCorrelationId());
+        request.getRpcFuture().setChannelInfo(channelInfo);
         BrpcChannel brpcChannel = channelInfo.getChannelGroup();
         protocol.beforeRequestSent(request, this, brpcChannel);
 
         // register timeout timer
         RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getCorrelationId(), this);
         Timeout timeout = timeoutTimer.newTimeout(timeoutTask, request.getReadTimeoutMillis(), TimeUnit.MILLISECONDS);
-        rpcFuture.setTimeout(timeout);
+        request.getRpcFuture().setTimeout(timeout);
         try {
             // netty will release the send buffer after sent.
             // we retain here, so it can be used when rpc retry.
             request.retain();
-            ChannelFuture sendFuture = request.getChannel().writeAndFlush(byteBuf);
+            ChannelFuture sendFuture = request.getChannel().writeAndFlush(request.getSendBuf());
             sendFuture.awaitUninterruptibly(request.getWriteTimeoutMillis());
             if (!sendFuture.isSuccess()) {
                 if (!(sendFuture.cause() instanceof ClosedChannelException)) {
@@ -437,7 +432,7 @@ public class RpcClient {
 
         // return channel
         channelInfo.handleRequestSuccess();
-        return rpcFuture;
+        return request.getRpcFuture();
     }
 
     public void triggerCallback(Runnable runnable) {
