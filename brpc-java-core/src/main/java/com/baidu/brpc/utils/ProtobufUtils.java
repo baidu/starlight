@@ -59,7 +59,7 @@ public class ProtobufUtils {
             return MessageType.JPROTOBUF;
         }
 
-        Field[] fields = inputType.getFields();
+        Field[] fields = inputType.getDeclaredFields();
         for (Field field : fields) {
             Protobuf protobuf = field.getAnnotation(Protobuf.class);
             if (protobuf != null) {
