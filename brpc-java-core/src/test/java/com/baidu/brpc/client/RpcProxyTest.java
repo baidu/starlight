@@ -44,7 +44,7 @@ public class RpcProxyTest {
         paramTypes[1] = Class.class;
         Constructor constructor = BrpcProxy.class.getDeclaredConstructor(paramTypes);
         constructor.setAccessible(true);
-        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002");
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002", RpcOptionsUtils.getRpcClientOptions());
         BrpcProxy rpcProxy = (BrpcProxy) constructor.newInstance(rpcClient, EchoService.class);
         rpcClient.shutdown();
         Assert.assertTrue(rpcProxy != null);

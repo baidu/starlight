@@ -20,10 +20,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.channel.BrpcChannel;
@@ -44,8 +41,8 @@ public class RandomStrategyTest {
     private static String serviceUrl = "list://127.0.0.1:8000,127.0.0.1:8001,127.0.0.1:8002";
     private static RpcClient rpcClient;
 
-    @BeforeClass
-    public static void beforeClass() {
+    @Before
+    public void before() {
         rpcServer1 = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer1.registerService(new LoadBalanceTest.TestEchoService(100));
         rpcServer1.getInterceptors().add(new LoadBalanceTest.TestInterceptor(1));
@@ -65,20 +62,8 @@ public class RandomStrategyTest {
         instance3 = BrpcChannelFactory.createChannel(new ServiceInstance("127.0.0.1", 8002), rpcClient);
     }
 
-    @AfterClass
-    public static void afterClass() {
-        if (rpcServer1 != null) {
-            rpcServer1.shutdown();
-        }
-        if (rpcServer2 != null) {
-            rpcServer2.shutdown();
-        }
-        if (rpcServer3 != null) {
-            rpcServer3.shutdown();
-        }
-        if (rpcClient != null) {
-            rpcClient.stop();
-        }
+    @After
+    public void after() {
         if (instance1 != null) {
             instance1.close();
         }
@@ -87,6 +72,18 @@ public class RandomStrategyTest {
         }
         if (instance3 != null) {
             instance3.close();
+        }
+        if (rpcClient != null) {
+            rpcClient.stop();
+        }
+        if (rpcServer1 != null) {
+            rpcServer1.shutdown();
+        }
+        if (rpcServer2 != null) {
+            rpcServer2.shutdown();
+        }
+        if (rpcServer3 != null) {
+            rpcServer3.shutdown();
         }
     }
 

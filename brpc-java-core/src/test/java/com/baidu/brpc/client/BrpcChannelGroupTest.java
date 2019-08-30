@@ -46,7 +46,7 @@ public class BrpcChannelGroupTest {
     public void before() {
         rpcServer = new RpcServer(8000, RpcOptionsUtils.getRpcServerOptions());
         rpcServer.start();
-        options = new RpcClientOptions();
+        options = RpcOptionsUtils.getRpcClientOptions();
         options.setLatencyWindowSizeOfFairLoadBalance(2);
         rpcClient = new RpcClient("list://127.0.0.1:8000", options);
         channelGroup = new BrpcPooledChannel(new ServiceInstance("127.0.0.1", 8000), rpcClient);

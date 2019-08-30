@@ -19,6 +19,7 @@ package com.baidu.brpc.protocol.standard;
 import java.lang.reflect.Constructor;
 import java.util.Map;
 
+import com.baidu.brpc.RpcOptionsUtils;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -82,7 +83,7 @@ public class BaiduRpcProtocolTest {
         paramTypes[1] = Class.class;
         Constructor constructor = BrpcProxy.class.getDeclaredConstructor(paramTypes);
         constructor.setAccessible(true);
-        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002");
+        RpcClient rpcClient = new RpcClient("list://127.0.0.1:8002", RpcOptionsUtils.getRpcClientOptions());
         BrpcProxy rpcProxy = (BrpcProxy) constructor.newInstance(rpcClient, EchoService.class);
         rpcClient.shutdown();
         Map<String, RpcMethodInfo> methodInfoMap = rpcProxy.getRpcMethodMap();
