@@ -416,8 +416,8 @@ public class RpcClient {
                     LOG.warn("send request failed, channelActive={}, ex=",
                             request.getChannel().isActive(), sendFuture.cause());
                 }
-                String errMsg = String.format("send request failed, channelActive=%b, ex=%s",
-                        request.getChannel().isActive(), sendFuture.cause().getMessage());
+                String errMsg = String.format("send request failed, channelActive=%b",
+                        request.getChannel().isActive());
                 throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
             }
         } catch (Exception ex) {

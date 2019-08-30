@@ -18,10 +18,7 @@ package com.baidu.brpc.client.instance;
 
 import java.io.IOException;
 import java.net.Socket;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -95,17 +92,6 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
 
                             lock.lock();
                             try {
-                                if (newHealthyInstanceChannels.size() > 0) {
-                                    List<BrpcChannel> effectiveInstances = new ArrayList<BrpcChannel>();
-                                    for (BrpcChannel brpcChannel : newHealthyInstanceChannels) {
-                                        if (instances.contains(brpcChannel.getServiceInstance())) {
-                                            effectiveInstances.add(brpcChannel);
-                                        }
-                                    }
-                                    healthyInstanceChannels.addAll(effectiveInstances);
-                                    unhealthyInstanceChannels.removeAll(effectiveInstances);
-                                }
-
                                 if (newUnhealthyInstanceChannels.size() > 0) {
                                     List<BrpcChannel> effectiveInstances = new ArrayList<BrpcChannel>();
                                     for (BrpcChannel brpcChannel : newUnhealthyInstanceChannels) {
@@ -116,6 +102,17 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
                                     healthyInstanceChannels.removeAll(effectiveInstances);
                                     unhealthyInstanceChannels.addAll(effectiveInstances);
                                     notifyInvalidInstance(effectiveInstances);
+                                }
+
+                                if (newHealthyInstanceChannels.size() > 0) {
+                                    List<BrpcChannel> effectiveInstances = new ArrayList<BrpcChannel>();
+                                    for (BrpcChannel brpcChannel : newHealthyInstanceChannels) {
+                                        if (instances.contains(brpcChannel.getServiceInstance())) {
+                                            effectiveInstances.add(brpcChannel);
+                                        }
+                                    }
+                                    healthyInstanceChannels.addAll(effectiveInstances);
+                                    unhealthyInstanceChannels.removeAll(effectiveInstances);
                                 }
                             } finally {
                                 lock.unlock();
@@ -156,8 +153,21 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
 
     @Override
     public void deleteInstances(Collection<ServiceInstance> deleteList) {
+        List<BrpcChannel> removedInstanceChannels = new ArrayList<BrpcChannel>();
         for (ServiceInstance instance : deleteList) {
-            deleteInstance(instance);
+            BrpcChannel brpcChannel = deleteInstance(instance);
+            if (brpcChannel != null) {
+                removedInstanceChannels.add(brpcChannel);
+            }
+        }
+        // close the channel pool after 1 second, so that request can be finished
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException ex) {
+            log.warn("InterruptedException:", ex);
+        }
+        for (BrpcChannel brpcChannel : removedInstanceChannels) {
+            brpcChannel.close();
         }
     }
 
@@ -216,23 +226,27 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
         return isHealthy;
     }
 
-    private void deleteInstance(ServiceInstance instance) {
+    private BrpcChannel deleteInstance(ServiceInstance instance) {
         lock.lock();
         try {
             if (instances.remove(instance)) {
-                List<BrpcChannel> removedInstanceChannels = new ArrayList<BrpcChannel>();
-                removeInstanceChannels(healthyInstanceChannels, instance, removedInstanceChannels);
-                if (removedInstanceChannels.size() == 0) {
-                    removeInstanceChannels(unhealthyInstanceChannels, instance, removedInstanceChannels);
-                }
-
                 instanceChannelMap.remove(instance);
-                // notify the fair load balance strategy
-                notifyInvalidInstance(removedInstanceChannels);
+                BrpcChannel brpcChannel = removeInstanceChannel(healthyInstanceChannels, instance);
+                if (brpcChannel == null) {
+                    brpcChannel = removeInstanceChannel(unhealthyInstanceChannels, instance);
+                }
+                if (brpcChannel == null) {
+                    log.error("instance exist, but channel not exist");
+                } else {
+                    // notify the fair load balance strategy
+                    notifyInvalidInstance(Arrays.asList(brpcChannel));
+                }
+                return brpcChannel;
             }
         } finally {
             lock.unlock();
         }
+        return null;
     }
 
     private void notifyInvalidInstance(List<BrpcChannel> invalidInstances) {
@@ -241,20 +255,17 @@ public class EnhancedInstanceProcessor implements InstanceProcessor {
         }
     }
 
-    private void removeInstanceChannels(CopyOnWriteArrayList<BrpcChannel> checkedInstanceChannels,
-                                        ServiceInstance instance,
-                                        List<BrpcChannel> removedInstanceChannels) {
-
+    private BrpcChannel removeInstanceChannel(
+            CopyOnWriteArrayList<BrpcChannel> checkedInstanceChannels,
+            ServiceInstance instance) {
         Iterator<BrpcChannel> iterator = checkedInstanceChannels.iterator();
         while (iterator.hasNext()) {
             BrpcChannel brpcChannel = iterator.next();
             if (brpcChannel.getServiceInstance().equals(instance)) {
                 checkedInstanceChannels.remove(brpcChannel);
-                brpcChannel.close();
-                removedInstanceChannels.add(brpcChannel);
-                break;
+                return brpcChannel;
             }
         }
-
+        return null;
     }
 }
