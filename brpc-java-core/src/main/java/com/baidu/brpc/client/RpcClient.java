@@ -453,6 +453,12 @@ public class RpcClient {
         }
         this.interceptors.add(new ClientTraceInterceptor());
         this.protocol = ProtocolManager.getInstance().getProtocol(options.getProtocolType());
+        if (protocol.returnChannelBeforeResponse()
+                && rpcClientOptions.getChannelType() == ChannelType.SINGLE_CONNECTION) {
+            String errorString = "it can't use SINGLE_CONNECTION when protocol returns channel before response";
+            LOG.error(errorString);
+            throw new IllegalArgumentException(errorString);
+        }
         fastFutureStore = FastFutureStore.getInstance(options.getFutureBufferSize());
         timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
 
