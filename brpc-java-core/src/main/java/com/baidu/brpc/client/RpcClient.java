@@ -314,13 +314,18 @@ public class RpcClient {
             LOG.debug(errMsg);
             throw new RpcException(RpcException.UNKNOWN_EXCEPTION, errMsg, illegalState);
         } catch (Exception connectedFailed) {
-            String errMsg = String.format("channel pool make new object failed, "
-                            + "active=%d,idle=%d,server=%s:%d, ex=%s",
-                    brpcChannel.getActiveConnectionNum(),
-                    brpcChannel.getIdleConnectionNum(),
-                    brpcChannel.getServiceInstance().getIp(),
-                    brpcChannel.getServiceInstance().getPort(),
-                    connectedFailed.getMessage());
+            String errMsg;
+            if (rpcClientOptions.getChannelType() == ChannelType.POOLED_CONNECTION) {
+                errMsg = String.format("channel pool make new object failed, "
+                                + "active=%d,idle=%d,server=%s:%d, ex=%s",
+                        brpcChannel.getActiveConnectionNum(),
+                        brpcChannel.getIdleConnectionNum(),
+                        brpcChannel.getServiceInstance().getIp(),
+                        brpcChannel.getServiceInstance().getPort(),
+                        connectedFailed.getMessage());
+            } else {
+                errMsg = String.format("get channel failed, ex=%s", connectedFailed.getMessage());
+            }
             LOG.debug(errMsg);
             throw new RpcException(RpcException.UNKNOWN_EXCEPTION, errMsg, connectedFailed);
         }
