@@ -431,7 +431,7 @@ public class RpcClient {
         }
 
         // return channel
-        channelInfo.handleRequestSuccess();
+        channelInfo.handleRequestSuccess(rpcClientOptions.getChannelType());
         return request.getRpcFuture();
     }
 

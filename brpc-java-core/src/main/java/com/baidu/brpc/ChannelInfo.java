@@ -104,23 +104,24 @@ public class ChannelInfo {
      */
     public void handleRequestFail(ChannelType channelType, long correlationId) {
         removeRpcFuture(correlationId);
-        if (channelType != ChannelType.SHORT_CONNECTION) {
-            channelGroup.incFailedNum();
-            returnChannelAfterRequest();
-        } else {
+        if (channelType == ChannelType.SHORT_CONNECTION) {
+            channel.close();
             channelGroup.close();
+        } else {
+            channelGroup.incFailedNum();
+            returnChannelAfterRequest(channelType);
         }
     }
 
     /**
      * return channel when success
      */
-    public void handleRequestSuccess() {
-        returnChannelAfterRequest();
+    public void handleRequestSuccess(ChannelType channelType) {
+        returnChannelAfterRequest(channelType);
     }
 
-    private void returnChannelAfterRequest() {
-        if (protocol.returnChannelBeforeResponse()) {
+    private void returnChannelAfterRequest(ChannelType channelType) {
+        if (channelType != ChannelType.SHORT_CONNECTION && protocol.returnChannelBeforeResponse()) {
             channelGroup.returnChannel(channel);
         }
     }
@@ -155,6 +156,11 @@ public class ChannelInfo {
         }
         // 遍历并删除当前channel下所有RpcFuture
         pendingRpc.traverse(new ChannelErrorStoreWalker(channel, ex));
+    }
+
+    public void close() {
+        log.debug("close the channel:{}", channel);
+        channel.close();
     }
 
     protected ChannelInfo() {

@@ -26,12 +26,12 @@
     </Appenders>
 
     <Loggers>
-        <Logger name="com.baidu.brpc" level="info" additivity="false">
+        <Logger name="com.baidu.brpc" level="debug" additivity="false">
             <AppenderRef ref="Console" />
             <AppenderRef ref="RollingFile"/>
         </Logger>
 
-        <Root level="info" includeLocation="false">
+        <Root level="debug" includeLocation="false">
             <AppenderRef ref="Console" />
             <AppenderRef ref="RollingFile"/>
         </Root>

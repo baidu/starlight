@@ -103,7 +103,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
                 channelInfo.handleResponseFail();
             }
         } else {
-            channelInfo.getChannelGroup().close();
+            channelInfo.close();
         }
 
         timeout.cancel();
