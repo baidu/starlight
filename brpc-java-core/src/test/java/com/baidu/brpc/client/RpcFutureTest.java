@@ -72,7 +72,6 @@ public class RpcFutureTest extends BaseMockitoTest {
     @Before
     public void init() throws Exception {
         when(rpcClient.getInterceptors()).thenReturn(Collections.singletonList(interceptor));
-        when(channelInfo.getChannelGroup()).thenReturn(channelGroup);
         Class clazz = EchoService.class;
         Method method = clazz.getMethod("echo", String.class);
         this.methodInfo = new RpcMethodInfo(method);
