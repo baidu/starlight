@@ -467,8 +467,8 @@ public class RpcClient {
         fastFutureStore = FastFutureStore.getInstance(options.getFutureBufferSize());
         timeoutTimer = ClientTimeoutTimerInstance.getOrCreateInstance();
 
-        // singleServer or isShortConnection do not need healthChecker
-        if (singleServer || rpcClientOptions.getChannelType() == ChannelType.SHORT_CONNECTION) {
+        // singleServer do not need healthChecker
+        if (singleServer) {
             instanceProcessor = new BasicInstanceProcessor(this);
         } else {
             instanceProcessor = new EnhancedInstanceProcessor(this);
