@@ -20,7 +20,7 @@ public class RpcClientTest {
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(ProtocolType.PROTOCOL_HTTP_JSON_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(5000);
+        clientOption.setReadTimeoutMillis(30000);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setMaxTryTimes(1);
 

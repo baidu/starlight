@@ -289,16 +289,18 @@ public class HttpRpcProtocol extends AbstractProtocol {
             }
             response.setRpcFuture(future);
 
-            if (!httpResponse.status().equals(HttpResponseStatus.OK)) {
-                LOG.warn("status={}", httpResponse.status());
-                response.setException(new RpcException(RpcException.SERVICE_EXCEPTION,
-                        "http status=" + httpResponse.status()));
-                return response;
-            }
-
             int bodyLen = httpResponse.content().readableBytes();
             byte[] bytes = new byte[bodyLen];
             httpResponse.content().readBytes(bytes);
+
+            if (!httpResponse.status().equals(HttpResponseStatus.OK)) {
+                String body = new String(bytes);
+                String message = String.format("http status=%d, message=%s",
+                        httpResponse.status().code(), body);
+                LOG.warn("{}", message);
+                response.setException(new RpcException(RpcException.SERVICE_EXCEPTION, message));
+                return response;
+            }
 
             String contentTypeAndEncoding = httpResponse.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
             String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
@@ -435,28 +437,30 @@ public class HttpRpcProtocol extends AbstractProtocol {
         FullHttpResponse httpResponse = null;
 
         try {
+            byte[] responseBytes;
             if (response.getException() != null) {
-                httpResponse =
-                        new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                httpResponse = new DefaultFullHttpResponse(
+                        HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                responseBytes = response.getException().toString().getBytes();
             } else {
                 httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-                addHttpResponseHeaders(httpResponse, response, httpRequest);
                 int protocolType = Integer.parseInt(httpRequest.headers().get(PROTOCOL_TYPE));
                 Object body = makeResponse(protocolType, response);
                 // encode body
                 try {
-                    byte[] responseBytes = encodeBody(protocolType,
+                    responseBytes = encodeBody(protocolType,
                             httpRequest.headers().get(HttpHeaderNames.CONTENT_ENCODING),
                             body, response.getRpcMethodInfo());
-                    httpResponse.content().writeBytes(responseBytes);
-                    httpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, responseBytes.length);
                 } catch (Exception e) {
                     LOG.warn("encode response failed", e);
                     response.setException(e);
-                    httpResponse =
-                            new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                    httpResponse = new DefaultFullHttpResponse(
+                            HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
+                    responseBytes = response.getException().toString().getBytes();
                 }
             }
+            httpResponse.content().writeBytes(responseBytes);
+            addHttpResponseHeaders(httpResponse, response, httpRequest);
             // encode full http response
             BrpcHttpResponseEncoder encoder = new BrpcHttpResponseEncoder();
             return encoder.encode(httpResponse);
@@ -615,6 +619,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 fullHttpResponse.headers().set(entry.getKey(), entry.getValue());
             }
         }
+        fullHttpResponse.headers().set(HttpHeaderNames.CONTENT_LENGTH, fullHttpResponse.content().readableBytes());
     }
 
     public Object makeRequest(int id, String methodName, Object[] args) {
