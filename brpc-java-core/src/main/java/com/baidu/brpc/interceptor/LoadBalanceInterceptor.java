@@ -68,7 +68,6 @@ public class LoadBalanceInterceptor extends AbstractInterceptor {
     }
 
     protected void invokeRpc(Request request, Response response) throws Exception {
-        rpcClient.encodeAndLoadBalance(request);
         rpcCore(request, response);
     }
 

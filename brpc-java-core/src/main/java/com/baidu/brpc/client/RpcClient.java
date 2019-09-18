@@ -383,9 +383,18 @@ public class RpcClient {
         channelInfo.getChannelGroup().removeChannel(channel);
     }
 
-    public void encodeAndLoadBalance(Request request) {
+    public <T> AsyncAwareFuture<T> sendRequest(Request request) {
+        // select instance by load balance, and select channel from instance.
+        Channel channel = selectChannel(request);
+        request.setChannel(channel);
+        ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(request.getChannel());
+        BrpcChannel brpcChannel = channelInfo.getChannelGroup();
+        protocol.beforeRequestSent(request, this, brpcChannel);
+
         // encode request
         RpcFuture rpcFuture = RpcFuture.createRpcFuture(request, this);
+        channelInfo.setCorrelationId(rpcFuture.getCorrelationId());
+        rpcFuture.setChannelInfo(channelInfo);
         request.setRpcFuture(rpcFuture);
         request.setCorrelationId(rpcFuture.getCorrelationId());
         try {
@@ -393,18 +402,6 @@ public class RpcClient {
         } catch (Throwable t) {
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, t.getMessage(), t);
         }
-
-        // select instance by load balance, and select channel from instance.
-        Channel channel = selectChannel(request);
-        request.setChannel(channel);
-    }
-
-    public <T> AsyncAwareFuture<T> sendRequest(Request request) {
-        ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(request.getChannel());
-        channelInfo.setCorrelationId(request.getCorrelationId());
-        request.getRpcFuture().setChannelInfo(channelInfo);
-        BrpcChannel brpcChannel = channelInfo.getChannelGroup();
-        protocol.beforeRequestSent(request, this, brpcChannel);
 
         // register timeout timer
         RpcTimeoutTimer timeoutTask = new RpcTimeoutTimer(channelInfo, request.getCorrelationId(), this);
