@@ -25,7 +25,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import com.baidu.brpc.protocol.standard.BaiduRpcProto;
+import com.google.gson.*;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,11 +52,6 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.ServiceManager;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.ExtensionRegistry;
 import com.google.protobuf.Message;
@@ -627,7 +622,11 @@ public class HttpRpcProtocol extends AbstractProtocol {
             if (args == null || args.length == 0) {
                 return null;
             }
-            return args[0];
+            if (args.length == 1) {
+                return args[0];
+            } else {
+                return args;
+            }
         } else if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE) {
             if (args == null || args.length == 0) {
                 return null;
@@ -723,7 +722,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             return null;
         }
 
-        Object[] args = new Object[rpcMethodInfo.getMethod().getGenericParameterTypes().length];
+        Object[] args = new Object[rpcMethodInfo.getInputClasses().length];
         if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
             try {
                 if (rpcMethodInfo instanceof ProtobufRpcMethodInfo) {
@@ -732,7 +731,19 @@ public class HttpRpcProtocol extends AbstractProtocol {
                     jsonPbConverter.merge((String) body, ExtensionRegistry.getEmptyRegistry(), argBuilder);
                     args[0] = argBuilder.build();
                 } else {
-                    args[0] = gson.fromJson((String) body, rpcMethodInfo.getInputClasses()[0]);
+                    if (rpcMethodInfo.getInputClasses().length == 1) {
+                        args[0] = gson.fromJson((String) body, rpcMethodInfo.getInputClasses()[0]);
+                    } else {
+                        JsonArray jsonArray = (JsonArray) jsonParser.parse((String) body);
+                        int jsonSize = jsonArray.size();
+                        if (jsonSize != rpcMethodInfo.getInputClasses().length) {
+                            LOG.warn("bad params num");
+                            throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, "bad params num");
+                        }
+                        for (int i = 0; i < jsonSize; i++) {
+                            args[i] = gson.fromJson(jsonArray.get(i), rpcMethodInfo.getInputClasses()[i]);
+                        }
+                    }
                 }
             } catch (Exception e) {
                 LOG.error("decodeBody failed", e);
