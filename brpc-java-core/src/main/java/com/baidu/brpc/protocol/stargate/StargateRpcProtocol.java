@@ -178,6 +178,14 @@ public class StargateRpcProtocol extends AbstractProtocol {
             try {
                 Response response = new RpcResponse();
                 response.setResult(rpcResponse.getResult());
+                if (rpcResponse.getException() != null) {
+                    if (rpcResponse.getException() instanceof Throwable) {
+                        response.setException((Throwable) rpcResponse.getException());
+                    } else {
+                        throw new IllegalStateException("stargate response contains an exception which"
+                                + "is not a throwable");
+                    }
+                }
                 long correlationId = Long.parseLong(rpcResponse.getId());
                 ChannelInfo channelInfo = ChannelInfo.getClientChannelInfo(ctx.channel());
                 RpcFuture future = channelInfo.removeRpcFuture(correlationId);
