@@ -25,7 +25,7 @@ java 6+ && netty 4 && protobuf 2.5.0
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>2.5.7</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 Spring环境：
@@ -33,7 +33,7 @@ Spring环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring</artifactId>
-    <version>2.5.7</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 SpringBoot环境：
@@ -41,7 +41,7 @@ SpringBoot环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring-boot-stater</artifactId>
-    <version>2.5.7</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 SpringCloud环境：
@@ -49,7 +49,7 @@ SpringCloud环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>spring-cloud-brpc</artifactId>
-    <version>2.5.7</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 Zookeeper注册中心：
@@ -57,7 +57,7 @@ Zookeeper注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-zookeeper</artifactId>
-    <version>2.5.7</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 Consul注册中心：
@@ -65,7 +65,7 @@ Consul注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-consul</artifactId>
-    <version>2.5.7</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 ### Server端使用
