@@ -198,7 +198,7 @@ public class RpcClient {
 
         // 如果只注册了pushService，没有注册一个普通的服务的话， 报错
         if (instanceProcessor.getInstances().size() == 0) {
-            LOG.error("there should be have normal servcies before register push service.");
+            LOG.error("there should be have normal services before register push service.");
             throw new RpcException("there should be have normal services before register push service");
         }
     }
@@ -455,7 +455,7 @@ public class RpcClient {
         }
         this.interceptors.add(new ClientTraceInterceptor());
         this.protocol = ProtocolManager.getInstance().getProtocol(options.getProtocolType());
-        if (protocol.returnChannelBeforeResponse()
+        if (!protocol.returnChannelBeforeResponse()
                 && rpcClientOptions.getChannelType() == ChannelType.SINGLE_CONNECTION) {
             String errorString = "it can't use SINGLE_CONNECTION when protocol returns channel before response";
             LOG.error(errorString);
