@@ -22,7 +22,27 @@ service EchoService {
 ```
 
 也支持使用jprotobuf方式定义的普通java类作为request/response，具体使用例子请见:
-[RpcServerTest](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/jprotobuf/RpcServerTest.java)
+[jprotobuf](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/jprotobuf)
+<br>在使用jprotobuf时，编译接口包时需要在maven的pom.xml中加上如下plugin：
+```xml
+<plugin>
+    <groupId>com.baidu</groupId>
+    <artifactId>jprotobuf-precompile-plugin</artifactId>
+    <version>1.2.15</version>
+    <configuration>
+        <filterClassPackage>com.baidu</filterClassPackage>
+        <generateProtoFile>true</generateProtoFile>
+    </configuration>
+    <executions>
+        <execution>
+            <phase>compile</phase>
+            <goals>
+                <goal>precompile</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
 
 ### 定义java接口
 ```java
