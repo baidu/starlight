@@ -16,6 +16,8 @@
 
 package com.baidu.brpc.server;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.nio.channels.ClosedChannelException;
 import java.util.ArrayList;
 import java.util.List;
@@ -323,8 +325,17 @@ public class RpcServer {
                 channelFuture = bootstrap.bind(port);
             }
             channelFuture.sync();
+            if (port == 0 && channelFuture.channel() != null) {
+                // update port to the actual value in case the server in started on a random port
+                Channel channel = channelFuture.channel();
+                SocketAddress localAddress = channel.localAddress();
+                if (localAddress instanceof InetSocketAddress) {
+                    this.port = ((InetSocketAddress) localAddress).getPort();
+                }
+            }
             if (namingService != null) {
                 for (RegisterInfo registerInfo : registerInfoList) {
+                    registerInfo.setPort(port);
                     namingService.register(registerInfo);
                 }
             }
