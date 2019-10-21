@@ -17,105 +17,61 @@ package com.baidu.brpc.spring.boot.autoconfigure.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
+import org.springframework.boot.context.properties.bind.Bindable;
+import org.springframework.boot.context.properties.bind.Binder;
 import org.springframework.context.EnvironmentAware;
 import org.springframework.core.env.Environment;
-import org.springframework.util.ReflectionUtils;
 
-import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * BRPC Configuration.
+ * <p>
+ * Global defaults can be set under `brpc.global`.
+ * Service-specific configs can be set under `brpc.custom.fully-qualified-service-name`.
+ */
 @Getter
 @Setter
 @ConfigurationProperties(prefix = "brpc")
 public class BrpcProperties implements EnvironmentAware {
+    @NestedConfigurationProperty
     private BrpcConfig global;
+    @Setter
     private Environment environment;
 
-    private static Map<String, String> extractMap(Environment env, String prefix) {
-        Map<String, String> result = new HashMap<String, String>();
-        int i = 0;
-        while (true) {
-            String key = env.getProperty(String.format("%s[%d].key", prefix, i));
-            String value = env.getProperty(String.format("%s[%d].value", prefix, i));
-            if (key == null || value == null) {
+    private static String camelToKebabCase(String str) {
+        return str.replaceAll("([a-z0-9])([A-Z])", "$1-$2").toLowerCase();
+    }
+
+    private static void rewriteMap(Map<String, String> map) {
+        if (map == null) {
+            return;
+        }
+        Map<String, String> ret = new HashMap<>();
+        for (int i = 0; i < map.size() / 2; i++) {
+            String key = map.remove(i + ".key");
+            String value = map.remove(i + ".value");
+            if (StringUtils.isBlank(key) || StringUtils.isBlank(value)) {
                 break;
             }
-            result.put(key, value);
-            i++;
+            ret.put(key, value);
         }
-        return result;
+        map.clear();
+        map.putAll(ret);
     }
 
     public BrpcConfig getServiceConfig(Class<?> serviceInterface) {
         BrpcConfig brpcConfig = new BrpcConfig(global);
-        StringBuilder sb = new StringBuilder(64);
-        String prefix = sb.append("brpc.custom.")
-                .append(serviceInterface.getName())
-                .append(".")
-                .toString();
-        ReflectionUtils.doWithFields(RpcNamingConfig.class, new ReflectionUtils.FieldCallback() {
-            @Override
-            public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
-                Object value;
-                if (field.getName().equals("extra")) {
-                    // extra field is a list of {key, value} objects
-                    value = extractMap(environment, prefix + "naming.extra");
-                } else {
-                    StringBuilder sb = new StringBuilder(128);
-                    String key = sb.append(prefix).append("naming.").append(field.getName()).toString();
-                    value = environment.getProperty(key, field.getType());
-                }
-                if (value != null) {
-                    try {
-                        field.setAccessible(true);
-                        field.set(brpcConfig.getNaming(), value);
-                    } catch (Exception ex) {
-                        throw new RuntimeException("set custom config failed", ex);
-                    }
-                }
-            }
-        });
-
-        ReflectionUtils.doWithFields(RpcClientConfig.class, new ReflectionUtils.FieldCallback() {
-            @Override
-            public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
-                StringBuilder sb = new StringBuilder(128);
-                String key = sb.append(prefix).append("client.").append(field.getName()).toString();
-                Object value = environment.getProperty(key, field.getType());
-                if (value != null) {
-                    try {
-                        field.setAccessible(true);
-                        field.set(brpcConfig.getClient(), value);
-                    } catch (Exception ex) {
-                        throw new RuntimeException("set custom config failed", ex);
-                    }
-                }
-            }
-        });
-
-        ReflectionUtils.doWithFields(RpcServerConfig.class, new ReflectionUtils.FieldCallback() {
-            @Override
-            public void doWith(Field field) throws IllegalArgumentException, IllegalAccessException {
-                StringBuilder sb = new StringBuilder(128);
-                String key = sb.append(prefix).append("server.").append(field.getName()).toString();
-                Object value = environment.getProperty(key, field.getType());
-                if (value != null) {
-                    try {
-                        field.setAccessible(true);
-                        field.set(brpcConfig.getServer(), value);
-                    } catch (Exception ex) {
-                        throw new RuntimeException("set custom config failed", ex);
-                    }
-                }
-            }
-        });
-
+        String prefix = "brpc.custom." + serviceInterface.getName() + ".";
+        Binder binder = Binder.get(environment);
+        binder.bind(camelToKebabCase(prefix + "naming"), Bindable.ofInstance(brpcConfig.getNaming()));
+        binder.bind(camelToKebabCase(prefix + "client"), Bindable.ofInstance(brpcConfig.getClient()));
+        binder.bind(camelToKebabCase(prefix + "server"), Bindable.ofInstance(brpcConfig.getServer()));
+        rewriteMap(brpcConfig.getNaming().getExtra());
         return brpcConfig;
-    }
-
-    public void setEnvironment(Environment environment) {
-        this.environment = environment;
     }
 }

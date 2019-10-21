@@ -1,0 +1,22 @@
+{
+  "properties": [
+    {
+      "name": "brpc.custom",
+      "type": "java.util.Map<java.lang.String,com.baidu.brpc.spring.boot.autoconfigure.config.BrpcConfig>",
+      "description": "Service specific customized config."
+    }
+  ],
+  "hints": [
+    {
+      "name": "brpc.global.server.interceptor-bean-name",
+      "providers": [
+        {
+          "name": "spring-bean-reference",
+          "parameters": {
+            "target": "com.baidu.brpc.interceptor.Interceptor"
+          }
+        }
+      ]
+    }
+  ]
+}
