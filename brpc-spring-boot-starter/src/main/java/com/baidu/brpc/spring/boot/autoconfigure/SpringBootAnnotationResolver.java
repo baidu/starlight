@@ -55,6 +55,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -271,10 +272,13 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
                 && StringUtils.isNoneBlank(brpcConfig.getServer().getInterceptorBeanName())) {
             Interceptor interceptor = beanFactory.getBean(
                     brpcConfig.getServer().getInterceptorBeanName(), Interceptor.class);
-            if (rpcServiceExporter.getInterceptors() != null) {
+            if (rpcServiceExporter.getInterceptors() != null &&
+                    !rpcServiceExporter.getInterceptors().contains(interceptor)) {
                 rpcServiceExporter.getInterceptors().add(interceptor);
             } else {
-                rpcServiceExporter.setInterceptors(Arrays.asList(interceptor));
+                List<Interceptor> interceptors = new ArrayList<>();
+                interceptors.add(interceptor);
+                rpcServiceExporter.setInterceptors(interceptors); // must be immutable
             }
         }
 

@@ -17,12 +17,25 @@ package com.baidu.brpc.spring.boot.autoconfigure.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.context.properties.NestedConfigurationProperty;
 
 @Getter
 @Setter
 public class BrpcConfig {
+    /**
+     * Naming config
+     */
+    @NestedConfigurationProperty
     private RpcNamingConfig naming;
+    /**
+     * Client Config
+     */
+    @NestedConfigurationProperty
     private RpcClientConfig client;
+    /**
+     * Server config
+     */
+    @NestedConfigurationProperty
     private RpcServerConfig server;
 
     public BrpcConfig() {
