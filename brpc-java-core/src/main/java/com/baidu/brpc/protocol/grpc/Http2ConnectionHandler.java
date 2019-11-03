@@ -25,6 +25,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+//Copy from netty http2 lib
 public class Http2ConnectionHandler implements Http2LifecycleManager {
     private static final InternalLogger logger = InternalLoggerFactory.getInstance(Http2ConnectionHandler.class);
     private static final Http2Headers HEADERS_TOO_LARGE_HEADERS;

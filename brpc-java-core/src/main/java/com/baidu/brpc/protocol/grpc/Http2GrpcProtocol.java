@@ -2,8 +2,6 @@ package com.baidu.brpc.protocol.grpc;
 
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
-import com.baidu.brpc.client.RpcClient;
-import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.compress.Compress;
 import com.baidu.brpc.compress.CompressManager;
 import com.baidu.brpc.exceptions.BadSchemaException;
@@ -121,12 +119,14 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
-        return null;
+        //return null;
+        throw new UnsupportedOperationException("encodeRequest is not support in grpc protocol");
     }
 
     @Override
     public Response decodeResponse(Object msg, ChannelHandlerContext ctx) throws Exception {
-        return null;
+        throw new UnsupportedOperationException("decodeResponse is not support in grpc protocol");
+
     }
 
     @Override
@@ -176,35 +176,5 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
             return Unpooled.EMPTY_BUFFER;
         }
-    }
-
-    /**
-     * Init connection before sent request to server
-     * @param request
-     * @param rpcClient
-     * @param channelGroup
-     */
-    @Override
-    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannel channelGroup) {
-        Http2Connection connection = new DefaultHttp2Connection(false);
-        Http2ConnectionEncoder encoder = new DefaultHttp2ConnectionEncoder(connection, new DefaultHttp2FrameWriter());
-        Http2ConnectionDecoder decoder = new DefaultHttp2ConnectionDecoder(connection, encoder, new DefaultHttp2FrameReader(), Http2PromisedRequestVerifier.ALWAYS_VERIFY, true);
-
-        Http2Settings initialSettings = new Http2Settings();
-        initialSettings.pushEnabled(false);
-        initialSettings.maxConcurrentStreams(0);
-        initialSettings.initialWindowSize(1048576);
-        initialSettings.maxHeaderListSize(8192L);
-
-        Http2ConnectionHandler handler = new Http2ConnectionHandler(false, new DefaultHttp2FrameWriter(),
-                null, initialSettings);
-
-        //handler.write();
-
-
-
-
-
-
     }
 }

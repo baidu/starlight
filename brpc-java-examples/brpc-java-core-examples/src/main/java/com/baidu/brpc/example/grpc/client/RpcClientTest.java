@@ -1,44 +1,35 @@
 package com.baidu.brpc.example.grpc.client;
 
-import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
+import com.baidu.brpc.client.instance.Endpoint;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
-import com.baidu.brpc.example.http.json.EchoService;
-import com.baidu.brpc.example.interceptor.CustomInterceptor;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.example.standard.Echo;
+import com.baidu.brpc.example.standard.EchoServiceGrpc;
 import com.baidu.brpc.protocol.Options;
-
-import java.util.ArrayList;
-import java.util.List;
+import io.grpc.StatusRuntimeException;
 
 public class RpcClientTest {
     public static void main(String[] args) {
         RpcClientOptions clientOption = new RpcClientOptions();
         clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_GRPC_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(5000);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setMaxTryTimes(1);
 
-        String serviceUrl = "list://127.0.0.1:50051";
-        if (args.length == 1) {
-            serviceUrl = args[0];
-        }
+        Endpoint endpoint = new Endpoint("127.0.0.1",50051);
+        RpcClient rpcClient = new RpcClient(endpoint,clientOption);
+        io.grpc.Channel channel = rpcClient.selectGrpcChannel(endpoint);
 
-        List<Interceptor> interceptors = new ArrayList<Interceptor>();;
-        interceptors.add(new CustomInterceptor());
-
-        // sync call
-        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-        EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
+        EchoServiceGrpc.EchoServiceBlockingStub blockingStub = EchoServiceGrpc.newBlockingStub(channel);
+        Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello grpc!!").build();
+        Echo.EchoResponse response;
         try {
-            String response = echoService.hello("okok");
-            System.out.printf("sync call success, response=%s\n", response);
-        } catch (RpcException ex) {
-            System.out.println("sync call failed, msg=" + ex.getMessage());
+            for(int i=0;i<10;i++) {
+                response = blockingStub.echo(request);
+                System.out.println("Greeting: " + response.getMessage());
+            }
+        } catch (StatusRuntimeException e) {
+            e.printStackTrace();
         }
-        rpcClient.stop();
     }
 }
