@@ -18,7 +18,7 @@ public class RpcClientTest {
 
         Endpoint endpoint = new Endpoint("127.0.0.1",50051);
         RpcClient rpcClient = new RpcClient(endpoint,clientOption);
-        io.grpc.Channel channel = rpcClient.selectGrpcChannel(endpoint);
+        io.grpc.Channel channel = rpcClient.selectChannel(endpoint,true);
 
         EchoServiceGrpc.EchoServiceBlockingStub blockingStub = EchoServiceGrpc.newBlockingStub(channel);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello grpc!!").build();

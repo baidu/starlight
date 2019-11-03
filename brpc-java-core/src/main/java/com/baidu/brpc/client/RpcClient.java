@@ -375,25 +375,27 @@ public class RpcClient {
      * @param endpoint ip:port
      * @return grpc channel
      */
-    public io.grpc.Channel selectChannel(List<Endpoint> list) {
-
-        Set<io.grpc.Channel> selectedChannel = new HashSet<io.grpc.Channel>();
-        ManagedChannel grpcChannel = (ManagedChannel)loadBalanceStrategy.selectInstance(
-                null,
-                instanceProcessor.getHealthyInstanceChannels(),
-                selectedChannel
-        );
-        //ManagedChannel grpcChannel = (ManagedChannel)instanceProcessor.getInstanceChannelMap().get(endpoint);
-        if (grpcChannel == null) {
-            LOG.warn("instance:{} not found, may be it is removed from naming service.", endpoint);
-            throw new RpcException(RpcException.SERVICE_EXCEPTION, "instance not found:" + endpoint);
+    public io.grpc.Channel selectChannel(Endpoint endpoint,boolean isGrpc) {
+        if(isGrpc) {
+            Set<io.grpc.Channel> selectedChannel = new HashSet<io.grpc.Channel>();
+            ManagedChannel grpcChannel = (ManagedChannel) loadBalanceStrategy.selectInstance(
+                    null,
+                    instanceProcessor.getHealthyInstanceChannels(),
+                    selectedChannel
+            );
+            //ManagedChannel grpcChannel = (ManagedChannel)instanceProcessor.getInstanceChannelMap().get(endpoint);
+            if (grpcChannel == null) {
+                LOG.warn("instance:{} not found, may be it is removed from naming service.", endpoint);
+                throw new RpcException(RpcException.SERVICE_EXCEPTION, "instance not found:" + endpoint);
+            }
+            if (grpcChannel.isShutdown() || grpcChannel.isTerminated()) {
+                instanceProcessor.deleteInstances(Lists.newArrayList(new ServiceInstance(endpoint)));
+                String errMsg = "channel is non active, retry another channel";
+                throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
+            }
+            return grpcChannel;
         }
-        if (grpcChannel.isShutdown() || grpcChannel.isTerminated()) {
-            instanceProcessor.deleteInstances(Lists.newArrayList(new ServiceInstance(endpoint)));
-            String errMsg = "channel is non active, retry another channel";
-            throw new RpcException(RpcException.NETWORK_EXCEPTION, errMsg);
-        }
-        return grpcChannel;
+        return null;
     }
 
 
