@@ -1,6 +1,6 @@
 ## 示例程序
 
-[brpc-java-examples/src/main/java/com/baidu/brpc/example/http](https://github.com/baidu/brpc-java/tree/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/http)
+[brpc-java-core-examples/src/main/java/com/baidu/brpc/example/http](https://github.com/baidu/brpc-java/tree/master/brpc-java-examples/brpc-java-core-examples/src/main/java/com/baidu/brpc/example/http)
 
 ## 支持的content-type类型
 * application/json
