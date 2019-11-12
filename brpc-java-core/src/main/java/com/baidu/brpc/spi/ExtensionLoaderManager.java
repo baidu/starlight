@@ -8,7 +8,6 @@ import com.baidu.brpc.protocol.ProtocolFactory;
 import com.baidu.brpc.protocol.ProtocolManager;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ExtensionLoaderManager {
     private static volatile ExtensionLoaderManager instance;
@@ -24,16 +23,23 @@ public class ExtensionLoaderManager {
         return instance;
     }
 
-    private AtomicBoolean load = new AtomicBoolean(false);
+    private Object loadLock = new Object();
+    private Boolean isLoaded = false;
 
     /**
      * load all extensions with java spi
      */
     public void loadAllExtensions(String encoding) {
-        if (load.compareAndSet(false, true)) {
-            loadNamingService();
-            loadProtocol(encoding);
-            loadLoadBalance();
+        if (!isLoaded) {
+            synchronized (loadLock) {
+                if (!isLoaded) {
+                    loadNamingService();
+                    loadProtocol(encoding);
+                    loadLoadBalance();
+
+                    isLoaded = true;
+                }
+            }
         }
     }
 
