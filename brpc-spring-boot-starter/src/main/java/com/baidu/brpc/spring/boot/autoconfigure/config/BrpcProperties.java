@@ -66,11 +66,20 @@ public class BrpcProperties implements EnvironmentAware {
 
     public BrpcConfig getServiceConfig(Class<?> serviceInterface) {
         BrpcConfig brpcConfig = new BrpcConfig(global);
+        if (brpcConfig.getClient() == null) {
+            brpcConfig.setClient(new RpcClientConfig());
+        }
+        if (brpcConfig.getServer() == null) {
+            brpcConfig.setServer(new RpcServerConfig());
+        }
+        if (brpcConfig.getNaming() == null) {
+            brpcConfig.setNaming(new RpcNamingConfig());
+        }
         String prefix = "brpc.custom." + serviceInterface.getName() + ".";
         Binder binder = Binder.get(environment);
-        binder.bind(camelToKebabCase(prefix + "naming"), Bindable.ofInstance(brpcConfig.getNaming()));
         binder.bind(camelToKebabCase(prefix + "client"), Bindable.ofInstance(brpcConfig.getClient()));
         binder.bind(camelToKebabCase(prefix + "server"), Bindable.ofInstance(brpcConfig.getServer()));
+        binder.bind(camelToKebabCase(prefix + "naming"), Bindable.ofInstance(brpcConfig.getNaming()));
         rewriteMap(brpcConfig.getNaming().getExtra());
         return brpcConfig;
     }
