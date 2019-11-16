@@ -24,7 +24,7 @@ import org.springframework.stereotype.Service;
 @Service("echoServiceImpl")
 @RpcExporter(port = "8012",
         rpcServerOptionsBeanName = "rpcServerOptions",
-        interceptorBeanName = "customInterceptor")
+        interceptorBeanNames = "customInterceptor")
 public class EchoServiceImpl implements EchoService {
     private static final Logger LOG = LoggerFactory.getLogger(EchoServiceImpl.class);
 

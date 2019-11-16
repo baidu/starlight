@@ -15,6 +15,7 @@ brpc:
     client:
       workThreadNum: 1
       ioThreadNum: 1
+      interceptorBeanNames: customInterceptor
   custom:
     com.baidu.brpc.example.springboot.api.EchoService:
       naming:

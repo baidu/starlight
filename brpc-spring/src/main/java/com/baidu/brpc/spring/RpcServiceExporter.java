@@ -73,7 +73,7 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
     /**
      * The interceptor.
      */
-    private List<Interceptor> interceptors;
+    private List<Interceptor> interceptors = new ArrayList<Interceptor>();
 
     /* (non-Javadoc)
      * @see org.springframework.beans.factory.DisposableBean#destroy()

@@ -24,7 +24,7 @@ import lombok.Setter;
 public class RpcServerConfig extends RpcServerOptions {
     private int port;
     private boolean useSharedThreadPool;
-    private String interceptorBeanName;
+    private String interceptorBeanNames;
 
     public RpcServerConfig() {
     }
@@ -33,6 +33,6 @@ public class RpcServerConfig extends RpcServerOptions {
         super(rhs);
         this.port = rhs.getPort();
         this.useSharedThreadPool = rhs.isUseSharedThreadPool();
-        this.interceptorBeanName = rhs.getInterceptorBeanName();
+        this.interceptorBeanNames = rhs.getInterceptorBeanNames();
     }
 }

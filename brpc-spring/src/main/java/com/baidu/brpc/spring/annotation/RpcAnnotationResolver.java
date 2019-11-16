@@ -94,9 +94,9 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     private NamingServiceFactory namingServiceFactory;
 
     /**
-     * The default interceptor for all service
+     * The default interceptors for all service
      */
-    private Interceptor interceptor;
+    private List<Interceptor> interceptors = new ArrayList<Interceptor>();
 
     /**
      * The protobuf rpc annotation resolver listener.
@@ -162,18 +162,17 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         }
 
         // interceptor
-        String interceptorName = parsePlaceholder(rpcExporter.interceptorBeanName());
-        if (!StringUtils.isBlank(interceptorName)) {
-            Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
-            List<Interceptor> interceptors = new ArrayList<Interceptor>();
-            interceptors.add(interceptor);
-            rpcServiceExporter.setInterceptors(interceptors);
-        } else {
-            if (interceptor != null) {
-                List<Interceptor> interceptors = new ArrayList<Interceptor>();
-                interceptors.add(interceptor);
-                rpcServiceExporter.setInterceptors(interceptors);
+        String interceptorNames = parsePlaceholder(rpcExporter.interceptorBeanNames());
+        if (!StringUtils.isBlank(interceptorNames)) {
+            List<Interceptor> customInterceptors = new ArrayList<Interceptor>();
+            String[] interceptorNameArray = interceptorNames.split(",");
+            for (String interceptorName : interceptorNameArray) {
+                Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
+                customInterceptors.add(interceptor);
             }
+            rpcServiceExporter.setInterceptors(customInterceptors);
+        } else {
+            rpcServiceExporter.setInterceptors(interceptors);
         }
 
         // naming options
@@ -339,18 +338,17 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         values.addPropertyValue("serviceId", rpcProxy.name());
 
         // interceptor
-        String interceptorName = parsePlaceholder(rpcProxy.interceptorBeanName());
-        if (!StringUtils.isBlank(interceptorName)) {
-            Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
-            List<Interceptor> interceptors = new ArrayList<Interceptor>();
-            interceptors.add(interceptor);
-            values.addPropertyValue("interceptors", interceptors);
-        } else {
-            if (interceptor != null) {
-                List<Interceptor> interceptors = new ArrayList<Interceptor>();
-                interceptors.add(interceptor);
-                values.addPropertyValue("interceptors", interceptors);
+        String interceptorNames = parsePlaceholder(rpcProxy.interceptorBeanNames());
+        if (!StringUtils.isBlank(interceptorNames)) {
+            List<Interceptor> customInterceptors = new ArrayList<Interceptor>();
+            String[] interceptorNameArray = interceptorNames.split(",");
+            for (String interceptorName : interceptorNameArray) {
+                Interceptor interceptor = beanFactory.getBean(interceptorName, Interceptor.class);
+                customInterceptors.add(interceptor);
             }
+            values.addPropertyValue("interceptors", customInterceptors);
+        } else {
+            values.addPropertyValue("interceptors", interceptors);
         }
 
         beanDef.setPropertyValues(values);

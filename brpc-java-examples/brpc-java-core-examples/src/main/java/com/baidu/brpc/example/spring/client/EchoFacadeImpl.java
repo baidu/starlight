@@ -33,11 +33,11 @@ import java.util.concurrent.Future;
 @Getter
 public class EchoFacadeImpl implements EchoFacade {
     @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
+            interceptorBeanNames = "customInterceptor")
     private EchoService echoService;
 
     @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
+            interceptorBeanNames = "customInterceptor")
     private EchoService echoService2;
 
     /**
@@ -45,7 +45,7 @@ public class EchoFacadeImpl implements EchoFacade {
      * not used RpcClient of sync interface proxy.
      */
     @RpcProxy(rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
+            interceptorBeanNames = "customInterceptor")
     private AsyncEchoService echoService3;
 
     public EchoResponse echo(EchoRequest request) {

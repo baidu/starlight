@@ -16,3 +16,4 @@ brpc:
       port: 8002
       workThreadNum: 1
       ioThreadNum: 1
+      interceptorBeanNames: customInterceptor,customInterceptor2
