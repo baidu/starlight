@@ -22,13 +22,13 @@ import lombok.Setter;
 @Setter
 @Getter
 public class RpcClientConfig extends RpcClientOptions {
-    private String interceptorBeanName;
+    private String interceptorBeanNames;
 
     public RpcClientConfig() {
     }
 
     public RpcClientConfig(RpcClientConfig rhs) {
         super(rhs);
-        this.interceptorBeanName = rhs.getInterceptorBeanName();
+        this.interceptorBeanNames = rhs.getInterceptorBeanNames();
     }
 }

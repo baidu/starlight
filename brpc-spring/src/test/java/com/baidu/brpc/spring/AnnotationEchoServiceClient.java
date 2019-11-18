@@ -34,6 +34,6 @@ public class AnnotationEchoServiceClient {
 
     @RpcProxy(namingServiceUrl = "list://127.0.0.1:8012",
             rpcClientOptionsBeanName = "rpcClientOptions",
-            interceptorBeanName = "customInterceptor")
+            interceptorBeanNames = "customInterceptor")
     private EchoService echoService;
 }

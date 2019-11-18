@@ -30,7 +30,7 @@ import com.baidu.brpc.spring.annotation.RpcExporter;
 @RpcExporter(port = "8012",
         useServiceSharedThreadPool = false,
         rpcServerOptionsBeanName = "rpcServerOptions",
-        interceptorBeanName = "customInterceptor",
+        interceptorBeanNames = "customInterceptor",
         extraOptions = {
                 // We can pass extra options to the NamingService
                 // `weight` is just an example here, currently we don't have any NamingService supports weight yet
