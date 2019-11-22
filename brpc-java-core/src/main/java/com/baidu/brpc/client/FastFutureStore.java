@@ -128,7 +128,7 @@ public class FastFutureStore {
 
             // loopCount is bigger than capacity indicating FastFutureStore has ran out of space
             if (++loopCount >= cap) {
-                LOG.debug("FutureStore exhausted, current=%d, store id in map", cap);
+                LOG.debug("FutureStore exhausted, current={}, store id in map", cap);
                 return storeInMap(currentCounter, fut);
             }
         }
