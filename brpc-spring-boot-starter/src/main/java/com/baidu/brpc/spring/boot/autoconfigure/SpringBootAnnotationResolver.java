@@ -267,9 +267,9 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
         // interceptor
         if (brpcConfig.getServer() != null
                 && StringUtils.isNoneBlank(brpcConfig.getServer().getInterceptorBeanNames())) {
-            String[] interceptorNameArray = brpcConfig.getServer().getInterceptorBeanNames().split(",");
+            String[] interceptorNameArray = brpcConfig.getServer().getInterceptorBeanNames().trim().split(",");
             for (String interceptorBeanName : interceptorNameArray) {
-                Interceptor interceptor = beanFactory.getBean(interceptorBeanName, Interceptor.class);
+                Interceptor interceptor = beanFactory.getBean(interceptorBeanName.trim(), Interceptor.class);
                 if (!rpcServiceExporter.getInterceptors().contains(interceptor)) {
                     rpcServiceExporter.getInterceptors().add(interceptor);
                 }
