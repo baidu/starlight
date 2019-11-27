@@ -24,6 +24,7 @@ import com.baidu.brpc.utils.BrpcConstants;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.Builder;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
@@ -31,6 +32,7 @@ import lombok.Setter;
 @Setter
 @Getter
 @NoArgsConstructor
+@Builder
 public class RpcClientOptions {
 
     private int protocolType = Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE;
