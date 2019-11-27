@@ -18,11 +18,11 @@ public class RpcOptionsTest {
           .clientName("client")
           .build();
 
-    Assert.assertEquals("UTF-8",client.getEncoding());
-    Assert.assertEquals(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE,client.getProtocolType());
-    Assert.assertEquals(1000,client.getHealthyCheckIntervalMillis());
-    Assert.assertEquals(true,client.isReuseAddr());
-    Assert.assertEquals("client",client.getClientName());
+    Assert.assertEquals("UTF-8", client.getEncoding());
+    Assert.assertEquals(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE, client.getProtocolType());
+    Assert.assertEquals(1000, client.getHealthyCheckIntervalMillis());
+    Assert.assertEquals(true, client.isReuseAddr());
+    Assert.assertEquals("client", client.getClientName());
   }
 
   @Test
@@ -33,9 +33,9 @@ public class RpcOptionsTest {
           .maxSize(2000)
           .build();
 
-    Assert.assertEquals("UTF-8",server.getEncoding());
-    Assert.assertEquals(false,server.isKeepAlive());
-    Assert.assertEquals(2000,server.getMaxSize());
+    Assert.assertEquals("UTF-8", server.getEncoding());
+    Assert.assertEquals(false, server.isKeepAlive());
+    Assert.assertEquals(2000, server.getMaxSize());
   }
 
 }
