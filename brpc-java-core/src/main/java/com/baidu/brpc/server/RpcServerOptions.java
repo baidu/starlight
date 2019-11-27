@@ -20,20 +20,19 @@ import com.baidu.brpc.utils.BrpcConstants;
 
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.experimental.Tolerate;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
  */
 @Setter
 @Getter
-@ToString
-@NoArgsConstructor
 @Builder
+@AllArgsConstructor
 public class RpcServerOptions {
     // The keep alive
     private boolean keepAlive = true;
@@ -88,6 +87,9 @@ public class RpcServerOptions {
     private String namingServiceUrl = "";
     // share global thread pool between multi rpcServer
     private boolean globalThreadPoolSharing = false;
+
+    @Tolerate
+    public RpcServerOptions(){}
 
     public RpcServerOptions(RpcServerOptions options) {
         this.copyFrom(options);
