@@ -20,17 +20,20 @@ import com.baidu.brpc.client.channel.ChannelType;
 import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.utils.BrpcConstants;
-
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.Tolerate;
+
 
 /**
  * Created by wenweihu86 on 2017/4/24.
  */
 @Setter
 @Getter
-@NoArgsConstructor
+@Builder
+@AllArgsConstructor
 public class RpcClientOptions {
 
     private int protocolType = Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE;
@@ -81,6 +84,9 @@ public class RpcClientOptions {
 
     // share worker thread poll and event thread pool between multi RpcClients
     private boolean globalThreadPoolSharing = false;
+
+    @Tolerate
+    public RpcClientOptions(){}
 
     public RpcClientOptions(RpcClientOptions options) {
         this.copyFrom(options);
