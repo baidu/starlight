@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import lombok.Builder;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
@@ -32,6 +33,7 @@ import lombok.ToString;
 @Getter
 @ToString
 @NoArgsConstructor
+@Builder
 public class RpcServerOptions {
     // The keep alive
     private boolean keepAlive = true;
