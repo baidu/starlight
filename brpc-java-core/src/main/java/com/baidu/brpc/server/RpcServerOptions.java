@@ -22,15 +22,13 @@ import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import lombok.experimental.Tolerate;
 
 /**
  * Created by wenweihu86 on 2017/4/24.
  */
-@Setter
-@Getter
+@Data
 @Builder
 @AllArgsConstructor
 public class RpcServerOptions {
