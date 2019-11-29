@@ -2,6 +2,8 @@ package com.baidu.brpc.protocol.grpc;
 
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
+import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.compress.Compress;
 import com.baidu.brpc.compress.CompressManager;
 import com.baidu.brpc.exceptions.BadSchemaException;
@@ -14,7 +16,6 @@ import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.ServiceManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.*;
@@ -74,27 +75,48 @@ public class Http2GrpcProtocol extends AbstractProtocol {
             handleDecodeException(ctx, channelId, handler);
         }
 
-        Http2GrpcRequest request = frameListener.getHttp2GrpcRequest();
+        if(isDecodingRequest) {
+            Http2GrpcRequest request = frameListener.getHttp2GrpcRequest();
 
-        Http2Headers requestHeaders = request.getHttp2Headers().headers();
-        CharSequence path = requestHeaders.path();
-        String pathStr = path.toString();
-        String[] arr = pathStr.split("/");
-        String serviceName = arr[1];
-        String methodName = arr[2];
+            Http2Headers requestHeaders = request.getHttp2Headers().headers();
+            CharSequence path = requestHeaders.path();
+            String pathStr = path.toString();
+            String[] arr = pathStr.split("/");
+            String serviceName = arr[1];
+            String methodName = arr[2];
 
-        int compressType = Options.CompressType.COMPRESS_TYPE_NONE_VALUE;
-        request.setCompressType(compressType);
-        request.setServiceName(serviceName);
-        request.setMethodName(methodName);
-        request.setChannelHandlerContext(ctx);
+            int compressType = Options.CompressType.COMPRESS_TYPE_NONE_VALUE;
+            request.setCompressType(compressType);
+            request.setServiceName(serviceName);
+            request.setMethodName(methodName);
+            request.setChannelHandlerContext(ctx);
 
-        return request;
+            return request;
+        } else {
+            return null;
+        }
     }
 
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
-        return null;
+        String serviceName = request.getServiceName();
+        String methodName = request.getMethodName();
+        Object protoObject = request.getArgs()[0];
+
+        Http2Connection connection = new DefaultHttp2Connection(true);
+        Http2ConnectionEncoder encoder = new DefaultHttp2ConnectionEncoder(connection, new DefaultHttp2FrameWriter());
+
+        Http2HeadersEncoder headersEncoder = new DefaultHttp2HeadersEncoder();
+
+        Http2Headers requestHeader = new DefaultHttp2Headers();
+        requestHeader.method("POST");
+        requestHeader.path("/"+serviceName + "/"+ methodName);
+        requestHeader.add("content-type", "application/grpc+proto");
+
+        ByteBuf result = request.getChannel().alloc().buffer();
+        headersEncoder.encodeHeaders(0,requestHeader,result);
+
+        return Unpooled.wrappedBuffer(result);
     }
 
     @Override
@@ -176,5 +198,11 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         } finally {
             handlerMap.remove(channelId);
         }
+    }
+
+    @Override
+    public void beforeRequestSent(Request request, RpcClient rpcClient, BrpcChannel channelGroup) {
+        // if the http2 connection does not established, we should send connect preface to server
+
     }
 }
