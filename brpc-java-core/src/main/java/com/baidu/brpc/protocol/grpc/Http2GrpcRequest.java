@@ -1,6 +1,7 @@
 package com.baidu.brpc.protocol.grpc;
 
 import com.baidu.brpc.protocol.AbstractRequest;
+import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http2.Http2DataFrame;
 import io.netty.handler.codec.http2.Http2HeadersFrame;
 import lombok.Getter;
@@ -18,6 +19,9 @@ public class Http2GrpcRequest extends AbstractRequest {
     @Getter
     @Setter
     private boolean isEndOfStream;
+    @Getter
+    @Setter
+    private ChannelHandlerContext channelHandlerContext;
 
 
 }
