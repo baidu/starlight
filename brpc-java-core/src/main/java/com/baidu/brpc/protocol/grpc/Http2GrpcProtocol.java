@@ -13,7 +13,10 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.ServiceManager;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPromise;
 import io.netty.handler.codec.http2.*;
 
 import java.util.ArrayList;
@@ -53,6 +56,8 @@ public class Http2GrpcProtocol extends AbstractProtocol {
                 handlerMap.put(channelId, handler);
             } catch (Exception e) {
                 throw new BadSchemaException(e);
+            } finally {
+                handleDecodeException(ctx, channelId, handler);
             }
         }
 
@@ -65,6 +70,8 @@ public class Http2GrpcProtocol extends AbstractProtocol {
             handler.decode(ctx, readyToDecode, new ArrayList());
         } catch (Exception e) {
             throw new BadSchemaException(e);
+        } finally {
+            handleDecodeException(ctx, channelId, handler);
         }
 
         Http2GrpcRequest request = frameListener.getHttp2GrpcRequest();
@@ -80,6 +87,7 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         request.setCompressType(compressType);
         request.setServiceName(serviceName);
         request.setMethodName(methodName);
+        request.setChannelHandlerContext(ctx);
 
         return request;
     }
@@ -97,7 +105,7 @@ public class Http2GrpcProtocol extends AbstractProtocol {
     @Override
     public Request decodeRequest(Object packet) throws Exception {
 
-        Http2GrpcRequest http2GrpcRequest = (Http2GrpcRequest)packet;
+        Http2GrpcRequest http2GrpcRequest = (Http2GrpcRequest) packet;
 
         RpcMethodInfo rpcMethodInfo = serviceManager.getService(
                 http2GrpcRequest.getServiceName(), http2GrpcRequest.getMethodName());
@@ -111,12 +119,62 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         http2GrpcRequest.setTargetMethod(rpcMethodInfo.getMethod());
         http2GrpcRequest.setTarget(rpcMethodInfo.getTarget());
 
-
         return http2GrpcRequest;
     }
 
     @Override
     public ByteBuf encodeResponse(Request request, Response response) throws Exception {
-        return null;
+
+        if (request == null) return Unpooled.EMPTY_BUFFER;
+
+        Http2GrpcRequest http2GrpcRequest = (Http2GrpcRequest) request;
+        Object responseProto = response.getResult();
+
+
+        int streamId = http2GrpcRequest.getHttp2Headers().stream().id();
+        String channelId = request.getChannel().id().asLongText();
+
+        Http2ConnectionHandler handler = handlerMap.get(channelId);
+        ChannelHandlerContext ctx = http2GrpcRequest.getChannelHandlerContext();
+
+        Http2Headers responseHeader = new DefaultHttp2Headers();
+        responseHeader.status("200");
+        responseHeader.add("content-type", "application/grpc+proto");
+
+        Http2Headers responseEndHeader = new DefaultHttp2Headers();
+        responseEndHeader.add("grpc-status", "0");
+
+        if (responseProto != null) {
+            Compress compress = compressManager.getCompress(request.getCompressType());
+            ByteBuf protoBuf = compress.compressOutput(responseProto, response.getRpcMethodInfo());
+            ByteBuf resultDataBuf = ctx.alloc().buffer(2 + 4 + protoBuf.readableBytes());
+
+            resultDataBuf.writeShort(0); // compress flag (0 means no compress)
+            resultDataBuf.writeMedium(protoBuf.readableBytes()); // data length
+            resultDataBuf.writeBytes(protoBuf); // data content
+
+
+            ChannelPromise promise = ctx.newPromise();
+            Http2FrameWriter frameWriter = handler.encoder().frameWriter();
+            frameWriter.writeHeaders(ctx, streamId, responseHeader, 0, false, promise);
+            frameWriter.writeData(ctx, streamId, resultDataBuf, 0, false, promise);
+            frameWriter.writeHeaders(ctx, streamId, responseEndHeader, 0, true, promise);
+
+        }
+
+
+        return Unpooled.EMPTY_BUFFER;
+    }
+
+    private void handleDecodeException(ChannelHandlerContext ctx, String channelId, Http2ConnectionHandler handler) {
+        try {
+            if (handler != null) {
+                handler.close(ctx, ctx.newPromise());
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        } finally {
+            handlerMap.remove(channelId);
+        }
     }
 }
