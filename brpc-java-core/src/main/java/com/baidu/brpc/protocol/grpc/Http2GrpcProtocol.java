@@ -50,15 +50,12 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
             handler = new Http2ConnectionHandler(true, new DefaultHttp2FrameWriter(),
                     null, new Http2Settings());
-
             try {
                 handler.handlerAdded(ctx);
                 decoder.lifecycleManager(handler);
                 handlerMap.put(channelId, handler);
-            } catch (Exception e) {
+            } catch(Exception e){
                 throw new BadSchemaException(e);
-            } finally {
-                handleDecodeException(ctx, channelId, handler);
             }
         }
 
@@ -70,33 +67,35 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         try {
             handler.decode(ctx, readyToDecode, new ArrayList());
         } catch (Exception e) {
-            throw new BadSchemaException(e);
-        } finally {
             handleDecodeException(ctx, channelId, handler);
+            throw new BadSchemaException(e);
         }
 
         if(isDecodingRequest) {
             Http2GrpcRequest request = frameListener.getHttp2GrpcRequest();
+            if(request != null) {
+                Http2Headers requestHeaders = request.getHttp2Headers().headers();
+                CharSequence path = requestHeaders.path();
+                String pathStr = path.toString();
+                String[] arr = pathStr.split("/");
+                String serviceName = arr[1];
+                String methodName = arr[2];
 
-            Http2Headers requestHeaders = request.getHttp2Headers().headers();
-            CharSequence path = requestHeaders.path();
-            String pathStr = path.toString();
-            String[] arr = pathStr.split("/");
-            String serviceName = arr[1];
-            String methodName = arr[2];
+                int compressType = Options.CompressType.COMPRESS_TYPE_NONE_VALUE;
+                request.setCompressType(compressType);
+                request.setServiceName(serviceName);
+                request.setMethodName(methodName);
+                request.setChannelHandlerContext(ctx);
 
-            int compressType = Options.CompressType.COMPRESS_TYPE_NONE_VALUE;
-            request.setCompressType(compressType);
-            request.setServiceName(serviceName);
-            request.setMethodName(methodName);
-            request.setChannelHandlerContext(ctx);
-
-            return request;
+                return request;
+            } else return null;
         } else {
+            //TODO decode response here
             return null;
         }
     }
 
+    //TODO encode request here
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
         String serviceName = request.getServiceName();
@@ -121,27 +120,35 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
     @Override
     public Response decodeResponse(Object msg, ChannelHandlerContext ctx) throws Exception {
+        //TODO decode response body here
         return null;
     }
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
+        if(packet != null) {
+            Http2GrpcRequest http2GrpcRequest = (Http2GrpcRequest) packet;
 
-        Http2GrpcRequest http2GrpcRequest = (Http2GrpcRequest) packet;
+            RpcMethodInfo rpcMethodInfo = serviceManager.getService(
+                    http2GrpcRequest.getServiceName(), http2GrpcRequest.getMethodName());
 
-        RpcMethodInfo rpcMethodInfo = serviceManager.getService(
-                http2GrpcRequest.getServiceName(), http2GrpcRequest.getMethodName());
+            ByteBuf protoAndAttachmentBuf = http2GrpcRequest.getHttp2Data().content();
 
-        ByteBuf protoAndAttachmentBuf = http2GrpcRequest.getHttp2Data().content();
+            /*
+            Necessary operation
+             */
+            byte compressFlag = protoAndAttachmentBuf.readByte();
+            int messageLength = protoAndAttachmentBuf.readInt();
 
-        Compress compress = compressManager.getCompress(http2GrpcRequest.getCompressType());
-        Object proto = compress.uncompressInput(protoAndAttachmentBuf, rpcMethodInfo);
-        http2GrpcRequest.setArgs(new Object[]{proto});
-        http2GrpcRequest.setRpcMethodInfo(rpcMethodInfo);
-        http2GrpcRequest.setTargetMethod(rpcMethodInfo.getMethod());
-        http2GrpcRequest.setTarget(rpcMethodInfo.getTarget());
+            Compress compress = compressManager.getCompress(http2GrpcRequest.getCompressType());
+            Object proto = compress.uncompressInput(protoAndAttachmentBuf, rpcMethodInfo);
+            http2GrpcRequest.setArgs(new Object[]{proto});
+            http2GrpcRequest.setRpcMethodInfo(rpcMethodInfo);
+            http2GrpcRequest.setTargetMethod(rpcMethodInfo.getMethod());
+            http2GrpcRequest.setTarget(rpcMethodInfo.getTarget());
 
-        return http2GrpcRequest;
+            return http2GrpcRequest;
+        } else return null;
     }
 
     @Override
