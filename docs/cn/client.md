@@ -4,11 +4,26 @@
 同server端，请见[server.md](https://github.com/baidu/brpc-java/blob/master/docs/cn/server.md)
 
 ## 初始化RpcClient
-RpcClient可传入四个参数：
-
-- 服务端地址：必选，支持多种naming方式，包括zookeeper://,consul://,list://,file://,dns://。
-- RpcClientOptions：可选，用于设置读写超时、交互协议、工作线程个数等重要参数。
-- 拦截器：可选，在发送请求和接受响应时，进行拦截。
+RpcClient可传入三个参数：
+### 服务端地址：
+必选，支持多种naming（服务注册发现）方式，包括zookeeper://,consul://,list://,file://,dns://。
+### RpcClientOptions：
+可选，client端核心配置类，用于设置读写超时、交互协议、工作线程个数等重要参数。
+* protocolType：与server交互的协议类型，是[ProtocolType](https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/proto/options.proto)枚举值，默认是PROTOCOL_BAIDU_STD_VALUE。
+* connectTimeoutMillis：与server连接超时时间，单位毫秒，默认是1000ms。
+* readTimeoutMillis：读超时时间，单位毫秒，默认是1000ms。
+* writeTimeoutMillis：写超时时间，单位毫秒，默认是1000ms。
+* channelType：与server连接类型，是[ChannelType](https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/client/channel/ChannelType.java)枚举值，默认是POOLED_CONNECTION。
+* maxTotalConnections：最大连接数，仅当channelType是POOLED_CONNECTION时有效，默认是8。
+* minIdleConnections：最小空闲连接数，仅当channelType是POOLED_CONNECTION时有效，默认是8。
+* maxTryTimes：最大重试次数，默认是3。
+* loadBalanceType：负载均衡类型，是[LoadBalanceStrategy](https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/client/loadbalance/LoadBalanceStrategy.java)，默认是LOAD_BALANCE_FAIR。
+* ioThreadNum：IO线程数，默认是CPU核数。
+* workThreadNum：工作线程数，默认是CPU核数。
+* globalThreadPoolSharing：多个client实例是否共享线程池，默认是false。
+* healthyCheckIntervalMillis：健康检查间隔，单位毫秒，默认是3000ms。
+### 拦截器：
+可选，在发送请求和接受响应时，进行拦截。
 
 在初始化RpcClient实例时，内部会建立连接池、创建netty acceptor线程池、io线程池、work线程池以及各种定时线程池。
 

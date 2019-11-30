@@ -73,10 +73,6 @@ public class RpcServerOptions {
 
     private int maxTryTimes = 1;
 
-    public void setProtocolType(Integer protocolType) {
-        this.protocolType = protocolType;
-    }
-
     // server protocol type
     private Integer protocolType;
     private String encoding = "utf-8";

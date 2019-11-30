@@ -12,10 +12,16 @@
 
 ## 定义Main类
 server端启动主要分两步：
-
-- 配置RpcServerOptions：配置io线程数、工作线程数、协议类型等。
-- 初始化RpcServer实例：所需参数为端口、RpcServerOptions（可选）、以及interceptor（可选）。
-- 注册服务实例。
+### 配置RpcServerOptions：
+* ioThreadNum：IO线程数，默认是CPU核数。
+* workThreadNum：工作线程数，默认是CPU核数。
+* protocolType：接收client的协议类型，是[ProtocolType](https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/proto/options.proto)枚举值，默认为空，表示接收所有支持的类型。
+* namingServiceUrl：注册中心地址，当不为空时，server会向该地址注册实例，默认为空。
+* globalThreadPoolSharing：多个server实例是否共享线程池，默认否。
+* readerIdleTime：与client连接保持的空闲时间，如果超过空闲时间没有读写时间，连接将被关闭，默认是60s。
+### 初始化RpcServer实例：
+所需参数为端口、RpcServerOptions（可选）、以及interceptor（可选）。
+### 注册服务实例。
 
 具体代码如下：
 
