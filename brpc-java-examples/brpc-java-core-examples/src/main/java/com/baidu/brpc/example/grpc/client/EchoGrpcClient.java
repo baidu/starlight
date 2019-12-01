@@ -68,7 +68,7 @@ public class EchoGrpcClient {
             if (args.length > 0) {
                 user = args[0]; /* Use the arg as the name to greet if provided */
             }
-            //for(int i = 0; i < 5; i++)
+            for(int i = 0; i < 5; i++)
             client.greet(user);
         } finally {
             client.shutdown();
