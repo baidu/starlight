@@ -3,8 +3,8 @@
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
-    <artifactId>brpc-spring-starter</artifactId>
-    <version>2.4.0</version>
+    <artifactId>brpc-spring-boot-starter</artifactId>
+    <version>2.5.8</version>
 </dependency>
 ```
 ## 接口声明跟非Spring用法一样
@@ -13,16 +13,15 @@
 brpc:
   global:
     naming:
-      namingServiceUrl: zookeeper://127.0.0.1:2181/examples
-      namingServiceFactory: com.baidu.brpc.naming.zookeeper.ZookeeperNamingFactory
-      group: "normal"
-      version: 1.0.0
-      ignoreFailOfNamingService: false
-    server:
+      namingServiceUrl: zookeeper://127.0.0.1:2181/examples # 注册中心名称
+      group: "normal" # 实例分组名称，用于区分同一个接口不同提供方场景，默认default
+      version: 1.0.0 # 提供方接口实现版本
+      ignoreFailOfNamingService: false # false：注册中心连不上时会报错。
+    server: # server配置跟RpcServerOptions一样
       port: 8002
       workThreadNum: 1
       ioThreadNum: 1
-    client:
+    client: # client配置和RpcClientOptions一样
       workThreadNum: 1
       ioThreadNum: 1
   custom:
@@ -33,7 +32,7 @@ brpc:
       naming:
         version: 2.0.0
 ```
-* brpc.global是默认配置，brpc.custom是具体接口的自定义配置。
+* brpc.global是默认配置，brpc.custom是具体接口的自定义配置，当同一个配置在brpc.custom和brpc.global同时存在时，以brpc.custom为准。
 * brpc.global.server只有在使用RpcServer时才需要。
 * brpc.global.client只有在使用RpcClient时才需要。
 
