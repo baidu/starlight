@@ -39,11 +39,12 @@ public class BenchmarkServerPushTest {
 
         int threadNum = Integer.parseInt(args[0]);
 
-        RpcServerOptions options = new RpcServerOptions();
-        options.setReceiveBufferSize(64 * 1024 * 1024);
-        options.setSendBufferSize(64 * 1024 * 1024);
-        options.setKeepAliveTime(20);
-        options.setProtocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
+        RpcServerOptions options = RpcServerOptions.builder()
+              .receiveBufferSize(64 * 1024 * 1024)
+              .sendBufferSize(64 * 1024 * 1024)
+              .keepAliveTime(20)
+              .protocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE)
+              .build();
 
         final RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());

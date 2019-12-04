@@ -86,7 +86,9 @@ public class RpcClientOptions {
     private boolean globalThreadPoolSharing = false;
 
     @Tolerate
-    public RpcClientOptions(){}
+    public RpcClientOptions(){
+
+    }
 
     public RpcClientOptions(RpcClientOptions options) {
         this.copyFrom(options);

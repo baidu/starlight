@@ -89,7 +89,9 @@ public class RpcServerOptions {
     private boolean globalThreadPoolSharing = false;
 
     @Tolerate
-    public RpcServerOptions(){}
+    public RpcServerOptions(){
+
+    }
 
     public RpcServerOptions(RpcServerOptions options) {
         this.copyFrom(options);

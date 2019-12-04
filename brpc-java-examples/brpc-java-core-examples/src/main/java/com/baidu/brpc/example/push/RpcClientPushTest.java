@@ -38,15 +38,16 @@ import lombok.extern.slf4j.Slf4j;
 public class RpcClientPushTest {
 
     public static void main(String[] args) throws InterruptedException {
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
-        clientOption.setWriteTimeoutMillis(20 * 1000);
-        clientOption.setReadTimeoutMillis(20 * 1000);
-        clientOption.setMaxTotalConnections(1000);
-        clientOption.setMinIdleConnections(1);
-        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
-        clientOption.setMaxTotalConnections(1);
+        RpcClientOptions clientOption = RpcClientOptions.builder()
+              .protocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE)
+              .writeTimeoutMillis(20 * 1000)
+              .readTimeoutMillis(20 * 1000)
+              .maxTotalConnections(1000)
+              .minIdleConnections(1)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .compressType(Options.CompressType.COMPRESS_TYPE_NONE)
+              .maxTotalConnections(1)
+              .build();
 
         // 指定clientName
         clientOption.setClientName("c1");

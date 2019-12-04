@@ -13,10 +13,12 @@ public class RpcServerTest {
             port = Integer.valueOf(args[0]);
         }
 
-        RpcServerOptions options = new RpcServerOptions();
-        options.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
-        // options.setProtocolType(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE);
-        options.setEncoding("gbk");
+        RpcServerOptions options = RpcServerOptions.builder()
+              .protocolType(Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE)
+              //.protocolType(Options.ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE)
+              .encoding("gbk")
+              .build();
+
         RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();

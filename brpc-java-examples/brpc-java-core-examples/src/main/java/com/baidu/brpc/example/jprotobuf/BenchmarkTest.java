@@ -47,16 +47,18 @@ public class BenchmarkTest {
             System.out.println("usage: BenchmarkTest 127.0.0.1:8002 threadNum");
             System.exit(-1);
         }
-        RpcClientOptions options = new RpcClientOptions();
-        options.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
-        options.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        options.setMaxTotalConnections(1000000);
-        options.setMinIdleConnections(10);
-        options.setConnectTimeoutMillis(1000);
-        options.setWriteTimeoutMillis(1000);
-        options.setReadTimeoutMillis(5000);
-        options.setTcpNoDelay(false);
-        options.setChannelType(ChannelType.SINGLE_CONNECTION);
+        RpcClientOptions options = RpcClientOptions.builder()
+              .protocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .maxTotalConnections(1000000)
+              .minIdleConnections(10)
+              .connectTimeoutMillis(1000)
+              .writeTimeoutMillis(1000)
+              .readTimeoutMillis(5000)
+              .tcpNoDelay(false)
+              .channelType(ChannelType.SINGLE_CONNECTION)
+              .build();
+
 //        options.setWorkThreadNum(2);
         // options.setFutureBufferSize(10000);
         RpcClient rpcClient = new RpcClient(args[0], options, null);

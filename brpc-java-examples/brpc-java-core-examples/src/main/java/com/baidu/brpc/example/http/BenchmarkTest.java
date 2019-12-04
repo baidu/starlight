@@ -23,13 +23,14 @@ public class BenchmarkTest {
             System.out.println("usage: BenchmarkTest list://127.0.0.1:8080 threadNum");
             System.exit(-1);
         }
-        RpcClientOptions options = new RpcClientOptions();
-        options.setProtocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
-        options.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        options.setMaxTotalConnections(1000000);
-        options.setMinIdleConnections(10);
-        options.setReadTimeoutMillis(5000);
-        options.setConnectTimeoutMillis(1000);
+        RpcClientOptions options = RpcClientOptions.builder()
+              .protocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .maxTotalConnections(1000000)
+              .minIdleConnections(10)
+              .readTimeoutMillis(5000)
+              .connectTimeoutMillis(1000)
+              .build();
         RpcClient rpcClient = new RpcClient(args[0], options, null);
         EchoServiceAsync echoServiceAsync = BrpcProxy.getProxy(rpcClient, EchoServiceAsync.class);
         int threadNum = Integer.parseInt(args[1]);

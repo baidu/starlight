@@ -40,16 +40,17 @@ public class BenchmarkClientPushTest {
             System.exit(-1);
         }
 
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(1000);
-        clientOption.setMaxTotalConnections(1000);
-//        clientOption.setMaxTotalConnections(10);
-        clientOption.setMinIdleConnections(100);
-        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
-        clientOption.setClientName("Benchmark");
+        RpcClientOptions clientOption = RpcClientOptions.builder()
+              .protocolType(Options.ProtocolType.PROTOCOL_SERVER_PUSH_VALUE)
+              .writeTimeoutMillis(1000)
+              .readTimeoutMillis(1000)
+              .maxTotalConnections(1000)
+              //.maxTotalConnections(10)
+              .minIdleConnections(100)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .compressType(Options.CompressType.COMPRESS_TYPE_NONE)
+              .clientName("Benchmark")
+              .build();
 
         int threadNum = Integer.parseInt(args[1]);
 

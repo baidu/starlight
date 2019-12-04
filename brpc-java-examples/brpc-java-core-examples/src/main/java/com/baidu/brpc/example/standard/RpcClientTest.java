@@ -41,14 +41,15 @@ import java.util.concurrent.TimeUnit;
 public class RpcClientTest {
 
     public static void main(String[] args) {
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(5000);
-        clientOption.setMaxTotalConnections(1000);
-        clientOption.setMinIdleConnections(10);
-        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
+        RpcClientOptions clientOption = RpcClientOptions.builder()
+              .protocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE)
+              .writeTimeoutMillis(1000)
+              .readTimeoutMillis(5000)
+              .maxTotalConnections(1000)
+              .minIdleConnections(10)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .compressType(Options.CompressType.COMPRESS_TYPE_NONE)
+              .build();
 
         String serviceUrl = "list://127.0.0.1:8002";
 //        String serviceUrl = "zookeeper://127.0.0.1:2181";

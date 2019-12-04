@@ -32,11 +32,13 @@ public class RpcServerTest {
             port = Integer.valueOf(args[0]);
         }
 
-        RpcServerOptions options = new RpcServerOptions();
-        options.setReceiveBufferSize(64 * 1024 * 1024);
-        options.setSendBufferSize(64 * 1024 * 1024);
-        options.setKeepAliveTime(20);
-//        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
+        RpcServerOptions options = RpcServerOptions.builder()
+              .receiveBufferSize(64 * 1024 * 1024)
+              .sendBufferSize(64 * 1024 * 1024)
+              .keepAliveTime(20)
+              //.namingServiceUrl("zookeeper://127.0.0.1:2181")
+              .build();
+
 //        final RpcServer rpcServer = new RpcServer(port, options);
         final RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());

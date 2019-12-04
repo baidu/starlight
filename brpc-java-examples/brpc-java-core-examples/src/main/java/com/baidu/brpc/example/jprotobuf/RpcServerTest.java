@@ -29,12 +29,13 @@ public class RpcServerTest {
             port = Integer.valueOf(args[0]);
         }
 
-        RpcServerOptions options = new RpcServerOptions();
-//        options.setAcceptorThreadNum(8);
-//        options.setIoThreadNum(32);
-//        options.setWorkThreadNum(80);
-        options.setReceiveBufferSize(64 * 1024 * 1024);
-        options.setSendBufferSize(64 * 1024 * 1024);
+        RpcServerOptions options =RpcServerOptions.builder()
+              //.acceptorThreadNum(8)
+              //.ioThreadNum(32)
+              //.workThreadNum(80)
+              .receiveBufferSize(64 * 1024 * 1024)
+              .sendBufferSize(64 * 1024 * 1024)
+              .build();
         RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());
         rpcServer.start();

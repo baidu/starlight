@@ -5,17 +5,17 @@ import com.baidu.brpc.server.RpcServerOptions;
 
 public class RpcOptionsUtils {
     public static RpcClientOptions getRpcClientOptions() {
-        RpcClientOptions options = new RpcClientOptions();
-        options.setIoThreadNum(1);
-        options.setWorkThreadNum(1);
-        options.setMinIdleConnections(1);
-        return options;
+        return RpcClientOptions.builder()
+              .ioThreadNum(1)
+              .workThreadNum(1)
+              .minIdleConnections(1)
+              .build();
     }
 
     public static RpcServerOptions getRpcServerOptions() {
-        RpcServerOptions options = new RpcServerOptions();
-        options.setIoThreadNum(1);
-        options.setWorkThreadNum(1);
-        return options;
+        return RpcServerOptions.builder()
+              .ioThreadNum(1)
+              .workThreadNum(1)
+              .build();
     }
 }

@@ -94,16 +94,16 @@ public class SingleConnectionClientTest {
     }
 
     private static RpcClientOptions getRpcClientOptions() {
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(1000);
-        clientOption.setMaxTotalConnections(1000);
-        clientOption.setMinIdleConnections(10);
-        clientOption.setLoadBalanceType(LoadBalanceType.ROUND_ROBIN.getId());
-        clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
-        clientOption.setChannelType(ChannelType.SINGLE_CONNECTION);
-        clientOption.setKeepAliveTime(25);
-        return clientOption;
+    return  RpcClientOptions.builder()
+            .protocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE)
+            .writeTimeoutMillis(1000)
+            .readTimeoutMillis(1000)
+            .maxTotalConnections(1000)
+            .minIdleConnections(10)
+            .loadBalanceType(LoadBalanceType.ROUND_ROBIN.getId())
+            .compressType(Options.CompressType.COMPRESS_TYPE_NONE)
+            .channelType(ChannelType.SINGLE_CONNECTION)
+            .keepAliveTime(25)
+            .build();
     }
 }

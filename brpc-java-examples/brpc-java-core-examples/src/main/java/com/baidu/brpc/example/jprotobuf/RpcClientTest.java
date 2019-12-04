@@ -38,15 +38,16 @@ import java.util.concurrent.Future;
 public class RpcClientTest {
 
     public static void main(String[] args) {
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(1000);
-        clientOption.setMaxTotalConnections(1000);
-        clientOption.setMinIdleConnections(10);
-//        clientOption.setIoThreadNum(40);
-        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
+        RpcClientOptions clientOption = RpcClientOptions.builder()
+              .protocolType(Options.ProtocolType.PROTOCOL_BAIDU_STD_VALUE)
+              .writeTimeoutMillis(1000)
+              .readTimeoutMillis(1000)
+              .maxTotalConnections(1000)
+              .minIdleConnections(10)
+              //.ioThreadNum(40)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .compressType(Options.CompressType.COMPRESS_TYPE_NONE)
+              .build();
 
         String serviceUrl = "list://127.0.0.1:8002";
         if (args.length == 1) {

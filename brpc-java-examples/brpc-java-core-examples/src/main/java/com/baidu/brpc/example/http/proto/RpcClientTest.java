@@ -22,12 +22,13 @@ import com.baidu.brpc.protocol.Options.ProtocolType;
 public class RpcClientTest {
 
     public static void main(String[] args) {
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setProtocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(500);
-        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        clientOption.setMaxTryTimes(1);
+        RpcClientOptions clientOption = RpcClientOptions.builder()
+              .protocolType(ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE)
+              .writeTimeoutMillis(1000)
+              .readTimeoutMillis(500)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .maxTryTimes(1)
+              .build();
 
         String serviceUrl = "list://127.0.0.1:8080";
         if (args.length == 1) {

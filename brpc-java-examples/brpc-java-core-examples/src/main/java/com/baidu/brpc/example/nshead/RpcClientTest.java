@@ -14,13 +14,14 @@ public class RpcClientTest {
 
     public static void main(String[] args) {
 
-        RpcClientOptions clientOption = new RpcClientOptions();
-        clientOption.setProtocolType(ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE);
-        // clientOption.setProtocolType(ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE);
-        clientOption.setWriteTimeoutMillis(1000);
-        clientOption.setReadTimeoutMillis(5000);
-        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
-        clientOption.setEncoding("gbk");
+        RpcClientOptions clientOption = RpcClientOptions.builder()
+              .protocolType(ProtocolType.PROTOCOL_NSHEAD_PROTOBUF_VALUE)
+              //.protocolType(ProtocolType.PROTOCOL_NSHEAD_JSON_VALUE)
+              .writeTimeoutMillis(1000)
+              .readTimeoutMillis(5000)
+              .loadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR)
+              .encoding("gbk")
+              .build();
 
         // 高端口，在开发机上测试
         String serviceUrl = "list://localhost:8080";
