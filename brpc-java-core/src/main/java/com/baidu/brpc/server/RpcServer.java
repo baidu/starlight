@@ -353,6 +353,7 @@ public class RpcServer {
                 for (RegisterInfo registerInfo : registerInfoList) {
                     namingService.unregister(registerInfo);
                 }
+                namingService.destroy();
             }
             if (bossGroup != null && !rpcServerOptions.isGlobalThreadPoolSharing()) {
                 bossGroup.shutdownGracefully().syncUninterruptibly();

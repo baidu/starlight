@@ -255,6 +255,7 @@ public class RpcClient {
         if (stop.compareAndSet(false, true)) {
             if (namingService != null) {
                 namingService.unsubscribe(subscribeInfo);
+                namingService.destroy();
             }
             if (instanceProcessor != null) {
                 instanceProcessor.stop();

@@ -117,4 +117,8 @@ public class DnsNamingService implements NamingService {
     public String getHostPort() {
         return hostPort;
     }
+
+    @Override
+    public void destroy() {
+    }
 }

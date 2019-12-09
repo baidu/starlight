@@ -54,4 +54,9 @@ public interface NamingService {
      * @param registerInfo service/group/version info
      */
     void unregister(RegisterInfo registerInfo);
+
+    /**
+     * 销毁服务注册发现client，client或server实例销毁时调用
+     */
+    void destroy();
 }

@@ -134,6 +134,7 @@ public class ConsulNamingService implements NamingService {
                 ConsulConstants.HEARTBEAT_CIRCLE, TimeUnit.MILLISECONDS);
     }
 
+    @Override
     public void destroy() {
         serviceIds.clear();
         timer.stop();
