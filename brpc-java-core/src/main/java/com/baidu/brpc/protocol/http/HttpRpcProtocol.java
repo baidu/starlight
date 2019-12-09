@@ -353,7 +353,14 @@ public class HttpRpcProtocol extends AbstractProtocol {
             long correlationId = parseCorrelationId(httpRequest.headers().get(CORRELATION_ID), null);
             httpRequest.setCorrelationId(correlationId);
 
-            String contentTypeAndEncoding = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE).toLowerCase();
+            String contentTypeAndEncoding = httpRequest.headers().get(HttpHeaderNames.CONTENT_TYPE);
+            if (StringUtils.isBlank(contentTypeAndEncoding)) {
+                String errMsg = String.format("content-type is null, uri:%s", httpRequest.uri());
+                LOG.warn(errMsg);
+                httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
+                return httpRequest;
+            }
+            contentTypeAndEncoding = contentTypeAndEncoding.toLowerCase();
             String[] splits = StringUtils.split(contentTypeAndEncoding, ";");
             int protocolType = HttpRpcProtocol.parseProtocolType(splits[0]);
             String encoding = this.encoding;
