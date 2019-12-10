@@ -254,6 +254,12 @@ public class ZookeeperNamingService implements NamingService {
         }
     }
 
+    @Override
+    public void destroy() {
+        client.close();
+        timer.stop();
+    }
+
     public String getSubscribePath(SubscribeInfo subscribeInfo) {
         StringBuilder sb = new StringBuilder();
         sb.append("/");

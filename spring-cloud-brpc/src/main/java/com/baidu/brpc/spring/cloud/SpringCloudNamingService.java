@@ -106,4 +106,8 @@ public class SpringCloudNamingService implements NamingService {
     @Override
     public void unregister(RegisterInfo registerInfo) {
     }
+
+    @Override
+    public void destroy() {
+    }
 }

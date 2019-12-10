@@ -139,4 +139,8 @@ public class FileNamingService implements NamingService {
     @Override
     public void unregister(RegisterInfo registerInfo) {
     }
+
+    @Override
+    public void destroy() {
+    }
 }
