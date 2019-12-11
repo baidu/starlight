@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.baidu.brpc.naming.consul.model;
+package com.baidu.brpc.naming.consul;
 
 public class ConsulConstants {
 
@@ -47,4 +47,6 @@ public class ConsulConstants {
      * default check time for consul service
      */
     public static final int DEFAULT_LOOKUP_INTERVAL = 20000;
+
+    public static final String CONSUL_SERVICE_TAG = "brpc-java";
 }
