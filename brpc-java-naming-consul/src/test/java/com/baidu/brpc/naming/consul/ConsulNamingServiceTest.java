@@ -24,14 +24,14 @@ import com.baidu.brpc.naming.SubscribeInfo;
 import com.pszymczyk.consul.ConsulProcess;
 import com.pszymczyk.consul.ConsulStarterBuilder;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
+
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 @Slf4j
+@Ignore
 public class ConsulNamingServiceTest {
 
     private static BrpcURL namingUrl;
@@ -46,7 +46,7 @@ public class ConsulNamingServiceTest {
                         "  \"log_level\": \"info\"\n" +
                         "}\n";
         consul = ConsulStarterBuilder.consulStarter()
-                .withConsulVersion("1.2.1")
+                .withConsulVersion("1.4.2")
                 .withCustomConfig(customConfiguration)
                 .build()
                 .start();
@@ -77,29 +77,6 @@ public class ConsulNamingServiceTest {
     }
 
     @Test
-    public void testRegisterAndSubscribe() throws InterruptedException {
-
-        RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8015);
-        RegisterInfo anotherRegisterInfo = createRegisterInfo("127.0.0.1", 8016);
-        consulNamingService.register(registerInfo);
-        consulNamingService.register(anotherRegisterInfo);
-        SubscribeInfo subscribeInfo = createSubscribeInfo(false);
-        Thread.sleep(10 * 1000);
-
-        consulNamingService.subscribe(subscribeInfo, new NotifyListener() {
-            @Override public void notify(Collection<ServiceInstance> addList,
-                                         Collection<ServiceInstance> deleteList) {
-                log.info("notify: {}, {}", addList, deleteList);
-            }
-        });
-
-        Thread.sleep(10 * 1000);
-        consulNamingService.unregister(registerInfo);
-        Thread.sleep(50 * 1000);
-
-    }
-
-    @Test
     public void testLookup() throws InterruptedException {
         SubscribeInfo subscribeInfo = createSubscribeInfo(true);
         List<ServiceInstance> instances = consulNamingService.lookup(subscribeInfo);
@@ -107,14 +84,51 @@ public class ConsulNamingServiceTest {
 
         RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8012);
         consulNamingService.register(registerInfo);
-        Thread.sleep(10 * 1000);
+        Thread.sleep(3 * 1000);
 
         instances = consulNamingService.lookup(subscribeInfo);
         Assert.assertTrue(instances.size() == 1);
         Assert.assertTrue(instances.get(0).getIp().equals("127.0.0.1"));
         Assert.assertTrue(instances.get(0).getPort() == 8012);
         consulNamingService.unregister(registerInfo);
+    }
 
+    @Test
+    public void testRegisterAndSubscribe() throws InterruptedException {
+        RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8015);
+        RegisterInfo anotherRegisterInfo = createRegisterInfo("127.0.0.1", 8016);
+        consulNamingService.register(registerInfo);
+        consulNamingService.register(anotherRegisterInfo);
+        Thread.sleep(3 * 1000);
+
+        SubscribeInfo subscribeInfo = createSubscribeInfo(false);
+        final List<ServiceInstance> adds = consulNamingService.lookup(subscribeInfo);
+        Assert.assertTrue(adds.size() == 2);
+        adds.clear();
+
+        final List<ServiceInstance> deletes = new ArrayList<ServiceInstance>();
+        consulNamingService.subscribe(subscribeInfo, new NotifyListener() {
+            @Override public void notify(Collection<ServiceInstance> addList,
+                                         Collection<ServiceInstance> deleteList) {
+                adds.addAll(addList);
+                deletes.addAll(deleteList);
+                log.info("notify: {}, {}", addList, deleteList);
+            }
+        });
+
+        consulNamingService.unregister(registerInfo);
+        Thread.sleep(3 * 1000);
+        Assert.assertTrue(adds.size() == 0);
+        Assert.assertTrue(deletes.size() == 1);
+        Assert.assertTrue(deletes.get(0).equals(new ServiceInstance("127.0.0.1", 8015)));
+        adds.clear();
+        deletes.clear();
+
+        consulNamingService.register(registerInfo);
+        Thread.sleep(3 * 1000);
+        Assert.assertTrue(adds.size() == 1);
+        Assert.assertTrue(deletes.size() == 0);
+        Assert.assertTrue(adds.get(0).equals(new ServiceInstance("127.0.0.1", 8015)));
     }
 
 }
