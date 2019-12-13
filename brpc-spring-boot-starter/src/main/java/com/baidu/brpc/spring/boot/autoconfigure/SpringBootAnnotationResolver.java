@@ -338,6 +338,9 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
         MutablePropertyValues values = new MutablePropertyValues();
         BrpcConfig brpcConfig = getServiceConfig(beanFactory, serviceInterface);
         for (Field field : RpcClientOptions.class.getDeclaredFields()) {
+            if (field.isSynthetic()) {
+                continue;
+            }
             try {
                 field.setAccessible(true);
                 values.addPropertyValue(field.getName(), field.get(brpcConfig.getClient()));
