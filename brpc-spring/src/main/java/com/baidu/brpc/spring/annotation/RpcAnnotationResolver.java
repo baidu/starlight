@@ -323,6 +323,9 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         beanDef.setBeanClass(RpcProxyFactoryBean.class);
         MutablePropertyValues values = new MutablePropertyValues();
         for (Field field : rpcClientOptions.getClass().getDeclaredFields()) {
+            if (field.isSynthetic()) {
+                continue;
+            }
             try {
                 field.setAccessible(true);
                 values.addPropertyValue(field.getName(), field.get(rpcClientOptions));
