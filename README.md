@@ -110,8 +110,3 @@ https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/
 | 数据量 | 5 byte | 1k byte | 2k byte | 4k byte |
 |:-----:| :-----: | :-------: | :-------: | :-------: |
 |qps    | 22w   |    10w  |  5.3w   |   2.7w  |
-
-# 微信交流群：
-<img src="https://github.com/baidu/brpc-java/blob/master/weixin_qrcode.png" width=200 height=300 />
-
-
