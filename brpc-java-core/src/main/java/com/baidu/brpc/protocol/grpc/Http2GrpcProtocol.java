@@ -1,9 +1,10 @@
 package com.baidu.brpc.protocol.grpc;
 
-import com.baidu.brpc.ProtobufRpcMethodInfo;
+import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.RpcMethodInfo;
 import com.baidu.brpc.buffer.DynamicCompositeByteBuf;
 import com.baidu.brpc.client.RpcClient;
+import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.compress.Compress;
 import com.baidu.brpc.compress.CompressManager;
@@ -24,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Http2GrpcProtocol
@@ -32,14 +34,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * @email kowaywang@gmail.com
  */
 public class Http2GrpcProtocol extends AbstractProtocol {
-    private static final String BRPC_SERVICE_NAME_KEY = "brpc-service-name";
-    private static final String BRPC_METHOD_NAME_KEY = "brpc-method-name";
 
 
     private static final CompressManager compressManager = CompressManager.getInstance();
     private static final ServiceManager serviceManager = ServiceManager.getInstance();
     private static final Map<String, Http2ConnectionHandler> handlerMap = new ConcurrentHashMap<String, Http2ConnectionHandler>();
-    private  final AtomicBoolean clientConnected = new AtomicBoolean(false);
+    private final AtomicBoolean clientConnected = new AtomicBoolean(false);
+    private final AtomicBoolean isFirstTimeConnect = new AtomicBoolean(true);
+    private final AtomicLong correlationId = new AtomicLong(0);
 
     @Override
     public Object decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest) throws BadSchemaException, TooBigDataException, NotEnoughDataException {
@@ -48,28 +50,30 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         Http2ConnectionHandler handler = handlerMap.get(channelId);
 
         if (handler == null) {
-            Http2Connection connection = new DefaultHttp2Connection(true);
-            Http2ConnectionEncoder encoder = new DefaultHttp2ConnectionEncoder(connection, new DefaultHttp2FrameWriter());
-            Http2ConnectionDecoder decoder = new DefaultHttp2ConnectionDecoder(connection, encoder, new DefaultHttp2FrameReader(), Http2PromisedRequestVerifier.ALWAYS_VERIFY, true);
-
-            handler = new Http2ConnectionHandler(true, new DefaultHttp2FrameWriter(),
+            handler = new Http2ConnectionHandler(isDecodingRequest, new DefaultHttp2FrameWriter(),
                     null, new Http2Settings());
             try {
-                handler.handlerAdded(ctx);
-                decoder.lifecycleManager(handler);
+
+                handler.handlerAdded(ctx, isDecodingRequest);
                 handlerMap.put(channelId, handler);
-            } catch(Exception e){
+            } catch (Exception e) {
                 throw new BadSchemaException(e);
+            }
+        } else if (isFirstTimeConnect.get() && !isDecodingRequest) {
+            try {
+                handler.handlerAdded(ctx, false);
+                isFirstTimeConnect.compareAndSet(true, false);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         }
 
         ByteBuf readyToDecode = in.readRetainedSlice(in.readableBytes());
 
 
-
-        if(isDecodingRequest) {
-            FrameListener frameListener = new FrameListener();
-            handler.decoder().frameListener(frameListener);
+        if (isDecodingRequest) {
+            Http2GrpcRequestFrameListener http2GrpcRequestFrameListener = new Http2GrpcRequestFrameListener();
+            handler.decoder().frameListener(http2GrpcRequestFrameListener);
 
             try {
                 handler.decode(ctx, readyToDecode, new ArrayList());
@@ -77,8 +81,8 @@ public class Http2GrpcProtocol extends AbstractProtocol {
                 handleDecodeException(ctx, channelId, handler);
                 throw new BadSchemaException(e);
             }
-            Http2GrpcRequest request = frameListener.getHttp2GrpcRequest();
-            if(request != null) {
+            Http2GrpcRequest request = http2GrpcRequestFrameListener.getHttp2GrpcRequest();
+            if (request != null) {
                 Http2Headers requestHeaders = request.getHttp2Headers().headers();
                 CharSequence path = requestHeaders.path();
                 String pathStr = path.toString();
@@ -95,11 +99,10 @@ public class Http2GrpcProtocol extends AbstractProtocol {
                 return request;
             } else return null;
         } else {
-            //TODO decode response here
+            // decode response here
 
             Http2GrpcResponseFrameListener frameListener = new Http2GrpcResponseFrameListener();
             handler.decoder().frameListener(frameListener);
-
             try {
                 handler.decode(ctx, readyToDecode, new ArrayList());
             } catch (Exception e) {
@@ -112,48 +115,55 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         }
     }
 
-    //TODO encode request here
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
-        Channel channel = request.getChannel();
-        String serviceName = request.getServiceName();
-        String methodName = request.getMethodName();
-        Object protoObject = request.getArgs()[0];
+        if (clientConnected.get()) {
+            Channel channel = request.getChannel();
+            String serviceName = request.getServiceName();
+            String methodName = request.getMethodName();
+            Object protoObject = request.getArgs()[0];
+            String channelId = channel.id().asLongText();
 
-        /*Http2Connection connection = new DefaultHttp2Connection(true);
-        Http2ConnectionEncoder encoder = new DefaultHttp2ConnectionEncoder(connection, new DefaultHttp2FrameWriter());
-*/
-        Http2Headers requestHeader = new DefaultHttp2Headers();
-        requestHeader.method("POST");
-        requestHeader.path("/"+serviceName + "/"+ methodName);
-        requestHeader.add("content-type", "application/grpc+proto");
+            Http2Headers requestHeader = new DefaultHttp2Headers();
+            requestHeader.method("POST");
+            requestHeader.path("/" + serviceName + "/" + methodName);
+            requestHeader.add("content-type", "application/grpc+proto");
 
-        //Http2DataFrame http2DataFrame = new DefaultHttp2DataFrame();
-        int compressType = Options.CompressType.COMPRESS_TYPE_NONE_VALUE;
-        Compress compress = compressManager.getCompress(compressType);
-        RpcMethodInfo rpcMethodInfo = request.getRpcMethodInfo(); //serviceManager.getService(serviceName, methodName);
-        ByteBuf requestData = compress.compressInput(protoObject,rpcMethodInfo);
-        ByteBuf resultDataBuf = channel.alloc().buffer(2 + 4 + requestData.readableBytes());
-        resultDataBuf.writeShort(0); // compress flag (0 means no compress)
-        resultDataBuf.writeMedium(requestData.readableBytes()); // data length
-        resultDataBuf.writeBytes(requestData); // data content
+            int compressType = Options.CompressType.COMPRESS_TYPE_NONE_VALUE;
+            Compress compress = compressManager.getCompress(compressType);
+            RpcMethodInfo rpcMethodInfo = request.getRpcMethodInfo(); //serviceManager.getService(serviceName, methodName);
+            ByteBuf requestData = compress.compressInput(protoObject, rpcMethodInfo);
+            ByteBuf resultDataBuf = channel.alloc().buffer(2 + 4 + requestData.readableBytes());
+            resultDataBuf.writeShort(0); // compress flag (0 means no compress)
+            resultDataBuf.writeMedium(requestData.readableBytes()); // data length
+            resultDataBuf.writeBytes(requestData); // data content
 
-        Http2GrpcFrameWriter frameWriter = new Http2GrpcFrameWriter();
-        frameWriter.writeHeaders(channel,1,requestHeader,0,false,channel.newPromise());
-        frameWriter.writeData(channel,1,resultDataBuf,0,true,channel.newPromise());
-        channel.flush();
+            Http2Connection connection = handlerMap.get(channelId).connection();
+            int streamId = connection.local().incrementAndGetNextStreamId();
+            Http2Stream createdStream = connection.local().createStream(streamId, false);
+            System.out.println(connection.local().created(createdStream));
 
-        return Unpooled.EMPTY_BUFFER;
+            Http2GrpcFrameWriter frameWriter = new Http2GrpcFrameWriter();
+            frameWriter.writeHeaders(channel, streamId, requestHeader, 0, false, channel.newPromise());
+            frameWriter.writeData(channel, streamId, resultDataBuf, 0, true, channel.newPromise());
+            channel.flush();
+
+            return Unpooled.EMPTY_BUFFER;
+        } else return Unpooled.EMPTY_BUFFER;
     }
 
     @Override
     public Response decodeResponse(Object msg, ChannelHandlerContext ctx) throws Exception {
-        if(msg != null) {
-            Http2GrpcResponse http2GrpcResponse = (Http2GrpcResponse)msg;
-            Http2Headers http2Headers = http2GrpcResponse.getStartHttp2Headers().headers();
-            RpcMethodInfo rpcMethodInfo = serviceManager.getService(
-                    http2Headers.get(BRPC_SERVICE_NAME_KEY).toString(),
-                    http2Headers.get(BRPC_METHOD_NAME_KEY).toString());
+        if (msg != null) {
+            Http2GrpcResponse http2GrpcResponse = (Http2GrpcResponse) msg;
+            ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(ctx.channel());
+
+            System.out.println(channelInfo);
+            RpcFuture rpcFuture = channelInfo.removeRpcFuture(correlationId.getAndIncrement());
+
+            if (rpcFuture == null) {
+                return new RpcResponse();
+            }
 
             ByteBuf protoAndAttachmentBuf = http2GrpcResponse.getHttp2Data().content();
 
@@ -166,8 +176,9 @@ public class Http2GrpcProtocol extends AbstractProtocol {
             int compressType = Options.CompressType.COMPRESS_TYPE_NONE_VALUE;
 
             Compress compress = compressManager.getCompress(compressType);
-            Object proto = compress.uncompressOutput(protoAndAttachmentBuf, rpcMethodInfo);
+            Object proto = compress.uncompressOutput(protoAndAttachmentBuf, rpcFuture.getRpcMethodInfo());
 
+            http2GrpcResponse.setRpcFuture(rpcFuture);
             http2GrpcResponse.setResult(proto);
 
             return http2GrpcResponse;
@@ -176,7 +187,7 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
-        if(packet != null) {
+        if (packet != null) {
             Http2GrpcRequest http2GrpcRequest = (Http2GrpcRequest) packet;
 
             RpcMethodInfo rpcMethodInfo = serviceManager.getService(
@@ -213,15 +224,16 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         int streamId = http2GrpcRequest.getHttp2Headers().stream().id();
         String channelId = request.getChannel().id().asLongText();
 
+
         Http2ConnectionHandler handler = handlerMap.get(channelId);
         ChannelHandlerContext ctx = http2GrpcRequest.getChannelHandlerContext();
+
+        Http2Stream http2Stream = handler.connection().stream(streamId);
+        System.out.println(http2Stream);
 
         Http2Headers responseHeader = new DefaultHttp2Headers();
         responseHeader.status("200");
         responseHeader.add("content-type", "application/grpc+proto");
-        responseHeader.add(BRPC_SERVICE_NAME_KEY,request.getServiceName());
-        responseHeader.add(BRPC_METHOD_NAME_KEY,request.getMethodName());
-
         Http2Headers responseEndHeader = new DefaultHttp2Headers();
         responseEndHeader.add("grpc-status", "0");
 
@@ -264,18 +276,30 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
         Http2GrpcFrameWriter frameWriter = new Http2GrpcFrameWriter();
         try {
-            if(!clientConnected.get()) {
-                Channel clientChannel = channelGroup.getChannel();
+            Channel clientChannel = request.getChannel();
+            if (!clientConnected.get() && clientChannel.isActive()) {
+
+                String channelId = clientChannel.id().asLongText();
+
+                Http2ConnectionHandler handler = handlerMap.get(channelId);
+                if (handler == null) {
+                    handler = new Http2ConnectionHandler(false, new DefaultHttp2FrameWriter(),
+                            null, new Http2Settings());
+                    handlerMap.put(channelId, handler);
+                }
+
                 //https://tools.ietf.org/html/rfc7540#page-11
                 clientChannel.write(Http2CodecUtil.connectionPrefaceBuf());
                 //https://tools.ietf.org/html/rfc7540#section-6.5
                 frameWriter.writeSettings(clientChannel, new Http2Settings(), clientChannel.newPromise());
-                frameWriter.writeWindowUpdate(clientChannel,0,74,clientChannel.newPromise());
+                frameWriter.writeWindowUpdate(clientChannel, 0, 74, clientChannel.newPromise());
                 clientChannel.flush();
-                clientConnected.compareAndSet(false,true);
+                clientConnected.compareAndSet(false, true);
             }
 
-        } catch(Exception e) {}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
     }
 }

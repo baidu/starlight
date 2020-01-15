@@ -15,17 +15,7 @@ public class Http2GrpcResponseFrameListener extends Http2EventAdapter {
     private Http2GrpcResponse http2GrpcResponse;
 
     public void onHeadersRead(ChannelHandlerContext ctx, final int streamId, Http2Headers headers, int streamDependency, short weight, boolean exclusive, int padding, boolean endStream) throws Http2Exception {
-        Http2HeadersFrame frame = new DefaultHttp2HeadersFrame(headers, endStream, padding).stream(new Http2FrameStream() {
-            @Override
-            public int id() {
-                return streamId;
-            }
-
-            @Override
-            public Http2Stream.State state() {
-                return null;
-            }
-        });
+        Http2HeadersFrame frame = new DefaultHttp2HeadersFrame(headers, endStream, padding);
         if (http2GrpcResponse == null) {
             http2GrpcResponse = new Http2GrpcResponse();
         }
@@ -37,17 +27,7 @@ public class Http2GrpcResponseFrameListener extends Http2EventAdapter {
     }
 
     public int onDataRead(ChannelHandlerContext ctx, final int streamId, ByteBuf data, int padding, boolean endOfStream) throws Http2Exception {
-        Http2DataFrame frame = new DefaultHttp2DataFrame(data, endOfStream, padding).stream(new Http2FrameStream() {
-            @Override
-            public int id() {
-                return streamId;
-            }
-
-            @Override
-            public Http2Stream.State state() {
-                return null;
-            }
-        });
+        Http2DataFrame frame = new DefaultHttp2DataFrame(data, endOfStream, padding);
         if (http2GrpcResponse == null) {
             http2GrpcResponse = new Http2GrpcResponse();
 
@@ -59,25 +39,7 @@ public class Http2GrpcResponseFrameListener extends Http2EventAdapter {
 
     @Override
     public void onRstStreamRead(ChannelHandlerContext ctx, final int streamId, long errorCode) throws Http2Exception {
-       /*Http2ResetFrame resetFrame = new DefaultHttp2ResetFrame(errorCode).stream(new Http2FrameStream() {
-           @Override
-           public int id() {
-               return streamId;
-           }
-
-           @Override
-           public Http2Stream.State state() {
-               return null;
-           }
-       });*/
-
-        // ctx.writeAndFlush(resetFrame);
-        new DefaultHttp2FrameWriter().writeRstStream(ctx, streamId, errorCode, ctx.newPromise());
+        System.out.println("onRstStreamRead, streamId: "+ streamId + "errorCode : " +errorCode);
     }
 
-    @Override
-    public void onSettingsRead(ChannelHandlerContext ctx, Http2Settings settings) throws Http2Exception {
-        new DefaultHttp2FrameWriter().writeSettingsAck(ctx,ctx.newPromise());
-
-    }
 }

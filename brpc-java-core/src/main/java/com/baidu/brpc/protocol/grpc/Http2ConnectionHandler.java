@@ -1,3 +1,18 @@
+/*
+ * Copyright 2014 The Netty Project
+ *
+ * The Netty Project licenses this file to you under the Apache License, version 2.0 (the
+ * "License"); you may not use this file except in compliance with the License. You may obtain a
+ * copy of the License at:
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License
+ * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
+ * or implied. See the License for the specific language governing permissions and limitations under
+ * the License.
+ * Copy form Netty project
+ */
 package com.baidu.brpc.protocol.grpc;
 
 import io.netty.buffer.ByteBuf;
@@ -39,16 +54,16 @@ public class Http2ConnectionHandler implements Http2LifecycleManager {
     private Http2ConnectionHandler.BaseDecoder byteDecoder;
     private long gracefulShutdownTimeoutMillis;
 
-    public Http2ConnectionHandler(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) {
+    /*public Http2ConnectionHandler(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) {
         this.initialSettings = (Http2Settings) ObjectUtil.checkNotNull(initialSettings, "initialSettings");
         this.decoder = (Http2ConnectionDecoder) ObjectUtil.checkNotNull(decoder, "decoder");
         this.encoder = (Http2ConnectionEncoder) ObjectUtil.checkNotNull(encoder, "encoder");
         if (encoder.connection() != decoder.connection()) {
             throw new IllegalArgumentException("Encoder and Decoder do not share the same connection object");
         }
-    }
+    }*/
 
-    Http2ConnectionHandler(boolean server, Http2FrameWriter frameWriter, Http2FrameLogger frameLogger, Http2Settings initialSettings) {
+    public Http2ConnectionHandler(boolean server, Http2FrameWriter frameWriter, Http2FrameLogger frameLogger, Http2Settings initialSettings) {
         this.initialSettings = (Http2Settings)ObjectUtil.checkNotNull(initialSettings, "initialSettings");
         Http2Connection connection = new DefaultHttp2Connection(server);
         Long maxHeaderListSize = initialSettings.maxHeaderListSize();
@@ -77,13 +92,22 @@ public class Http2ConnectionHandler implements Http2LifecycleManager {
     }
 
 
-    public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+    /*public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         this.encoder.lifecycleManager(this);
         this.decoder.lifecycleManager(this);
         this.encoder.flowController().channelHandlerContext(ctx);
         this.decoder.flowController().channelHandlerContext(ctx);
         this.byteDecoder = new Http2ConnectionHandler.PrefaceDecoder(ctx);
+    }*/
+    public void handlerAdded(ChannelHandlerContext ctx,boolean isDecodingRequest) throws Exception {
+        this.encoder.lifecycleManager(this);
+        this.decoder.lifecycleManager(this);
+        this.encoder.flowController().channelHandlerContext(ctx);
+        this.decoder.flowController().channelHandlerContext(ctx);
+        if(isDecodingRequest) this.byteDecoder = new Http2ConnectionHandler.PrefaceDecoder(ctx);
+        else this.byteDecoder = new Http2ConnectionHandler.FrameDecoder();
     }
+
 
     public void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
         this.byteDecoder.decode(ctx, in, out);
@@ -527,9 +551,6 @@ public class Http2ConnectionHandler implements Http2LifecycleManager {
                 }
 
                 Http2ConnectionHandler.this.encoder.writeSettings(ctx, Http2ConnectionHandler.this.initialSettings, ctx.newPromise()).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
-                //if (isClient) {
-                    //Http2ConnectionHandler.this.userEventTriggered(ctx, Http2ConnectionPrefaceAndSettingsFrameWrittenEvent.INSTANCE);
-                //}
 
             }
         }

@@ -22,7 +22,7 @@ public class RpcClientTest {
         clientOption.setProtocolType(Options.ProtocolType.PROTOCOL_GRPC_PROTOBUF_VALUE);
         clientOption.setWriteTimeoutMillis(1000);
         clientOption.setReadTimeoutMillis(5000);
-        clientOption.setMaxTotalConnections(1000);
+        clientOption.setMaxTotalConnections(1);
         clientOption.setMinIdleConnections(10);
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
@@ -33,10 +33,7 @@ public class RpcClientTest {
             serviceUrl = args[0];
         }
 
-        // build request
-        Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
-                .setMessage("helloooooooooooo")
-                .build();
+
 
         List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
@@ -48,10 +45,19 @@ public class RpcClientTest {
         RpcContext.getContext().setLogId(1234);
 
         try {
-            Echo.EchoResponse response = echoService.echo(request);
-            System.out.printf("sync call service=EchoService.echo success, "
-                            + "request=%s,response=%s\n",
-                    request.getMessage(), response.getMessage());
+            for(int i = 0;i<100;i++) {
+
+                // build request
+                Echo.EchoRequest request = Echo.EchoRequest.newBuilder()
+                        .setMessage("helloooooooooooo"+ (i+1))
+                        .build();
+
+                Echo.EchoResponse response = echoService.echo(request);
+                System.out.println("Call times: "+ (i+1));
+                System.out.printf("sync call service=EchoService.echo success, "
+                                + "request=%s,response=%s\n",
+                        request.getMessage(), response.getMessage());
+            }
         } catch (RpcException ex) {
             log.warn("sync call failed, ex=", ex);
         }
