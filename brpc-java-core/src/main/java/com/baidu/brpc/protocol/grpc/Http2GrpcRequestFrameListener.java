@@ -17,6 +17,7 @@ public class Http2GrpcRequestFrameListener extends Http2EventAdapter {
 
         }
         http2GrpcRequest.setHttp2Headers(frame);
+        http2GrpcRequest.setStreamId(streamId);
     }
     public int onDataRead(ChannelHandlerContext ctx,final int streamId, ByteBuf data, int padding, boolean endOfStream) throws Http2Exception {
         Http2DataFrame frame=new DefaultHttp2DataFrame(data,endOfStream,padding);
@@ -25,6 +26,7 @@ public class Http2GrpcRequestFrameListener extends Http2EventAdapter {
 
         }
         http2GrpcRequest.setHttp2Data(frame);
+        http2GrpcRequest.setStreamId(streamId);
 
         return data.readableBytes() + padding;
     }

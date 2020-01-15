@@ -19,6 +19,7 @@ public class Http2GrpcResponseFrameListener extends Http2EventAdapter {
         if (http2GrpcResponse == null) {
             http2GrpcResponse = new Http2GrpcResponse();
         }
+        http2GrpcResponse.setStreamId(streamId);
         if (!endStream) {
             http2GrpcResponse.setStartHttp2Headers(frame);
         } else {
@@ -32,6 +33,7 @@ public class Http2GrpcResponseFrameListener extends Http2EventAdapter {
             http2GrpcResponse = new Http2GrpcResponse();
 
         }
+        http2GrpcResponse.setStreamId(streamId);
         http2GrpcResponse.setHttp2Data(frame);
 
         return data.readableBytes() + padding;

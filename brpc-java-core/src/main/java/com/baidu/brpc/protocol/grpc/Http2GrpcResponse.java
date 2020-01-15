@@ -31,6 +31,9 @@ public class Http2GrpcResponse extends AbstractResponse {
     @Getter
     @Setter
     private String methodName;
+    @Getter
+    @Setter
+    private int streamId;
 
 
 }

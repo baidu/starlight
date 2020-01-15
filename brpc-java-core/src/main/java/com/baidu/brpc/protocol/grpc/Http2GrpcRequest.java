@@ -22,6 +22,9 @@ public class Http2GrpcRequest extends AbstractRequest {
     @Getter
     @Setter
     private ChannelHandlerContext channelHandlerContext;
+    @Getter
+    @Setter
+    private int streamId;
 
 
 }

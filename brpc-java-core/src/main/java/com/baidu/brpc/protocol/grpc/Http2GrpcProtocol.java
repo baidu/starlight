@@ -140,8 +140,7 @@ public class Http2GrpcProtocol extends AbstractProtocol {
 
             Http2Connection connection = handlerMap.get(channelId).connection();
             int streamId = connection.local().incrementAndGetNextStreamId();
-            Http2Stream createdStream = connection.local().createStream(streamId, false);
-            System.out.println(connection.local().created(createdStream));
+            connection.local().createStream(streamId, false);
 
             Http2GrpcFrameWriter frameWriter = new Http2GrpcFrameWriter();
             frameWriter.writeHeaders(channel, streamId, requestHeader, 0, false, channel.newPromise());
@@ -157,8 +156,6 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         if (msg != null) {
             Http2GrpcResponse http2GrpcResponse = (Http2GrpcResponse) msg;
             ChannelInfo channelInfo = ChannelInfo.getOrCreateClientChannelInfo(ctx.channel());
-
-            System.out.println(channelInfo);
             RpcFuture rpcFuture = channelInfo.removeRpcFuture(correlationId.getAndIncrement());
 
             if (rpcFuture == null) {
@@ -221,15 +218,12 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         Object responseProto = response.getResult();
 
 
-        int streamId = http2GrpcRequest.getHttp2Headers().stream().id();
+        int streamId = http2GrpcRequest.getStreamId();
         String channelId = request.getChannel().id().asLongText();
 
 
         Http2ConnectionHandler handler = handlerMap.get(channelId);
         ChannelHandlerContext ctx = http2GrpcRequest.getChannelHandlerContext();
-
-        Http2Stream http2Stream = handler.connection().stream(streamId);
-        System.out.println(http2Stream);
 
         Http2Headers responseHeader = new DefaultHttp2Headers();
         responseHeader.status("200");
