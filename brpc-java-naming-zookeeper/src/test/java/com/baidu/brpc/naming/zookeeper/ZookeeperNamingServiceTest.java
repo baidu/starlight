@@ -19,16 +19,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import com.baidu.brpc.client.channel.ServiceInstance;
+import com.baidu.brpc.protocol.SubscribeInfo;
 import org.apache.curator.test.TestingServer;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import com.baidu.brpc.client.instance.ServiceInstance;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.naming.SubscribeInfo;
 
 public class ZookeeperNamingServiceTest {
     private TestingServer zkServer;

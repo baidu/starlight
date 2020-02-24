@@ -26,7 +26,7 @@
 
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-parent</artifactId>
-    <version>2.5.9</version>
+    <version>3.0.0</version>
     <packaging>pom</packaging>
 
     <name>${project.artifactId}</name>
@@ -40,7 +40,8 @@
     </properties>
 
     <modules>
-        <module>brpc-java-core</module>
+        <module>brpc-java-communication</module>
+        <module>brpc-java-governance</module>
         <module>brpc-java-naming-zookeeper</module>
         <module>brpc-java-naming-consul</module>
         <module>brpc-spring</module>
@@ -241,6 +242,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.baidu</groupId>
+                <artifactId>brpc-java-communication</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>com.baidu</groupId>
                 <artifactId>brpc-java</artifactId>

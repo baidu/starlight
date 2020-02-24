@@ -25,7 +25,7 @@ import com.baidu.brpc.client.RpcCallback;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.ChannelType;
-import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
+import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.protocol.Options;
 
 import io.netty.util.ReferenceCountUtil;
@@ -87,6 +87,13 @@ public class BenchmarkTest {
             threads[i].start();
         }
 
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
+            @Override
+            public void run() {
+                stop = true;
+            }
+        }));
+
         long lastSuccessRequestNum = 0;
         long lastFailRequestNum = 0;
         long lastElapsedNs = 0;
@@ -134,7 +141,6 @@ public class BenchmarkTest {
             }
 
             log.info(msg);
-
         }
     }
 

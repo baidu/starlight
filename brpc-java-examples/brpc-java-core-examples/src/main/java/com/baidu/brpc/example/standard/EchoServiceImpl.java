@@ -51,8 +51,8 @@ public class EchoServiceImpl implements EchoService {
         String message = request.getMessage();
         Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
                 .setMessage(message).build();
-//        LOG.debug("EchoService.echo, request={}, response={}",
-//                request.getMessage(), response.getMessage());
+        LOG.debug("EchoService.echo, request={}, response={}",
+                request.getMessage(), response.getMessage());
 
         return response;
     }

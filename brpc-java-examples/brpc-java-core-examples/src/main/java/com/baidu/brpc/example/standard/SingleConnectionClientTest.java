@@ -7,6 +7,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +16,6 @@ import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.ChannelType;
-import com.baidu.brpc.client.loadbalance.LoadBalanceType;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options;
@@ -100,7 +100,7 @@ public class SingleConnectionClientTest {
         clientOption.setReadTimeoutMillis(1000);
         clientOption.setMaxTotalConnections(1000);
         clientOption.setMinIdleConnections(10);
-        clientOption.setLoadBalanceType(LoadBalanceType.ROUND_ROBIN.getId());
+        clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_ROUND_ROBIN);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
         clientOption.setChannelType(ChannelType.SINGLE_CONNECTION);
         clientOption.setKeepAliveTime(25);

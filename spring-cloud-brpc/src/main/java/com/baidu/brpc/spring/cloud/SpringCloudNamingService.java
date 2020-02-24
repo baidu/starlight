@@ -15,13 +15,13 @@
  */
 package com.baidu.brpc.spring.cloud;
 
-import com.baidu.brpc.client.instance.ServiceInstance;
+import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.Constants;
 import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.naming.SubscribeInfo;
+import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.spring.boot.autoconfigure.BrpcApplicationContextUtils;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import io.netty.util.HashedWheelTimer;

@@ -16,9 +16,10 @@
 
 package com.baidu.brpc.naming.consul;
 
-import com.baidu.brpc.client.instance.ServiceInstance;
+import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.*;
+import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.QueryParams;
@@ -34,7 +35,12 @@ import io.netty.util.internal.ConcurrentSet;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Collection;
+import java.util.Arrays;
 import java.util.concurrent.*;
 
 @Slf4j
@@ -129,7 +135,7 @@ public class ConsulNamingService implements NamingService {
     public List<ServiceInstance> lookup(SubscribeInfo subscribeInfo) {
         try {
             Response<List<HealthService>> consulServices = lookupHealthService(
-                    generateServiceName(subscribeInfo), -1);
+                    subscribeInfo.getServiceId(), -1);
             List<ServiceInstance> instances = convert(consulServices);
             log.info("lookup {} instances from consul", instances.size());
             return instances;
@@ -147,7 +153,7 @@ public class ConsulNamingService implements NamingService {
     @Override
     public void subscribe(final SubscribeInfo subscribeInfo, final NotifyListener listener) {
         try {
-            final String serviceName = generateServiceName(subscribeInfo);
+            final String serviceName = subscribeInfo.getServiceId();
             Response<List<HealthService>> response = lookupHealthService(serviceName, -1);
             List<ServiceInstance> instances = convert(response);
             log.info("lookup {} instances from consul", instances.size());
@@ -221,7 +227,7 @@ public class ConsulNamingService implements NamingService {
 
     private NewService getConsulNewService(RegisterInfo registerInfo) {
         NewService newService = new NewService();
-        newService.setName(generateServiceName(registerInfo));
+        newService.setName(registerInfo.getServiceId());
         newService.setId(generateInstanceId(registerInfo));
         newService.setAddress(registerInfo.getHost());
         newService.setPort(registerInfo.getPort());
@@ -235,34 +241,15 @@ public class ConsulNamingService implements NamingService {
         return newService;
     }
 
-    public String generateServiceName(RegisterInfo registerInfo) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(registerInfo.getGroup())
-                .append(":")
-                .append(registerInfo.getInterfaceName())
-                .append(":")
-                .append(registerInfo.getVersion());
-        return sb.toString();
-    }
-
-    public String generateServiceName(SubscribeInfo subscribeInfo) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(subscribeInfo.getGroup())
-                .append(":")
-                .append(subscribeInfo.getInterfaceName())
-                .append(":")
-                .append(subscribeInfo.getVersion());
-        return sb.toString();
-    }
-
     public String generateInstanceId(RegisterInfo registerInfo) {
         StringBuilder sb = new StringBuilder();
-        sb.append(generateServiceName(registerInfo))
+        sb.append(registerInfo.getServiceId())
                 .append(":")
                 .append(registerInfo.getHost())
                 .append(":")
                 .append(registerInfo.getPort());
         return sb.toString();
+
     }
 
     public Response<List<HealthService>> lookupHealthService(String serviceName, long lastConsulIndex) {
@@ -286,6 +273,7 @@ public class ConsulNamingService implements NamingService {
                 ServiceInstance serviceInstance = new ServiceInstance();
                 serviceInstance.setIp(consulService.getService().getAddress());
                 serviceInstance.setPort(consulService.getService().getPort());
+                serviceInstance.setServiceName(consulService.getService().getService());
                 serviceInstances.add(serviceInstance);
             }
             return serviceInstances;

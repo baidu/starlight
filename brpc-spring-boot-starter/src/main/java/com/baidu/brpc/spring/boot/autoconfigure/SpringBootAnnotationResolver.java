@@ -33,6 +33,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
 import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
@@ -338,10 +339,11 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
         MutablePropertyValues values = new MutablePropertyValues();
         BrpcConfig brpcConfig = getServiceConfig(beanFactory, serviceInterface);
         for (Field field : RpcClientOptions.class.getDeclaredFields()) {
-            if (field.isSynthetic()) {
-                continue;
-            }
             try {
+                if (field.getType().equals(Logger.class)) {
+                    // ignore properties of org.slf4j.Logger class
+                    continue;
+                }
                 field.setAccessible(true);
                 values.addPropertyValue(field.getName(), field.get(brpcConfig.getClient()));
             } catch (Exception ex) {

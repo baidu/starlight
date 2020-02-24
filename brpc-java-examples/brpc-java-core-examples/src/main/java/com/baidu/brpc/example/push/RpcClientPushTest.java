@@ -19,7 +19,7 @@ package com.baidu.brpc.example.push;
 import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
-import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
+import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.push.normal.EchoRequest;
 import com.baidu.brpc.example.push.normal.EchoResponse;
 import com.baidu.brpc.example.push.normal.EchoService;

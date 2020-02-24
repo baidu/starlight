@@ -16,7 +16,6 @@
 
 package com.baidu.brpc.example.standard;
 
-import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 import lombok.extern.slf4j.Slf4j;
@@ -36,7 +35,7 @@ public class RpcServerTest {
         options.setReceiveBufferSize(64 * 1024 * 1024);
         options.setSendBufferSize(64 * 1024 * 1024);
         options.setKeepAliveTime(20);
-//        options.setNamingServiceUrl("zookeeper://127.0.0.1:2181");
+//        options.setNamingServiceUrl("consul://127.0.0.1:8500");
 //        final RpcServer rpcServer = new RpcServer(port, options);
         final RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());

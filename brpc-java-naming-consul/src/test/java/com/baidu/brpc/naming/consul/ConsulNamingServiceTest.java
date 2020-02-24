@@ -16,11 +16,11 @@
 
 package com.baidu.brpc.naming.consul;
 
-import com.baidu.brpc.client.instance.ServiceInstance;
+import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.naming.SubscribeInfo;
+import com.baidu.brpc.protocol.SubscribeInfo;
 import com.pszymczyk.consul.ConsulProcess;
 import com.pszymczyk.consul.ConsulStarterBuilder;
 import lombok.extern.slf4j.Slf4j;

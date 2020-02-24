@@ -15,7 +15,7 @@
  */
 package com.baidu.brpc.spring.boot.autoconfigure.config;
 
-import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.protocol.NamingOptions;
 import lombok.Getter;
 import lombok.Setter;
 
