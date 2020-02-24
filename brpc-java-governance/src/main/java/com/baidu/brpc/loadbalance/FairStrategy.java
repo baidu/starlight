@@ -60,7 +60,7 @@ public class FairStrategy implements LoadBalanceStrategy {
      *
      * <p>The weight tree can achieve time complexity at the O(logN) level, and 1000 servers require only 11 memory accesses.
      */
-    private CopyOnWriteArrayList<Node> treeContainer;
+    protected CopyOnWriteArrayList<Node> treeContainer = new CopyOnWriteArrayList<Node>();
     private volatile Timer timer;
     private RpcClient rpcClient;
     private int latencyWindowSize;
@@ -68,7 +68,8 @@ public class FairStrategy implements LoadBalanceStrategy {
     private float activeInstancesRatio;
     // fair strategy will not work if the instances is less the minInstancesNum
     private int minInstancesNum = 3;
-    private CopyOnWriteArrayList<CommunicationClient> invalidInstances;
+    private CopyOnWriteArrayList<CommunicationClient> invalidInstances
+            = new CopyOnWriteArrayList<CommunicationClient>();
     private Random random = new Random(System.currentTimeMillis());
 
     @Override
@@ -104,23 +105,34 @@ public class FairStrategy implements LoadBalanceStrategy {
             Set<CommunicationClient> selectedInstances) {
 
         if (treeContainer.size() == 0) {
-            return randomSelect(instances);
+            return new RandomStrategy().selectInstance(request, instances, selectedInstances);
         }
 
         try {
             Node root = treeContainer.get(0);
-            CommunicationClient instance = fairSelect(root);
+            CommunicationClient instance = null;
+            for (int i = 0; i < 3; i++) {
+                instance = fairSelect(root);
+                if (CollectionUtils.isNotEmpty(selectedInstances) && selectedInstances.contains(instance)) {
+                    continue;
+                }
+                if (invalidInstances.contains(instance)) {
+                    continue;
+                }
+                break;
+            }
             // the invalidInstances list size is not very large.
-            if (invalidInstances.contains(instance)) {
+            if ((CollectionUtils.isNotEmpty(selectedInstances) && selectedInstances.contains(instance))
+                    || invalidInstances.contains(instance)) {
                 // if the selected node is an invalid one, means the weight tree has not yet updated.
                 // random reselect a new one
                 log.debug("the selected one is invalid, begin to random reselect a new one...");
-                return randomSelect(instances);
+                return new RandomStrategy().selectInstance(request, instances, selectedInstances);
             }
             return instance;
         } catch (Exception e) {
             log.warn("FairStrategy select channel failed.", e);
-            return randomSelect(instances);
+            return new RandomStrategy().selectInstance(request, instances, selectedInstances);
         }
 
     }
@@ -138,15 +150,6 @@ public class FairStrategy implements LoadBalanceStrategy {
      */
     public void markInvalidInstance(List<CommunicationClient> instances) {
         this.invalidInstances.addAll(instances);
-    }
-
-    protected CommunicationClient randomSelect(List<CommunicationClient> instances) {
-        long instanceNum = instances.size();
-        if (instanceNum == 0) {
-            return null;
-        }
-        int index = (int) (getRandomLong() % instanceNum);
-        return instances.get(index);
     }
 
     protected long getRandomLong() {

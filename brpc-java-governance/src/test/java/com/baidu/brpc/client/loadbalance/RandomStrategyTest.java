@@ -41,9 +41,6 @@ public class RandomStrategyTest {
     private static CommunicationClient instance2;
     private static CommunicationClient instance3;
 
-    private static String serviceUrl = "list://127.0.0.1:8000,127.0.0.1:8001,127.0.0.1:8002";
-    private static RpcClient rpcClient;
-
     @Before
     public void before() {
         List<Interceptor> interceptors = new ArrayList<Interceptor>();

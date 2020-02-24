@@ -13,7 +13,7 @@ public class RpcOptionsUtils {
         RpcClientOptions options = new RpcClientOptions();
         options.setIoThreadNum(1);
         options.setWorkThreadNum(1);
-        options.setMinIdleConnections(1);
+        options.setMinIdleConnections(0);
         return options;
     }
 
