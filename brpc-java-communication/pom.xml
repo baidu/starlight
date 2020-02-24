@@ -131,6 +131,10 @@
             <artifactId>protostuff-core</artifactId>
             <version>1.0.7</version>
         </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>hessian-lite</artifactId>
+        </dependency>
     </dependencies>
 
 </project>

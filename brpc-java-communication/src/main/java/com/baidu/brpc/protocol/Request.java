@@ -181,4 +181,7 @@ public interface Request {
 
     void setSendBuf(ByteBuf sendBuf);
 
+    boolean isHeartbeat();
+
+    void setHeartbeat(boolean heartbeat);
 }

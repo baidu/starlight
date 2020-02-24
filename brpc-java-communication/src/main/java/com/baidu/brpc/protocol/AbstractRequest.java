@@ -67,6 +67,7 @@ public abstract class AbstractRequest implements Request {
     private RpcFuture rpcFuture; // just used by client
     private ByteBuf sendBuf; // just used by client
     private CommunicationClient communicationClient;
+    private boolean heartbeat;
 
     /**
      * 订阅信息，客户端请求时，将订阅的服务信息存入
@@ -102,6 +103,7 @@ public abstract class AbstractRequest implements Request {
         rpcFuture = null;
         sendBuf = null;
         communicationClient = null;
+        heartbeat = false;
     }
 
     @Override

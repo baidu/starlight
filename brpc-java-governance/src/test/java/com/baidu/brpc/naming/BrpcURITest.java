@@ -46,6 +46,14 @@ public class BrpcURITest {
     }
 
     @Test
+    public void testDubboURI() {
+        String serviceUrl = "dubbo://192.168.1.8:8898/com.baidu.brpc.example.dubbo.EchoService?category=providers&interface=com.baidu.brpc.example.dubbo.EchoService&group=&version=";
+        BrpcURL uri = new BrpcURL(serviceUrl);
+        Assert.assertTrue(uri.getSchema().equals("dubbo"));
+        Assert.assertTrue(uri.getParameter("group").equals(""));
+    }
+
+    @Test
     public void testDns() {
         String serviceUrl = "dns://weibo.com";
         BrpcURL uri = new BrpcURL(serviceUrl);

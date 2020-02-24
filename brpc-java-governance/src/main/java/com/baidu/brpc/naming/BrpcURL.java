@@ -78,7 +78,11 @@ public class BrpcURL {
             String[] querySplits = query.split("&");
             for (String kv : querySplits) {
                 String[] kvSplit = kv.split("=");
-                queryMap.put(kvSplit[0], kvSplit[1]);
+                if (kvSplit.length == 1) {
+                    queryMap.put(kvSplit[0], "");
+                } else {
+                    queryMap.put(kvSplit[0], kvSplit[1]);
+                }
             }
         }
     }

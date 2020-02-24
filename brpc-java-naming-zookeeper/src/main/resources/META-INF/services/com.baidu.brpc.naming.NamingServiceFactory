@@ -1,2 +1,3 @@
 com.baidu.brpc.naming.zookeeper.ZookeeperNamingFactory
 com.baidu.brpc.naming.zookeeper.StargateNamingFactory
+com.baidu.brpc.naming.zookeeper.DubboNamingFactory
