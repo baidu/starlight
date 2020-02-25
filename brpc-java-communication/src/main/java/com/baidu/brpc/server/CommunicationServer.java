@@ -141,8 +141,10 @@ public class CommunicationServer {
 
         if (rpcServerOptions.getIoEventType() == BrpcConstants.IO_EVENT_NETTY_EPOLL) {
             if (rpcServerOptions.isGlobalThreadPoolSharing()) {
-                bossGroup = ServerAcceptorThreadPoolInstance.getOrCreateEpollInstance(rpcServerOptions.getAcceptorThreadNum());
-                workerGroup = ServerIoThreadPoolInstance.getOrCreateEpollInstance(rpcServerOptions.getAcceptorThreadNum());
+                bossGroup = ServerAcceptorThreadPoolInstance.getOrCreateEpollInstance(
+                        rpcServerOptions.getAcceptorThreadNum());
+                workerGroup = ServerIoThreadPoolInstance.getOrCreateEpollInstance(
+                        rpcServerOptions.getIoThreadNum());
             } else {
                 bossGroup = new EpollEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                         new CustomThreadFactory("server-acceptor-thread"));
@@ -157,8 +159,10 @@ public class CommunicationServer {
             log.info("use netty epoll edge trigger mode");
         } else {
             if (rpcServerOptions.isGlobalThreadPoolSharing()) {
-                bossGroup = ServerAcceptorThreadPoolInstance.getOrCreateNioInstance(rpcServerOptions.getAcceptorThreadNum());
-                workerGroup = ServerIoThreadPoolInstance.getOrCreateNioInstance(rpcServerOptions.getAcceptorThreadNum());
+                bossGroup = ServerAcceptorThreadPoolInstance.getOrCreateNioInstance(
+                        rpcServerOptions.getAcceptorThreadNum());
+                workerGroup = ServerIoThreadPoolInstance.getOrCreateNioInstance(
+                        rpcServerOptions.getIoThreadNum());
             } else {
                 bossGroup = new NioEventLoopGroup(rpcServerOptions.getAcceptorThreadNum(),
                         new CustomThreadFactory("server-acceptor-thread"));

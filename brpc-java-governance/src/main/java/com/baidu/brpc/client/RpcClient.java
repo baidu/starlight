@@ -186,6 +186,10 @@ public class RpcClient {
         List<CommunicationClient> instances = namingServiceProcessor.getInstances();
         CommunicationClient client = loadBalanceStrategy.selectInstance(
                 request, instances, request.getSelectedInstances());
+        if (client == null) {
+            log.warn("no available server instance");
+            throw new RpcException(RpcException.NETWORK_EXCEPTION, "no available server instance");
+        }
         Response response = communicationOptions.getProtocol().createResponse();
         client.executeChain(request, response);
         return response;

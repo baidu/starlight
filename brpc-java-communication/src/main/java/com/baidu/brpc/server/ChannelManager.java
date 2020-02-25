@@ -68,10 +68,10 @@ public class ChannelManager {
     }
 
     public void removeChannel(Channel channel) {
-
         Attribute<String> participant = channel.attr(PushChannelContextHolder.CLIENTNAME_KEY);
         String participantName = participant.get();
         if (StringUtils.isNotBlank(participantName)) {
+            log.debug("channel is in active, remove from channel map");
             lock.writeLock().lock();
             try {
                 innerStoreManager.removeChannel(channel);

@@ -141,7 +141,6 @@ public class RpcServerHandler extends SimpleChannelInboundHandler<Object> {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        log.debug("channel is in active, remove from channel map");
         ChannelManager.getInstance().removeChannel(ctx.channel());
         ctx.fireChannelInactive();
     }

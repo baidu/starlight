@@ -23,7 +23,7 @@
         </Console>
     </Appenders>
     <Loggers>
-        <Logger name="com.baidu.brpc" level="debug" additivity="false">
+        <Logger name="com.baidu.brpc" level="info" additivity="false">
             <AppenderRef ref="Console"/>
         </Logger>
         <Root level="info">
