@@ -28,6 +28,7 @@ public abstract class AbstractResponse implements Response {
     private Map<String, Object> kvAttachment;
     private ByteBuf binaryAttachment;
     private int compressType;
+    private boolean heartbeat;
     private NSHead nsHead;
     private SPHead spHead;
 
@@ -42,5 +43,6 @@ public abstract class AbstractResponse implements Response {
         kvAttachment = null;
         binaryAttachment = null;
         compressType = 0;
+        heartbeat = false;
     }
 }

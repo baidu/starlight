@@ -9,11 +9,8 @@ import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.protocol.NamingOptions;
 import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.thread.BrpcThreadPoolManager;
-import com.baidu.brpc.utils.ThreadPool;
-import io.netty.channel.EventLoopGroup;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;

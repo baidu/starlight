@@ -44,7 +44,7 @@
     </logger>
 
     <root>
-        <level value="info"/>
+        <level value="debug"/>
         <appender-ref ref="CONSOLE"/>
         <appender-ref ref="FILE"/>
         <appender-ref ref="FILE-WARN"/>

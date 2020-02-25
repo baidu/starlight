@@ -72,6 +72,11 @@ public interface Protocol {
      */
     Response getResponse();
 
+    /**
+     * check if the protocol supports heartbeat packet
+     */
+    boolean supportHeartbeat();
+
     /**************** 仅客户端需要实现的函数 *******************/
 
     /**

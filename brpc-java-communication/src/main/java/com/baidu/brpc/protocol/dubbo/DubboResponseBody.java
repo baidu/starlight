@@ -15,7 +15,8 @@ import java.util.Map;
 @Getter
 public class DubboResponseBody {
     private byte responseType;
-    private Object result;
+    private Object result = null;
+    private Throwable exception = null;
     private Map<String, String> attachments;
 
     public byte[] encodeResponseBody() throws IOException {
@@ -48,19 +49,46 @@ public class DubboResponseBody {
         return bodyBytes;
     }
 
-    public static DubboResponseBody decodeResponseBody(
-            DubboHeader header, ByteBuf responseBodyBuf) throws IOException {
+    public static DubboResponseBody decodeResponseBody(ByteBuf responseBodyBuf) throws IOException {
         ByteBufInputStream inputStream = null;
         try {
             inputStream = new ByteBufInputStream(responseBodyBuf, true);
             Hessian2Input hessian2Input = new Hessian2Input(inputStream);
             DubboResponseBody responseBody = new DubboResponseBody();
             responseBody.setResponseType((byte) hessian2Input.readInt());
-            responseBody.setResult(hessian2Input.readObject());
-            if (header.getFlag() == DubboConstants.RESPONSE_VALUE_WITH_ATTACHMENTS) {
-                Map<String, String> map = (Map<String, String>) hessian2Input.readObject(Map.class);
-                if (map != null && map.size() > 0) {
-                    responseBody.getAttachments().putAll(map);
+            switch (responseBody.getResponseType()) {
+                case DubboConstants.RESPONSE_NULL_VALUE:
+                    break;
+                case DubboConstants.RESPONSE_VALUE:
+                    // TODO: add response class
+                    responseBody.setResult(hessian2Input.readObject());
+                    break;
+                case DubboConstants.RESPONSE_WITH_EXCEPTION:
+                    responseBody.setException((Throwable) hessian2Input.readObject());
+                    break;
+                case DubboConstants.RESPONSE_NULL_VALUE_WITH_ATTACHMENTS: {
+                    Map<String, String> map = (Map<String, String>) hessian2Input.readObject(Map.class);
+                    if (map != null && map.size() > 0) {
+                        responseBody.setAttachments(map);
+                    }
+                    break;
+                }
+                case DubboConstants.RESPONSE_VALUE_WITH_ATTACHMENTS: {
+                    // TODO: add response class
+                    responseBody.setResult(hessian2Input.readObject());
+                    Map<String, String> map = (Map<String, String>) hessian2Input.readObject(Map.class);
+                    if (map != null && map.size() > 0) {
+                        responseBody.setAttachments(map);
+                    }
+                    break;
+                }
+                case DubboConstants.RESPONSE_WITH_EXCEPTION_WITH_ATTACHMENTS: {
+                    responseBody.setException((Throwable) hessian2Input.readObject());
+                    Map<String, String> map = (Map<String, String>) hessian2Input.readObject(Map.class);
+                    if (map != null && map.size() > 0) {
+                        responseBody.setAttachments(map);
+                    }
+                    break;
                 }
             }
             return responseBody;

@@ -42,6 +42,7 @@ import java.util.Map;
 public class DubboRpcProtocol extends AbstractProtocol {
     protected static final byte FLAG_REQUEST = (byte) 0x80;
     protected static final byte FLAG_TWOWAY = (byte) 0x40;
+    protected static final byte FLAG_EVENT = (byte) 0x20;
 
     private static final NotEnoughDataException notEnoughDataException
             = new NotEnoughDataException("not enough data");
@@ -84,27 +85,37 @@ public class DubboRpcProtocol extends AbstractProtocol {
     @Override
     public ByteBuf encodeRequest(Request request) throws Exception {
         DubboHeader header = new DubboHeader();
-        byte flag = (byte) (FLAG_REQUEST | getContentTypeId() | FLAG_TWOWAY);
+        byte flag = (byte) (FLAG_REQUEST | getContentTypeId());
+        if (!request.isOneWay()) {
+            flag |= FLAG_TWOWAY;
+        }
+        if (request.isHeartbeat()) {
+            flag |= FLAG_EVENT;
+        }
         header.setFlag(flag);
         header.setCorrelationId(request.getCorrelationId());
 
-        DubboRequestBody requestBody = new DubboRequestBody();
-        requestBody.setPath(request.getServiceName());
-        requestBody.setVersion(request.getSubscribeInfo().getVersion());
-        requestBody.setMethodName(request.getMethodName());
-        requestBody.setParameterTypes(request.getTargetMethod().getParameterTypes());
-        requestBody.setArguments(request.getArgs());
+        byte[] bodyBytes = null;
+        if (request.isHeartbeat()) {
+            bodyBytes = DubboPacket.encodeHeartbeatBody();
+        } else {
+            DubboRequestBody requestBody = new DubboRequestBody();
+            requestBody.setPath(request.getServiceName());
+            requestBody.setVersion(request.getSubscribeInfo().getVersion());
+            requestBody.setMethodName(request.getMethodName());
+            requestBody.setParameterTypes(request.getTargetMethod().getParameterTypes());
+            requestBody.setArguments(request.getArgs());
 
-        Map<String, String> kvAttachments = new HashMap<String, String>();
-        kvAttachments.put("group", request.getSubscribeInfo().getGroup());
-        if (request.getKvAttachment() != null) {
-            for (Map.Entry<String, Object> entry : request.getKvAttachment().entrySet()) {
-                kvAttachments.put(entry.getKey(), (String) entry.getValue());
+            Map<String, String> kvAttachments = new HashMap<String, String>();
+            kvAttachments.put("group", request.getSubscribeInfo().getGroup());
+            if (request.getKvAttachment() != null) {
+                for (Map.Entry<String, Object> entry : request.getKvAttachment().entrySet()) {
+                    kvAttachments.put(entry.getKey(), (String) entry.getValue());
+                }
             }
+            requestBody.setAttachments(kvAttachments);
+            bodyBytes = requestBody.encodeRequestBody();
         }
-        requestBody.setAttachments(kvAttachments);
-
-        byte[] bodyBytes = requestBody.encodeRequestBody();
         header.setBodyLength(bodyBytes.length);
 
         return Unpooled.wrappedBuffer(header.encode(), Unpooled.wrappedBuffer(bodyBytes));
@@ -126,15 +137,24 @@ public class DubboRpcProtocol extends AbstractProtocol {
         // status
         byte status = dubboHeader.getStatus();
         if (status == DubboConstants.RESPONSE_OK) {
-            DubboResponseBody responseBody = DubboResponseBody.decodeResponseBody(
-                    dubboHeader, dubboPacket.getBodyBuf());
-            response.setResult(responseBody.getResult());
-            if (responseBody.getAttachments() != null) {
-                Map<String, Object> attachments = new HashMap<String, Object>();
-                for (Map.Entry<String, String> entry : responseBody.getAttachments().entrySet()) {
-                    attachments.put(entry.getKey(), entry.getValue());
+            if ((dubboHeader.getFlag() & DubboConstants.FLAG_EVENT) != 0) {
+                Object bodyObject = DubboPacket.decodeEventBody(dubboPacket.getBodyBuf());
+                if (bodyObject == DubboConstants.HEARTBEAT_EVENT) {
+                    response.setHeartbeat(true);
+                } else {
+                    throw new RpcException("response body not null for event");
                 }
-                response.setKvAttachment(attachments);
+            } else {
+                DubboResponseBody responseBody = DubboResponseBody.decodeResponseBody(dubboPacket.getBodyBuf());
+                response.setResult(responseBody.getResult());
+                response.setException(responseBody.getException());
+                if (responseBody.getAttachments() != null) {
+                    Map<String, Object> attachments = new HashMap<String, Object>();
+                    for (Map.Entry<String, String> entry : responseBody.getAttachments().entrySet()) {
+                        attachments.put(entry.getKey(), entry.getValue());
+                    }
+                    response.setKvAttachment(attachments);
+                }
             }
         } else {
             ByteBufInputStream inputStream = null;
@@ -157,24 +177,17 @@ public class DubboRpcProtocol extends AbstractProtocol {
         Request request = new RpcRequest();
         DubboPacket dubboPacket = (DubboPacket) packet;
         request.setCorrelationId(dubboPacket.getHeader().getCorrelationId());
+
+        // check if it is heartbeat request
         byte flag = dubboPacket.getHeader().getFlag();
         if ((flag & DubboConstants.FLAG_EVENT) != 0) {
-            ByteBufInputStream inputStream = null;
-            try {
-                inputStream = new ByteBufInputStream(dubboPacket.getBodyBuf(), true);
-                Hessian2Input hessian2Input = new Hessian2Input(inputStream);
-                Object bodyObject = hessian2Input.readObject();
-                if (bodyObject == DubboConstants.HEARTBEAT_EVENT) {
-                    request.setHeartbeat(true);
-                } else {
-                    throw new RpcException("request body not null for event");
-                }
-                return request;
-            } finally {
-                if (inputStream != null) {
-                    inputStream.close();
-                }
+            Object bodyObject = DubboPacket.decodeEventBody(dubboPacket.getBodyBuf());
+            if (bodyObject == DubboConstants.HEARTBEAT_EVENT) {
+                request.setHeartbeat(true);
+            } else {
+                throw new RpcException("request body not null for event");
             }
+            return request;
         }
 
         try {
@@ -209,7 +222,7 @@ public class DubboRpcProtocol extends AbstractProtocol {
             DubboResponseBody responseBody = new DubboResponseBody();
             dubboHeader.setFlag(getContentTypeId());
             if (request.isHeartbeat()) {
-                dubboHeader.setFlag((byte) (dubboHeader.getFlag() | DubboConstants.FLAG_EVENT));
+                dubboHeader.setFlag((byte) (dubboHeader.getFlag() | FLAG_EVENT));
             }
             dubboHeader.setCorrelationId(response.getCorrelationId());
             if (response.getException() != null) {
@@ -239,6 +252,11 @@ public class DubboRpcProtocol extends AbstractProtocol {
             log.warn("encode response failed", e);
             throw new RpcException(RpcException.SERIALIZATION_EXCEPTION, e);
         }
+    }
+
+    @Override
+    public boolean supportHeartbeat() {
+        return true;
     }
 
     protected byte getContentTypeId() {

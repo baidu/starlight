@@ -42,19 +42,11 @@ public class RpcServerOptions {
     // send buffer size
     private int sendBufferSize = 1024 * 64;
     /**
-     * an {@link IdleStateEvent} whose state is {@link IdleState#READER_IDLE}
-     * will be triggered when no read was performed for the specified period of time.
+     * an {@link IdleStateEvent} whose state is {@link IdleState#ALL_IDLE}
+     * will be triggered when no read/write was performed for the specified seconds.
      * Specify {@code 0} to disable.
      */
-    private int readerIdleTime = 60;
-    /**
-     * an {@link IdleStateEvent} whose state is {@link IdleState#WRITER_IDLE}
-     * will be triggered when no write was performed for the specified period of time.
-     * Specify {@code 0} to disable.
-     */
-    private int writerIdleTime = 60;
-    // keepAlive时间（second）
-    private int keepAliveTime = 5;
+    private int keepAliveTime = 60;
     // acceptor threads, default use Netty default value
     private int acceptorThreadNum = 1;
     // io threads, default use Netty default value
@@ -95,17 +87,32 @@ public class RpcServerOptions {
         this.maxSize = options.maxSize;
         this.namingServiceUrl = options.namingServiceUrl;
         this.protocolType = options.protocolType;
-        this.readerIdleTime = options.readerIdleTime;
         this.receiveBufferSize = options.receiveBufferSize;
         this.sendBufferSize = options.sendBufferSize;
         this.soLinger = options.soLinger;
         this.tcpNoDelay = options.tcpNoDelay;
         this.workThreadNum = options.workThreadNum;
-        this.writerIdleTime = options.writerIdleTime;
         this.globalThreadPoolSharing = options.globalThreadPoolSharing;
     }
 
     public String toString() {
-        return "RpcServerOptions(keepAlive=" + this.isKeepAlive() + ", tcpNoDelay=" + this.isTcpNoDelay() + ", soLinger=" + this.getSoLinger() + ", backlog=" + this.getBacklog() + ", receiveBufferSize=" + this.getReceiveBufferSize() + ", sendBufferSize=" + this.getSendBufferSize() + ", readerIdleTime=" + this.getReaderIdleTime() + ", writerIdleTime=" + this.getWriterIdleTime() + ", keepAliveTime=" + this.getKeepAliveTime() + ", acceptorThreadNum=" + this.getAcceptorThreadNum() + ", ioThreadNum=" + this.getIoThreadNum() + ", workThreadNum=" + this.getWorkThreadNum() + ", ioEventType=" + this.getIoEventType() + ", maxSize=" + this.getMaxSize() + ", maxTryTimes=" + this.getMaxTryTimes() + ", protocolType=" + this.getProtocolType() + ", encoding=" + this.getEncoding() + ", jarvisPortName=" + this.getJarvisPortName() + ", namingServiceUrl=" + this.getNamingServiceUrl() + ", globalThreadPoolSharing=" + this.isGlobalThreadPoolSharing() + ")";
+        return "RpcServerOptions(keepAlive=" + this.isKeepAlive()
+                + ", tcpNoDelay=" + this.isTcpNoDelay()
+                + ", soLinger=" + this.getSoLinger()
+                + ", backlog=" + this.getBacklog()
+                + ", receiveBufferSize=" + this.getReceiveBufferSize()
+                + ", sendBufferSize=" + this.getSendBufferSize()
+                + ", keepAliveTime=" + this.getKeepAliveTime()
+                + ", acceptorThreadNum=" + this.getAcceptorThreadNum()
+                + ", ioThreadNum=" + this.getIoThreadNum()
+                + ", workThreadNum=" + this.getWorkThreadNum()
+                + ", ioEventType=" + this.getIoEventType()
+                + ", maxSize=" + this.getMaxSize()
+                + ", maxTryTimes=" + this.getMaxTryTimes()
+                + ", protocolType=" + this.getProtocolType()
+                + ", encoding=" + this.getEncoding()
+                + ", jarvisPortName=" + this.getJarvisPortName()
+                + ", namingServiceUrl=" + this.getNamingServiceUrl()
+                + ", globalThreadPoolSharing=" + this.isGlobalThreadPoolSharing() + ")";
     }
 }

@@ -27,7 +27,6 @@ import com.baidu.brpc.protocol.push.ServerPushPacket;
 import com.baidu.brpc.protocol.push.ServerPushProtocol;
 import com.baidu.brpc.server.CommunicationServer;
 import com.baidu.brpc.server.ServerStatus;
-import com.baidu.brpc.utils.ThreadPool;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -107,6 +106,9 @@ public class DecodeWorkTask implements Runnable {
         Response response = protocol.createResponse();
         try {
             request = protocol.decodeRequest(packet);
+            if (request.isHeartbeat()) {
+                log.debug("receive hearbeat event from {}", ctx.channel().remoteAddress().toString());
+            }
         } catch (Exception ex) {
             // throw request
             log.warn("decode request failed:", ex);
@@ -128,14 +130,13 @@ public class DecodeWorkTask implements Runnable {
             return;
         }
 
-        ThreadPool threadPool = request.getRpcMethodInfo().getThreadPool();
         ServerWorkTask workTask = new ServerWorkTask(rpcServer, protocol, request, response, ctx);
-        if (threadPool == rpcServer.getThreadPool()) {
+        if (request.isHeartbeat() || request.getRpcMethodInfo().getThreadPool() == rpcServer.getThreadPool()) {
             // service run in the current thread
             workTask.run();
         } else {
             // service run in individual thread
-            threadPool.submit(workTask);
+            request.getRpcMethodInfo().getThreadPool().submit(workTask);
         }
     }
 

@@ -91,7 +91,7 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
         if (channelType == ChannelType.SHORT_CONNECTION) {
             channelInfo.close();
         } else {
-            if (response != null && response.getResult() != null) {
+            if (response != null && (response.getResult() != null || response.isHeartbeat())) {
                 channelInfo.getChannelGroup().updateLatency((int) (endTime - startTime));
                 channelInfo.handleResponseSuccess();
             } else {

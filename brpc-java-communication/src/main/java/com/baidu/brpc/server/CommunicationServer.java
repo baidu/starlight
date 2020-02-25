@@ -185,8 +185,8 @@ public class CommunicationServer {
             protected void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline().addLast(
                         "idleStateAwareHandler", new IdleStateHandler(
-                                rpcServerOptions.getReaderIdleTime(),
-                                rpcServerOptions.getWriterIdleTime(),
+                                0,
+                                0,
                                 rpcServerOptions.getKeepAliveTime()));
                 ch.pipeline().addLast("idle", new RpcServerChannelIdleHandler());
                 ch.pipeline().addLast(rpcServerHandler);

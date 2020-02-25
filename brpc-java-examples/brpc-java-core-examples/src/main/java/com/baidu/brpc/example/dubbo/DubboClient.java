@@ -36,7 +36,7 @@ public class DubboClient {
 
         EchoService echoService = RpcClient.getProxy(rpcClient, EchoService.class, namingOptions);
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10000; i++) {
             EchoRequest request = new EchoRequest();
             request.setMessage("hello world");
             EchoResponse response = echoService.echo(request);

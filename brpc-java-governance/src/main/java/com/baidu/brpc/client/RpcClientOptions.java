@@ -43,6 +43,7 @@ public class RpcClientOptions {
     private int connectTimeoutMillis = 1000;
     private int readTimeoutMillis = 1000;
     private int writeTimeoutMillis = 1000;
+    private ChannelType channelType = ChannelType.POOLED_CONNECTION;
     private int maxTotalConnections = 8;
     private int minIdleConnections = 8;
     private int maxTryTimes = 3;
@@ -56,8 +57,6 @@ public class RpcClientOptions {
     // fair load balance will not start, just use random load balance strategy
     private float activeInstancesRatioOfFairLoadBalance = 0.5f;
     private int healthyCheckIntervalMillis = 3000;
-    // The keep alive
-    private boolean keepAlive = true;
     private boolean reuseAddr = true;
     private boolean tcpNoDelay = true;
     // so linger
@@ -82,7 +81,6 @@ public class RpcClientOptions {
     private int futureBufferSize = 1000000;
     private String encoding = "utf-8";
     private Options.CompressType compressType = Options.CompressType.COMPRESS_TYPE_NONE;
-    private ChannelType channelType = ChannelType.POOLED_CONNECTION;
     private String clientName;
 
     // share worker thread poll and event thread pool between multi RpcClients
@@ -102,7 +100,6 @@ public class RpcClientOptions {
         this.futureBufferSize = another.futureBufferSize;
         this.healthyCheckIntervalMillis = another.healthyCheckIntervalMillis;
         this.ioThreadNum = another.ioThreadNum;
-        this.keepAlive = another.keepAlive;
         this.keepAliveTime = another.keepAliveTime;
         this.latencyWindowSizeOfFairLoadBalance = another.latencyWindowSizeOfFairLoadBalance;
         this.loadBalanceType = another.loadBalanceType;
@@ -132,7 +129,6 @@ public class RpcClientOptions {
                 .encoding(encoding)
                 .healthyCheckIntervalMillis(healthyCheckIntervalMillis)
                 .ioThreadNum(ioThreadNum)
-                .keepAlive(keepAlive)
                 .keepAliveTime(keepAliveTime)
                 .maxTotalConnections(maxTotalConnections)
                 .maxTryTimes(maxTryTimes)

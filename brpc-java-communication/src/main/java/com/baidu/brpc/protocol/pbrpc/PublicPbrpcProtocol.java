@@ -191,7 +191,7 @@ public class PublicPbrpcProtocol extends AbstractProtocol {
 
     @Override
     public Request decodeRequest(Object packet) throws Exception {
-        Request request = this.getRequest();
+        Request request = this.createRequest();
 
         PublicPbRpcPacket pbPacket = (PublicPbRpcPacket) packet;
         ByteBuf bodyBuf = pbPacket.getBody();

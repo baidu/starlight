@@ -17,8 +17,6 @@
 package com.baidu.brpc.server.handler;
 
 import com.baidu.brpc.RpcContext;
-import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
@@ -30,8 +28,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import java.lang.reflect.InvocationTargetException;
 
 @Slf4j
 @Setter
@@ -70,7 +66,7 @@ public class ServerWorkTask implements Runnable {
             response.setRpcMethodInfo(request.getRpcMethodInfo());
         }
 
-        if (response.getException() == null) {
+        if (!request.isHeartbeat() && response.getException() == null) {
             rpcServer.execute(request, response);
             if (RpcContext.isSet()) {
                 rpcContext = RpcContext.getContext();

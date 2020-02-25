@@ -64,5 +64,9 @@ public interface Response {
 
     void setCompressType(int compressType);
 
+    boolean isHeartbeat();
+
+    void setHeartbeat(boolean heartbeat);
+
     void reset();
 }

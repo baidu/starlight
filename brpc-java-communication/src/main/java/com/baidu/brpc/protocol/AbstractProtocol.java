@@ -58,6 +58,11 @@ public abstract class AbstractProtocol implements Protocol {
     }
 
     @Override
+    public boolean supportHeartbeat() {
+        return false;
+    }
+
+    @Override
     public boolean returnChannelBeforeResponse() {
         return true;
     }

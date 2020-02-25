@@ -44,8 +44,4 @@ public interface BrpcChannel {
     int getActiveConnectionNum();
 
     int getIdleConnectionNum();
-
-    int hashCode();
-
-    boolean equals(Object object);
 }

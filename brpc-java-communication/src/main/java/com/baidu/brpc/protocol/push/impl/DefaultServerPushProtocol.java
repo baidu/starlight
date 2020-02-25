@@ -360,4 +360,9 @@ public class DefaultServerPushProtocol implements ServerPushProtocol {
         return buffer;
     }
 
+    @Override
+    public boolean supportHeartbeat() {
+        return false;
+    }
+
 }
