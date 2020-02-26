@@ -16,6 +16,7 @@
 
 package com.baidu.brpc.example.springboot.server;
 
+import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.AbstractInterceptor;
 import com.baidu.brpc.interceptor.InterceptorChain;
 import com.baidu.brpc.protocol.Request;
@@ -36,7 +37,7 @@ public class CustomInterceptor extends AbstractInterceptor {
     }
 
     @Override
-    public void aroundProcess(Request request, Response response, InterceptorChain chain) throws Exception {
+    public void aroundProcess(Request request, Response response, InterceptorChain chain) throws RpcException {
         LOG.info("around intercepted, before proceed, correlationId={}, service={}, method={}",
                 request.getCorrelationId(),
                 request.getTarget().getClass().getSimpleName(),

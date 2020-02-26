@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingOptions;
-import com.baidu.brpc.naming.NamingServiceFactory;
+import com.baidu.brpc.protocol.NamingOptions;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;
 

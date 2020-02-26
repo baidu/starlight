@@ -25,9 +25,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.baidu.brpc.protocol.NamingOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.slf4j.Logger;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValues;
@@ -41,7 +43,6 @@ import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
 import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
-import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NamingServiceFactory;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.spring.RpcProxyFactoryBean;
@@ -323,10 +324,11 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
         beanDef.setBeanClass(RpcProxyFactoryBean.class);
         MutablePropertyValues values = new MutablePropertyValues();
         for (Field field : rpcClientOptions.getClass().getDeclaredFields()) {
-            if (field.isSynthetic()) {
-                continue;
-            }
             try {
+                if (field.getType().equals(Logger.class)) {
+                    // ignore properties of org.slf4j.Logger class
+                    continue;
+                }
                 field.setAccessible(true);
                 values.addPropertyValue(field.getName(), field.get(rpcClientOptions));
             } catch (Exception ex) {

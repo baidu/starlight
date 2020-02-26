@@ -15,7 +15,7 @@
  */
 package com.baidu.brpc.example.stargate;
 
-import com.baidu.brpc.naming.NamingOptions;
+import com.baidu.brpc.protocol.NamingOptions;
 import com.baidu.brpc.protocol.Options;
 import com.baidu.brpc.server.RpcServer;
 import com.baidu.brpc.server.RpcServerOptions;

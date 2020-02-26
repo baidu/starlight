@@ -16,7 +16,7 @@
 
 package com.baidu.brpc.example.jprotobuf;
 
-import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
+import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.client.RpcCallback;

@@ -33,13 +33,11 @@ public abstract class RpcXmlConfigurationTestBase {
      * context of {@link AbstractApplicationContext}
      */
     protected AbstractApplicationContext context;
-    
-
 
     @Before
     public void setUp() {
-        context =
-                new ClassPathXmlApplicationContext(getConfigurationPath());
+        context = new ClassPathXmlApplicationContext(getConfigurationPath());
+        context.start();
     }
     
     protected abstract String getConfigurationPath();

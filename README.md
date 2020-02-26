@@ -25,7 +25,7 @@ java 6+ && netty 4 && protobuf 2.5.0
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>2.5.9</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 Spring环境：
@@ -33,7 +33,7 @@ Spring环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring</artifactId>
-    <version>2.5.9</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 SpringBoot环境：
@@ -41,7 +41,7 @@ SpringBoot环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring-boot-starter</artifactId>
-    <version>2.5.9</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 SpringCloud环境：
@@ -49,7 +49,7 @@ SpringCloud环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>spring-cloud-brpc</artifactId>
-    <version>2.5.9</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 Zookeeper注册中心：
@@ -57,7 +57,7 @@ Zookeeper注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-zookeeper</artifactId>
-    <version>2.5.9</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 Consul注册中心：
@@ -65,7 +65,7 @@ Consul注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-consul</artifactId>
-    <version>2.5.9</version>
+    <version>2.5.8</version>
 </dependency>
 ```
 ### Server端使用
@@ -86,7 +86,7 @@ Consul注册中心：
 
 ### 一些设计
 #### 网络模型
-采用netty的reactor网络模型，做了以下优化：
+采用netty的reactor网络模型，但跟常规用法有些不同：
 * 没有使用netty的ByteToMessageDecoder去解析协议，因为ByteToMessageDecoder内部会对buffer进行拷贝。
 * 为了提高并发，尽量少在IO线程中执行业务逻辑，所以在io线程中只会去解析协议的header部分，并把body的buffer retain出来，然后丢给工作线程去处理；工作线程会decode body，并执行具体业务逻辑。
 * 由于粘包/拆包问题，可能一次socket读操作会包含多个包，所以支持了批量往工作线程中submit任务。
@@ -95,6 +95,8 @@ Consul注册中心：
 * [DynamicCompositeByteBuf](https://github.com/baidu/brpc-java/blob/master/docs/cn/composite_buffer.md)
 
 #### 线程池ThreadPool
+* 调研过JDK的ThreadPoolExecutor、ConcurrentLinkedQueue以及Disruptor，最后使用更高性能的[ThreadPool](
+https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/utils/ThreadPool.java)。
 * ThreadPool内部把生产者队列、消费者队列分开，用两个锁去控制同步，当consumer queue为空时，且producer queue不为空条件满足时，会交换两个队列。
 
 #### 比ConcurrentHashMap更快的FastFutureStore
@@ -108,3 +110,8 @@ Consul注册中心：
 | 数据量 | 5 byte | 1k byte | 2k byte | 4k byte |
 |:-----:| :-----: | :-------: | :-------: | :-------: |
 |qps    | 22w   |    10w  |  5.3w   |   2.7w  |
+
+# 微信交流群：
+<img src="https://github.com/baidu/brpc-java/blob/master/weixin_qrcode.png" width=200 height=300 />
+
+

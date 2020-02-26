@@ -16,15 +16,15 @@
 
 package com.baidu.brpc.naming.zookeeper;
 
-import com.baidu.brpc.client.instance.Endpoint;
-import com.baidu.brpc.client.instance.ServiceInstance;
+import com.baidu.brpc.client.channel.Endpoint;
+import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.Constants;
 import com.baidu.brpc.naming.NamingService;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.naming.SubscribeInfo;
+import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.GsonUtils;
 import io.netty.util.HashedWheelTimer;
@@ -33,6 +33,7 @@ import io.netty.util.Timer;
 import io.netty.util.TimerTask;
 import io.netty.util.internal.ConcurrentSet;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -131,7 +132,11 @@ public class ZookeeperNamingService implements NamingService {
                 try {
                     String childData = new String(client.getData().forPath(childPath));
                     Endpoint endpoint = GsonUtils.fromJson(childData, Endpoint.class);
-                    instances.add(new ServiceInstance(endpoint));
+                    ServiceInstance instance = new ServiceInstance(endpoint);
+                    if (subscribeInfo != null && StringUtils.isNoneBlank(subscribeInfo.getServiceId())) {
+                        instance.setServiceName(subscribeInfo.getServiceId());
+                    }
+                    instances.add(instance);
                 } catch (Exception getDataFailedException) {
                     log.warn("get child data failed, path:{}, ex:", childPath, getDataFailedException);
                 }

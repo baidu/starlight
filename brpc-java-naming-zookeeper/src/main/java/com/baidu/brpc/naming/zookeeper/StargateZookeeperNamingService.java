@@ -15,13 +15,13 @@
  */
 package com.baidu.brpc.naming.zookeeper;
 
-import com.baidu.brpc.client.instance.ServiceInstance;
+import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.naming.BrpcURL;
-import com.baidu.brpc.naming.NamingOptions;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
-import com.baidu.brpc.naming.SubscribeInfo;
+import com.baidu.brpc.protocol.NamingOptions;
+import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.protocol.stargate.StargateConstants;
 import com.baidu.brpc.protocol.stargate.StargateURI;
 
@@ -29,6 +29,7 @@ import com.google.common.base.Strings;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.ChildData;
 import org.apache.curator.framework.recipes.cache.PathChildrenCache;
@@ -65,8 +66,9 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
     }
 
     @Override
-    public List<ServiceInstance> lookup(SubscribeInfo info) {
-        String path = buildParentNodePath(resolveGroup(info), info.getInterfaceName(), resolveVersion(info));
+    public List<ServiceInstance> lookup(SubscribeInfo subscribeInfo) {
+        String path = buildParentNodePath(resolveGroup(subscribeInfo),
+                subscribeInfo.getInterfaceName(), resolveVersion(subscribeInfo));
         List<ServiceInstance> instances = new ArrayList<ServiceInstance>();
         try {
             List<String> childList = client.getChildren().forPath(path);
@@ -79,7 +81,11 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
                 try {
                     String childData = new String(client.getData().forPath(childPath));
                     StargateURI uri = new StargateURI.Builder(childData).build();
-                    instances.add(new ServiceInstance(uri.getHost(), uri.getPort()));
+                    ServiceInstance instance = new ServiceInstance(uri.getHost(), uri.getPort());
+                    if (subscribeInfo != null && StringUtils.isNoneBlank(subscribeInfo.getServiceId())) {
+                        instance.setServiceName(subscribeInfo.getServiceId());
+                    }
+                    instances.add(instance);
                 } catch (Exception getDataFailedException) {
                     log.warn("get child data failed, path:{}, ex:", childPath, getDataFailedException);
                 }
@@ -88,7 +94,7 @@ public class StargateZookeeperNamingService extends ZookeeperNamingService {
         } catch (Exception ex) {
             log.warn("lookup service instance list failed from {}, msg={}",
                     url, ex.getMessage());
-            if (!info.isIgnoreFailOfNamingService()) {
+            if (!subscribeInfo.isIgnoreFailOfNamingService()) {
                 throw new RpcException("lookup end point list failed from zookeeper failed", ex);
             }
         }

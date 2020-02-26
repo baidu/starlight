@@ -24,7 +24,7 @@ import com.baidu.brpc.client.BrpcProxy;
 import com.baidu.brpc.client.RpcClient;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.client.channel.ChannelType;
-import com.baidu.brpc.client.loadbalance.LoadBalanceStrategy;
+import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.protocol.Options;
 
