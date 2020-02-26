@@ -17,15 +17,16 @@ brpc-java是baidu rpc的java版本实现，支持baidu rpc、nshead、sofa、hul
 
 ## 快速开始
 ### 开发环境
-java 6+ && netty 4 && protobuf 2.5.0
+java 6+ && netty 4 && protobuf 2.5.0+
 
 ### 引入maven依赖
+#### protobuf 2.x环境
 非Spring环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>2.5.8</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 Spring环境：
@@ -33,7 +34,7 @@ Spring环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring</artifactId>
-    <version>2.5.8</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 SpringBoot环境：
@@ -41,7 +42,7 @@ SpringBoot环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring-boot-starter</artifactId>
-    <version>2.5.8</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 SpringCloud环境：
@@ -49,7 +50,7 @@ SpringCloud环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>spring-cloud-brpc</artifactId>
-    <version>2.5.8</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 Zookeeper注册中心：
@@ -57,7 +58,7 @@ Zookeeper注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-zookeeper</artifactId>
-    <version>2.5.8</version>
+    <version>3.0.0</version>
 </dependency>
 ```
 Consul注册中心：
@@ -65,7 +66,23 @@ Consul注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-consul</artifactId>
-    <version>2.5.8</version>
+    <version>3.0.0</version>
+</dependency>
+```
+#### protobuf 3.x环境
+除了引入protobuf2.x环境所需依赖外，还需要增加protobuf3.x依赖：
+```xml
+<dependency>
+    <groupId>com.google.protobuf</groupId>
+    <artifactId>protobuf-java</artifactId>
+    <version>3.11.0</version>
+</dependency>
+```
+```xml
+<dependency>
+    <groupId>com.google.protobuf</groupId>
+    <artifactId>protobuf-java-util</artifactId>
+    <version>3.11.0</version>
 </dependency>
 ```
 ### Server端使用
