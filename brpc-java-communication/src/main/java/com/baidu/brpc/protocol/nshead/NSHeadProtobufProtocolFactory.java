@@ -19,4 +19,9 @@ public class NSHeadProtobufProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new NSHeadProtobufProtocol(encoding);
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_NSHEAD_PROTOBUF.name();
+    }
 }

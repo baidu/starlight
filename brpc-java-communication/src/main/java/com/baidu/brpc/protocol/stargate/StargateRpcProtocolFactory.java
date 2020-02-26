@@ -19,4 +19,9 @@ public class StargateRpcProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new StargateRpcProtocol();
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_STARGATE.name();
+    }
 }

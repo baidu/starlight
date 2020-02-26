@@ -20,4 +20,9 @@ public class ServerPushProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new DefaultServerPushProtocol(encoding);
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_SERVER_PUSH.name();
+    }
 }

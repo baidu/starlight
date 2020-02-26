@@ -19,4 +19,9 @@ public class BaiduRpcProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new BaiduRpcProtocol();
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_BAIDU_STD.name();
+    }
 }

@@ -19,4 +19,9 @@ public class SofaRpcProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new SofaRpcProtocol();
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_SOFA_PBRPC.name();
+    }
 }

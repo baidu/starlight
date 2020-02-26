@@ -19,4 +19,9 @@ public class PublicPbRpcProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new PublicPbrpcProtocol();
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_PUBLIC_PBRPC.name();
+    }
 }

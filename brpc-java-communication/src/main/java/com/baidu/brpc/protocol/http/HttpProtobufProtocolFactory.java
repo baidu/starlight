@@ -19,4 +19,9 @@ public class HttpProtobufProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new HttpRpcProtocol(getProtocolType(), encoding);
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF.name();
+    }
 }

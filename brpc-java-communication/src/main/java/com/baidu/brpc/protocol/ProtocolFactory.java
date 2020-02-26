@@ -10,4 +10,5 @@ public interface ProtocolFactory {
     Integer getProtocolType();
     Integer getPriority();
     Protocol createProtocol(String encoding);
+    String getProtocolName();
 }

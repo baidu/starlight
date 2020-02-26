@@ -19,4 +19,9 @@ public class DubboRpcProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new DubboRpcProtocol();
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_DUBBO.name();
+    }
 }

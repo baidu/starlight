@@ -19,4 +19,9 @@ public class HuluRpcProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new HuluRpcProtocol();
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_HULU_PBRPC.name();
+    }
 }

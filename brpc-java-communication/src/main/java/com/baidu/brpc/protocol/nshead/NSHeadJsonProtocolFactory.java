@@ -19,4 +19,9 @@ public class NSHeadJsonProtocolFactory implements ProtocolFactory {
     public Protocol createProtocol(String encoding) {
         return new NSHeadJsonProtocol(encoding);
     }
+
+    @Override
+    public String getProtocolName() {
+        return Options.ProtocolType.PROTOCOL_NSHEAD_JSON.name();
+    }
 }
