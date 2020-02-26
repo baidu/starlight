@@ -30,6 +30,7 @@ import com.baidu.brpc.protocol.HttpRequest;
 import com.baidu.brpc.protocol.HttpResponse;
 import com.baidu.brpc.protocol.*;
 import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.utils.Pb2JsonUtils;
 import com.google.gson.*;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.ExtensionRegistry;
@@ -63,19 +64,19 @@ public class HttpRpcProtocol extends AbstractProtocol {
      * 请求的唯一标识id
      */
     private static final String CORRELATION_ID = "correlation-id";
-    private static final JsonFormat jsonPbConverter = new JsonFormat() {
-        protected void print(Message message, JsonGenerator generator) throws IOException {
-            for (Iterator<Map.Entry<Descriptors.FieldDescriptor, Object>> iter =
-                 message.getAllFields().entrySet().iterator(); iter.hasNext(); ) {
-                Map.Entry<Descriptors.FieldDescriptor, Object> field = iter.next();
-                printField(field.getKey(), field.getValue(), generator);
-                if (iter.hasNext()) {
-                    generator.print(",");
-                }
-            }
-            // ignore UnknownFields
-        }
-    };
+//    private static final JsonFormat jsonPbConverter = new JsonFormat() {
+//        protected void print(Message message, JsonGenerator generator) throws IOException {
+//            for (Iterator<Map.Entry<Descriptors.FieldDescriptor, Object>> iter =
+//                 message.getAllFields().entrySet().iterator(); iter.hasNext(); ) {
+//                Map.Entry<Descriptors.FieldDescriptor, Object> field = iter.next();
+//                printField(field.getKey(), field.getValue(), generator);
+//                if (iter.hasNext()) {
+//                    generator.print(",");
+//                }
+//            }
+//            // ignore UnknownFields
+//        }
+//    };
     private static final Gson gson = (new GsonBuilder())
             .serializeNulls()
             .disableHtmlEscaping()
@@ -505,10 +506,11 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 case Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE: {
                     String bodyJson = "";
                     if (rpcMethodInfo instanceof ProtobufRpcMethodInfo) {
-                        ByteArrayOutputStream out = new ByteArrayOutputStream();
-                        jsonPbConverter.print((Message) body, out, Charset.forName(encoding));
-                        out.flush();
-                        bodyJson = out.toString(encoding);
+//                        ByteArrayOutputStream out = new ByteArrayOutputStream();
+//                        jsonPbConverter.print((Message) body, out, Charset.forName(encoding));
+//                        out.flush();
+//                        bodyJson = out.toString(encoding);
+                        bodyJson = Pb2JsonUtils.pb2json((Message) body, encoding);
                     } else {
                         bodyJson = gson.toJson(body);
                     }
@@ -668,7 +670,8 @@ public class HttpRpcProtocol extends AbstractProtocol {
                     if (rpcMethodInfo instanceof ProtobufRpcMethodInfo) {
                         ProtobufRpcMethodInfo protobufRpcMethodInfo = (ProtobufRpcMethodInfo) rpcMethodInfo;
                         Message.Builder rspBuilder = protobufRpcMethodInfo.getOutputInstance().newBuilderForType();
-                        jsonPbConverter.merge((String) body, ExtensionRegistry.getEmptyRegistry(), rspBuilder);
+//                        jsonPbConverter.merge((String) body, ExtensionRegistry.getEmptyRegistry(), rspBuilder);
+                        Pb2JsonUtils.json2Pb((String) body, rspBuilder);
                         response = rspBuilder.build();
                     } else {
                         response = gson.fromJson((String) body, rpcMethodInfo.getOutputClass());
@@ -700,7 +703,8 @@ public class HttpRpcProtocol extends AbstractProtocol {
                 if (rpcMethodInfo instanceof ProtobufRpcMethodInfo) {
                     ProtobufRpcMethodInfo protobufRpcMethodInfo = (ProtobufRpcMethodInfo) rpcMethodInfo;
                     Message.Builder argBuilder = protobufRpcMethodInfo.getInputInstance().newBuilderForType();
-                    jsonPbConverter.merge((String) body, ExtensionRegistry.getEmptyRegistry(), argBuilder);
+//                    jsonPbConverter.merge((String) body, ExtensionRegistry.getEmptyRegistry(), argBuilder);
+                    Pb2JsonUtils.json2Pb((String) body, argBuilder);
                     args[0] = argBuilder.build();
                 } else {
                     if (rpcMethodInfo.getInputClasses().length == 1) {

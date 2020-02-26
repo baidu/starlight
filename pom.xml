@@ -36,6 +36,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <netty.version>4.1.42.Final</netty.version>
+        <protobuf.version>2.5.0</protobuf.version>
+        <jprotobuf.version>1.11.11</jprotobuf.version>
+        <jprotobuf.plugin.version>1.2.15</jprotobuf.plugin.version>
+        <protoc.maven.plugin.version>3.11.1</protoc.maven.plugin.version>
         <lombok.version>1.18.8</lombok.version>
     </properties>
 
@@ -174,7 +178,7 @@
             <plugin>
                 <groupId>com.github.os72</groupId>
                 <artifactId>protoc-jar-maven-plugin</artifactId>
-                <version>3.6.0.1</version>
+                <version>${protoc.maven.plugin.version}</version>
                 <executions>
                     <execution>
                         <id>generate-sources</id>
@@ -183,7 +187,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <protocVersion>2.5.0</protocVersion>
+                            <protocVersion>${protobuf.version}</protocVersion>
                             <addSources>none</addSources>
                             <includeStdTypes>true</includeStdTypes>
                             <outputDirectory>src/main/java</outputDirectory>
@@ -199,7 +203,7 @@
                             <goal>run</goal>
                         </goals>
                         <configuration>
-                            <protocVersion>2.5.0</protocVersion>
+                            <protocVersion>${protobuf.version}</protocVersion>
                             <includeStdTypes>true</includeStdTypes>
                             <addSources>none</addSources>
                             <outputDirectory>src/test/java</outputDirectory>
@@ -213,7 +217,7 @@
             <plugin>
                 <groupId>com.baidu</groupId>
                 <artifactId>jprotobuf-precompile-plugin</artifactId>
-                <version>1.2.15</version>
+                <version>${jprotobuf.plugin.version}</version>
                 <configuration>
 <!--                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>-->
                     <filterClassPackage>com.baidu</filterClassPackage>
@@ -275,7 +279,17 @@
             <dependency>
                 <groupId>com.google.protobuf</groupId>
                 <artifactId>protobuf-java</artifactId>
-                <version>2.5.0</version>
+                <version>${protobuf.version}</version>
+            </dependency>
+<!--            <dependency>-->
+<!--                <groupId>com.google.protobuf</groupId>-->
+<!--                <artifactId>protobuf-java-util</artifactId>-->
+<!--                <version>3.11.0</version>-->
+<!--            </dependency>-->
+            <dependency>
+                <groupId>com.googlecode.protobuf-java-format</groupId>
+                <artifactId>protobuf-java-format</artifactId>
+                <version>1.4</version>
             </dependency>
             <dependency>
                 <groupId>com.ecwid.consul</groupId>
@@ -283,14 +297,9 @@
                 <version>1.4.2</version>
             </dependency>
             <dependency>
-                <groupId>com.googlecode.protobuf-java-format</groupId>
-                <artifactId>protobuf-java-format</artifactId>
-                <version>1.4</version>
-            </dependency>
-            <dependency>
                 <groupId>com.baidu</groupId>
                 <artifactId>jprotobuf</artifactId>
-                <version>1.11.11</version>
+                <version>${jprotobuf.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.slf4j</groupId>
