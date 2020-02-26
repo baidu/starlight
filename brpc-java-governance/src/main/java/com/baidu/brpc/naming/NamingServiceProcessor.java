@@ -168,12 +168,12 @@ public class NamingServiceProcessor {
     }
 
     public void stop() {
+        if (healthyCheckTimer != null) {
+            healthyCheckTimer.stop();
+        }
         if (namingService != null && !(namingService instanceof ListNamingService)) {
             namingService.unsubscribe(subscribeInfo);
             namingService.destroy();
-        }
-        if (healthyCheckTimer != null) {
-            healthyCheckTimer.stop();
         }
         for (CommunicationClient client : healthyInstances) {
             client.stop();

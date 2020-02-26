@@ -5,7 +5,7 @@ public class DubboConstants {
     public static final short MAGIC = (short) 0xdabb;
     protected static final byte FLAG_EVENT = (byte) 0x20;
     public static final byte HESSIAN2_SERIALIZATION_ID = 2;
-    public static final String DEFAULT_DUBBO_PROTOCOL_VERSION = "2.0.2";
+    public static final String DEFAULT_DUBBO_PROTOCOL_VERSION = "2.7.5";
     public static final byte RESPONSE_OK = 20;
     /**
      * service error.
@@ -20,4 +20,6 @@ public class DubboConstants {
     public static final byte RESPONSE_NULL_VALUE_WITH_ATTACHMENTS = 5;
 
     public static final String HEARTBEAT_EVENT = null;
+
+    public static final int DEFAULT_OUTPUT_BUFFER_SIZE = 4096;
 }

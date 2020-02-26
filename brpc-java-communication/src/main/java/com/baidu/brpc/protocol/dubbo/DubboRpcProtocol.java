@@ -192,17 +192,14 @@ public class DubboRpcProtocol extends AbstractProtocol {
 
         try {
             DubboRequestBody dubboRequestBody = DubboRequestBody.decodeRequestBody(dubboPacket.getBodyBuf());
-            String serviceName = dubboRequestBody.getPath();
-            String methodName = dubboRequestBody.getMethodName();
-            RpcMethodInfo rpcMethodInfo = serviceManager.getService(serviceName, methodName);
-
             request.setArgs(dubboRequestBody.getArguments());
-            request.setMethodName(methodName);
-            request.setRpcMethodInfo(rpcMethodInfo);
-            request.setTarget(rpcMethodInfo.getTarget());
-            request.setTargetMethod(rpcMethodInfo.getMethod());
+            request.setMethodName(dubboRequestBody.getPath());
+            request.setRpcMethodInfo(dubboRequestBody.getRpcMethodInfo());
+            request.setTarget(dubboRequestBody.getRpcMethodInfo().getTarget());
+            request.setTargetMethod(dubboRequestBody.getRpcMethodInfo().getMethod());
             if (dubboRequestBody.getAttachments().size() > 0) {
-                Map<String, Object> attachments = new HashMap<String, Object>();
+                Map<String, Object> attachments = new HashMap<String, Object>(
+                        dubboRequestBody.getAttachments().size());
                 for (Map.Entry<String, String> entry : dubboRequestBody.getAttachments().entrySet()) {
                     attachments.put(entry.getKey(), entry.getValue());
                 }
@@ -240,6 +237,11 @@ public class DubboRpcProtocol extends AbstractProtocol {
                     responseBody.setResult(response.getResult());
                     if (response.getKvAttachment() != null && response.getKvAttachment().size() > 0) {
                         responseBody.setResponseType(DubboConstants.RESPONSE_VALUE_WITH_ATTACHMENTS);
+                        Map<String, String> attachments = new HashMap<String, String>();
+                        for (Map.Entry<String, Object> entry : response.getKvAttachment().entrySet()) {
+                            attachments.put(entry.getKey(), (String) entry.getValue());
+                        }
+                        responseBody.setAttachments(attachments);
                     } else {
                         responseBody.setResponseType(DubboConstants.RESPONSE_VALUE);
                     }

@@ -28,7 +28,7 @@ public class HealthyCheckTimer implements TimerTask {
     private NamingServiceProcessor instanceProcessor;
     private Timer timer = ClientHealthCheckTimerInstance.getOrCreateInstance();
     private int healthyCheckIntervalMillis;
-    private boolean stop = false;
+    private volatile boolean stop = false;
 
     public HealthyCheckTimer(NamingServiceProcessor instanceProcessor,
                              int healthyCheckIntervalMillis) {
@@ -99,9 +99,11 @@ public class HealthyCheckTimer implements TimerTask {
                 request.setWriteTimeoutMillis(instance.getCommunicationOptions().getWriteTimeoutMillis());
                 Response response = new RpcResponse();
                 response.reset();
-                instance.execute(request, response);
-                if (response.getException() != null) {
-                    throw response.getException();
+                if (!instance.getStop().get()) {
+                    instance.execute(request, response);
+                    if (response.getException() != null) {
+                        throw response.getException();
+                    }
                 }
             } else {
                 Channel channel = instance.selectChannel();

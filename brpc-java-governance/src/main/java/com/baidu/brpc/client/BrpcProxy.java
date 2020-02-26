@@ -294,7 +294,7 @@ public class BrpcProxy implements MethodInterceptor {
             }
         }
 
-        if (response.getResult() == null && response.getRpcFuture() == null) {
+        if (response == null || (response.getResult() == null && response.getRpcFuture() == null)) {
             if (exception == null) {
                 exception = new RpcException(RpcException.UNKNOWN_EXCEPTION, "unknown error");
             }

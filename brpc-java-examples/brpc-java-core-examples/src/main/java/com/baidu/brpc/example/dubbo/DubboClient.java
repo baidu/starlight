@@ -26,7 +26,7 @@ public class DubboClient {
     public static void main(String[] args) {
         RpcClientOptions options = new RpcClientOptions();
         options.setProtocolType(Options.ProtocolType.PROTOCOL_DUBBO_VALUE);
-        options.setReadTimeoutMillis(1000);
+        options.setReadTimeoutMillis(10000000);
         options.setWriteTimeoutMillis(1000);
         RpcClient rpcClient = new RpcClient("dubbo://127.0.0.1:2181", options);
 

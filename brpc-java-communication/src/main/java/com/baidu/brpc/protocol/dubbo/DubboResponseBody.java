@@ -20,22 +20,24 @@ public class DubboResponseBody {
     private Map<String, String> attachments;
 
     public byte[] encodeResponseBody() throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream(DubboConstants.DEFAULT_OUTPUT_BUFFER_SIZE);
         Hessian2Output hessian2Output = new Hessian2Output(outputStream);
+        hessian2Output.setSerializerFactory(DubboRequestBody.SERIALIZER_FACTORY);
         hessian2Output.writeInt(responseType);
         hessian2Output.writeObject(result);
-        if (attachments != null) {
+        if (attachments != null && attachments.size() > 0) {
             hessian2Output.writeObject(attachments);
         }
-        hessian2Output.flushBuffer();
+        hessian2Output.flush();
         return outputStream.toByteArray();
     }
 
     public static byte[] encodeErrorResponseBody(String errorMessage) throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         Hessian2Output hessian2Output = new Hessian2Output(outputStream);
+        hessian2Output.setSerializerFactory(DubboRequestBody.SERIALIZER_FACTORY);
         hessian2Output.writeString(errorMessage);
-        hessian2Output.flushBuffer();
+        hessian2Output.flush();
         byte[] bodyBytes = outputStream.toByteArray();
         return bodyBytes;
     }
@@ -43,8 +45,9 @@ public class DubboResponseBody {
     public static byte[] encodeHeartbeatResponseBody() throws IOException {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         Hessian2Output hessian2Output = new Hessian2Output(outputStream);
+        hessian2Output.setSerializerFactory(DubboRequestBody.SERIALIZER_FACTORY);
         hessian2Output.writeString(DubboConstants.HEARTBEAT_EVENT);
-        hessian2Output.flushBuffer();
+        hessian2Output.flush();
         byte[] bodyBytes = outputStream.toByteArray();
         return bodyBytes;
     }
@@ -54,6 +57,7 @@ public class DubboResponseBody {
         try {
             inputStream = new ByteBufInputStream(responseBodyBuf, true);
             Hessian2Input hessian2Input = new Hessian2Input(inputStream);
+            hessian2Input.setSerializerFactory(DubboRequestBody.SERIALIZER_FACTORY);
             DubboResponseBody responseBody = new DubboResponseBody();
             responseBody.setResponseType((byte) hessian2Input.readInt());
             switch (responseBody.getResponseType()) {

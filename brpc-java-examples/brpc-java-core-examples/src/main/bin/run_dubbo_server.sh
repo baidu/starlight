@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-export JVM_OPTIONS=" -server -Xmn2g -Xmx6g -Xms6g -Xss256k -Xverify:none \
+export JVM_OPTIONS=" -server -Xmn4g -Xmx8g -Xms8g -Xss256k -Xverify:none \
  -XX:+DisableExplicitGC -XX:+AlwaysPreTouch \
  -XX:+AggressiveOpts -XX:AutoBoxCacheMax=20000 \
  -XX:CMSInitiatingOccupancyFraction=75 -XX:+UseCMSInitiatingOccupancyOnly \

@@ -26,6 +26,9 @@ public class DubboServer {
         RpcServerOptions serverOptions = new RpcServerOptions();
         serverOptions.setProtocolType(Options.ProtocolType.PROTOCOL_DUBBO_VALUE);
         serverOptions.setNamingServiceUrl("dubbo://127.0.0.1:2181");
+        serverOptions.setReceiveBufferSize(64 * 1024 * 1024);
+        serverOptions.setSendBufferSize(64 * 1024 * 1024);
+        serverOptions.setWorkThreadNum(12);
 
         RpcServer rpcServer = new RpcServer(8898, serverOptions);
         EchoService service = new EchoServiceImpl();

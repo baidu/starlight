@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by huwenwei on 2019/12/06.
@@ -55,6 +56,7 @@ public class CommunicationClient {
     protected CommunicationOptions communicationOptions;
     protected BrpcChannel brpcChannel;
     protected List<Interceptor> interceptors = new ArrayList<Interceptor>();
+    private AtomicBoolean stop = new AtomicBoolean(false);
 
     public CommunicationClient(
             ServiceInstance serviceInstance,
@@ -188,8 +190,10 @@ public class CommunicationClient {
     }
 
     public void stop() {
-        if (brpcChannel != null) {
-            brpcChannel.close();
+        if (stop.compareAndSet(false, true)) {
+            if (brpcChannel != null) {
+                brpcChannel.close();
+            }
         }
     }
 
