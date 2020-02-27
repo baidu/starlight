@@ -3,10 +3,10 @@
 ![maven](https://img.shields.io/maven-central/v/com.baidu/brpc-java.svg)
 
 # 项目名称
-brpc-java是baidu rpc的java版本实现，支持baidu rpc、nshead、sofa、hulu、http、stargate等协议。
+brpc-java是baidu rpc的java版本实现，支持baidu rpc、nshead、sofa、hulu、http、stargate、dubbo协议。
 
 # 核心功能点
-* 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议、public pbrpc、stargate协议。
+* 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议、public pbrpc、stargate、dubbo协议。
 * 支持SpringBoot starter，也支持SpringCloud的服务注册发现、用brpc-java替换Feign http调用，提升性能。
 * 支持Server Push机制，并支持扩展Server Push协议。
 * 支持多种naming服务，比如Zookeeper、Consul、List、File、DNS等，可以灵活扩展支持etcd、eureka、nacos等。
@@ -17,7 +17,7 @@ brpc-java是baidu rpc的java版本实现，支持baidu rpc、nshead、sofa、hul
 
 ## 快速开始
 ### 开发环境
-java 6+ && netty 4 && protobuf 2.5.0+
+java 6+ && protobuf 2.5.0+
 
 ### 引入maven依赖
 #### protobuf 2.x环境
