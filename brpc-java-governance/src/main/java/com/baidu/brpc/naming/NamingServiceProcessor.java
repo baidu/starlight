@@ -160,11 +160,13 @@ public class NamingServiceProcessor {
     }
 
     public List<CommunicationClient> getInstances() {
+        List<CommunicationClient> instances = new ArrayList<CommunicationClient>();
         if (healthyInstances.size() > 0) {
-            return healthyInstances;
+            instances.addAll(healthyInstances);
         } else {
-            return unhealthyInstances;
+            instances.addAll(unhealthyInstances);
         }
+        return instances;
     }
 
     public void stop() {
