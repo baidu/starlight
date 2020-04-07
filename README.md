@@ -96,7 +96,7 @@ Consul注册中心：
 
 #### 线程池ThreadPool
 * 调研过JDK的ThreadPoolExecutor、ConcurrentLinkedQueue以及Disruptor，最后使用更高性能的[ThreadPool](
-https://github.com/baidu/brpc-java/blob/master/brpc-java-core/src/main/java/com/baidu/brpc/utils/ThreadPool.java)。
+https://github.com/baidu/brpc-java/blob/master/brpc-java-communication/src/main/java/com/baidu/brpc/utils/ThreadPool.java)。
 * ThreadPool内部把生产者队列、消费者队列分开，用两个锁去控制同步，当consumer queue为空时，且producer queue不为空条件满足时，会交换两个队列。
 
 #### 比ConcurrentHashMap更快的FastFutureStore
