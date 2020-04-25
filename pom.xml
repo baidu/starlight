@@ -219,7 +219,6 @@
                 <artifactId>jprotobuf-precompile-plugin</artifactId>
                 <version>${jprotobuf.plugin.version}</version>
                 <configuration>
-<!--                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>-->
                     <filterClassPackage>com.baidu</filterClassPackage>
                     <generateProtoFile>true</generateProtoFile>
                 </configuration>
@@ -281,11 +280,6 @@
                 <artifactId>protobuf-java</artifactId>
                 <version>${protobuf.version}</version>
             </dependency>
-<!--            <dependency>-->
-<!--                <groupId>com.google.protobuf</groupId>-->
-<!--                <artifactId>protobuf-java-util</artifactId>-->
-<!--                <version>3.11.0</version>-->
-<!--            </dependency>-->
             <dependency>
                 <groupId>com.googlecode.protobuf-java-format</groupId>
                 <artifactId>protobuf-java-format</artifactId>
