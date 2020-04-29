@@ -185,7 +185,6 @@ public class ConsulNamingService implements NamingService {
                 throw new RpcException("unsubscribe failed from " + url, ex);
             } else {
                 failedUnsubscribes.add(subscribeInfo);
-                return;
             }
         }
     }
@@ -260,8 +259,7 @@ public class ConsulNamingService implements NamingService {
                 .setQueryParams(queryParams)
                 .setPassing(true)
                 .build();
-        Response<List<HealthService>> response = client.getHealthServices(serviceName, request);
-        return response;
+        return client.getHealthServices(serviceName, request);
     }
 
     public List<ServiceInstance> convert(Response<List<HealthService>> consulServices) {
