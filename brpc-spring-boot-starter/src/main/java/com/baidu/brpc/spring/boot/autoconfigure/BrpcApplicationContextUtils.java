@@ -45,7 +45,7 @@ public class BrpcApplicationContextUtils implements ApplicationContextAware, Pri
 
     private static void checkApplicationContext() {
         if (applicationContext == null) {
-            throw new IllegalStateException("applicationContext ia null");
+            throw new IllegalStateException("applicationContext is null");
         }
     }
 }

@@ -16,7 +16,6 @@ public class BrpcPropertySourceLocator implements PropertySourceLocator {
         Map<String, Object> properties = new HashMap<>();
         properties.put(ENV_NAMING_URL_KEY,
                 SpringCloudNamingFactory.NAMING_PREFIX + "://discovery");
-        MapPropertySource propertySource = new MapPropertySource("brpc", properties);
-        return propertySource;
+        return new MapPropertySource("brpc", properties);
     }
 }
