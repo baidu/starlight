@@ -15,11 +15,11 @@ import java.util.Iterator;
 import java.util.List;
 
 @Slf4j
-public class DetectMemoryLeakRule implements TestRule {
+public class MemoryLeakDetectionRule implements TestRule {
 
     private final Object instance;
 
-    public DetectMemoryLeakRule(Object instance) {
+    public MemoryLeakDetectionRule(Object instance) {
         this.instance = instance;
     }
 

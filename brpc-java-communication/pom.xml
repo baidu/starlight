@@ -153,6 +153,18 @@
                     <excludedGroups>${test.excludedGroups}</excludedGroups>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>*Request</exclude>
+                        <exclude>*Response</exclude>
+                        <exclude>**/*Proto.*</exclude>
+                        <exclude>**/*Proto$*.*</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 

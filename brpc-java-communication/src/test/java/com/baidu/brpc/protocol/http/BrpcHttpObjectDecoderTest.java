@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import com.baidu.brpc.test.DetectLeak;
-import com.baidu.brpc.test.DetectMemoryLeakRule;
+import com.baidu.brpc.test.MemoryLeakDetectionRule;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -24,7 +24,7 @@ public class BrpcHttpObjectDecoderTest {
     @DetectLeak
     protected PooledByteBufAllocator alloc;
     @Rule
-    public DetectMemoryLeakRule detectMemoryLeakRule = new DetectMemoryLeakRule(this);
+    public MemoryLeakDetectionRule memoryLeakDetectionRule = new MemoryLeakDetectionRule(this);
 
     @Test
     public void testDecodePartial() throws Exception {
@@ -57,7 +57,7 @@ public class BrpcHttpObjectDecoderTest {
                 "Content-Length: 10",
                 "",
                 "1234567890"
-        }; // partial request
+        }; // full request
         buf.writeBytes(StringUtils.join(testRequest, "\n\r").getBytes(Charset.forName("UTF-8")));
         Object message = decoder.decode(ctx, buf);
         assertThat(message).isNotNull();
