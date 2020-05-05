@@ -1,27 +1,28 @@
-[![Build Status](https://travis-ci.org/baidu/brpc-java.svg?branch=master)](https://travis-ci.org/baidu/brpc-java) 
-![license](https://img.shields.io/github/license/baidu/brpc-java.svg)
-![maven](https://img.shields.io/maven-central/v/com.baidu/brpc-java.svg)
+![Build Status](https://img.shields.io/github/workflow/status/baidu/brpc-java/Unit%20Test)
+![Coverage](https://img.shields.io/codecov/c/gh/baidu/brpc-java)
+![License](https://img.shields.io/github/license/baidu/brpc-java.svg)
+![Maven](https://img.shields.io/maven-central/v/com.baidu/brpc-java.svg)
 
 # 项目名称
-brpc-java是baidu rpc的java版本实现，支持baidu rpc、nshead、sofa、hulu、http、stargate、dubbo协议。
+brpc-java 是 baidu rpc 的 java 版本实现，支持 baidu rpc、nshead、sofa、hulu、http、stargate、dubbo 等协议。
 
 # 核心功能点
-* 支持baidu rpc标准协议、sofa协议、hulu协议、nshead+protobuf协议、http+protobuf/json协议、public pbrpc、stargate、dubbo协议。
-* 支持SpringBoot starter，也支持SpringCloud的服务注册发现、用brpc-java替换Feign http调用，提升性能。
-* 支持Server Push机制，并支持扩展Server Push协议。
-* 支持多种naming服务，比如Zookeeper、Consul、List、File、DNS等，可以灵活扩展支持etcd、eureka、nacos等。
-* 支持多种负载均衡策略，比如fair、random、round robin、weight等。
-* 支持interceptor功能，支持计数器、令牌桶等server端限流算法。
-* rpc功能可独立使用，不是必须依赖Spring和注册中心功能。
-* 基于SPI机制可灵活扩展Protocol、NamingService和LoadBalance。
+* 支持 baidu rpc 标准协议、sofa 协议、hulu 协议、nshead+protobuf 协议、http+protobuf/json 协议、public pbrpc、stargate、dubbo协议。
+* 支持 Spring Boot Starter，也支持 Spring Cloud 的服务注册发现、用 brpc-java 替换 Feign HTTP 调用，提升性能。
+* 支持 Server Push 机制，并支持扩展 Server Push 协议。
+* 支持多种 naming 服务，比如 Zookeeper、Consul、List、File、DNS 等，可以灵活扩展支持 etcd、eureka、nacos 等。
+* 支持多种负载均衡策略，比如 fair、random、round robin、weight 等。
+* 支持 interceptor 功能，支持计数器、令牌桶等 server 端限流算法。
+* RPC 功能可独立使用，不是必须依赖 Spring 和注册中心功能。
+* 基于 SPI 机制可灵活扩展 Protocol、NamingService 和 LoadBalance。
 
 ## 快速开始
 ### 开发环境
 java 6+ && protobuf 2.5.0+
 
-### 引入maven依赖
-#### protobuf 2.x环境
-非Spring环境：
+### 引入 maven 依赖
+#### protobuf 2.x 环境
+非 Spring 环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
@@ -29,7 +30,7 @@ java 6+ && protobuf 2.5.0+
     <version>3.0.0</version>
 </dependency>
 ```
-Spring环境：
+Spring 环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
@@ -37,7 +38,7 @@ Spring环境：
     <version>3.0.0</version>
 </dependency>
 ```
-SpringBoot环境：
+Spring Boot 环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
@@ -45,7 +46,7 @@ SpringBoot环境：
     <version>3.0.0</version>
 </dependency>
 ```
-SpringCloud环境：
+Spring Cloud 环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
@@ -53,7 +54,7 @@ SpringCloud环境：
     <version>3.0.0</version>
 </dependency>
 ```
-Zookeeper注册中心：
+Zookeeper 注册中心：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
@@ -61,7 +62,7 @@ Zookeeper注册中心：
     <version>3.0.0</version>
 </dependency>
 ```
-Consul注册中心：
+Consul 注册中心：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
@@ -69,8 +70,8 @@ Consul注册中心：
     <version>3.0.0</version>
 </dependency>
 ```
-#### protobuf 3.x环境
-除了引入protobuf2.x环境所需依赖外，还需要增加protobuf3.x依赖：
+#### protobuf 3.x 环境
+除了引入 protobuf 2.x 环境所需依赖外，还需要增加 protobuf 3.x 依赖：
 ```xml
 <dependency>
     <groupId>com.google.protobuf</groupId>
@@ -85,50 +86,47 @@ Consul注册中心：
     <version>3.11.0</version>
 </dependency>
 ```
-### Server端使用
-* [server端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/server.md)
-* [搭建标准协议/sofa协议/hulu协议server](https://github.com/baidu/brpc-java/blob/master/docs/cn/brpc_server.md)
-* [搭建nshead server](https://github.com/baidu/brpc-java/blob/master/docs/cn/nshead_server.md)
-* [搭建http server](https://github.com/baidu/brpc-java/blob/master/docs/cn/http_server.md)
-* [server push 推送用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/server_push.md)
+### Server 端使用
+* [Server 端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/server.md)
+* [搭建标准协议/sofa 协议/hulu 协议 server](https://github.com/baidu/brpc-java/blob/master/docs/cn/brpc_server.md)
+* [搭建 nshead server](https://github.com/baidu/brpc-java/blob/master/docs/cn/nshead_server.md)
+* [搭建 HTTP server](https://github.com/baidu/brpc-java/blob/master/docs/cn/http_server.md)
+* [Server Push 推送用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/server_push.md)
 
-### Client端使用
-* [client端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/client.md)
+### Client 端使用
+* [Client 端基本用法](https://github.com/baidu/brpc-java/blob/master/docs/cn/client.md)
 
-### 与Spring集成
-* [Spring集成使用](https://github.com/baidu/brpc-java/blob/master/docs/cn/spring.md)
+### 与 Spring 集成
+* [Spring 集成使用](https://github.com/baidu/brpc-java/blob/master/docs/cn/spring.md)
 
 ### 扩展
-* [扩展Protocol、NamingService、LoadBalance](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
+* [扩展 Protocol、NamingService、LoadBalance](https://github.com/baidu/brpc-java/blob/master/docs/cn/extension.md)
 
 ### 一些设计
 #### 网络模型
-采用netty的reactor网络模型，但跟常规用法有些不同：
-* 没有使用netty的ByteToMessageDecoder去解析协议，因为ByteToMessageDecoder内部会对buffer进行拷贝。
-* 为了提高并发，尽量少在IO线程中执行业务逻辑，所以在io线程中只会去解析协议的header部分，并把body的buffer retain出来，然后丢给工作线程去处理；工作线程会decode body，并执行具体业务逻辑。
-* 由于粘包/拆包问题，可能一次socket读操作会包含多个包，所以支持了批量往工作线程中submit任务。
+采用 Netty 的 Reactor 网络模型，但跟常规用法有些不同：
+* 没有使用 Netty 的 ByteToMessageDecoder 去解析协议，因为 ByteToMessageDecoder 内部会对 buffer 进行拷贝。
+* 为了提高并发，尽量少在 IO 线程中执行业务逻辑，所以在 IO 线程中只会去解析协议的 Header 部分，并把 body 的 buffer retain 出来，然后丢给工作线程去处理；工作线程会 decode body，并执行具体业务逻辑。
+* 由于粘包/拆包问题，可能一次 socket 读操作会包含多个包，所以支持了批量往工作线程中 submit 任务。
 
-#### 零拷贝Buffer
+#### 零拷贝 Buffer
 * [DynamicCompositeByteBuf](https://github.com/baidu/brpc-java/blob/master/docs/cn/composite_buffer.md)
 
-#### 线程池ThreadPool
-* 调研过JDK的ThreadPoolExecutor、ConcurrentLinkedQueue以及Disruptor，最后使用更高性能的[ThreadPool](
-https://github.com/baidu/brpc-java/blob/master/brpc-java-communication/src/main/java/com/baidu/brpc/utils/ThreadPool.java)。
-* ThreadPool内部把生产者队列、消费者队列分开，用两个锁去控制同步，当consumer queue为空时，且producer queue不为空条件满足时，会交换两个队列。
+#### 线程池 ThreadPool
+* 调研过 JDK 的 ThreadPoolExecutor、ConcurrentLinkedQueue 以及 Disruptor，最后使用更高性能的 [ThreadPool](https://github.com/baidu/brpc-java/blob/master/brpc-java-communication/src/main/java/com/baidu/brpc/utils/ThreadPool.java) 。
+* ThreadPool 内部把生产者队列、消费者队列分开，用两个锁去控制同步，当 consumer queue 为空时，且 producer queue 不为空条件满足时，会交换两个队列。
 
-#### 比ConcurrentHashMap更快的FastFutureStore
+#### 比ConcurrentHashMap 更快的 FastFutureStore
 * [FastFutureStore](https://github.com/baidu/brpc-java/blob/master/docs/cn/fastfuturestore.md)
 
 ## 压力测试数据
 ### 部署环境：
-* Client/Server机器配置：cpu 12核，内存132G，千兆网卡。
+* Client/Server 机器配置：CPU 12核，内存 132G，千兆网卡。
 * [压测代码](https://github.com/baidu/brpc-java/blob/master/brpc-java-examples/src/main/java/com/baidu/brpc/example/standard/BenchmarkTest.java)
 ### 压力测试结果：
 | 数据量 | 5 byte | 1k byte | 2k byte | 4k byte |
 |:-----:| :-----: | :-------: | :-------: | :-------: |
-|qps    | 22w   |    10w  |  5.3w   |   2.7w  |
+| QPS | 220k | 100k | 53k | 27k |
 
 # 微信交流群：
-<img src="https://github.com/baidu/brpc-java/blob/master/weixin_qrcode.png" width=200 height=300 />
-
-
+<img src="./weixin_qrcode.png" width="320" />

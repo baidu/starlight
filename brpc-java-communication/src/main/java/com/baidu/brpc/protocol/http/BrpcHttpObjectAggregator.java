@@ -15,6 +15,8 @@
  */
 package com.baidu.brpc.protocol.http;
 
+import com.baidu.brpc.exceptions.RpcException;
+
 import java.util.List;
 
 import io.netty.channel.ChannelHandlerContext;
@@ -43,6 +45,19 @@ public class BrpcHttpObjectAggregator extends HttpObjectAggregator {
             }
         } else {
             out.add(msg);
+        }
+    }
+
+    /**
+     * Abort aggregation and release underlying resources
+     * <p>
+     * FIXME find a better way to release memory
+     */
+    public void abort() {
+        try {
+            handlerRemoved(null);
+        } catch (Exception e) {
+            throw new RpcException(e);
         }
     }
 

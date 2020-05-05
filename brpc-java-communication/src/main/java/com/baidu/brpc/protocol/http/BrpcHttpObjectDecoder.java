@@ -165,6 +165,7 @@ public class BrpcHttpObjectDecoder extends HttpObjectDecoder {
                 }
             }
             // decode failed, there's not enough bytes
+            httpObjectAggregator.abort();
             return null;
         } catch (DecoderException e) {
             throw e;
