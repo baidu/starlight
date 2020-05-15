@@ -153,6 +153,8 @@ public class NamingServiceProcessor {
                 }
                 return communicationClient;
             }
+        } catch (Exception e){
+            log.error("delete instance {}, error msg {}", instance, e.getMessage());
         } finally {
             lock.unlock();
         }
@@ -197,9 +199,10 @@ public class NamingServiceProcessor {
         CommunicationClient instance = null;
         Iterator<CommunicationClient> iterator = list.iterator();
         while (iterator.hasNext()) {
-            if (iterator.next().getServiceInstance().equals(item)) {
-                instance = iterator.next();
-                iterator.remove();
+            CommunicationClient toCheck = iterator.next();
+            if (toCheck.getServiceInstance().equals(item)) {
+                instance = toCheck;
+                list.remove(instance);
                 break;
             }
         }
