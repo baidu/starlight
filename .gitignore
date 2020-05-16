@@ -13,6 +13,8 @@ logs/
 *MANIFEST
 *artifacts
 .DS_Store
+.factorypath
+*.versionsBackup
 BaiduRpcErrno.java
 Options.java
 StreamingRpcProto.java
@@ -20,7 +22,4 @@ SofaRpcProto.java
 BaiduRpcProto.java
 Echo.java
 HuluRpcProto.java
-brpc-java-core/.factorypath
-brpc-java-examples/.factorypath
-brpc-java-spring/.factorypath
 PublicPbrpcProto.java
