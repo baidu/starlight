@@ -71,99 +71,75 @@ public class DubboZookeeperNamingService extends ZookeeperNamingService {
         return instances;
     }
 
+
+
     @Override
-    public void subscribe(SubscribeInfo info, final NotifyListener listener) {
-        try {
-            final String path = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
-            PathChildrenCache cache = new PathChildrenCache(client, path, true);
-            cache.getListenable().addListener(new PathChildrenCacheListener() {
-                @Override
-                public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                    ChildData data = event.getData();
-                    // 子节点信息，将监听的父节点信息擦除
-                    String childNodePath = data.getPath().replace(path + "/", "");
-                    String providerUrlString = URLDecoder.decode(childNodePath, "UTF-8");
-                    BrpcURL url = new BrpcURL(providerUrlString);
-                    ServiceInstance instance = new ServiceInstance(url.getHostPorts());
-                    switch (event.getType()) {
-                        case CHILD_ADDED: {
-                            listener.notify(Collections.singletonList(instance),
-                                    Collections.<ServiceInstance>emptyList());
-                            break;
-                        }
-                        case CHILD_REMOVED: {
-                            listener.notify(Collections.<ServiceInstance>emptyList(),
-                                    Collections.singletonList(instance));
-                            break;
-                        }
-                        case CHILD_UPDATED:
-                        default:
-                            break;
+    public void doSubscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) throws Exception {
+        final String path = buildParentNodePath(subscribeInfo.getGroup(), subscribeInfo.getInterfaceName(), subscribeInfo.getVersion());
+        PathChildrenCache cache = new PathChildrenCache(client, path, true);
+        cache.getListenable().addListener(new PathChildrenCacheListener() {
+            @Override
+            public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
+                ChildData data = event.getData();
+                // 子节点信息，将监听的父节点信息擦除
+                String childNodePath = data.getPath().replace(path + "/", "");
+                String providerUrlString = URLDecoder.decode(childNodePath, "UTF-8");
+                BrpcURL url = new BrpcURL(providerUrlString);
+                ServiceInstance instance = new ServiceInstance(url.getHostPorts());
+                switch (event.getType()) {
+                    case CHILD_ADDED: {
+                        listener.notify(Collections.singletonList(instance),
+                                Collections.<ServiceInstance>emptyList());
+                        break;
                     }
-                }
-            });
-            cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
-            failedSubscribes.remove(info);
-            subscribeCacheMap.putIfAbsent(info, cache);
-            log.info("dubbo subscribe success from {}", url);
-        } catch (Exception ex) {
-            if (!info.isIgnoreFailOfNamingService()) {
-                throw new RpcException("dubbo subscribe failed from " + url, ex);
-            } else {
-                failedSubscribes.putIfAbsent(info, listener);
-            }
-        }
-    }
-
-    @Override
-    public void unsubscribe(SubscribeInfo subscribeInfo) {
-        super.unsubscribe(subscribeInfo);
-    }
-
-    @Override
-    public void register(RegisterInfo info) {
-        String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
-        String path = parentPath + "/" + buildRegisterPath(info);
-        String pathData = getRegisterPathData(info);
-        try {
-            if (client.checkExists().forPath(parentPath) == null) {
-                client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(parentPath);
-            }
-            if (client.checkExists().forPath(path) != null) {
-                try {
-                    client.delete().forPath(path);
-                } catch (Exception deleteException) {
-                    log.info("zk delete node failed, ignore");
+                    case CHILD_REMOVED: {
+                        listener.notify(Collections.<ServiceInstance>emptyList(),
+                                Collections.singletonList(instance));
+                        break;
+                    }
+                    case CHILD_UPDATED:
+                    default:
+                        break;
                 }
             }
-            client.create().withMode(CreateMode.EPHEMERAL).forPath(path, pathData.getBytes());
-            log.info("dubbo register success to {}", url);
-        } catch (Exception ex) {
-            if (!info.isIgnoreFailOfNamingService()) {
-                throw new RpcException("dubbo Failed to register to " + url, ex);
-            } else {
-                failedRegisters.add(info);
-                return;
-            }
-        }
-        failedRegisters.remove(info);
+        });
+        cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        subscribeCacheMap.putIfAbsent(subscribeInfo, cache);
+        log.info("dubbo subscribe success from {}", url);
     }
 
     @Override
-    public void unregister(RegisterInfo info) {
-        String parentPath = buildParentNodePath(info.getGroup(), info.getInterfaceName(), info.getVersion());
-        String path = "/" + buildRegisterPath(info);
-        try {
-            client.delete().guaranteed().forPath(parentPath + path);
-            log.info("dubbo unregister success to {}", url);
-        } catch (Exception ex) {
-            if (!info.isIgnoreFailOfNamingService()) {
-                throw new RpcException("dubbo Failed to unregister from " + url, ex);
-            } else {
-                failedUnregisters.add(info);
+    public void doUnsubscribe(SubscribeInfo subscribeInfo) throws Exception {
+        super.doUnsubscribe(subscribeInfo);
+    }
+
+    @Override
+    public void doRegister(RegisterInfo registerInfo) throws Exception {
+        String parentPath = buildParentNodePath(registerInfo.getGroup(), registerInfo.getInterfaceName(), registerInfo.getVersion());
+        String path = parentPath + "/" + buildRegisterPath(registerInfo);
+        String pathData = getRegisterPathData(registerInfo);
+        if (client.checkExists().forPath(parentPath) == null) {
+            client.create().creatingParentsIfNeeded().withMode(CreateMode.PERSISTENT).forPath(parentPath);
+        }
+        if (client.checkExists().forPath(path) != null) {
+            try {
+                client.delete().forPath(path);
+            } catch (Exception deleteException) {
+                log.info("zk delete node failed, ignore");
             }
         }
+        client.create().withMode(CreateMode.EPHEMERAL).forPath(path, pathData.getBytes());
+        log.info("dubbo register success to {}", url);
     }
+
+    @Override
+    public void doUnregister(RegisterInfo registerInfo) throws Exception {
+        String parentPath = buildParentNodePath(registerInfo.getGroup(), registerInfo.getInterfaceName(), registerInfo.getVersion());
+        String path = "/" + buildRegisterPath(registerInfo);
+        client.delete().guaranteed().forPath(parentPath + path);
+        log.info("dubbo unregister success to {}", url);
+    }
+
 
     private String buildParentNodePath(String group, String serviceName, String version) {
         StringBuilder sb = new StringBuilder();
