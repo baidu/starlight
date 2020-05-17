@@ -37,6 +37,7 @@ public abstract class FailbackNamingService implements NamingService {
     private BrpcURL url;
 
     public FailbackNamingService(BrpcURL url) {
+        this.url = url;
         this.retryInterval = url.getIntParameter(Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
         String namingServiceClassName = this.getClass().getSimpleName();
         timer = new HashedWheelTimer(new CustomThreadFactory(namingServiceClassName + "-retry-timer-thread"));
