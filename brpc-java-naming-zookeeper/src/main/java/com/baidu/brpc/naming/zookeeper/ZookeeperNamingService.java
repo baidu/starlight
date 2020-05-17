@@ -19,11 +19,7 @@ package com.baidu.brpc.naming.zookeeper;
 import com.baidu.brpc.client.channel.Endpoint;
 import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.naming.BrpcURL;
-import com.baidu.brpc.naming.Constants;
-import com.baidu.brpc.naming.NamingService;
-import com.baidu.brpc.naming.NotifyListener;
-import com.baidu.brpc.naming.RegisterInfo;
+import com.baidu.brpc.naming.*;
 import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.baidu.brpc.utils.GsonUtils;
@@ -53,23 +49,15 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public class ZookeeperNamingService implements NamingService {
+public class ZookeeperNamingService extends FailbackNamingService implements NamingService {
     protected BrpcURL url;
     protected CuratorFramework client;
-    private int retryInterval;
-    private Timer timer;
-    protected ConcurrentSet<RegisterInfo> failedRegisters =
-            new ConcurrentSet<RegisterInfo>();
-    protected ConcurrentSet<RegisterInfo> failedUnregisters =
-            new ConcurrentSet<RegisterInfo>();
-    protected ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes =
-            new ConcurrentHashMap<SubscribeInfo, NotifyListener>();
-    protected ConcurrentSet<SubscribeInfo> failedUnsubscribes =
-            new ConcurrentSet<SubscribeInfo>();
+
     protected ConcurrentMap<SubscribeInfo, PathChildrenCache> subscribeCacheMap =
             new ConcurrentHashMap<SubscribeInfo, PathChildrenCache>();
 
     public ZookeeperNamingService(BrpcURL url) {
+        super(url);
         this.url = url;
         int sleepTimeoutMs = url.getIntParameter(
                 Constants.SLEEP_TIME_MS, Constants.DEFAULT_SLEEP_TIME_MS);
@@ -92,33 +80,6 @@ public class ZookeeperNamingService implements NamingService {
                 .namespace(namespace)
                 .build();
         client.start();
-
-        this.retryInterval = url.getIntParameter(Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
-        timer = new HashedWheelTimer(new CustomThreadFactory("zookeeper-retry-timer-thread"));
-        timer.newTimeout(
-                new TimerTask() {
-                    @Override
-                    public void run(Timeout timeout) throws Exception {
-                        try {
-                            for (RegisterInfo registerInfo : failedRegisters) {
-                                register(registerInfo);
-                            }
-                            for (RegisterInfo registerInfo : failedUnregisters) {
-                                unregister(registerInfo);
-                            }
-                            for (Map.Entry<SubscribeInfo, NotifyListener> entry : failedSubscribes.entrySet()) {
-                                subscribe(entry.getKey(), entry.getValue());
-                            }
-                            for (SubscribeInfo subscribeInfo : failedUnsubscribes) {
-                                unsubscribe(subscribeInfo);
-                            }
-                        } catch (Exception ex) {
-                            log.warn("retry timer exception:", ex);
-                        }
-                        timer.newTimeout(this, retryInterval, TimeUnit.MILLISECONDS);
-                    }
-                },
-                retryInterval, TimeUnit.MILLISECONDS);
     }
 
     @Override
@@ -152,117 +113,86 @@ public class ZookeeperNamingService implements NamingService {
         return instances;
     }
 
+
+
+
+
+
     @Override
-    public void subscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) {
-        try {
-            String path = getSubscribePath(subscribeInfo);
-            PathChildrenCache cache = new PathChildrenCache(client, path, true);
-            cache.getListenable().addListener(new PathChildrenCacheListener() {
-                @Override
-                public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
-                    ChildData data = event.getData();
-                    switch (event.getType()) {
-                        case CHILD_ADDED: {
-                            ServiceInstance instance = GsonUtils.fromJson(
-                                    new String(data.getData()), ServiceInstance.class);
-                            listener.notify(Collections.singletonList(instance),
-                                    Collections.<ServiceInstance>emptyList());
-                            break;
-                        }
-                        case CHILD_REMOVED: {
-                            ServiceInstance instance = GsonUtils.fromJson(
-                                    new String(data.getData()), ServiceInstance.class);
-                            listener.notify(Collections.<ServiceInstance>emptyList(),
-                                    Collections.singletonList(instance));
-                            break;
-                        }
-                        case CHILD_UPDATED:
-                            break;
-                        default:
-                            break;
+    public void doSubscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) throws Exception {
+        String path = getSubscribePath(subscribeInfo);
+        PathChildrenCache cache = new PathChildrenCache(client, path, true);
+        cache.getListenable().addListener(new PathChildrenCacheListener() {
+            @Override
+            public void childEvent(CuratorFramework client, PathChildrenCacheEvent event) throws Exception {
+                ChildData data = event.getData();
+                switch (event.getType()) {
+                    case CHILD_ADDED: {
+                        ServiceInstance instance = GsonUtils.fromJson(
+                                new String(data.getData()), ServiceInstance.class);
+                        listener.notify(Collections.singletonList(instance),
+                                Collections.<ServiceInstance>emptyList());
+                        break;
                     }
+                    case CHILD_REMOVED: {
+                        ServiceInstance instance = GsonUtils.fromJson(
+                                new String(data.getData()), ServiceInstance.class);
+                        listener.notify(Collections.<ServiceInstance>emptyList(),
+                                Collections.singletonList(instance));
+                        break;
+                    }
+                    case CHILD_UPDATED:
+                        break;
+                    default:
+                        break;
                 }
-            });
-            cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
-            failedSubscribes.remove(subscribeInfo);
-            subscribeCacheMap.putIfAbsent(subscribeInfo, cache);
-            log.info("subscribe success from {}", url);
-        } catch (Exception ex) {
-            if (!subscribeInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("subscribe failed from " + url, ex);
-            } else {
-                failedSubscribes.putIfAbsent(subscribeInfo, listener);
             }
-        }
+        });
+        cache.start(PathChildrenCache.StartMode.BUILD_INITIAL_CACHE);
+        subscribeCacheMap.putIfAbsent(subscribeInfo, cache);
+        log.info("subscribe success from {}", url);
     }
 
     @Override
-    public void unsubscribe(SubscribeInfo subscribeInfo) {
+    public void doUnsubscribe(SubscribeInfo subscribeInfo) throws Exception {
         PathChildrenCache cache = subscribeCacheMap.get(subscribeInfo);
-        try {
-            if (cache != null) {
-                cache.close();
-            }
-            log.info("unsubscribe success from {}", url);
-        } catch (Exception ex) {
-            if (!subscribeInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("unsubscribe failed from " + url, ex);
-            } else {
-                failedUnsubscribes.add(subscribeInfo);
-                return;
-            }
+        if (cache != null) {
+            cache.close();
         }
         subscribeCacheMap.remove(subscribeInfo);
+        log.info("unsubscribe success from {}", url);
     }
 
     @Override
-    public void register(RegisterInfo registerInfo) {
+    public void doRegister(RegisterInfo registerInfo) throws Exception {
         String parentPath = getParentRegisterPath(registerInfo);
         String path = getRegisterPath(registerInfo);
         String pathData = getRegisterPathData(registerInfo);
-        try {
-            if (client.checkExists().forPath(parentPath) == null) {
-                client.create().withMode(CreateMode.PERSISTENT).forPath(parentPath);
-            }
-            if (client.checkExists().forPath(path) != null) {
-                try {
-                    client.delete().forPath(path);
-                } catch (Exception deleteException) {
-                    log.info("zk delete node failed, ignore");
-                }
-            }
-            client.create().withMode(CreateMode.EPHEMERAL).forPath(path, pathData.getBytes());
-            log.info("register success to {}", url);
-        } catch (Exception ex) {
-            if (!registerInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("Failed to register to " + url, ex);
-            } else {
-                failedRegisters.add(registerInfo);
-                return;
+        if (client.checkExists().forPath(parentPath) == null) {
+            client.create().withMode(CreateMode.PERSISTENT).forPath(parentPath);
+        }
+        if (client.checkExists().forPath(path) != null) {
+            try {
+                client.delete().forPath(path);
+            } catch (Exception deleteException) {
+                log.info("zk delete node failed, ignore");
             }
         }
-        failedRegisters.remove(registerInfo);
+        client.create().withMode(CreateMode.EPHEMERAL).forPath(path, pathData.getBytes());
+        log.info("register success to {}", url);
     }
 
     @Override
-    public void unregister(RegisterInfo registerInfo) {
+    public void doUnregister(RegisterInfo registerInfo) throws Exception {
         String path = getRegisterPath(registerInfo);
-        try {
-            client.delete().guaranteed().forPath(path);
-            log.info("unregister success to {}", url);
-        } catch (Exception ex) {
-            if (!registerInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("Failed to unregister from " + url, ex);
-            } else {
-                failedUnregisters.add(registerInfo);
-            }
-        }
+        client.delete().guaranteed().forPath(path);
+        log.info("unregister success to {}", url);
     }
 
     @Override
     public void destroy() {
+        super.destroy();
         client.close();
-        timer.stop();
     }
 
     public String getSubscribePath(SubscribeInfo subscribeInfo) {

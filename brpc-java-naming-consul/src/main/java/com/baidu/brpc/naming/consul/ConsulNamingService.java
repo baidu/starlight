@@ -44,28 +44,21 @@ import java.util.Arrays;
 import java.util.concurrent.*;
 
 @Slf4j
-public class ConsulNamingService implements NamingService {
+public class ConsulNamingService  extends  FailbackNamingService implements NamingService {
     private BrpcURL url;
     private ConsulClient client;
-    private int retryInterval;
     private int consulInterval;
     private int lookupInterval;
-    private ConcurrentSet<RegisterInfo> failedRegisters = new ConcurrentSet<RegisterInfo>();
-    private ConcurrentSet<RegisterInfo> failedUnregisters = new ConcurrentSet<RegisterInfo>();
 
-    private ConcurrentMap<SubscribeInfo, NotifyListener> failedSubscribes
-            = new ConcurrentHashMap<SubscribeInfo, NotifyListener>();
-    private ConcurrentSet<SubscribeInfo> failedUnsubscribes
-            = new ConcurrentSet<SubscribeInfo>();
     private ConcurrentMap<SubscribeInfo, WatchTask> watchTaskMap
             = new ConcurrentHashMap<SubscribeInfo, WatchTask>();
-    private Timer retryTimer;
 
     private Set<String> instanceIds = new ConcurrentSet<String>();
     private ScheduledExecutorService heartbeatExecutor;
     private ExecutorService watchExecutor;
 
     public ConsulNamingService(BrpcURL url) {
+        super(url);
         this.url = url;
         try {
             String[] hostPorts = url.getHostPorts().split(":");
@@ -75,36 +68,10 @@ public class ConsulNamingService implements NamingService {
                     "wrong configuration of url, should be like test.bj:port", e);
         }
 
-        this.retryInterval = url.getIntParameter(Constants.INTERVAL, Constants.DEFAULT_INTERVAL);
         this.consulInterval = url.getIntParameter(ConsulConstants.CONSULINTERVAL,
                 ConsulConstants.DEFAULT_CONSUL_INTERVAL);
         this.lookupInterval = url.getIntParameter(ConsulConstants.LOOKUPINTERVAL,
                 ConsulConstants.DEFAULT_LOOKUP_INTERVAL);
-        retryTimer = new HashedWheelTimer(new CustomThreadFactory("consul-retry-timer-thread"));
-        retryTimer.newTimeout(
-                new TimerTask() {
-                    @Override
-                    public void run(Timeout timeout) throws Exception {
-                        try {
-                            for (RegisterInfo registerInfo : failedRegisters) {
-                                register(registerInfo);
-                            }
-                            for (RegisterInfo registerInfo : failedUnregisters) {
-                                unregister(registerInfo);
-                            }
-                            for (Map.Entry<SubscribeInfo, NotifyListener> entry : failedSubscribes.entrySet()) {
-                                subscribe(entry.getKey(), entry.getValue());
-                            }
-                            for (SubscribeInfo subscribeInfo : failedUnsubscribes) {
-                                unsubscribe(subscribeInfo);
-                            }
-                        } catch (Exception ex) {
-                            log.warn("retry timer exception:", ex);
-                        }
-                        retryTimer.newTimeout(this, retryInterval, TimeUnit.MILLISECONDS);
-                    }
-                },
-                retryInterval, TimeUnit.MILLISECONDS);
 
         heartbeatExecutor = Executors.newSingleThreadScheduledExecutor(
                 new CustomThreadFactory("consul-heartbeat"));
@@ -125,7 +92,7 @@ public class ConsulNamingService implements NamingService {
 
     @Override
     public void destroy() {
-        retryTimer.stop();
+        super.destroy();
         heartbeatExecutor.shutdown();
         watchExecutor.shutdownNow();
         instanceIds.clear();
@@ -150,79 +117,43 @@ public class ConsulNamingService implements NamingService {
         }
     }
 
+
     @Override
-    public void subscribe(final SubscribeInfo subscribeInfo, final NotifyListener listener) {
-        try {
-            final String serviceName = subscribeInfo.getServiceId();
-            Response<List<HealthService>> response = lookupHealthService(serviceName, -1);
-            List<ServiceInstance> instances = convert(response);
-            log.info("lookup {} instances from consul", instances.size());
-            WatchTask watchTask = new WatchTask(serviceName, instances, response.getConsulIndex(), listener);
-            watchExecutor.submit(watchTask);
-            watchTaskMap.putIfAbsent(subscribeInfo, watchTask);
-            failedSubscribes.remove(subscribeInfo);
-        } catch (Exception ex) {
-            log.warn("lookup endpoint list failed from {}, msg={}",
-                    url, ex.getMessage());
-            if (!subscribeInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("lookup endpoint list failed from consul failed", ex);
-            } else {
-                failedSubscribes.putIfAbsent(subscribeInfo, listener);
-            }
-        }
+    public void doSubscribe(SubscribeInfo subscribeInfo, NotifyListener listener) {
+        final String serviceName = subscribeInfo.getServiceId();
+        Response<List<HealthService>> response = lookupHealthService(serviceName, -1);
+        List<ServiceInstance> instances = convert(response);
+        log.info("lookup {} instances from consul", instances.size());
+        WatchTask watchTask = new WatchTask(serviceName, instances, response.getConsulIndex(), listener);
+        watchExecutor.submit(watchTask);
+        watchTaskMap.putIfAbsent(subscribeInfo, watchTask);
     }
 
     @Override
-    public void unsubscribe(SubscribeInfo subscribeInfo) {
-        try {
-            WatchTask watchTask = watchTaskMap.remove(subscribeInfo);
-            if (watchTask != null) {
-                watchTask.stop();
-            }
-            log.info("unsubscribe success from {}", url);
-        } catch (Exception ex) {
-            if (!subscribeInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("unsubscribe failed from " + url, ex);
-            } else {
-                failedUnsubscribes.add(subscribeInfo);
-            }
+    public void doUnsubscribe(SubscribeInfo subscribeInfo) {
+        WatchTask watchTask = watchTaskMap.remove(subscribeInfo);
+        if (watchTask != null) {
+            watchTask.stop();
         }
+        log.info("unsubscribe success from {}", url);
     }
 
     @Override
-    public void register(RegisterInfo registerInfo) {
-        try {
-            NewService newService = getConsulNewService(registerInfo);
-            client.agentServiceRegister(newService);
-            instanceIds.add("service:" + newService.getId());
-            log.info("register success to {}", url);
-        } catch (Exception ex) {
-            if (!registerInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("Failed to register to " + url, ex);
-            } else {
-                failedRegisters.add(registerInfo);
-                return;
-            }
-        }
-        failedRegisters.remove(registerInfo);
+    public void doRegister(RegisterInfo registerInfo)  {
+        NewService newService = getConsulNewService(registerInfo);
+        client.agentServiceRegister(newService);
+        instanceIds.add("service:" + newService.getId());
+        log.info("register success to {}", url);
     }
 
     @Override
-    public void unregister(RegisterInfo registerInfo) {
-        try {
-            NewService newService = getConsulNewService(registerInfo);
-            client.agentServiceDeregister(newService.getId());
-            instanceIds.remove("service:" + newService.getId());
-        } catch (Exception ex) {
-            if (!registerInfo.isIgnoreFailOfNamingService()) {
-                throw new RpcException("Failed to unregister to " + url, ex);
-            } else {
-                failedUnregisters.add(registerInfo);
-                return;
-            }
-        }
-        failedUnregisters.remove(registerInfo);
+    public void doUnregister(RegisterInfo registerInfo) {
+        NewService newService = getConsulNewService(registerInfo);
+        client.agentServiceDeregister(newService.getId());
+        instanceIds.remove("service:" + newService.getId());
     }
+
+
 
     private NewService getConsulNewService(RegisterInfo registerInfo) {
         NewService newService = new NewService();
