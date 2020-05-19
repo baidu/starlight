@@ -129,4 +129,4 @@ Consul 注册中心：
 | QPS | 220k | 100k | 53k | 27k |
 
 # 微信交流群：
-<img src="https://brpc-java.bj.bcebos.com/qrcode.jpeg" width="320" />
+<img src="https://brpc-java.cdn.bcebos.com/qrcode.jpeg" width="320" />
