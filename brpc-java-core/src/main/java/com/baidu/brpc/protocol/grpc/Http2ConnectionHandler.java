@@ -54,14 +54,6 @@ public class Http2ConnectionHandler implements Http2LifecycleManager {
     private Http2ConnectionHandler.BaseDecoder byteDecoder;
     private long gracefulShutdownTimeoutMillis;
 
-    /*public Http2ConnectionHandler(Http2ConnectionDecoder decoder, Http2ConnectionEncoder encoder, Http2Settings initialSettings) {
-        this.initialSettings = (Http2Settings) ObjectUtil.checkNotNull(initialSettings, "initialSettings");
-        this.decoder = (Http2ConnectionDecoder) ObjectUtil.checkNotNull(decoder, "decoder");
-        this.encoder = (Http2ConnectionEncoder) ObjectUtil.checkNotNull(encoder, "encoder");
-        if (encoder.connection() != decoder.connection()) {
-            throw new IllegalArgumentException("Encoder and Decoder do not share the same connection object");
-        }
-    }*/
 
     public Http2ConnectionHandler(boolean server, Http2FrameWriter frameWriter, Http2FrameLogger frameLogger, Http2Settings initialSettings) {
         this.initialSettings = (Http2Settings)ObjectUtil.checkNotNull(initialSettings, "initialSettings");
@@ -74,7 +66,7 @@ public class Http2ConnectionHandler implements Http2LifecycleManager {
         }
 
         this.encoder = new DefaultHttp2ConnectionEncoder(connection, (Http2FrameWriter)frameWriter);
-        this.decoder = new DefaultHttp2ConnectionDecoder(connection, this.encoder, (Http2FrameReader)frameReader);
+        this.decoder = new DefaultHttp2ConnectionDecoder(connection, this.encoder, (Http2FrameReader)frameReader,Http2PromisedRequestVerifier.ALWAYS_VERIFY,false);
     }
 
    

@@ -45,7 +45,7 @@ public class RpcClientTest {
         RpcContext.getContext().setLogId(1234);
 
         try {
-            for(int i = 0;i<100;i++) {
+            for(int i = 0;i<10000;i++) {
 
                 // build request
                 Echo.EchoRequest request = Echo.EchoRequest.newBuilder()

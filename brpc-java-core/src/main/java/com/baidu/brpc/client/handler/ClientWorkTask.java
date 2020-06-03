@@ -25,6 +25,8 @@ import com.baidu.brpc.client.RpcFuture;
 import com.baidu.brpc.protocol.Protocol;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
+import com.baidu.brpc.protocol.grpc.Http2GrpcProtocol;
+import com.baidu.brpc.protocol.grpc.Http2GrpcResponse;
 import com.baidu.brpc.protocol.push.SPHead;
 import com.baidu.brpc.protocol.push.ServerPushPacket;
 import com.baidu.brpc.protocol.push.ServerPushProtocol;
@@ -60,11 +62,25 @@ public class ClientWorkTask implements Runnable {
             }
         }
 
+        //grpc 协议中，client也有可能收到服务端发来的信息
+        if(protocol instanceof Http2GrpcProtocol) {
+            //System.out.println(packet);
+            Http2GrpcResponse response = ((Http2GrpcResponse)packet);
+            if(!response.isDataResponse() || (response.getHttp2Data() == null)){
+                return;
+            }
+        }
+
         Response response;
         try {
             response = protocol.decodeResponse(packet, ctx);
         } catch (Exception e) {
             log.warn("decode response failed:", e);
+            return;
+        }
+
+        if(response == null){
+            log.warn("rpcResponse is null, ignore it");
             return;
         }
 

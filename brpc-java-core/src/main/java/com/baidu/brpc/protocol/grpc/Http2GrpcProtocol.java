@@ -40,11 +40,16 @@ public class Http2GrpcProtocol extends AbstractProtocol {
     private static final ServiceManager serviceManager = ServiceManager.getInstance();
     private static final Map<String, Http2ConnectionHandler> handlerMap = new ConcurrentHashMap<String, Http2ConnectionHandler>();
     private final AtomicBoolean clientConnected = new AtomicBoolean(false);
+    private final AtomicBoolean serverSentSettingsBeforeClientConnect = new AtomicBoolean(false);
     private final AtomicBoolean isFirstTimeConnect = new AtomicBoolean(true);
     private final AtomicLong correlationId = new AtomicLong(0);
 
     @Override
     public Object decode(ChannelHandlerContext ctx, DynamicCompositeByteBuf in, boolean isDecodingRequest) throws BadSchemaException, TooBigDataException, NotEnoughDataException {
+
+        if(!clientConnected.get() && !isDecodingRequest){
+            serverSentSettingsBeforeClientConnect.compareAndSet(false,true);
+        }
 
         String channelId = ctx.channel().id().asLongText();
         Http2ConnectionHandler handler = handlerMap.get(channelId);
@@ -101,7 +106,7 @@ public class Http2GrpcProtocol extends AbstractProtocol {
         } else {
             // decode response here
 
-            Http2GrpcResponseFrameListener frameListener = new Http2GrpcResponseFrameListener();
+            Http2GrpcResponseFrameListener frameListener = new Http2GrpcResponseFrameListener(clientConnected.get(),handler.encoder());
             handler.decoder().frameListener(frameListener);
             try {
                 handler.decode(ctx, readyToDecode, new ArrayList());
@@ -138,14 +143,23 @@ public class Http2GrpcProtocol extends AbstractProtocol {
             resultDataBuf.writeMedium(requestData.readableBytes()); // data length
             resultDataBuf.writeBytes(requestData); // data content
 
-            Http2Connection connection = handlerMap.get(channelId).connection();
-            int streamId = connection.local().incrementAndGetNextStreamId();
-            connection.local().createStream(streamId, false);
+            Http2ConnectionHandler currentHandler = handlerMap.get(channelId);
 
-            Http2GrpcFrameWriter frameWriter = new Http2GrpcFrameWriter();
-            frameWriter.writeHeaders(channel, streamId, requestHeader, 0, false, channel.newPromise());
-            frameWriter.writeData(channel, streamId, resultDataBuf, 0, true, channel.newPromise());
-            channel.flush();
+            if(currentHandler == null) {
+                Http2ConnectionHandler newHandler = new Http2ConnectionHandler(false, new DefaultHttp2FrameWriter(),
+                        null, new Http2Settings());
+                handlerMap.put(channelId,newHandler);
+                currentHandler = newHandler;
+            }
+                Http2Connection connection = currentHandler.connection();
+                int streamId = connection.local().incrementAndGetNextStreamId();
+                connection.local().createStream(streamId, false);
+
+                Http2GrpcFrameWriter frameWriter = new Http2GrpcFrameWriter();
+                frameWriter.writeHeaders(channel, streamId, requestHeader, 0, false, channel.newPromise());
+                frameWriter.writeData(channel, streamId, resultDataBuf, 0, true, channel.newPromise());
+                channel.flush();
+
 
             return Unpooled.EMPTY_BUFFER;
         } else return Unpooled.EMPTY_BUFFER;
@@ -159,10 +173,21 @@ public class Http2GrpcProtocol extends AbstractProtocol {
             RpcFuture rpcFuture = channelInfo.removeRpcFuture(correlationId.getAndIncrement());
 
             if (rpcFuture == null) {
-                return new RpcResponse();
+                return null;
             }
 
-            ByteBuf protoAndAttachmentBuf = http2GrpcResponse.getHttp2Data().content();
+            Http2DataFrame dataFrame = http2GrpcResponse.getHttp2Data();
+
+            if(dataFrame == null){
+                return null;
+            }
+            ByteBuf protoAndAttachmentBuf = null ;
+
+            try {
+                protoAndAttachmentBuf =dataFrame.content();
+            } catch(NullPointerException e){
+                e.printStackTrace();
+            }
 
             /*
             Necessary operation
@@ -179,7 +204,9 @@ public class Http2GrpcProtocol extends AbstractProtocol {
             http2GrpcResponse.setResult(proto);
 
             return http2GrpcResponse;
-        } else return new RpcResponse();
+        } else {
+            return null;
+        }
     }
 
     @Override
@@ -287,6 +314,9 @@ public class Http2GrpcProtocol extends AbstractProtocol {
                 //https://tools.ietf.org/html/rfc7540#section-6.5
                 frameWriter.writeSettings(clientChannel, new Http2Settings(), clientChannel.newPromise());
                 frameWriter.writeWindowUpdate(clientChannel, 0, 74, clientChannel.newPromise());
+                if(serverSentSettingsBeforeClientConnect.get()){
+                    frameWriter.writeSettingsAck(clientChannel,clientChannel.newPromise());
+                }
                 clientChannel.flush();
                 clientConnected.compareAndSet(false, true);
             }

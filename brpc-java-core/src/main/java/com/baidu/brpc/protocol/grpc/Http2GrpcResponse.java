@@ -34,6 +34,8 @@ public class Http2GrpcResponse extends AbstractResponse {
     @Getter
     @Setter
     private int streamId;
-
+    @Getter
+    @Setter
+    private boolean isDataResponse;
 
 }
