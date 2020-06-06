@@ -30,6 +30,7 @@ import com.baidu.brpc.protocol.HttpRequest;
 import com.baidu.brpc.protocol.HttpResponse;
 import com.baidu.brpc.protocol.*;
 import com.baidu.brpc.server.ServiceManager;
+import com.baidu.brpc.utils.GsonUtils;
 import com.baidu.brpc.utils.Pb2JsonUtils;
 import com.google.gson.*;
 import com.google.protobuf.Descriptors;
@@ -81,6 +82,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
             .serializeNulls()
             .disableHtmlEscaping()
             .serializeSpecialFloatingPointValues()
+            .setDateFormat("yyyy-MM-dd HH:mm:ss")
             .create();
     private static final JsonParser jsonParser = new JsonParser();
 
