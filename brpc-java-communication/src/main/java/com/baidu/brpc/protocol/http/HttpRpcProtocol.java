@@ -385,15 +385,32 @@ public class HttpRpcProtocol extends AbstractProtocol {
             String methodName = null;
             if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
                     || protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-                String[] uriSplit = path.split("/");
-                if (uriSplit.length < 3) {
+//                String[] uriSplit = path.split("/");
+//                if (uriSplit.length < 3) {
+//                    String errMsg = String.format("url format is error, path:%s", path);
+//                    LOG.warn(errMsg);
+//                    httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
+//                    return httpRequest;
+//                }
+//                serviceName = uriSplit[uriSplit.length - 2];
+//                methodName = uriSplit[uriSplit.length - 1];
+
+                boolean pathError = false;
+                try {
+                    serviceName = path.substring(1, path.lastIndexOf("/"));
+                    methodName = path.substring(path.lastIndexOf("/") + 1);
+                    pathError =
+                            serviceName == null || serviceName.isEmpty() || methodName == null || methodName.isEmpty();
+                } catch (Exception e) {
+                    LOG.warn("url format is error", e);
+                    pathError = true;
+                }
+
+                if (pathError) {
                     String errMsg = String.format("url format is error, path:%s", path);
-                    LOG.warn(errMsg);
                     httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
                     return httpRequest;
                 }
-                serviceName = uriSplit[uriSplit.length - 2];
-                methodName = uriSplit[uriSplit.length - 1];
             } else {
                 JsonObject bodyObject = (JsonObject) body;
                 methodName = bodyObject.get("method").getAsString();
