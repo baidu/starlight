@@ -196,19 +196,24 @@ public class RpcClient {
     }
 
     private void init(final RpcClientOptions options, List<Interceptor> interceptors) {
-        if (null == options) {
-            rpcClientOptions = new RpcClientOptions();
-        }
+
         if (CollectionUtils.isEmpty(interceptors)) {
             interceptors = new ArrayList<Interceptor>();
         }
-        initGlobal(options);
-        try {
-            this.rpcClientOptions.copyFrom(options);
-        } catch (Exception ex) {
-            log.warn("init rpc options failed, so use default");
+
+        if (null == options) {
+            rpcClientOptions = new RpcClientOptions();
+        } else {
+            try {
+                rpcClientOptions.copyFrom(options);
+            } catch (Exception ex) {
+                log.warn("init rpc options failed, so use default");
+                rpcClientOptions = new RpcClientOptions();
+            }
         }
-        this.communicationOptions = options.buildCommunicationOptions(interceptors);
+
+        initGlobal(rpcClientOptions);
+        communicationOptions = rpcClientOptions.buildCommunicationOptions(interceptors);
 
         // 负载均衡算法
         loadBalanceStrategy = LoadBalanceManager.getInstance().createLoadBalance(
