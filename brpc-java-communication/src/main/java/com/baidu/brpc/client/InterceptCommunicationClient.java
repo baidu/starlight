@@ -5,11 +5,7 @@ import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.*;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
-import com.baidu.brpc.utils.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.Validate;
-
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
