@@ -19,6 +19,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.factory.DisposableBean;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.util.Assert;
 
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.NamingOptions;
@@ -28,11 +34,6 @@ import com.baidu.brpc.server.RpcServerOptions;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-
-import org.springframework.aop.support.AopUtils;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.util.Assert;
 
 /**
  * PBRPC exporter for standard PROTOBUF RPC implementation from jprotobuf-rpc-socket.
@@ -74,6 +75,11 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
      */
     private List<Interceptor> interceptors = new ArrayList<Interceptor>();
 
+    /**
+     * status to control start only once.
+     */
+    private AtomicBoolean started = new AtomicBoolean(false);
+
     /* (non-Javadoc)
      * @see org.springframework.beans.factory.DisposableBean#destroy()
      */
@@ -89,25 +95,29 @@ public class RpcServiceExporter extends RpcServerOptions implements Initializing
      */
     @Override
     public void afterPropertiesSet() throws Exception {
-        Assert.isTrue(servicePort > 0, "invalid service port: " + servicePort);
-        if (registerServices.size() == 0 && customOptionsServiceMap.size() == 0) {
-            throw new IllegalArgumentException("No register service specified.");
+        if (started.compareAndSet(false, true)) {
+            Assert.isTrue(servicePort > 0, "invalid service port: " + servicePort);
+            if (registerServices.size() == 0 && customOptionsServiceMap.size() == 0) {
+                throw new IllegalArgumentException("No register service specified.");
+            }
+
+            prRpcServer = new RpcServer(servicePort, this, interceptors);
+
+            for (Object service : registerServices) {
+                NamingOptions namingOptions = serviceNamingOptions.get(service);
+                prRpcServer.registerService(service, AopUtils.getTargetClass(service), namingOptions, null);
+            }
+
+            for (Map.Entry<RpcServerOptions, Object> entry : customOptionsServiceMap.entrySet()) {
+                NamingOptions namingOptions = serviceNamingOptions.get(entry.getValue());
+                prRpcServer.registerService(entry.getValue(), AopUtils.getTargetClass(entry.getValue()), namingOptions,
+                                            entry.getKey());
+            }
+
+            prRpcServer.start();
+        } else {
+            log.warn("service port [" + servicePort + "] ignored due to server already started.");
         }
-
-        prRpcServer = new RpcServer(servicePort, this, interceptors);
-
-        for (Object service : registerServices) {
-            NamingOptions namingOptions = serviceNamingOptions.get(service);
-            prRpcServer.registerService(service, AopUtils.getTargetClass(service), namingOptions, null);
-        }
-
-        for (Map.Entry<RpcServerOptions, Object> entry : customOptionsServiceMap.entrySet()) {
-            NamingOptions namingOptions = serviceNamingOptions.get(entry.getValue());
-            prRpcServer.registerService(entry.getValue(), AopUtils.getTargetClass(entry.getValue()), namingOptions,
-                    entry.getKey());
-        }
-
-        prRpcServer.start();
     }
 
 }

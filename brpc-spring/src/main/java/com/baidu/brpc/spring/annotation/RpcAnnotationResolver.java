@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.baidu.brpc.protocol.NamingOptions;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,6 +43,7 @@ import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import com.baidu.brpc.client.RpcClientOptions;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.naming.NamingServiceFactory;
+import com.baidu.brpc.protocol.NamingOptions;
 import com.baidu.brpc.server.RpcServerOptions;
 import com.baidu.brpc.spring.RpcProxyFactoryBean;
 import com.baidu.brpc.spring.RpcServiceExporter;
@@ -80,11 +80,6 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
      * The compiler.
      */
     private Compiler compiler;
-
-    /**
-     * status to control start only once.
-     */
-    private AtomicBoolean started = new AtomicBoolean(false);
 
     /* the default naming service url */
     private String namingServiceUrl;
@@ -212,15 +207,13 @@ public class RpcAnnotationResolver extends AbstractAnnotationParserCallback impl
     public void annotationAtTypeAfterStarted(Annotation t, Object bean, String beanName,
                                              ConfigurableListableBeanFactory beanFactory) throws BeansException {
 
-        if (started.compareAndSet(false, true)) {
-            // do export service here
-            Collection<RpcServiceExporter> values = portMappingExporters.values();
-            for (RpcServiceExporter rpcServiceExporter : values) {
-                try {
-                    rpcServiceExporter.afterPropertiesSet();
-                } catch (Exception e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
+        // do export service here
+        Collection<RpcServiceExporter> values = portMappingExporters.values();
+        for (RpcServiceExporter rpcServiceExporter : values) {
+            try {
+                rpcServiceExporter.afterPropertiesSet();
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
         }
     }
