@@ -48,7 +48,7 @@ public class RpcContext {
     /**
      * logId of protocol, application can set it.
      */
-    private Integer logId;
+    private Long logId;
 
     /**
      * set custom service instance tag,

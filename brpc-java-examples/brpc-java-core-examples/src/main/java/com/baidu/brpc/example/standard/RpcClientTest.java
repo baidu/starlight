@@ -68,7 +68,7 @@ public class RpcClientTest {
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
 //        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
-        RpcContext.getContext().setLogId(1234);
+        RpcContext.getContext().setLogId(1234L);
         try {
             Echo.EchoResponse response = echoService.echo(request);
             System.out.printf("sync call service=EchoService.echo success, "
