@@ -1,6 +1,7 @@
 package com.baidu.brpc.example.http.json;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -41,6 +42,9 @@ public class RpcClientTest {
 
             response = echoService.hello2("jack", 123);
             System.out.printf("sync call hello2 success, response=%s\n", response);
+
+            final Echo echoResp = echoService.hello3(new Echo("foo", new Date()));
+            System.out.printf("sync call hello3 success, response=%s\n", echoResp);
         } catch (RpcException ex) {
             System.out.println("sync call failed, msg=" + ex.getMessage());
         }

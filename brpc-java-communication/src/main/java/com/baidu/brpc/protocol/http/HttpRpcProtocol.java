@@ -395,7 +395,7 @@ public class HttpRpcProtocol extends AbstractProtocol {
 //                serviceName = uriSplit[uriSplit.length - 2];
 //                methodName = uriSplit[uriSplit.length - 1];
 
-                boolean pathError = false;
+                boolean pathError;
                 try {
                     serviceName = path.substring(1, path.lastIndexOf("/"));
                     methodName = path.substring(path.lastIndexOf("/") + 1);
@@ -429,7 +429,15 @@ public class HttpRpcProtocol extends AbstractProtocol {
             httpRequest.setRpcMethodInfo(rpcMethodInfo);
             httpRequest.setTargetMethod(rpcMethodInfo.getMethod());
             httpRequest.setTarget(rpcMethodInfo.getTarget());
-            httpRequest.setArgs(parseRequestParam(protocolType, body, rpcMethodInfo));
+
+            try {
+                httpRequest.setArgs(parseRequestParam(protocolType, body, rpcMethodInfo));
+            } catch (RpcException e) {
+                LOG.error("parse request param error", e);
+                httpRequest.setException(e);
+                return httpRequest;
+            }
+
             return httpRequest;
         } finally {
             ((FullHttpRequest) packet).release();
@@ -443,7 +451,10 @@ public class HttpRpcProtocol extends AbstractProtocol {
 
         try {
             byte[] responseBytes;
-            if (response.getException() != null) {
+            if (request.getException() != null) {
+                httpResponse = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.BAD_REQUEST);
+                responseBytes = new byte[0];
+            } else if (response.getException() != null) {
                 httpResponse = new DefaultFullHttpResponse(
                         HttpVersion.HTTP_1_1, HttpResponseStatus.INTERNAL_SERVER_ERROR);
                 responseBytes = response.getException().toString().getBytes();
