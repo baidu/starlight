@@ -19,6 +19,7 @@ import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -165,6 +166,14 @@ public class RpcFuture<T> implements AsyncAwareFuture<T> {
         try {
             boolean ret = latch.await(timeout, unit);
             if (!ret) {
+                try {
+                    if (request.getChannel() != null && request.getChannel().remoteAddress() instanceof InetSocketAddress) {
+                        LOG.error("RpcFuture.get timeout, channel ip : " + ((InetSocketAddress) request.getChannel().remoteAddress()).getAddress().getHostAddress());
+                    }
+                } catch (Throwable e) {
+                    LOG.error("RpcFuture.get log error", e);
+                }
+
                 throw new RpcException(RpcException.TIMEOUT_EXCEPTION, "timeout");
             }
             assert response != null;
