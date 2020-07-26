@@ -45,7 +45,7 @@ public class BrpcThreadPoolManager {
                                                   int threadNum, int ioEventType) {
         if (isSharing) {
             if (defaultIoThreadPool == null) {
-                synchronized (defaultIoThreadPool) {
+                synchronized (BrpcThreadPoolManager.class) {
                     if (defaultIoThreadPool == null) {
                         defaultIoThreadPool = createClientIoThreadPool(
                                 threadNum, "brpc-client-io-thread-default", ioEventType);
@@ -84,7 +84,7 @@ public class BrpcThreadPoolManager {
     public ThreadPool getOrCreateClientWorkThreadPool(String serviceName, boolean isSharing, int threadNum) {
         if (isSharing) {
             if (defaultWorkThreadPool == null) {
-                synchronized (defaultWorkThreadPool) {
+                synchronized (BrpcThreadPoolManager.class) {
                     if (defaultWorkThreadPool == null) {
                         defaultWorkThreadPool = new ThreadPool(threadNum,
                                 new CustomThreadFactory("brpc-client-work-thread-default"));
