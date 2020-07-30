@@ -34,7 +34,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <netty.version>4.1.42.Final</netty.version>
+        <netty.version>4.1.51.Final</netty.version>
         <protobuf.version>2.5.0</protobuf.version>
         <jprotobuf.version>1.11.11</jprotobuf.version>
         <jprotobuf.plugin.version>1.2.15</jprotobuf.plugin.version>
