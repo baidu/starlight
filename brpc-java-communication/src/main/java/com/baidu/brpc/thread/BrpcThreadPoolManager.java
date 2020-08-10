@@ -57,7 +57,7 @@ public class BrpcThreadPoolManager {
 
         EventLoopGroup threadPool;
         if ((threadPool = ioThreadPoolMap.get(serviceName)) == null) {
-            synchronized (safeServiceName(serviceName).intern()) {
+            synchronized (internalServiceName(serviceName).intern()) {
                 if ((threadPool = ioThreadPoolMap.get(serviceName)) == null) {
                     threadPool = createClientIoThreadPool(
                             threadNum, "brpc-client-io-thread-" + serviceName, ioEventType);
@@ -99,7 +99,7 @@ public class BrpcThreadPoolManager {
 
         ThreadPool threadPool;
         if ((threadPool = workThreadPoolMap.get(serviceName)) == null) {
-            synchronized (safeServiceName(serviceName).intern()) {
+            synchronized (internalServiceName(serviceName).intern()) {
                 if ((threadPool = workThreadPoolMap.get(serviceName)) == null) {
                     threadPool = new ThreadPool(threadNum,
                             new CustomThreadFactory("brpc-client-work-thread-" + serviceName));
@@ -110,7 +110,7 @@ public class BrpcThreadPoolManager {
         return threadPool;
     }
 
-    protected String safeServiceName(String serviceName) {
+    protected String internalServiceName(String serviceName) {
         return this.getClass().getName() + ":" + serviceName;
     }
 
