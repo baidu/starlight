@@ -91,14 +91,16 @@ public class SofaRpcProtocol extends AbstractProtocol {
             if (msgSize != metaSize + bodySize) {
                 throw new BadSchemaException("msgSize != metaSize + bodySize");
             }
-            if (in.readableBytes() < FIXED_LEN + msgSize) {
-                throw notEnoughDataException;
-            }
 
             // 512M
             if (bodySize > 512 * 1024 * 1024) {
                 throw new TooBigDataException("to big body size:" + bodySize);
             }
+
+            if (in.readableBytes() < FIXED_LEN + msgSize) {
+                throw notEnoughDataException;
+            }
+
 
             in.skipBytes(FIXED_LEN);
             SofaRpcDecodePacket packet = new SofaRpcDecodePacket();
