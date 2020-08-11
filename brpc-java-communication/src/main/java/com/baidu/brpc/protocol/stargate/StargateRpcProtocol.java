@@ -112,13 +112,14 @@ public class StargateRpcProtocol extends AbstractProtocol {
         ByteBuf head = in.retainedSlice(FIXED_HEAD_LEN);
         try {
             int bodySize = head.readInt();
-            if (in.readableBytes() < bodySize + FIXED_HEAD_LEN) {
-                throw notEnoughDataException;
-            }
 
             // 512M
             if (bodySize > 512 * 1024 * 1024) {
                 throw new TooBigDataException("StarGate too big body size:" + bodySize);
+            }
+
+            if (in.readableBytes() < bodySize + FIXED_HEAD_LEN) {
+                throw notEnoughDataException;
             }
 
             byte[] body = new byte[bodySize];

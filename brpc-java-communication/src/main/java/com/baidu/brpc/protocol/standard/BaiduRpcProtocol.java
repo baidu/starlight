@@ -191,12 +191,14 @@ public class BaiduRpcProtocol extends AbstractProtocol {
             }
 
             int bodySize = fixHeaderBuf.readInt();
-            if (in.readableBytes() < FIXED_LEN + bodySize) {
-                throw notEnoughDataException;
-            }
+
             // 512M
             if (bodySize > 512 * 1024 * 1024) {
                 throw new TooBigDataException("to big body size:" + bodySize);
+            }
+
+            if (in.readableBytes() < FIXED_LEN + bodySize) {
+                throw notEnoughDataException;
             }
 
             int metaSize = fixHeaderBuf.readInt();
