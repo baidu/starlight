@@ -16,28 +16,30 @@
 
 package com.baidu.brpc.client;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Validate;
+
+import com.baidu.brpc.CommunicationSpiManager;
 import com.baidu.brpc.GovernanceSpiManager;
 import com.baidu.brpc.client.channel.Endpoint;
-import com.baidu.brpc.loadbalance.LoadBalanceManager;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
+import com.baidu.brpc.loadbalance.LoadBalanceManager;
 import com.baidu.brpc.loadbalance.LoadBalanceStrategy;
-import com.baidu.brpc.naming.*;
+import com.baidu.brpc.naming.NamingServiceProcessor;
 import com.baidu.brpc.protocol.NamingOptions;
 import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.server.ServiceManager;
-import com.baidu.brpc.CommunicationSpiManager;
-import com.baidu.brpc.thread.*;
+import com.baidu.brpc.thread.ShutDownManager;
 import com.baidu.brpc.utils.CollectionUtils;
+
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.Validate;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by huwenwei on 2017/4/25.
@@ -190,6 +192,10 @@ public class RpcClient {
             log.warn("no available server instance");
             throw new RpcException(RpcException.NETWORK_EXCEPTION, "no available server instance");
         }
+        if (log.isDebugEnabled()) {
+            log.debug("select instance {}", client.getServiceInstance());
+        }
+
         Response response = communicationOptions.getProtocol().createResponse();
         client.executeChain(request, response);
         return response;
