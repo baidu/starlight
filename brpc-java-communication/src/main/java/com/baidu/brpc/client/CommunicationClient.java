@@ -16,6 +16,16 @@
 
 package com.baidu.brpc.client;
 
+import java.nio.channels.ClosedChannelException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.NoSuchElementException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+
 import com.baidu.brpc.ChannelInfo;
 import com.baidu.brpc.client.channel.BrpcChannel;
 import com.baidu.brpc.client.channel.BrpcChannelFactory;
@@ -29,21 +39,13 @@ import com.baidu.brpc.protocol.Request;
 import com.baidu.brpc.protocol.Response;
 import com.baidu.brpc.thread.TimerInstance;
 import com.baidu.brpc.utils.CollectionUtils;
+
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.util.Timeout;
 import io.netty.util.Timer;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
-
-import java.nio.channels.ClosedChannelException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Created by huwenwei on 2019/12/06.
@@ -107,7 +109,7 @@ public class CommunicationClient {
             sendFuture.awaitUninterruptibly(request.getWriteTimeoutMillis());
             if (!sendFuture.isSuccess()) {
                 if (!(sendFuture.cause() instanceof ClosedChannelException)) {
-                    log.warn("send request failed, channelActive={}, ex=",
+                    log.warn("send request failed, channelActive={}, ex={}",
                             request.getChannel().isActive(), sendFuture.cause());
                 }
                 String errMsg = String.format("send request failed, channelActive=%b",
