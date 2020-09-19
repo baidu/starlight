@@ -1,13 +1,11 @@
 logging:
   config: classpath:logback-spring.xml
   directory: ./logs
-  level:
-    root: debug
 
 brpc:
   global:
     naming:
-      namingServiceUrl: consul://127.0.0.1:8500
+      namingServiceUrl: zookeeper://127.0.0.1:2181/examples
       group: "normal"
       version: 2.0.0
       ignoreFailOfNamingService: false
