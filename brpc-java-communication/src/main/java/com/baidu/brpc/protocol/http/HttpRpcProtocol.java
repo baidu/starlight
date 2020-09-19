@@ -100,7 +100,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
             .serializeNulls()
             .disableHtmlEscaping()
             .serializeSpecialFloatingPointValues()
-            .setDateFormat("yyyy-MM-dd HH:mm:ss")
             .create();
     private static final JsonParser jsonParser = new JsonParser();
 
@@ -385,16 +384,6 @@ public class HttpRpcProtocol extends AbstractProtocol {
             String methodName = null;
             if (protocolType == Options.ProtocolType.PROTOCOL_HTTP_PROTOBUF_VALUE
                     || protocolType == Options.ProtocolType.PROTOCOL_HTTP_JSON_VALUE) {
-//                String[] uriSplit = path.split("/");
-//                if (uriSplit.length < 3) {
-//                    String errMsg = String.format("url format is error, path:%s", path);
-//                    LOG.warn(errMsg);
-//                    httpRequest.setException(new RpcException(RpcException.SERVICE_EXCEPTION, errMsg));
-//                    return httpRequest;
-//                }
-//                serviceName = uriSplit[uriSplit.length - 2];
-//                methodName = uriSplit[uriSplit.length - 1];
-
                 boolean pathError;
                 try {
                     serviceName = path.substring(1, path.lastIndexOf("/"));
