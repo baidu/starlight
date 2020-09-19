@@ -14,7 +14,6 @@ import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options.ProtocolType;
-import com.google.gson.Gson;
 
 public class RpcClientTest {
     public static void main(String[] args) {
@@ -30,7 +29,7 @@ public class RpcClientTest {
             serviceUrl = args[0];
         }
 
-        List<Interceptor> interceptors = new ArrayList<Interceptor>();;
+        List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
 
         // sync call
