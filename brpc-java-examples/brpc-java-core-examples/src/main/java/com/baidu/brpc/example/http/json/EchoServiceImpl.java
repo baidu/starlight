@@ -1,7 +1,5 @@
 package com.baidu.brpc.example.http.json;
 
-import java.util.Date;
-
 public class EchoServiceImpl implements EchoService {
 
     @Override
@@ -17,6 +15,6 @@ public class EchoServiceImpl implements EchoService {
 
     @Override
     public Echo hello3(Echo echo) {
-        return new Echo("hello " + echo.getMessage(), new Date());
+        return new Echo("hello " + echo.getMessage(), echo.getTime());
     }
 }
