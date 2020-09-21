@@ -70,7 +70,7 @@ public class NamingServiceProcessor {
             });
         }
         // starter healthy check timer
-        starthealthyCheckTimer(healthyCheckIntervalMillis);
+        startHealthyCheckTimer(healthyCheckIntervalMillis);
     }
 
     public NamingServiceProcessor(List<Endpoint> endpoints,
@@ -88,11 +88,11 @@ public class NamingServiceProcessor {
         }
         if (allInstances.size() > 1) {
             // starter healthy check timer
-            starthealthyCheckTimer(healthyCheckIntervalMillis);
+            startHealthyCheckTimer(healthyCheckIntervalMillis);
         }
     }
 
-    private void starthealthyCheckTimer(int healthyCheckIntervalMillis) {
+    private void startHealthyCheckTimer(int healthyCheckIntervalMillis) {
         healthyCheckTimer = new HealthyCheckTimer(this, healthyCheckIntervalMillis);
         healthyCheckTimer.start();
     }

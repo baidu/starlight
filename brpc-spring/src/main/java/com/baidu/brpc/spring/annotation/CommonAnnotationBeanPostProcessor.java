@@ -74,7 +74,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         implements MergedBeanDefinitionPostProcessor, PriorityOrdered, BeanFactoryAware, DisposableBean,
         InitializingBean, ApplicationListener<ApplicationEvent> {
 
-    /** log this class. */
+    /** log this class. todo why not slf4j */
     protected static final Log LOGGER = LogFactory.getLog(AutowiredAnnotationBeanPostProcessor.class);
 
     /** call back class for {@link AnnotationParserCallback}. */
@@ -466,17 +466,17 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         if (event instanceof ContextStartedEvent || event instanceof ContextRefreshedEvent) {
 
             // only execute this method once. bug fix for ContextRefreshedEvent will invoke twice on spring MVC servlet
-            if (started.compareAndSet(false, true)) {
-                for (BeanInfo bean : typeAnnotationedBeans) {
-                    if (getCallback() != null) {
-                        Object targetBean = beanFactory.getBean(bean.name);
-                        getCallback().annotationAtTypeAfterStarted(bean.annotation, targetBean, bean.name, beanFactory);
-                    }
+            //            if (started.compareAndSet(false, true)) {
+            for (BeanInfo bean : typeAnnotationedBeans) {
+                if (getCallback() != null) {
+                    Object targetBean = beanFactory.getBean(bean.name);
+                    getCallback().annotationAtTypeAfterStarted(bean.annotation, targetBean, bean.name, beanFactory);
                 }
-            } else {
-                LOGGER.warn("onApplicationEvent of application event [" + event
-                        + "] ignored due to processor already started.");
             }
+            //            } else {
+            //                LOGGER.warn("onApplicationEvent of application event [" + event
+            //                        + "] ignored due to processor already started.");
+            //            }
 
         }
 

@@ -15,6 +15,32 @@
  */
 package com.baidu.brpc.spring.boot.autoconfigure;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.springframework.aop.support.AopUtils;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.PropertyValues;
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.ListableBeanFactory;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
+import org.springframework.core.Ordered;
+import org.springframework.core.PriorityOrdered;
+import org.springframework.util.ClassUtils;
+
 import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
 import com.baidu.bjf.remoting.protobuf.utils.compiler.Compiler;
 import com.baidu.brpc.client.RpcClientOptions;
@@ -32,32 +58,6 @@ import com.baidu.brpc.spring.boot.autoconfigure.config.BrpcProperties;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.slf4j.Logger;
-import org.springframework.aop.support.AopUtils;
-import org.springframework.beans.BeansException;
-import org.springframework.beans.MutablePropertyValues;
-import org.springframework.beans.PropertyValues;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.ListableBeanFactory;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
-import org.springframework.core.Ordered;
-import org.springframework.core.PriorityOrdered;
-import org.springframework.util.ClassUtils;
-
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Supports annotation resolver for {@link RpcProxy} and {@link RpcExporter} under springboot.
@@ -88,11 +88,6 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
      * The compiler.
      */
     private Compiler compiler;
-
-    /**
-     * status to control start only once.
-     */
-    private AtomicBoolean started = new AtomicBoolean(false);
 
     /* the default naming service url */
     private String namingServiceUrl;
@@ -159,15 +154,13 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
     @Override
     public void annotationAtTypeAfterStarted(Annotation t, Object bean, String beanName,
                                              ConfigurableListableBeanFactory beanFactory) throws BeansException {
-        if (started.compareAndSet(false, true)) {
-            // do export service here
-            Collection<RpcServiceExporter> values = portMappingExporters.values();
-            for (RpcServiceExporter rpcServiceExporter : values) {
-                try {
-                    rpcServiceExporter.afterPropertiesSet();
-                } catch (Exception e) {
-                    throw new RuntimeException(e.getMessage(), e);
-                }
+        // do export service here
+        Collection<RpcServiceExporter> values = portMappingExporters.values();
+        for (RpcServiceExporter rpcServiceExporter : values) {
+            try {
+                rpcServiceExporter.afterPropertiesSet();
+            } catch (Exception e) {
+                throw new RuntimeException(e.getMessage(), e);
             }
         }
     }

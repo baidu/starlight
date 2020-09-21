@@ -1,6 +1,7 @@
 package com.baidu.brpc.example.http.json;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -13,7 +14,6 @@ import com.baidu.brpc.example.interceptor.CustomInterceptor;
 import com.baidu.brpc.exceptions.RpcException;
 import com.baidu.brpc.interceptor.Interceptor;
 import com.baidu.brpc.protocol.Options.ProtocolType;
-import com.google.gson.Gson;
 
 public class RpcClientTest {
     public static void main(String[] args) {
@@ -29,7 +29,7 @@ public class RpcClientTest {
             serviceUrl = args[0];
         }
 
-        List<Interceptor> interceptors = new ArrayList<Interceptor>();;
+        List<Interceptor> interceptors = new ArrayList<Interceptor>();
         interceptors.add(new CustomInterceptor());
 
         // sync call
@@ -41,6 +41,9 @@ public class RpcClientTest {
 
             response = echoService.hello2("jack", 123);
             System.out.printf("sync call hello2 success, response=%s\n", response);
+
+            final Echo echoResp = echoService.hello3(new Echo("foo", new Date()));
+            System.out.printf("sync call hello3 success, response=%s\n", echoResp);
         } catch (RpcException ex) {
             System.out.println("sync call failed, msg=" + ex.getMessage());
         }
