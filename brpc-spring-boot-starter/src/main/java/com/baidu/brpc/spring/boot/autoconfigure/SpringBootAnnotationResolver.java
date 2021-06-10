@@ -362,7 +362,7 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
                 Interceptor interceptor = beanFactory.getBean(interceptorBeanName, Interceptor.class);
                 customInterceptors.add(interceptor);
             }
-            values.addPropertyValue("interceptors", Arrays.asList(customInterceptors));
+            values.addPropertyValue("interceptors", customInterceptors);
         }
 
         beanDef.setPropertyValues(values);
