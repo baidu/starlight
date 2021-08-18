@@ -75,7 +75,7 @@ public class RpcException extends RuntimeException {
         return code == SERVICE_EXCEPTION;
     }
 
-    public boolean isForbidded() {
+    public boolean isForbidden() {
         return code == FORBIDDEN_EXCEPTION;
     }
 

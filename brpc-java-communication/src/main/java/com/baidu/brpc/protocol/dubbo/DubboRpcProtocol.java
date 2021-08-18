@@ -61,13 +61,13 @@ public class DubboRpcProtocol extends AbstractProtocol {
             if (dubboHeader.getMagic() != DubboConstants.MAGIC) {
                 throw new BadSchemaException("not valid magic head for dubbo");
             }
-            if (in.readableBytes() < dubboHeader.getBodyLength() + DubboConstants.FIXED_HEAD_LEN) {
-                throw notEnoughDataException;
-            }
-
             // 512M
             if (dubboHeader.getBodyLength() > 512 * 1024 * 1024) {
                 throw new TooBigDataException("dubbo too big body size:" + dubboHeader.getBodyLength());
+            }
+
+            if (in.readableBytes() < dubboHeader.getBodyLength() + DubboConstants.FIXED_HEAD_LEN) {
+                throw notEnoughDataException;
             }
 
             in.skipBytes(DubboConstants.FIXED_HEAD_LEN);

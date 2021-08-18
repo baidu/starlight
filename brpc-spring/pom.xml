@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2018 Baidu, Inc. All Rights Reserved.
+  ~ Copyright (c) 2020 Baidu, Inc. All Rights Reserved.
   ~
   ~ Licensed under the Apache License, Version 2.0 (the "License");
   ~ you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
     <parent>
         <groupId>com.baidu</groupId>
         <artifactId>brpc-java-parent</artifactId>
-        <version>3.0.2-SNAPSHOT</version>
+        <version>3.0.2</version>
     </parent>
     <artifactId>brpc-spring</artifactId>
     <packaging>jar</packaging>

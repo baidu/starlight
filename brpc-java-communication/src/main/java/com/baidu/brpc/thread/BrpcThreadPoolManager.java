@@ -19,10 +19,10 @@ import java.util.concurrent.Executors;
 @Getter
 @Slf4j
 public class BrpcThreadPoolManager {
-    private EventLoopGroup defaultIoThreadPool;
+    private volatile EventLoopGroup defaultIoThreadPool;
     private ConcurrentMap<String, EventLoopGroup> ioThreadPoolMap
             = new ConcurrentHashMap<String, EventLoopGroup>();
-    private ThreadPool defaultWorkThreadPool;
+    private volatile ThreadPool defaultWorkThreadPool;
     private ConcurrentMap<String, ThreadPool> workThreadPoolMap
             = new ConcurrentHashMap<String, ThreadPool>();
     private ExecutorService exceptionThreadPool = Executors.newFixedThreadPool(
@@ -45,7 +45,7 @@ public class BrpcThreadPoolManager {
                                                   int threadNum, int ioEventType) {
         if (isSharing) {
             if (defaultIoThreadPool == null) {
-                synchronized (defaultIoThreadPool) {
+                synchronized (BrpcThreadPoolManager.class) {
                     if (defaultIoThreadPool == null) {
                         defaultIoThreadPool = createClientIoThreadPool(
                                 threadNum, "brpc-client-io-thread-default", ioEventType);
@@ -55,16 +55,19 @@ public class BrpcThreadPoolManager {
             return defaultIoThreadPool;
         }
 
-        EventLoopGroup threadPool = ioThreadPoolMap.get(serviceName);
-        if (threadPool != null) {
-            return threadPool;
-        }
-        threadPool = createClientIoThreadPool(
-                threadNum, "brpc-client-io-thread-" + serviceName, ioEventType);
-        EventLoopGroup prev = ioThreadPoolMap.putIfAbsent(serviceName, threadPool);
-        if (prev != null) {
-            log.warn("brpc io thread pool exist for service:{}", serviceName);
-            threadPool.shutdownGracefully().awaitUninterruptibly();
+        EventLoopGroup threadPool;
+        if ((threadPool = ioThreadPoolMap.get(serviceName)) == null) {
+            synchronized (internalServiceName(serviceName).intern()) {
+                if ((threadPool = ioThreadPoolMap.get(serviceName)) == null) {
+                    threadPool = createClientIoThreadPool(
+                            threadNum, "brpc-client-io-thread-" + serviceName, ioEventType);
+                    EventLoopGroup prev = ioThreadPoolMap.putIfAbsent(serviceName, threadPool);
+                    if (prev != null) {
+                        log.warn("brpc io thread pool exist for service:{}", serviceName);
+                        threadPool.shutdownGracefully().awaitUninterruptibly();
+                    }
+                }
+            }
         }
         return threadPool;
     }
@@ -84,7 +87,7 @@ public class BrpcThreadPoolManager {
     public ThreadPool getOrCreateClientWorkThreadPool(String serviceName, boolean isSharing, int threadNum) {
         if (isSharing) {
             if (defaultWorkThreadPool == null) {
-                synchronized (defaultWorkThreadPool) {
+                synchronized (BrpcThreadPoolManager.class) {
                     if (defaultWorkThreadPool == null) {
                         defaultWorkThreadPool = new ThreadPool(threadNum,
                                 new CustomThreadFactory("brpc-client-work-thread-default"));
@@ -94,14 +97,21 @@ public class BrpcThreadPoolManager {
             return defaultWorkThreadPool;
         }
 
-        ThreadPool threadPool = workThreadPoolMap.get(serviceName);
-        if (threadPool != null) {
-            return threadPool;
+        ThreadPool threadPool;
+        if ((threadPool = workThreadPoolMap.get(serviceName)) == null) {
+            synchronized (internalServiceName(serviceName).intern()) {
+                if ((threadPool = workThreadPoolMap.get(serviceName)) == null) {
+                    threadPool = new ThreadPool(threadNum,
+                            new CustomThreadFactory("brpc-client-work-thread-" + serviceName));
+                    workThreadPoolMap.put(serviceName, threadPool);
+                }
+            }
         }
-        threadPool = new ThreadPool(threadNum,
-                new CustomThreadFactory("brpc-client-work-thread-" + serviceName));
-        workThreadPoolMap.put(serviceName, threadPool);
         return threadPool;
+    }
+
+    protected String internalServiceName(String serviceName) {
+        return this.getClass().getName() + ":" + serviceName;
     }
 
     public void stopAll() {

@@ -62,4 +62,12 @@ public class TooBigDataException extends Exception {
     public void setCode(int code) {
         this.code = code;
     }
+
+    /**
+     * avoid the expensive and useless stack trace for exceptions
+     */
+    @Override
+    public Throwable fillInStackTrace() {
+        return this;
+    }
 }

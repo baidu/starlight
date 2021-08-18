@@ -222,7 +222,7 @@ public class BrpcProxy implements MethodInterceptor {
                     request.setBinaryAttachment(rpcContext.getRequestBinaryAttachment());
                 }
                 if (rpcContext.getLogId() != null) {
-                    request.getNsHead().logId = rpcContext.getLogId();
+                    request.getNsHead().logId = rpcContext.getLogId().intValue();
                     request.setLogId(rpcContext.getLogId());
                 }
                 if (rpcContext.getServiceTag() != null) {

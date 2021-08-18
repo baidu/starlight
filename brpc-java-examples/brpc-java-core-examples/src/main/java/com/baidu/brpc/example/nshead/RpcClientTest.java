@@ -30,7 +30,7 @@ public class RpcClientTest {
         // sync call
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
 
-        RpcContext.getContext().setLogId(1234);
+        RpcContext.getContext().setLogId(1234L);
         Echo.EchoRequest request = Echo.EchoRequest.newBuilder().setMessage("hello world").build();
         EchoResponse response = echoService.echo(request);
         System.out.println("--------nshead protobuf sync call response-----------------");
