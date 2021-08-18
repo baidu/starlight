@@ -50,8 +50,10 @@ public class RpcClientTest {
         clientOption.setLoadBalanceType(LoadBalanceStrategy.LOAD_BALANCE_FAIR);
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
-        String serviceUrl = "list://127.0.0.1:8002";
+//        String serviceUrl = "list://127.0.0.1:8002";
+        String serviceUrl = "consul://127.0.0.1:8500?token=wangsan-master-token";
 //        String serviceUrl = "consul://127.0.0.1:8500";
+
         if (args.length == 1) {
             serviceUrl = args[0];
         }

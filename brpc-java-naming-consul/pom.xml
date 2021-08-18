@@ -21,7 +21,7 @@
     <parent>
         <groupId>com.baidu</groupId>
         <artifactId>brpc-java-parent</artifactId>
-        <version>3.0.2</version>
+        <version>3.0.3-SNAPSHOT</version>
     </parent>
 
     <artifactId>brpc-java-naming-consul</artifactId>
@@ -48,6 +48,17 @@
             <groupId>com.ecwid.consul</groupId>
             <artifactId>consul-api</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpcore</artifactId>
+            <version>4.4.9</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.5</version>
+        </dependency>
+
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
