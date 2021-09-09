@@ -51,7 +51,6 @@
         <module>brpc-spring-boot-starter</module>
         <module>spring-cloud-brpc</module>
         <module>brpc-java-examples</module>
-        <module>brpc-java-namingservice-etcd</module>
         <module>brpc-java-naming-etcd</module>
     </modules>
 
