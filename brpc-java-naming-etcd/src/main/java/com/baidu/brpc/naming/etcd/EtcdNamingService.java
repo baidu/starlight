@@ -2,37 +2,43 @@ package com.baidu.brpc.naming.etcd;
 
 import com.baidu.brpc.client.channel.Endpoint;
 import com.baidu.brpc.client.channel.ServiceInstance;
-import com.baidu.brpc.naming.*;
 import com.baidu.brpc.naming.Constants;
+import com.baidu.brpc.naming.*;
 import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.utils.GsonUtils;
 import io.etcd.jetcd.*;
 import io.etcd.jetcd.lease.LeaseKeepAliveResponse;
 import io.etcd.jetcd.options.GetOption;
 import io.etcd.jetcd.options.PutOption;
+import io.etcd.jetcd.options.WatchOption;
+import io.etcd.jetcd.watch.WatchEvent;
+import io.etcd.jetcd.watch.WatchResponse;
 import io.grpc.stub.StreamObserver;
+import lombok.extern.slf4j.Slf4j;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@Slf4j
 public class EtcdNamingService extends FailbackNamingService implements NamingService {
 
     protected Client client;
     private int ttlSec;
     private int connectTimeoutMs;
+    private ConcurrentHashMap<ByteSequence,Long> leaseMap = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<SubscribeInfo,Watch> watchMap = new ConcurrentHashMap<>();
 
     public EtcdNamingService(BrpcURL url) {
         super(url);
-        String namespace = Constants.DEFAULT_PATH;
-        if (url.getPath().startsWith("/")) {
-            namespace = url.getPath().substring(1);
-        }
         client = Client.builder()
-                .endpoints(namespace).build();
+                .endpoints("http://".concat(url.getHostPorts())).build();
         ttlSec = url.getIntParameter(
                 Constants.SESSION_TIMEOUT_MS, Constants.DEFAULT_SESSION_TIMEOUT_MS)/1000;
         connectTimeoutMs = url.getIntParameter(
@@ -54,11 +60,11 @@ public class EtcdNamingService extends FailbackNamingService implements NamingSe
                     .get(connectTimeoutMs, TimeUnit.MILLISECONDS)
                     .getKvs();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            log.warn("lookup interrupted, key:{}, msg={}",prefixKey,e.getMessage());
         } catch (ExecutionException e) {
-            e.printStackTrace();
+            log.warn("lookup failed, key:{}, msg={}",prefixKey,e.getMessage());
         } catch (TimeoutException e) {
-            e.printStackTrace();
+            log.warn("lookup timeout, key:{}, msg={}",prefixKey,e.getMessage());
         }
         for(KeyValue keyValue : keyValues){
             ByteSequence value = keyValue.getValue();
@@ -66,18 +72,63 @@ public class EtcdNamingService extends FailbackNamingService implements NamingSe
             ServiceInstance instance = new ServiceInstance(endpoint);
             instances.add(instance);
         }
-
         return instances;
     }
 
     @Override
     public void doSubscribe(SubscribeInfo subscribeInfo, NotifyListener listener) throws Exception {
-
+        Watch watchClient = client.getWatchClient();
+        String prefixKey = getSubscribeKey(subscribeInfo);
+        WatchOption watchOption = WatchOption.newBuilder()
+                .withPrefix(ByteSequence.from(prefixKey.getBytes(StandardCharsets.UTF_8)))
+                        .build();
+        watchClient.watch(ByteSequence.from(prefixKey.getBytes(StandardCharsets.UTF_8)), watchOption,new Watch.Listener() {
+            @Override
+            public void onNext(WatchResponse response) {
+                Iterator<WatchEvent> iterator = response.getEvents().iterator();
+                while(iterator.hasNext()){
+                    WatchEvent watchEvent = iterator.next();
+                    String value = watchEvent.getKeyValue().getValue().toString(StandardCharsets.UTF_8);
+                    switch(watchEvent.getEventType()){
+                        case PUT: {
+                            ServiceInstance instance = GsonUtils.fromJson(
+                                    watchEvent.getKeyValue().getValue().toString(StandardCharsets.UTF_8), ServiceInstance.class);
+                            listener.notify(Collections.singletonList(instance),
+                                    Collections.emptyList());
+                        }
+                            break;
+                        case DELETE: {
+                            //value does not exist in the delete event.
+                            String keyArray[] = watchEvent.getKeyValue().getKey().toString(StandardCharsets.UTF_8).split("_");
+                            String ipPorts = keyArray[keyArray.length-1];
+                            ServiceInstance instance = new ServiceInstance(ipPorts);
+                            listener.notify(Collections.emptyList(),
+                                    Collections.singletonList(instance));
+                        }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+            @Override
+            public void onError(Throwable throwable) {
+                log.warn("subscribe error, ex:",throwable);
+            }
+            @Override
+            public void onCompleted() {
+                log.info("subscribe completed.");
+            }
+        });
+        watchMap.putIfAbsent(subscribeInfo,watchClient);
     }
 
     @Override
     public void doUnsubscribe(SubscribeInfo subscribeInfo) throws Exception {
-
+        Watch watchClient = watchMap.remove(subscribeInfo);
+        if(watchClient != null){
+            watchClient.close();
+        }
     }
 
     @Override
@@ -91,29 +142,38 @@ public class EtcdNamingService extends FailbackNamingService implements NamingSe
         PutOption putOption = PutOption.newBuilder()
                 .withLeaseId(leaseClient.grant(ttlSec).get(connectTimeoutMs, TimeUnit.MILLISECONDS).getID())
                 .build();
+        leaseMap.putIfAbsent(registerKey,putOption.getLeaseId());
         kvClient.put(registerKey,registerValue,putOption);
         leaseClient.keepAlive(putOption.getLeaseId(), new StreamObserver<LeaseKeepAliveResponse>() {
             @Override
             public void onNext(LeaseKeepAliveResponse leaseKeepAliveResponse) {
 
             }
-
             @Override
             public void onError(Throwable throwable) {
-
+                log.warn("register error, ex:",throwable);
             }
-
             @Override
             public void onCompleted() {
-
+                log.info("register completed.");
             }
         });
     }
 
-
     @Override
-    public void doUnregister(RegisterInfo registerInfo) throws Exception {
-
+    public void doUnregister(RegisterInfo registerInfo){
+        try{
+            ByteSequence registerKey = ByteSequence.from(
+                    getRegisterKey(registerInfo).getBytes(StandardCharsets.UTF_8));
+            Long leaseId = leaseMap.remove(registerKey);
+            if(leaseId == null){
+                return;
+            }
+            client.getLeaseClient().revoke(leaseId);
+            client.getKVClient().delete(registerKey);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
     }
 
     private String getRegisterKey(RegisterInfo registerInfo) {
@@ -121,7 +181,8 @@ public class EtcdNamingService extends FailbackNamingService implements NamingSe
         registerKey.append(registerInfo.getGroup()).append("_");
         registerKey.append(registerInfo.getInterfaceName()).append("_");
         registerKey.append(registerInfo.getVersion()).append("_");
-        registerKey.append(registerInfo.getHost());
+        registerKey.append(registerInfo.getHost()).append(":");
+        registerKey.append(registerInfo.getPort());
         return registerKey.toString();
     }
 
@@ -133,10 +194,8 @@ public class EtcdNamingService extends FailbackNamingService implements NamingSe
         return subscribeKey.toString();
     }
 
-    public String getRegisterValue(RegisterInfo registerInfo) {
+    private String getRegisterValue(RegisterInfo registerInfo) {
         Endpoint endPoint = new Endpoint(registerInfo.getHost(), registerInfo.getPort());
         return GsonUtils.toJson(endPoint);
     }
-
-
 }
