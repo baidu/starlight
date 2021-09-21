@@ -70,6 +70,7 @@ public class EtcdNamingService extends FailbackNamingService implements NamingSe
             ByteSequence value = keyValue.getValue();
             Endpoint endpoint = GsonUtils.fromJson(value.toString(StandardCharsets.UTF_8), Endpoint.class);
             ServiceInstance instance = new ServiceInstance(endpoint);
+            instance.setServiceName(subscribeInfo.getInterfaceName());
             instances.add(instance);
         }
         return instances;
