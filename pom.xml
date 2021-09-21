@@ -35,7 +35,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <netty.version>4.1.51.Final</netty.version>
-        <protobuf.version>3.11.0</protobuf.version>
+        <protobuf.version>3.11.1</protobuf.version>
         <jprotobuf.version>1.11.11</jprotobuf.version>
         <jprotobuf.plugin.version>1.2.15</jprotobuf.plugin.version>
         <protoc.maven.plugin.version>3.11.1</protoc.maven.plugin.version>
