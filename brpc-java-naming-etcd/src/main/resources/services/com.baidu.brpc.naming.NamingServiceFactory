@@ -1,1 +1,1 @@
-com.baidu.brpc.naming.zookeeper.EtcdNamingFactory
+com.baidu.brpc.naming.etcd.EtcdNamingFactory
