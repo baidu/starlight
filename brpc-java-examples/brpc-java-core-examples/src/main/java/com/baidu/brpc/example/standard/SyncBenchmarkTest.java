@@ -46,6 +46,8 @@ public class SyncBenchmarkTest {
     }
 
     public static void main(String[] args) throws InterruptedException, IOException {
+        args=new String[]{"list://127.0.0.1:8002","2"};
+
         if (args.length != 2) {
             System.out.println("usage: BenchmarkTest list://127.0.0.1:8002 threadNum");
             System.exit(-1);
@@ -65,7 +67,7 @@ public class SyncBenchmarkTest {
         int threadNum = Integer.parseInt(args[1]);
 
         InputStream inputStream = Thread.currentThread().getClass()
-                .getResourceAsStream("/message.txt");
+                .getResourceAsStream("/message_4k.txt");
         int length = inputStream.available();
         byte[] messageBytes = new byte[length];
         inputStream.read(messageBytes);
