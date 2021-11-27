@@ -35,8 +35,8 @@ public class RpcServerTest {
         options.setReceiveBufferSize(64 * 1024 * 1024);
         options.setSendBufferSize(64 * 1024 * 1024);
         options.setKeepAliveTime(20);
-//        options.setNamingServiceUrl("consul://127.0.0.1:8500");
-        options.setNamingServiceUrl("consul://127.0.0.1:8500?token=wangsan-master-token");
+        options.setNamingServiceUrl("consul://127.0.0.1:8500");
+//        options.setNamingServiceUrl("consul://127.0.0.1:8500?token=wangsan-master-token");
 //        final RpcServer rpcServer = new RpcServer(port, options);
         final RpcServer rpcServer = new RpcServer(port, options);
         rpcServer.registerService(new EchoServiceImpl());

@@ -23,6 +23,7 @@ import java.util.List;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.baidu.brpc.client.channel.ServiceInstance;
@@ -34,6 +35,9 @@ import com.baidu.brpc.protocol.SubscribeInfo;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ *
+ */
 @Slf4j
 //@Ignore
 public class ConsulNamingServiceTokenTest {

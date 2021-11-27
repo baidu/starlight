@@ -3,6 +3,7 @@ package com.baidu.brpc.naming.consul.client;
 import java.util.List;
 import java.util.Map;
 
+import com.ecwid.consul.v1.ConsulClient;
 import com.ecwid.consul.v1.ConsulRawClient;
 import com.ecwid.consul.v1.QueryParams;
 import com.ecwid.consul.v1.Response;
@@ -27,19 +28,16 @@ import com.ecwid.consul.v1.session.model.Session;
  *
  * @author wangsan
  */
-public class ConsulClientDefaultTokenExt extends ConsulClientTokenExt {
+public class ConsulClientExt extends ConsulClient {
     protected ConsulRawClient rawClient;
     protected String token;
+    protected ConsulClientTokenExt clientTokenExt;
 
-    public ConsulClientDefaultTokenExt(ConsulRawClient rawClient) {
-        super(rawClient);
-        this.rawClient = rawClient;
-    }
-
-    public ConsulClientDefaultTokenExt(ConsulRawClient rawClient, String token) {
+    public ConsulClientExt(ConsulRawClient rawClient, String token) {
         super(rawClient);
         this.rawClient = rawClient;
         this.token = token;
+        this.clientTokenExt = new ConsulClientTokenExtImpl(rawClient);
     }
 
     // -------------------------------------------------------------------------------------------
@@ -52,17 +50,17 @@ public class ConsulClientDefaultTokenExt extends ConsulClientTokenExt {
 
     @Override
     public Response<Map<String, Check>> getAgentChecks() {
-        return super.getAgentChecks(token);
+        return clientTokenExt.getAgentChecks(token);
     }
 
     @Override
     public Response<Map<String, Service>> getAgentServices() {
-        return super.getAgentServices(token);
+        return clientTokenExt.getAgentServices(token);
     }
 
     @Override
     public Response<List<Member>> getAgentMembers() {
-        return super.getAgentMembers(token);
+        return clientTokenExt.getAgentMembers(token);
     }
 
     @Override
@@ -92,7 +90,7 @@ public class ConsulClientDefaultTokenExt extends ConsulClientTokenExt {
 
     @Override
     public Response<Void> agentServiceSetMaintenance(String serviceId, boolean maintenanceEnabled) {
-        return super.agentServiceSetMaintenance(serviceId, maintenanceEnabled, null, token);
+        return clientTokenExt.agentServiceSetMaintenance(serviceId, maintenanceEnabled, null, token);
     }
     // -------------------------------------------------------------------------------------------
     // KV
@@ -180,7 +178,7 @@ public class ConsulClientDefaultTokenExt extends ConsulClientTokenExt {
     @Override
     public Response<List<com.ecwid.consul.v1.health.model.Check>> getHealthChecksForService(String serviceName,
                                                                                             QueryParams queryParams) {
-        return super.getHealthChecksForService(serviceName, queryParams, token);
+        return clientTokenExt.getHealthChecksForService(serviceName, queryParams, token);
     }
 
     // -------------------------------------------------------------------------------------------
@@ -188,12 +186,12 @@ public class ConsulClientDefaultTokenExt extends ConsulClientTokenExt {
 
     @Override
     public Response<String> getStatusLeader() {
-        return super.getStatusLeader(token);
+        return clientTokenExt.getStatusLeader(token);
     }
 
     @Override
     public Response<List<String>> getStatusPeers() {
-        return super.getStatusPeers(token);
+        return clientTokenExt.getStatusPeers(token);
     }
 }
 
