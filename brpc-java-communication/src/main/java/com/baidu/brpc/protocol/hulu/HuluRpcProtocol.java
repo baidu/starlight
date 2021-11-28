@@ -153,10 +153,9 @@ public class HuluRpcProtocol extends AbstractProtocol {
             try {
                 if (responseMeta != null && responseMeta.getErrorCode() == 0) {
                     Compress compress = compressManager.getCompress(compressType);
-                    if (responseMeta.getUserMessageSize() > 0) {
-                        protoBuf = protoAndAttachmentBuf.slice(
-                                protoAndAttachmentBuf.readerIndex(),
-                                responseMeta.getUserMessageSize());
+                    int userMessageSize = responseMeta.getUserMessageSize();
+                    if (userMessageSize > 0) {
+                        protoBuf = protoAndAttachmentBuf.readSlice(userMessageSize);
                     } else {
                         protoBuf = protoAndAttachmentBuf;
                     }
@@ -241,9 +240,7 @@ public class HuluRpcProtocol extends AbstractProtocol {
                 Compress compress = compressManager.getCompress(compressType);
                 int userMessageSize = requestMeta.getUserMessageSize();
                 if (userMessageSize > 0) {
-                    protoBuf = protoAndAttachmentBuf.slice(
-                            protoAndAttachmentBuf.readerIndex(),
-                            userMessageSize);
+                    protoBuf = protoAndAttachmentBuf.readSlice(userMessageSize);
                 } else {
                     protoBuf = protoAndAttachmentBuf;
                 }
