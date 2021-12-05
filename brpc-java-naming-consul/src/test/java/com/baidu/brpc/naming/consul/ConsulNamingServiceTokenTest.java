@@ -19,11 +19,11 @@ package com.baidu.brpc.naming.consul;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.baidu.brpc.client.channel.ServiceInstance;
@@ -32,6 +32,9 @@ import com.baidu.brpc.naming.BrpcURL;
 import com.baidu.brpc.naming.NotifyListener;
 import com.baidu.brpc.naming.RegisterInfo;
 import com.baidu.brpc.protocol.SubscribeInfo;
+import com.pszymczyk.consul.ConsulProcess;
+import com.pszymczyk.consul.ConsulStarterBuilder;
+import com.pszymczyk.consul.LogLevel;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,17 +47,38 @@ public class ConsulNamingServiceTokenTest {
 
     private static BrpcURL namingUrl;
     private static ConsulNamingService consulNamingService;
+    private static ConsulProcess consul;
 
     @BeforeClass
-    public static void setUp() throws Exception {
-        String testToken = "wangsan-master-token";
-        namingUrl = new BrpcURL("consul://127.0.0.1:8500" + "?token=" + testToken);
+    public static void setUp() {
+        String testToken = UUID.randomUUID().toString();
+
+        final String customConfiguration = "{\n"
+                + "\t\"acl\": {\n"
+                + "\t\t\"enabled\": true,\n"
+                + "\t\t\"default_policy\": \"deny\",\n"
+                + "\t\t\"down_policy\": \"deny\","
+                + "\t\t\"tokens\": {\n"
+                + "\t\t\t\"agent\": \"" + testToken + "\",\n"
+                + "\t\t\t\"master\": \"" + testToken + "\"\n"
+                + "\t\t}\n"
+                + "\t}\n"
+                + "}";
+        consul = ConsulStarterBuilder.consulStarter()
+                .withLogLevel(LogLevel.DEBUG)
+                .withCustomConfig(customConfiguration)
+                .withConsulVersion("1.4.2")
+                .withToken(testToken)
+                .build()
+                .start();
+        namingUrl = new BrpcURL("consul://127.0.0.1:" + consul.getHttpPort() + "?token=" + testToken);
         consulNamingService = new ConsulNamingService(namingUrl);
     }
 
     @AfterClass
     public static void tearDown() throws Exception {
         consulNamingService.destroy();
+        consul.close();
         consulNamingService = null;
     }
 
