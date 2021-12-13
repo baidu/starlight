@@ -103,7 +103,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>23.0</version>
+            <version>30.0-jre</version>
         </dependency>
         <dependency>
             <groupId>ch.qos.logback</groupId>
