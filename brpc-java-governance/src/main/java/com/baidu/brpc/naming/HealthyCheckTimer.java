@@ -63,7 +63,7 @@ public class HealthyCheckTimer implements TimerTask {
             while (iter.hasNext()) {
                 CommunicationClient instance = iter.next();
                 boolean isHealthy = isInstanceHealthy(instance);
-                if (isHealthy) {
+                if (!isHealthy) {
                     // healthy change to be unhealthy
                     newUnhealthyInstances.add(instance);
                 }
