@@ -21,13 +21,14 @@ brpc-java 是 baidu rpc 的 java 版本实现，支持 baidu rpc、nshead、sofa
 java 6+ && protobuf 2.5.0+
 
 ### 引入 maven 依赖
+brpc-java当前稳定版：[STABLE_VESION] 是3.0.2
 #### protobuf 2.x 环境
 非 Spring 环境：
 ```xml
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java</artifactId>
-    <version>3.0.2</version>
+    <version>[STABLE_VERSION]</version>
 </dependency>
 ```
 Spring 环境：
@@ -35,7 +36,7 @@ Spring 环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring</artifactId>
-    <version>3.0.2</version>
+    <version>[STABLE_VERSION]</version>
 </dependency>
 ```
 Spring Boot 环境：
@@ -43,7 +44,7 @@ Spring Boot 环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-spring-boot-starter</artifactId>
-    <version>3.0.2</version>
+    <version>[STABLE_VERSION]</version>
 </dependency>
 ```
 Spring Cloud 环境：
@@ -51,7 +52,7 @@ Spring Cloud 环境：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>spring-cloud-brpc</artifactId>
-    <version>3.0.2</version>
+    <version>[STABLE_VERSION]</version>
 </dependency>
 ```
 Zookeeper 注册中心：
@@ -59,7 +60,7 @@ Zookeeper 注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-zookeeper</artifactId>
-    <version>3.0.2</version>
+    <version>[STABLE_VERSION]</version>
 </dependency>
 ```
 Consul 注册中心：
@@ -67,7 +68,7 @@ Consul 注册中心：
 <dependency>
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-naming-consul</artifactId>
-    <version>3.0.2</version>
+    <version>[STABLE_VERSION]</version>
 </dependency>
 ```
 #### protobuf 3.x 环境
@@ -129,4 +130,4 @@ Consul 注册中心：
 | QPS | 220k | 100k | 53k | 27k |
 
 # 微信交流群：
-<a href="https://brpc-java.cdn.bcebos.com/qrcode.jpeg"><img src="https://brpc-java.cdn.bcebos.com/qrcode.jpeg" width="320" /></a>
+<img src="./qrcode.png" width="320" />
