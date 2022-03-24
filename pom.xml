@@ -50,7 +50,7 @@
         <module>brpc-spring</module>
         <module>brpc-spring-boot-starter</module>
         <module>spring-cloud-brpc</module>
-        <module>brpc-java-examples</module>
+        <!--<module>brpc-java-examples</module>-->
     </modules>
 
     <issueManagement>
@@ -88,7 +88,7 @@
 
     <profiles>
         <profile>
-            <id>release</id>
+            <id>deploy</id>
             <build>
                 <plugins>
                     <plugin>
@@ -104,6 +104,23 @@
                                 </goals>
                             </execution>
                         </executions>
+                        <configuration>
+                            <gpgArguments>
+                                <arg>--pinentry-mode</arg>
+                                <arg>loopback</arg>
+                            </gpgArguments>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>1.6.7</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
                     </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -129,11 +146,11 @@
             </build>
             <distributionManagement>
                 <snapshotRepository>
-                    <id>oss</id>
+                    <id>ossrh</id>
                     <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
                 </snapshotRepository>
                 <repository>
-                    <id>oss</id>
+                    <id>ossrh</id>
                     <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
                 </repository>
             </distributionManagement>

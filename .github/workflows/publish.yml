@@ -1,0 +1,39 @@
+name: Maven Publish
+
+on: workflow_dispatch
+
+jobs:
+  publish:
+    
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+    - name: Checkout main branch & Change path to client 
+      uses: actions/checkout@v2
+      with: 
+        ref: 'master'
+    - name: Set Java Env
+      uses: actions/setup-java@v2
+      with:
+        java-version: '8'
+        distribution: 'adopt'
+        server-id: ossrh
+        server-username: MAVEN_USERNAME
+        server-password: MAVEN_PASSWORD
+
+
+    - name: Release Maven package
+      uses: samuelmeuli/action-maven-publish@v1
+      with:
+        gpg_private_key: ${{ secrets.GPG_SECRET }}
+        gpg_passphrase: ${{ secrets.GPG_PASSWD }}
+        nexus_username: ${{ secrets.OSSRH_USER }}
+        nexus_password: ${{ secrets.OSSRH_PASSWD }}
+        maven_args: -Dmaven.test.skip=true -Dgpg.skip=false 
+        maven_profiles: deploy
+      env:
+        MAVEN_USERNAME: ${{ secrets.OSSRH_USER }}
+        MAVEN_PASSWORD: ${{ secrets.OSSRH_PASSWD }}
