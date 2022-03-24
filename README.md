@@ -21,7 +21,7 @@ brpc-java 是 baidu rpc 的 java 版本实现，支持 baidu rpc、nshead、sofa
 java 6+ && protobuf 2.5.0+
 
 ### 引入 maven 依赖
-brpc-java当前稳定版：[STABLE_VESION] 是3.0.2
+brpc-java当前稳定版：[STABLE_VESION] 是![Maven](https://img.shields.io/maven-central/v/com.baidu/brpc-java.svg)
 #### protobuf 2.x 环境
 非 Spring 环境：
 ```xml
