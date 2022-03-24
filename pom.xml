@@ -25,7 +25,7 @@
 
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-parent</artifactId>
-    <version>3.0.3-SNAPSHOT</version>
+    <version>3.0.3</version>
     <packaging>pom</packaging>
 
     <name>${project.artifactId}</name>
