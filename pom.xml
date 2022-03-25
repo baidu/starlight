@@ -25,7 +25,7 @@
 
     <groupId>com.baidu</groupId>
     <artifactId>brpc-java-parent</artifactId>
-    <version>3.0.3</version>
+    <version>3.0.4-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>${project.artifactId}</name>
@@ -50,7 +50,7 @@
         <module>brpc-spring</module>
         <module>brpc-spring-boot-starter</module>
         <module>spring-cloud-brpc</module>
-        <!--<module>brpc-java-examples</module>-->
+        <module>brpc-java-examples</module>
     </modules>
 
     <issueManagement>
