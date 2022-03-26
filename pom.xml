@@ -50,7 +50,7 @@
         <module>brpc-spring</module>
         <module>brpc-spring-boot-starter</module>
         <module>spring-cloud-brpc</module>
-        <module>brpc-java-examples</module>
+<!--        <module>brpc-java-examples</module>-->
     </modules>
 
     <issueManagement>
@@ -68,9 +68,10 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git://github.com/baidu/brpc-java.git</connection>
-        <developerConnection>scm:git:git@github.com:baidu/brpc-java.git</developerConnection>
-        <url>https://github.com/baidu/brpc-java</url>
+        <connection>scm:git:${project.scm.url}</connection>
+        <developerConnection>scm:git:${project.scm.url}</developerConnection>
+        <url>https://github.com/baidu/brpc-java.git</url>
+        <tag>HEAD</tag>
     </scm>
 
     <licenses>
@@ -112,6 +113,14 @@
                         </configuration>
                     </plugin>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-release-plugin</artifactId>
+                        <version>2.5.3</version>
+                        <configuration>
+                            <tagNameFormat>@{project.version}</tagNameFormat>
+                        </configuration>
+                    </plugin>
+                    <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
                         <version>1.6.7</version>
@@ -119,7 +128,7 @@
                         <configuration>
                             <serverId>ossrh</serverId>
                             <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                            <autoReleaseAfterClose>false</autoReleaseAfterClose>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -141,6 +150,27 @@
                             <encoding>UTF-8</encoding>
                             <docencoding>UTF-8</docencoding>
                         </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>2.1.2</version>
+                        <configuration>
+                            <attach>true</attach>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>com/baidu/brpc/**</include>
+                                    </includes>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
@@ -169,27 +199,7 @@
                     <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.1.2</version>
-                <configuration>
-                    <attach>true</attach>
-                </configuration>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                        <configuration>
-                            <includes>
-                                <include>com/baidu/brpc/**</include>
-                            </includes>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
+
             <plugin>
                 <groupId>com.github.os72</groupId>
                 <artifactId>protoc-jar-maven-plugin</artifactId>
