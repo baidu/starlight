@@ -92,11 +92,7 @@ public class ZookeeperNamingService extends FailbackNamingService implements Nam
                 String childPath = path + "/" + child;
                 try {
                     String childData = new String(client.getData().forPath(childPath));
-                    Endpoint endpoint = GsonUtils.fromJson(childData, Endpoint.class);
-                    ServiceInstance instance = new ServiceInstance(endpoint);
-                    if (subscribeInfo != null && StringUtils.isNoneBlank(subscribeInfo.getServiceId())) {
-                        instance.setServiceName(subscribeInfo.getServiceId());
-                    }
+                    ServiceInstance instance = getInstanceFromData(subscribeInfo, childData);
                     instances.add(instance);
                 } catch (Exception getDataFailedException) {
                     log.warn("get child data failed, path:{}, ex:", childPath, getDataFailedException);
@@ -113,13 +109,8 @@ public class ZookeeperNamingService extends FailbackNamingService implements Nam
         return instances;
     }
 
-
-
-
-
-
     @Override
-    public void doSubscribe(SubscribeInfo subscribeInfo, final NotifyListener listener) throws Exception {
+    public void doSubscribe(final SubscribeInfo subscribeInfo, final NotifyListener listener) throws Exception {
         String path = getSubscribePath(subscribeInfo);
         PathChildrenCache cache = new PathChildrenCache(client, path, true);
         cache.getListenable().addListener(new PathChildrenCacheListener() {
@@ -128,15 +119,15 @@ public class ZookeeperNamingService extends FailbackNamingService implements Nam
                 ChildData data = event.getData();
                 switch (event.getType()) {
                     case CHILD_ADDED: {
-                        ServiceInstance instance = GsonUtils.fromJson(
-                                new String(data.getData()), ServiceInstance.class);
+                        ServiceInstance instance = getInstanceFromData(subscribeInfo,
+                                new String(data.getData()));
                         listener.notify(Collections.singletonList(instance),
                                 Collections.<ServiceInstance>emptyList());
                         break;
                     }
                     case CHILD_REMOVED: {
-                        ServiceInstance instance = GsonUtils.fromJson(
-                                new String(data.getData()), ServiceInstance.class);
+                        ServiceInstance instance = getInstanceFromData(subscribeInfo,
+                                new String(data.getData()));
                         listener.notify(Collections.<ServiceInstance>emptyList(),
                                 Collections.singletonList(instance));
                         break;
@@ -196,23 +187,11 @@ public class ZookeeperNamingService extends FailbackNamingService implements Nam
     }
 
     public String getSubscribePath(SubscribeInfo subscribeInfo) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("/");
-        sb.append(subscribeInfo.getGroup()).append(":");
-        sb.append(subscribeInfo.getInterfaceName()).append(":");
-        sb.append(subscribeInfo.getVersion());
-        String path = sb.toString();
-        return path;
+        return "/" + subscribeInfo.getServiceId();
     }
 
     public String getParentRegisterPath(RegisterInfo registerInfo) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("/");
-        sb.append(registerInfo.getGroup()).append(":");
-        sb.append(registerInfo.getInterfaceName()).append(":");
-        sb.append(registerInfo.getVersion());
-        String path = sb.toString();
-        return path;
+        return "/" + registerInfo.getServiceId();
     }
 
     public String getRegisterPath(RegisterInfo registerInfo) {
@@ -227,5 +206,14 @@ public class ZookeeperNamingService extends FailbackNamingService implements Nam
     public String getRegisterPathData(RegisterInfo registerInfo) {
         Endpoint endPoint = new Endpoint(registerInfo.getHost(), registerInfo.getPort());
         return GsonUtils.toJson(endPoint);
+    }
+
+    private ServiceInstance getInstanceFromData(SubscribeInfo subscribeInfo, String childData) {
+        Endpoint endpoint = GsonUtils.fromJson(childData, Endpoint.class);
+        ServiceInstance instance = new ServiceInstance(endpoint);
+        if (subscribeInfo != null && StringUtils.isNoneBlank(subscribeInfo.getServiceId())) {
+            instance.setServiceName(subscribeInfo.getServiceId());
+        }
+        return instance;
     }
 }
