@@ -37,7 +37,7 @@ jobs:
         git config user.name "GitHub Actions"
 
     - name: Publish package
-      run: mvn -B release:prepare release:perform -P deploy -Dmaven.test.skip=true -DreleaseVersion=${{ github.event.inputs.releaseVersion }} -DdevelopmentVersion=${{ github.event.inputs.developmentVersion }}
+      run: mvn -B release:prepare release:perform -P deploy -Darguments="-Dmaven.test.skip" -DreleaseVersion=${{ github.event.inputs.releaseVersion }} -DdevelopmentVersion=${{ github.event.inputs.developmentVersion }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         MAVEN_USERNAME: ${{ secrets.OSSRH_USER }}
