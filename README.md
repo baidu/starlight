@@ -131,4 +131,5 @@ Consul 注册中心：
 
 # 微信交流群：
 添加以下管理员帮忙加群，备注bprc-java
+
 <img src="./qrcode.jpeg" width="320" />
