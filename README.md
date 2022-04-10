@@ -130,4 +130,5 @@ Consul 注册中心：
 | QPS | 220k | 100k | 53k | 27k |
 
 # 微信交流群：
-<img src="./qrcode.png" width="320" />
+添加以下管理员帮忙加群，备注bprc-java
+<img src="./qrcode.jpeg" width="320" />
