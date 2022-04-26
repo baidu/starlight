@@ -12,7 +12,7 @@ import com.ecwid.consul.v1.agent.model.Service;
 /**
  * created by wangsan on 2021/08/18.
  * <p>
- * 补充consul client未能暴露的基于token的接口。一下接口在brpc consul name service会用到
+ * 补充consul client未能暴露的基于token的接口。以下接口在brpc consul name service中会用到
  *
  * @author wangsan
  */

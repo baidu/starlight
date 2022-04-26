@@ -42,10 +42,9 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-//@Ignore
+// @Ignore
 public class ConsulNamingServiceTokenTest {
 
-    private static BrpcURL namingUrl;
     private static ConsulNamingService consulNamingService;
     private static ConsulProcess consul;
 
@@ -71,20 +70,20 @@ public class ConsulNamingServiceTokenTest {
                 .withToken(testToken)
                 .build()
                 .start();
-        namingUrl = new BrpcURL("consul://127.0.0.1:" + consul.getHttpPort() + "?token=" + testToken);
+        BrpcURL namingUrl = new BrpcURL("consul://127.0.0.1:" + consul.getHttpPort() + "?token=" + testToken);
         consulNamingService = new ConsulNamingService(namingUrl);
     }
 
     @AfterClass
-    public static void tearDown() throws Exception {
+    public static void tearDown() {
         consulNamingService.destroy();
         consul.close();
         consulNamingService = null;
     }
 
-    protected RegisterInfo createRegisterInfo(String host, int port) {
+    protected RegisterInfo createRegisterInfo(int port) {
         RegisterInfo registerInfo = new RegisterInfo();
-        registerInfo.setHost(host);
+        registerInfo.setHost("127.0.0.1");
         registerInfo.setPort(port);
         registerInfo.setInterfaceName(EchoService.class.getName());
         return registerInfo;
@@ -101,40 +100,38 @@ public class ConsulNamingServiceTokenTest {
     public void testLookup() throws InterruptedException {
         SubscribeInfo subscribeInfo = createSubscribeInfo(true);
         List<ServiceInstance> instances = consulNamingService.lookup(subscribeInfo);
-        Assert.assertTrue(instances.size() == 0);
+        Assert.assertEquals(0, instances.size());
 
-        RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8012);
+        RegisterInfo registerInfo = createRegisterInfo(8012);
         consulNamingService.register(registerInfo);
         Thread.sleep(3 * 1000);
 
         instances = consulNamingService.lookup(subscribeInfo);
-        Assert.assertTrue(instances.size() == 1);
-        Assert.assertTrue(instances.get(0).getIp().equals("127.0.0.1"));
-        Assert.assertTrue(instances.get(0).getPort() == 8012);
+        Assert.assertEquals(1, instances.size());
+        Assert.assertEquals("127.0.0.1", instances.get(0).getIp());
+        Assert.assertEquals(8012, instances.get(0).getPort());
         consulNamingService.unregister(registerInfo);
     }
 
     @Test(expected = RpcException.class)
-    public void testWrongUrlWithoutToken() throws InterruptedException {
-        BrpcURL namingUrl = new BrpcURL("consul://127.0.0.1:8500");
-        ConsulNamingService consulNamingService = new ConsulNamingService(namingUrl);
-
-        RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8012);
-        consulNamingService.register(registerInfo);
-        consulNamingService.unregister(registerInfo);
+    public void testWrongUrlWithoutToken() {
+        BrpcURL wrongUrl = new BrpcURL("consul://127.0.0.1:" + consul.getHttpPort());
+        ConsulNamingService wrongNamingService = new ConsulNamingService(wrongUrl);
+        RegisterInfo registerInfo = createRegisterInfo(8012);
+        wrongNamingService.register(registerInfo);
     }
 
     @Test
     public void testRegisterAndSubscribe() throws InterruptedException {
-        RegisterInfo registerInfo = createRegisterInfo("127.0.0.1", 8015);
-        RegisterInfo anotherRegisterInfo = createRegisterInfo("127.0.0.1", 8016);
+        RegisterInfo registerInfo = createRegisterInfo(8015);
+        RegisterInfo anotherRegisterInfo = createRegisterInfo(8016);
         consulNamingService.register(registerInfo);
         consulNamingService.register(anotherRegisterInfo);
         Thread.sleep(3 * 1000);
 
         SubscribeInfo subscribeInfo = createSubscribeInfo(false);
         final List<ServiceInstance> adds = consulNamingService.lookup(subscribeInfo);
-        Assert.assertTrue(adds.size() == 2);
+        Assert.assertEquals(2, adds.size());
         adds.clear();
 
         final List<ServiceInstance> deletes = new ArrayList<ServiceInstance>();
@@ -150,17 +147,17 @@ public class ConsulNamingServiceTokenTest {
 
         consulNamingService.unregister(registerInfo);
         Thread.sleep(3 * 1000);
-        Assert.assertTrue(adds.size() == 0);
-        Assert.assertTrue(deletes.size() == 1);
-        Assert.assertTrue(deletes.get(0).equals(new ServiceInstance("127.0.0.1", 8015)));
+        Assert.assertEquals(0, adds.size());
+        Assert.assertEquals(1, deletes.size());
+        Assert.assertEquals(deletes.get(0), new ServiceInstance("127.0.0.1", 8015));
         adds.clear();
         deletes.clear();
 
         consulNamingService.register(registerInfo);
         Thread.sleep(3 * 1000);
-        Assert.assertTrue(adds.size() == 1);
-        Assert.assertTrue(deletes.size() == 0);
-        Assert.assertTrue(adds.get(0).equals(new ServiceInstance("127.0.0.1", 8015)));
+        Assert.assertEquals(1, adds.size());
+        Assert.assertEquals(0, deletes.size());
+        Assert.assertEquals(adds.get(0), new ServiceInstance("127.0.0.1", 8015));
     }
 
 }
