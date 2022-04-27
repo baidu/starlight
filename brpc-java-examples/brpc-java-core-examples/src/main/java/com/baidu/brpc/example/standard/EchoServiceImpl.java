@@ -41,7 +41,7 @@ public class EchoServiceImpl implements EchoService {
             if (attachment != null) {
                 if (LOG.isDebugEnabled()) {
                     String attachmentString = new String(attachment.array());
-                    LOG.info("request attachment={}", attachmentString);
+                    LOG.debug("request attachment={}", attachmentString);
                 }
                 // 设置response attachment
                 rpcContext.setResponseBinaryAttachment(Unpooled.copiedBuffer(attachment));
@@ -49,10 +49,8 @@ public class EchoServiceImpl implements EchoService {
         }
 
         String message = request.getMessage();
-        Echo.EchoResponse response = Echo.EchoResponse.newBuilder()
-                .setMessage(message).build();
-        LOG.debug("EchoService.echo, request={}, response={}",
-                request.getMessage(), response.getMessage());
+        Echo.EchoResponse response = Echo.EchoResponse.newBuilder().setMessage(message).build();
+        LOG.info("EchoService.echo, request={}, response={}", request.getMessage(), response.getMessage());
 
         return response;
     }

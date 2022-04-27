@@ -5,8 +5,7 @@ logging:
 brpc:
   global:
     naming:
-#      namingServiceUrl: zookeeper://127.0.0.1:2181/examples
-      namingServiceUrl: consul://127.0.0.1:8500?token=wangsan-master-token
+      namingServiceUrl: zookeeper://127.0.0.1:2181/examples
       group: "normal"
       version: 2.0.0
       ignoreFailOfNamingService: false

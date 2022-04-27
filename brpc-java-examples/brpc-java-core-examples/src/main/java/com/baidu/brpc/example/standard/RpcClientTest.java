@@ -51,8 +51,7 @@ public class RpcClientTest {
         clientOption.setCompressType(Options.CompressType.COMPRESS_TYPE_NONE);
 
         String serviceUrl = "list://127.0.0.1:8002";
-//        String serviceUrl = "consul://127.0.0.1:8500?token=wangsan-master-token";
-//        String serviceUrl = "consul://127.0.0.1:8500";
+        // String serviceUrl = "consul://127.0.0.1:8500";
 
         if (args.length == 1) {
             serviceUrl = args[0];
@@ -68,7 +67,6 @@ public class RpcClientTest {
 
         // sync call
         RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
-//        RpcClient rpcClient = new RpcClient(serviceUrl, clientOption, interceptors);
         EchoService echoService = BrpcProxy.getProxy(rpcClient, EchoService.class);
         RpcContext.getContext().setLogId(1234L);
         try {
