@@ -16,42 +16,49 @@
 
 package com.baidu.brpc.naming.consul;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import org.apache.commons.collections4.CollectionUtils;
+
 import com.baidu.brpc.client.channel.ServiceInstance;
 import com.baidu.brpc.exceptions.RpcException;
-import com.baidu.brpc.naming.*;
+import com.baidu.brpc.naming.BrpcURL;
+import com.baidu.brpc.naming.FailbackNamingService;
+import com.baidu.brpc.naming.NamingService;
+import com.baidu.brpc.naming.NotifyListener;
+import com.baidu.brpc.naming.RegisterInfo;
+import com.baidu.brpc.naming.consul.client.ConsulClientExt;
 import com.baidu.brpc.protocol.SubscribeInfo;
 import com.baidu.brpc.utils.CustomThreadFactory;
 import com.ecwid.consul.v1.ConsulClient;
+import com.ecwid.consul.v1.ConsulRawClient;
 import com.ecwid.consul.v1.QueryParams;
 import com.ecwid.consul.v1.Response;
 import com.ecwid.consul.v1.agent.model.NewService;
 import com.ecwid.consul.v1.health.HealthServicesRequest;
 import com.ecwid.consul.v1.health.model.HealthService;
-import io.netty.util.HashedWheelTimer;
-import io.netty.util.Timeout;
-import io.netty.util.Timer;
-import io.netty.util.TimerTask;
+
 import io.netty.util.internal.ConcurrentSet;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.Collection;
-import java.util.Arrays;
-import java.util.concurrent.*;
 
 @Slf4j
-public class ConsulNamingService  extends  FailbackNamingService implements NamingService {
+public class ConsulNamingService extends FailbackNamingService implements NamingService {
     private BrpcURL url;
     private ConsulClient client;
     private int consulInterval;
     private int lookupInterval;
 
-    private ConcurrentMap<SubscribeInfo, WatchTask> watchTaskMap
-            = new ConcurrentHashMap<SubscribeInfo, WatchTask>();
+    private ConcurrentMap<SubscribeInfo, WatchTask> watchTaskMap = new ConcurrentHashMap<SubscribeInfo, WatchTask>();
 
     private Set<String> instanceIds = new ConcurrentSet<String>();
     private ScheduledExecutorService heartbeatExecutor;
@@ -61,8 +68,11 @@ public class ConsulNamingService  extends  FailbackNamingService implements Nami
         super(url);
         this.url = url;
         try {
+            log.info("construct consul with url: {}", url);
             String[] hostPorts = url.getHostPorts().split(":");
-            this.client = new ConsulClient(hostPorts[0], Integer.parseInt(hostPorts[1]));
+            String token = url.getQueryMap().get("token") != null ? url.getQueryMap().get("token").toString() : null;
+            ConsulRawClient rawClient = new ConsulRawClient(hostPorts[0], Integer.parseInt(hostPorts[1]));
+            this.client = new ConsulClientExt(rawClient, token);
         } catch (Exception e) {
             throw new RpcException(RpcException.SERVICE_EXCEPTION,
                     "wrong configuration of url, should be like test.bj:port", e);
@@ -117,7 +127,6 @@ public class ConsulNamingService  extends  FailbackNamingService implements Nami
         }
     }
 
-
     @Override
     public void doSubscribe(SubscribeInfo subscribeInfo, NotifyListener listener) {
         final String serviceName = subscribeInfo.getServiceId();
@@ -139,7 +148,7 @@ public class ConsulNamingService  extends  FailbackNamingService implements Nami
     }
 
     @Override
-    public void doRegister(RegisterInfo registerInfo)  {
+    public void doRegister(RegisterInfo registerInfo) {
         NewService newService = getConsulNewService(registerInfo);
         client.agentServiceRegister(newService);
         instanceIds.add("service:" + newService.getId());
@@ -152,8 +161,6 @@ public class ConsulNamingService  extends  FailbackNamingService implements Nami
         client.agentServiceDeregister(newService.getId());
         instanceIds.remove("service:" + newService.getId());
     }
-
-
 
     private NewService getConsulNewService(RegisterInfo registerInfo) {
         NewService newService = new NewService();
@@ -229,17 +236,21 @@ public class ConsulNamingService  extends  FailbackNamingService implements Nami
         @Override
         public void run() {
             while (!stopWatch) {
-                Response<List<HealthService>> response = lookupHealthService(serviceName, lastConsulIndex);
-                Long currentIndex = response.getConsulIndex();
-                if (currentIndex != null && currentIndex > lastConsulIndex) {
-                    List<ServiceInstance> currentInstances = convert(response);
-                    Collection<ServiceInstance> addList = CollectionUtils.subtract(
-                            currentInstances, lastInstances);
-                    Collection<ServiceInstance> deleteList = CollectionUtils.subtract(
-                            lastInstances, currentInstances);
-                    listener.notify(addList, deleteList);
-                    lastInstances = currentInstances;
-                    lastConsulIndex = currentIndex;
+                try {
+                    Response<List<HealthService>> response = lookupHealthService(serviceName, lastConsulIndex);
+                    Long currentIndex = response.getConsulIndex();
+                    if (currentIndex != null && currentIndex > lastConsulIndex) {
+                        List<ServiceInstance> currentInstances = convert(response);
+                        Collection<ServiceInstance> addList = CollectionUtils.subtract(
+                                currentInstances, lastInstances);
+                        Collection<ServiceInstance> deleteList = CollectionUtils.subtract(
+                                lastInstances, currentInstances);
+                        listener.notify(addList, deleteList);
+                        lastInstances = currentInstances;
+                        lastConsulIndex = currentIndex;
+                    }
+                } catch (Exception e) {
+                    log.error("consul change watch error", e);
                 }
             }
         }
