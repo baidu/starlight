@@ -55,6 +55,7 @@ import org.springframework.core.GenericTypeResolver;
 import org.springframework.core.MethodParameter;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.Assert;
 import org.springframework.util.ClassUtils;
 import org.springframework.util.ReflectionUtils;
@@ -176,7 +177,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         if (annotation == null) {
             return bean;
         }
-        Annotation a = clazz.getAnnotation(annotation);
+        Annotation a = AnnotatedElementUtils.findMergedAnnotation(clazz, annotation);
         if (a == null) {
             return bean;
         }
@@ -276,7 +277,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         ReflectionUtils.doWithMethods(clazz, new ReflectionUtils.MethodCallback() {
             public void doWith(Method method) {
                 for (Class<? extends Annotation> anno : annotions) {
-                    Annotation annotation = method.getAnnotation(anno);
+                    Annotation annotation = AnnotatedElementUtils.findMergedAnnotation(method, anno);
                     if (annotation != null && method.equals(ClassUtils.getMostSpecificMethod(method, clazz))) {
                         if (Modifier.isStatic(method.getModifiers())) {
                             throw new IllegalStateException("Autowired annotation is not supported on static methods");
@@ -305,7 +306,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         ReflectionUtils.doWithFields(clazz, new ReflectionUtils.FieldCallback() {
             public void doWith(Field field) {
                 for (Class<? extends Annotation> anno : annotations) {
-                    Annotation annotation = field.getAnnotation(anno);
+                    Annotation annotation = AnnotatedElementUtils.findMergedAnnotation(field, anno);
                     if (annotation != null) {
                         if (Modifier.isStatic(field.getModifiers())) {
                             throw new IllegalStateException("Autowired annotation is not supported on static fields");
