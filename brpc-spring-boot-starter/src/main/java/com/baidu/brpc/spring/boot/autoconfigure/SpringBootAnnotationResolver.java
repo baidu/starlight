@@ -19,7 +19,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -39,6 +38,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.core.Ordered;
 import org.springframework.core.PriorityOrdered;
+import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.util.ClassUtils;
 
 import com.baidu.bjf.remoting.protobuf.utils.JDKCompilerHelper;
@@ -116,7 +116,8 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
             try {
                 log.info("Annotation 'BrpcProxy' on field '" + field.getName() + "' for target '" + beanName
                         + "' created");
-                return parseRpcProxyAnnotation((RpcProxy) t, field.getType(), beanFactory);
+                final RpcProxy rpcProxy = AnnotatedElementUtils.findMergedAnnotation(field, RpcProxy.class);
+                return parseRpcProxyAnnotation(rpcProxy, field.getType(), beanFactory);
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -132,7 +133,8 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
             try {
                 log.info("Annotation 'BrpcProxy' on method '" + method.getName() + "' for target '" + beanName
                         + "' created");
-                return parseRpcProxyAnnotation((RpcProxy) t, method.getParameterTypes()[0], beanFactory);
+                final RpcProxy rpcProxy = AnnotatedElementUtils.findMergedAnnotation(method, RpcProxy.class);
+                return parseRpcProxyAnnotation(rpcProxy, method.getParameterTypes()[0], beanFactory);
             } catch (Exception e) {
                 throw new RuntimeException(e.getMessage(), e);
             }
@@ -146,7 +148,8 @@ public class SpringBootAnnotationResolver extends AbstractAnnotationParserCallba
                                    ConfigurableListableBeanFactory beanFactory) throws BeansException {
         if (t instanceof RpcExporter) {
             log.info("Annotation 'RpcExporter' for target '" + beanName + "' created");
-            parseRpcExporterAnnotation((RpcExporter) t, beanFactory, beanFactory.getBean(beanName));
+            final RpcExporter rpcExporter = AnnotatedElementUtils.findMergedAnnotation(bean.getClass(), RpcExporter.class);
+            parseRpcExporterAnnotation(rpcExporter, beanFactory, beanFactory.getBean(beanName));
         }
         return bean;
     }
