@@ -21,7 +21,6 @@ import com.baidu.brpc.example.springboot.api.AsyncEchoService;
 import com.baidu.brpc.example.springboot.api.EchoRequest;
 import com.baidu.brpc.example.springboot.api.EchoResponse;
 import com.baidu.brpc.example.springboot.api.EchoService;
-import com.baidu.brpc.spring.annotation.RpcProxy;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
@@ -32,13 +31,13 @@ import java.util.concurrent.Future;
 @Setter
 @Getter
 public class EchoFacadeImpl implements EchoFacade {
-    @RpcProxy
+    @MergedRpcProxy
     private EchoService echoService;
 
-    @RpcProxy
+    @MergedRpcProxy
     private EchoService echoService2;
 
-    @RpcProxy
+    @MergedRpcProxy
     private AsyncEchoService echoService3;
 
     public EchoResponse echo(EchoRequest request) {

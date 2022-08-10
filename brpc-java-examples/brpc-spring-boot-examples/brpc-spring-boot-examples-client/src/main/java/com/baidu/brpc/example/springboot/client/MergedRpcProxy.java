@@ -13,7 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.baidu.brpc.spring.annotation;
+package com.baidu.brpc.example.springboot.client;
+
+import com.baidu.brpc.spring.annotation.RpcProxy;
+import org.springframework.core.annotation.AliasFor;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -23,48 +26,52 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation publish for {@link com.baidu.brpc.spring.RpcProxyFactoryBean}.
+ * Annotation publish for {@link RpcProxy}.
  *
- * @author xiemalin
- * @since 2.17
+ * @author zhangzicheng
+ * @since 3.0.5
  */
 @Target({ElementType.FIELD, ElementType.METHOD, ElementType.ANNOTATION_TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 @Inherited
 @Documented
-public @interface RpcProxy {
-
+@RpcProxy
+public @interface MergedRpcProxy {
+    
     /**
      * bean name of RPC client options.  bean type must be {@link com.baidu.brpc.client.RpcClientOptions}
      *
      * @return the string
      */
+    @AliasFor(annotation = RpcProxy.class)
     String rpcClientOptionsBeanName() default "";
-
+    
     /**
      * RPC server naming url to connect.
      *
      * @return the string
      */
+    @AliasFor(annotation = RpcProxy.class)
     String namingServiceUrl() default "";
-
+    
     /**
      * group for naming service
-     *
      */
+    @AliasFor(annotation = RpcProxy.class)
     String group() default "normal";
-
+    
     /**
      * version for naming service
-     *
      */
+    @AliasFor(annotation = RpcProxy.class)
     String version() default "1.0.0";
-
+    
     /**
      * ignore it when failed to lookup/subscribe naming service
      *
      * @return true, ignore
      */
+    @AliasFor(annotation = RpcProxy.class)
     boolean ignoreFailOfNamingService() default false;
     
     /**
@@ -72,10 +79,12 @@ public @interface RpcProxy {
      *
      * @return the string
      */
+    @AliasFor(annotation = RpcProxy.class)
     String interceptorBeanNames() default "";
-
+    
     /**
      * use name to identify all the instances for this service from registry.
      */
+    @AliasFor(annotation = RpcProxy.class)
     String name() default "";
 }
