@@ -26,7 +26,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Annotation publish for {@link RpcProxy}.
+ * Merged annotation for {@link RpcProxy}.
  *
  * @author zhangzicheng
  * @since 3.0.5
