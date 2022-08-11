@@ -19,11 +19,10 @@ package com.baidu.brpc.example.springboot.server;
 import com.baidu.brpc.example.springboot.api.EchoRequest;
 import com.baidu.brpc.example.springboot.api.EchoResponse;
 import com.baidu.brpc.example.springboot.api.EchoService;
-import com.baidu.brpc.spring.annotation.RpcExporter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@RpcExporter
+@MergedRpcExporter
 public class EchoServiceImpl implements EchoService {
     private static final Logger LOG = LoggerFactory.getLogger(EchoServiceImpl.class);
 

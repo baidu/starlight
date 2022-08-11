@@ -176,7 +176,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         if (annotation == null) {
             return bean;
         }
-        Annotation a = clazz.getAnnotation(annotation);
+        Annotation a = getAnnotationInClass(clazz, annotation);
         if (a == null) {
             return bean;
         }
@@ -184,7 +184,11 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         typeAnnotationedBeans.add(beanInfo);
         return getCallback().annotationAtType(a, bean, beanName, beanFactory);
     }
-
+    
+    protected Annotation getAnnotationInClass(Class clazz, Class<? extends Annotation> annotation) {
+        return clazz.getAnnotation(annotation);
+    }
+    
     /**
      * Post-process the given merged bean definition for the specified bean.
      * 
@@ -276,7 +280,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         ReflectionUtils.doWithMethods(clazz, new ReflectionUtils.MethodCallback() {
             public void doWith(Method method) {
                 for (Class<? extends Annotation> anno : annotions) {
-                    Annotation annotation = method.getAnnotation(anno);
+                    Annotation annotation = getAnnotationInMethod(method, anno);
                     if (annotation != null && method.equals(ClassUtils.getMostSpecificMethod(method, clazz))) {
                         if (Modifier.isStatic(method.getModifiers())) {
                             throw new IllegalStateException("Autowired annotation is not supported on static methods");
@@ -292,7 +296,11 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
             }
         });
     }
-
+    
+    protected Annotation getAnnotationInMethod(Method method, Class<? extends Annotation> anno) {
+        return method.getAnnotation(anno);
+    }
+    
     /**
      * To parse all field to find out annotation info.
      *
@@ -305,7 +313,7 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
         ReflectionUtils.doWithFields(clazz, new ReflectionUtils.FieldCallback() {
             public void doWith(Field field) {
                 for (Class<? extends Annotation> anno : annotations) {
-                    Annotation annotation = field.getAnnotation(anno);
+                    Annotation annotation = getAnnotationInField(field, anno);
                     if (annotation != null) {
                         if (Modifier.isStatic(field.getModifiers())) {
                             throw new IllegalStateException("Autowired annotation is not supported on static fields");
@@ -316,7 +324,11 @@ public class CommonAnnotationBeanPostProcessor extends InstantiationAwareBeanPos
             }
         });
     }
-
+    
+    protected Annotation getAnnotationInField(Field field, Class<? extends Annotation> anno) {
+        return field.getAnnotation(anno);
+    }
+    
     /**
      * Class representing injection information about an annotated field.
      */

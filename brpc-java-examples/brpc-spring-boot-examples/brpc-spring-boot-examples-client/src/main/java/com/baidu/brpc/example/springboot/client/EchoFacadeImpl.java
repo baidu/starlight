@@ -35,10 +35,10 @@ public class EchoFacadeImpl implements EchoFacade {
     @RpcProxy
     private EchoService echoService;
 
-    @RpcProxy
+    @MergedRpcProxy
     private EchoService echoService2;
 
-    @RpcProxy
+    @MergedRpcProxy
     private AsyncEchoService echoService3;
 
     public EchoResponse echo(EchoRequest request) {
