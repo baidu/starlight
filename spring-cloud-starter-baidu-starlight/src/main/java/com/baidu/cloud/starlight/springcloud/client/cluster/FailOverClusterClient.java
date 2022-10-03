@@ -154,7 +154,8 @@ public class FailOverClusterClient extends AbstractClusterClient {
         public void onResponse(Response response) {
             Integer canRetryTimes = retryTimesMap.get(getRequest());
             AtomicInteger remindRetryTimes = remainedRetries.get(getRequest());
-            if (canRetryTimes != null && remindRetryTimes != null && !canRetryTimes.equals(remindRetryTimes.get())) { // 代表经历过retry了，记录重试成功日志
+            if (canRetryTimes != null && remindRetryTimes != null && !canRetryTimes.equals(remindRetryTimes.get())) { 
+            // 代表经历过retry了，记录重试成功日志
                 LOGGER.info(
                     "[FailOver] Request retry success:" + " serviceName {}, methodName {}, traceId {}, retryCount {}",
                     getRequest().getServiceName(), getRequest().getMethodName(),
