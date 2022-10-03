@@ -1,0 +1,16 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+package example_for_java;
+option java_package = "com.baidu.cloud.starlight.benchmark.model";
+option java_outer_classname = "Proto3";
+
+message proto3 {
+    google.protobuf.Timestamp date = 1;
+    map<string, string> map = 2;
+    Sex sex =3;
+    enum Sex {
+        MALE = 0;
+        FEMALE = 1;
+        NONE = 2;
+    }
+}

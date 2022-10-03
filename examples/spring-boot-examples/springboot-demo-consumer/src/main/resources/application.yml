@@ -1,0 +1,8 @@
+starlight:
+  server:
+    enable: true
+    port: 8666
+#  client:
+ #   config:
+  #    default:
+   #     serialize-mode: pb2-java

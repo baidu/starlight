@@ -1,0 +1,47 @@
+syntax = "proto2";
+package example_for_java;
+option java_package = "com.baidu.cloud.starlight.benchmark.model";
+option java_outer_classname = "StudentProto";
+
+message Student {
+    required int64 id = 1;
+    required string name = 2;
+    required Sex sex = 3;
+    required int32 age = 4;
+    optional float balance = 5;
+    optional string description = 6;
+    repeated MapFieldEntry labels = 7;
+    repeated Experience experiences = 8;
+    optional School school = 9;
+    optional double score = 10;
+    optional Address address = 11;
+    optional bool success = 12;
+    enum Sex {
+        MALE = 0;
+        FEMALE = 1;
+        NONE = 2;
+    }
+
+    message Address {
+        required string address = 1;
+    }
+}
+
+message Experience {
+    required string info = 1;
+    optional string date = 2;
+}
+
+message School {
+
+    required string name = 1;
+
+    required int32 age = 2;
+
+    required string location = 3;
+}
+
+message MapFieldEntry {
+    optional string key = 1;
+    optional string value = 2;
+}

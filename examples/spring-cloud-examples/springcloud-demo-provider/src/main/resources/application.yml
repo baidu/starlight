@@ -1,0 +1,8 @@
+## starlight 配置
+starlight:
+  server:
+    enable: true
+    port: 8999
+spring:
+  application:
+    name: springcloud-demo-provider

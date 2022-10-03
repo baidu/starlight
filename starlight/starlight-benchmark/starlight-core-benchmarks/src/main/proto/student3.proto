@@ -1,0 +1,51 @@
+syntax = "proto3";
+import "google/protobuf/timestamp.proto";
+package example_for_java;
+option java_package = "com.baidu.cloud.starlight.benchmark.model";
+option java_outer_classname = "StudentProto3";
+
+message Student {
+    int64 id = 1;
+    string name = 2;
+    enum Sex {
+        MALE = 0;
+        FEMALE = 1;
+        NONE = 2;
+    }
+
+    Sex sex = 3;
+    int32 age = 4;
+    float balance = 5;
+    string description = 6;
+    map<string, string> labels = 7;
+    repeated Experience experiences = 8;
+    School school = 9;
+    double score = 10;
+    Address address = 11;
+    bool success = 12;
+
+    message Address {
+        string address = 1;
+    }
+}
+
+message Experience {
+    string info = 1;
+    string date = 2;
+}
+
+message School {
+
+    string name = 1;
+
+    int32 age = 2;
+
+    string location = 3;
+
+    // string addField = 4;  // add field
+}
+
+message MapFieldEntry {
+    string key = 1;
+    string value = 2;
+}

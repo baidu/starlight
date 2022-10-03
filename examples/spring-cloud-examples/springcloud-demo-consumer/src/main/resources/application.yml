@@ -1,0 +1,14 @@
+## starlight配置信息
+starlight:
+  server:
+    enable: true
+    port: 8888
+#  client:
+ #   config:
+  #    default:
+   #     serialize-mode: pb2-java
+
+
+spring:
+  application:
+    name: springcloud-demo-consumer

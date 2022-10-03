@@ -1,0 +1,2 @@
+com.baidu.cloud.starlight.serialization.compressor.GzipCompress
+com.baidu.cloud.starlight.serialization.compressor.NoneCompress

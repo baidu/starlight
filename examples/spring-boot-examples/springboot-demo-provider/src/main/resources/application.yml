@@ -1,0 +1,5 @@
+## starlight 配置
+starlight:
+  server:
+    enable: true
+    port: 8777
