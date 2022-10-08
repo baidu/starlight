@@ -63,11 +63,16 @@ import java.util.Map;
 
 /**
  * TODO 重复测试所有可能发生的情况 Extend spring-mvc {@link RequestMappingHandlerMapping} to convert HttpRequest to
- * {@link RpcRequest}. Step1: Store the mapping relationship between Method and RequestMappingInfo
- * {@link #createMapping(Class, Object)} Step2: According to the mapping relationship, map HttpRequest to MethodHandler
- * {@link #handler(HttpServletRequest)} Step3: Convert HttpRequst to method params
- * {@link #resolveArguments(HandlerMethod, HttpServletRequest, HttpServletResponse)} Used in
- * {@link SpringRestHttpDecoder}.
+ * {@link RpcRequest}.
+ * <ul>
+ *     <li>Step1: Store the mapping relationship between Method and RequestMappingInfo
+ *     {@link #createMapping(Class, Object)}</li>
+ *     <li>Step2: According to the mapping relationship, map HttpRequest to MethodHandler
+ *     {@link #handler(HttpServletRequest)}</li>
+ *     <li>Step3: Convert HttpRequst to method params
+ *     {@link #resolveArguments(HandlerMethod, HttpServletRequest, HttpServletResponse)}</li>
+ * </ul>
+ * Used in {@link SpringRestHttpDecoder}.
  *
  * @see SpringRestHttpDecoder#reverseConvertRequest Created by liuruisen on 2020/6/5.
  */
