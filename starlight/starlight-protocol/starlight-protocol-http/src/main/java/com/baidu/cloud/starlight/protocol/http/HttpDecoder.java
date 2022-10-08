@@ -194,8 +194,11 @@ public abstract class HttpDecoder implements ProtocolDecoder {
      * Reverse convert {@link FullHttpResponse} to {@link RpcResponse} in accordance with protocol and programming
      * contract.
      * <p>
-     * Convert HttpResponse to Response <1> convert headers to kvMap, requestId </1> <2> convert content to
-     * bodyBytes</2>
+     * Convert HttpResponse to Response
+     * <ul>
+     *     <li>Step1: convert headers to kvMap, requestId</li>
+     *     <li>Step2: convert content to bodyBytes</li>
+     * </ul>
      *
      * @param httpResponse
      * @return

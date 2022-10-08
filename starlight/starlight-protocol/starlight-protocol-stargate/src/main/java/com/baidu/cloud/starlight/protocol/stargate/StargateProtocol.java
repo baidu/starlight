@@ -46,13 +46,11 @@ public class StargateProtocol implements Protocol {
 
     /**
      * stargate header size is 4, first byte of body is 10d(key = 1, type Length-delimited),
-     * {@see https://linghutf.github.io/2016/06/08/protobuf/}
      */
     protected static final int FIXED_LEN = HEAD_LEN + 1;
 
     /**
-     * stargate first byte value of body is 10. protobuf key 定义 (field_number << 3) | wire_type 0000 1010 ==> 000 1010
-     * (去掉最高位） ==> 0001 --> key 1 ==> 010 --> wire_type 2(Length-delimited)
+     * stargate first byte value of body is 10.
      */
     protected static final int FIRST_BYTE_VALUE_OF_BODY = 10;
 

@@ -19,7 +19,7 @@ package com.baidu.cloud.starlight.api.transport;
 import com.baidu.cloud.starlight.api.common.URI;
 
 /**
- * SPI Factory of Transport, default is {@link StarlightTransportFactory} Created by liuruisen on 2020/1/16.
+ * SPI Factory of Transport Created by liuruisen on 2020/1/16.
  */
 public interface TransportFactory {
 

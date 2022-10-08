@@ -43,9 +43,12 @@ public abstract class Request extends AbstractMsgBase {
     public abstract void setRemoteURI(URI remoteURI);
 
     /**
-     * Service name of provider service, the value could be <1> ServiceId (brpc crossing-language or generic call) </1>
-     * <2> interfaceName (default) </2> In order to support multi protocol, we unified the data model of serviceName as
-     * group:interfaceName:version.
+     * Service name of provider service, the value could be
+     * <ul>
+     * <li>ServiceId (brpc crossing-language or generic call)</li>
+     * <li>interfaceName (default)</li>
+     * </ul>
+     * In order to support multi protocol, we unified the data model of serviceName as group:interfaceName:version.
      * 
      * @return
      */

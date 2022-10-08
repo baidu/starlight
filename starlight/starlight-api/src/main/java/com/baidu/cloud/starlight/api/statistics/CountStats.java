@@ -24,28 +24,28 @@ public interface CountStats extends Stats {
     /**
      * Total request count
      * 
-     * @return
+     * @return Total request count
      */
     Integer totalReqCount();
 
     /**
      * Failed request count
      * 
-     * @return
+     * @return Failed request count
      */
     Integer failReqCount();
 
     /**
      * Success request count
      * 
-     * @return
+     * @return Success request count
      */
     Integer sucReqCount();
 
     /**
      * Record
      * 
-     * @param success
+     * @param success whether the request was successful
      */
     void recordReqCount(boolean success);
 

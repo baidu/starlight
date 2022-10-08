@@ -37,7 +37,6 @@ public class DemoConsumerApp {
         clientConfig.setProtocol("brpc");
         // clientConfig.setSerializeMode("pb2-java");
         // clientConfig.setServiceId("com.baidu.cloud.rpc.benchmarks.service.EchoService");
-        starlightClient.refer(UserService.class, clientConfig);
 
         // 生成代理
         JDKProxyFactory proxyFactory = new JDKProxyFactory();

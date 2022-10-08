@@ -26,8 +26,8 @@ import com.baidu.cloud.starlight.api.transport.buffer.DynamicCompositeByteBuf;
 public interface ProtocolDecoder {
 
     /**
-     * Decode byte of the Protocol to MsgBase. Parsing protocol only, not parsing body. Execute in io thread.
-     * <1>Determine the data type: Request or Response</1> <2>Decode the byte to MsgBase</2> <3>Throw CodecException</3>
+     * Decode byte of the Protocol to MsgBase. Parsing protocol only, not parsing body. Execute in io thread. 1.
+     * Determine the data type: Request or Response 2. Decode the byte to MsgBase 3. Throw CodecException
      *
      * @param input
      * @return

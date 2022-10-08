@@ -378,7 +378,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getProtocol() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertNull(properties.getProtocol("Test"));
+        assertEquals(Constants.BRPC_VALUE, properties.getProtocol("Test"));
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);

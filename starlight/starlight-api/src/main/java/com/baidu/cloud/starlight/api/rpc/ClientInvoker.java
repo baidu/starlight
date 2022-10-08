@@ -27,14 +27,14 @@ public interface ClientInvoker extends Invoker {
     /**
      * Network communication using ClientPeer: default is NettyClient
      * 
-     * @@return
+     * @return ClientPeer
      */
     ClientPeer getClientPeer();
 
     /**
      * Target interface information represented by ClientInvoker
      * 
-     * @return
+     * @return ServiceConfig
      */
     ServiceConfig getServiceConfig();
 }
