@@ -37,8 +37,8 @@ public interface ProtocolEncoder {
 
     /**
      * Encoding MsgBase into binary data for the protocol. Body encoding will be handed over to method
-     * {@link #encodeBody(MsgBase)} <1>Determine the data type: Request or Response</1> <2>Encode the MsgBase to
-     * ByteBuf</2> <3>Throw CodecException</3>
+     * {@link #encodeBody(MsgBase)} 1.Determine the data type: Request or Response 2.Encode the MsgBase to ByteBuf
+     * 3.Throw CodecException
      *
      * @param input
      * @return
@@ -58,7 +58,6 @@ public interface ProtocolEncoder {
      * Starlight用于满足各种功能，额外向response kv中添加的内容
      * 
      * @param response
-     * @return
      */
     default void addAdditionalRespKv(Response response) {
         Map<String, Object> respExtKv = response.getAttachmentKv();

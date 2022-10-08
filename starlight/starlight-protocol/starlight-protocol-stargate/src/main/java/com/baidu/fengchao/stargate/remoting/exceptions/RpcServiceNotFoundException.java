@@ -19,10 +19,7 @@ package com.baidu.fengchao.stargate.remoting.exceptions;
 /**
  * RpcServiceNotFoundException
  * 
- * @title RpcServiceNotFoundException
- * @description TODO
  * @author zhaoyutong
- * @date 2015年11月17日
  * @version 1.0
  */
 public class RpcServiceNotFoundException extends RpcSystemException {

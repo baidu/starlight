@@ -48,16 +48,14 @@ public interface Processor {
 
     /**
      * ThreadPoolFactory is used to execute real biz invoke
-     * 
-     * @return
      */
     void setThreadPoolFactory(ThreadPoolFactory threadPoolFactory);
 
     /**
      * Statistics: the approximate wait request count of the rpc service.
      * 
-     * @param serviceKey
-     * @return
+     * @param serviceKey service key
+     * @return wait task count
      */
     Integer waitTaskCount(String serviceKey);
 

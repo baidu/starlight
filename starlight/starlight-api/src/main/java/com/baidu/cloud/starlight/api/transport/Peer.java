@@ -27,7 +27,7 @@ public interface Peer extends GracefullyShutdown {
     void init();
 
     /**
-     * get Uri: IP+Port && Config
+     * get Uri: IP+Port assemble with Config
      */
     URI getUri();
 

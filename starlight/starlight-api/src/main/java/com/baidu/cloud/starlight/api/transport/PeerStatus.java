@@ -65,7 +65,7 @@ public class PeerStatus {
     }
 
     /**
-     * Status of the client or server ACTIVE <----> OUTLIER ACTIVE ----> SHUTTING DOWN ----> SHUTDOWN
+     * Status of the client or server. ACTIVE exchange to OUTLIER ACTIVE to SHUTTING DOWN to SHUTDOWN
      */
     public enum Status {
         /**

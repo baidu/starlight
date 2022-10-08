@@ -342,12 +342,12 @@ public class Constants {
     public static final String LOCALHOST_VALUE = "127.0.0.1";
 
     /**
-     * Generic Key, used in stargate protocol support Starlight Client ---> generic call ----> stargate server
+     * Generic Key, support Starlight Client to generic call to stargate server
      */
     public static final String GENERIC_KEY = "generic";
 
     /**
-     * Stargate uuid, used in stargate protocol support stargate Client ---> call ----> starlight server
+     * Stargate uuid, used in stargate protocol support stargate Client call to starlight server
      */
     public static final String STARGATE_UUID = "stargate.id";
 

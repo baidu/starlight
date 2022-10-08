@@ -24,7 +24,8 @@ import java.io.IOException;
 
 /**
  * Wrapper {@link ByteBufInputStream} as ServletInputStream. Used when converting
- * {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest} to {@link javax.servlet.ServletRequest}.
+ * {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest} to
+ * {@link com.baidu.cloud.thirdparty.servlet.ServletRequest}.
  * 
  * @see NettyServletRequestAdaptor#getInputStream() Created by liuruisen on 2020/6/8.
  */

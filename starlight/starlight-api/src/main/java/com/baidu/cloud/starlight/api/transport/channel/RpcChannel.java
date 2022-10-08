@@ -73,7 +73,6 @@ public interface RpcChannel {
     /**
      * reconnect the channel
      * 
-     * @return
      */
     void reconnect() throws TransportException;
 

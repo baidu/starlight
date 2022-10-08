@@ -177,7 +177,11 @@ public class ServiceConfig {
     }
 
     /**
-     * Get unique ServiceName for target service. <1> serviceId </1> <2> interfaceName </2>
+     * Get unique ServiceName for target service. The value can be
+     * <ul>
+     * <li>serviceId</li>
+     * <li>interfaceName</li>
+     * </ul>
      * 
      * @param serviceClass
      * @return

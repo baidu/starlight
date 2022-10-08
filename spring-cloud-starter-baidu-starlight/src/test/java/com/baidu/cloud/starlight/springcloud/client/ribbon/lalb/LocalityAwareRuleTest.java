@@ -169,8 +169,8 @@ public class LocalityAwareRuleTest {
         assertEquals(10 * 10000, sumCount(hostCount));
         System.out.println(hostCount);
         System.out.println(hostCount.size());
-        assertTrue(hostCount.get("localhost:0") > hostCount.get("localhost:100"));
-        assertTrue(hostCount.get("localhost:100") > hostCount.get("localhost:500"));
+        assertTrue(hostCount.get("localhost:0") > hostCount.get("localhost:200"));
+        assertTrue(hostCount.get("localhost:200") > hostCount.get("localhost:500"));
         assertTrue(hostCount.get("localhost:500") > hostCount.get("localhost:900"));
     }
 

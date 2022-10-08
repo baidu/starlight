@@ -19,10 +19,7 @@ package com.baidu.fengchao.stargate.remoting.exceptions;
 /**
  * RpcMethodNotFountException
  * 
- * @title RpcMethodNotFountException
- * @description TODO
  * @author zhaoyutong
- * @date 2015年11月17日
  * @version 1.0
  */
 public class RpcMethodNotFountException extends RpcSystemException {

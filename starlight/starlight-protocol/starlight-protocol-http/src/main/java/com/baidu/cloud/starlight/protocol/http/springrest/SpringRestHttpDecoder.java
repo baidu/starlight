@@ -47,8 +47,8 @@ import java.util.Map;
 public class SpringRestHttpDecoder extends HttpDecoder {
 
     /**
-     * Convert httpRequest to Request: <1> convert headers to kvMap, requestId </1> <2> Get HandlerMethod map and
-     * resolve args</2>
+     * Convert httpRequest to Request: step1: convert headers to kvMap, requestId step2: Get HandlerMethod map and
+     * resolve args
      */
     @Override
     protected Request reverseConvertRequest(FullHttpRequest httpRequest) {

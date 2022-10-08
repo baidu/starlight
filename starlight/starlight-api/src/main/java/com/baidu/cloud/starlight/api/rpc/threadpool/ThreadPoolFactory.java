@@ -27,7 +27,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public interface ThreadPoolFactory {
 
     /**
-     * Get or create ThreadPool for <param>serviceKey<param/> If no thread pool is specified, the default thread pool is
+     * Get or create ThreadPool for service(interface). If no thread pool is specified, the default thread pool is
      * returned
      * 
      * @param rpcService

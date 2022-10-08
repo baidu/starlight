@@ -158,10 +158,10 @@ public class NetUriUtils {
     }
 
     /**
-     * check if is a valid address <1> not null </1> <2> not loopbackip </2> <3> not 0.0.0.0 or 127.0.0.1 </3>
+     * check if is a valid address 1. not null 2. not loopbackip 3. not 0.0.0.0 or 127.0.0.1
      *
      * @param address
-     * @return
+     * @return the address is valid or not
      */
     public static boolean isValidAddress(InetAddress address) {
         if (address == null || address.isLoopbackAddress()) {
