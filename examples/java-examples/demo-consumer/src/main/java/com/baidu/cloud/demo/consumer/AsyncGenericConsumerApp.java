@@ -41,7 +41,6 @@ public class AsyncGenericConsumerApp {
         ServiceConfig clientConfig = new ServiceConfig(); // 服务配置
         clientConfig.setProtocol("brpc");
         clientConfig.setServiceId("com.baidu.cloud.demo.api.UserService");
-        starlightClient.refer(AsyncGenericService.class, clientConfig);
         
         // 生成代理
         JDKProxyFactory proxyFactory = new JDKProxyFactory();
