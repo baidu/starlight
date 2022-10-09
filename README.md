@@ -11,7 +11,7 @@ Starlight 是一套面向云原生的微服务通信框架，兼容Spring生态�
 详细使用和设计文档参见[Github Wiki](https://github.com/baidu/starlight/wiki)
 
 ## License
-baidu/BaikalDB is licensed under the Apache License 2.0
+baidu/starlight is licensed under the Apache License 2.0
 
 # 微信交流群
 添加管理员olivaw2077帮忙加群，备注starlight
