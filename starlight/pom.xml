@@ -106,46 +106,6 @@
                 </plugin>
                 
                 <plugin>
-                    <groupId>com.github.os72</groupId>
-                    <artifactId>protoc-jar-maven-plugin</artifactId>
-                    <version>3.6.0.1</version>
-                    <executions>
-                        <execution>
-                            <id>generate-sources</id>
-                            <goals>
-                                <goal>run</goal>
-                            </goals>
-                            <phase>generate-sources</phase>
-                            <configuration>
-                                <protocVersion>2.5.0</protocVersion>
-                                <addSources>none</addSources>
-                                <includeStdTypes>true</includeStdTypes>
-                                <outputDirectory>src/main/java</outputDirectory>
-                                <inputDirectories>
-                                    <include>src/main/proto</include>
-                                </inputDirectories>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>generate-test-sources</id>
-                            <goals>
-                                <goal>run</goal>
-                            </goals>
-                            <phase>generate-test-sources</phase>
-                            <configuration>
-                                <protocVersion>2.5.0</protocVersion>
-                                <includeStdTypes>true</includeStdTypes>
-                                <addSources>none</addSources>
-                                <outputDirectory>src/test/java</outputDirectory>
-                                <inputDirectories>
-                                    <include>src/test/proto</include>
-                                </inputDirectories>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
-                
-                <plugin>
                     <groupId>org.codehaus.mojo</groupId>
                     <artifactId>cobertura-maven-plugin</artifactId>
                     <version>2.7</version>
