@@ -1,7 +1,8 @@
 [![GitHub license](https://img.shields.io/github/license/baidu/starlight?style=social)](https://github.com/baidu/starlight/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/baidu/starlight?style=social)](https://github.com/baidu/starlight/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/baidu/starlight?style=social)](https://github.com/baidu/starlight/issues)
-# Starlight: Simple Java RPC Framework
+![Codecov branch](https://img.shields.io/codecov/c/gh/baidu/starlight/main?style=social)
+# Starlight: Lightweight Java RPC Framework
 Starlight 是一套面向云原生的微服务通信框架，兼容Spring生态，基于此可快速构建高效、稳定、可控、可观测的微服务应用，获得研发效率提升、业务稳定性增强等舒适体验。
 核心特性如下：
 * 多种协议支持：Starlight单端口支持[brpc](https://github.com/apache/incubator-brpc)、Spring MVC REST协议，提供超丰富的使用场景
