@@ -33,36 +33,5 @@
         
     </dependencies>
     
-    <build>
-        <plugins>
-            
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                
-                <configuration>
-                    <instrumentation>
-                        <excludes>
-                            <exclude>com/baidu/cloud/starlight/exception/*.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/extension/*.class</exclude>
-                            <!--<exclude>com/baidu/cloud/starlight/common/URI*.class</exclude>-->
-                            <exclude>com/baidu/cloud/starlight/transport/protocol/brpc/BaiduRpcProto*.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/transport/protocol/brpc/StreamingRpcProto*.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/transport/protocol/http/springrest/RequestTemplateArgsResolver.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/transport/protocol/http/springrest/RequestTemplateGenerator.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/transport/protocol/http/springrest/EncodedRequestTemplateArgsResolver.class</exclude>
-                        </excludes>
-                    </instrumentation>
-                    <formats>
-                        <format>xml</format>
-                        <format>html</format>
-                    </formats>
-                    <check />
-                    <aggregate>true</aggregate>
-                </configuration>
-            </plugin>
-            
-        </plugins>
-    </build>
-    
+
 </project>
