@@ -23,6 +23,8 @@ import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.api.transport.ClientPeer;
 import com.baidu.cloud.starlight.api.transport.PeerStatus;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  * StarlightClient: user interface used to Have both SingleStarlightClient and ClusterStarlightClient types Created by
  * liuruisen on 2020/1/3.
@@ -37,6 +39,12 @@ public interface StarlightClient {
     URI remoteURI();
 
     /**
+     * Set the default thread pool.
+     * Note: this method should be called before {@link #init()}.
+     */
+    void setThreadPool(ThreadPoolExecutor threadPool);
+
+    /**
      * Init StarlightClient: init {@link ClientPeer} by Uri Uri: host:port + config params. in single model, host is ip;
      * in cluster model, host is service name
      */
@@ -44,7 +52,7 @@ public interface StarlightClient {
 
     /**
      * Generate {@link ClientInvoker} for the service Class
-     * 
+     *
      * @param serviceClass
      * @param serviceConfig
      */
@@ -52,7 +60,7 @@ public interface StarlightClient {
 
     /**
      * Async Request: use {@link ClientInvoker} to call
-     * 
+     *
      * @param request Request model
      * @param callback RpcCallback: BizWrapCallback or FutureCallback
      */
@@ -65,21 +73,21 @@ public interface StarlightClient {
 
     /**
      * If the starlight client is active Pay attention to the difference between cluster and single client scenarios
-     * 
+     *
      * @return
      */
     boolean isActive();
 
     /**
      * Get the status of the SingleClient
-     * 
+     *
      * @return
      */
     PeerStatus getStatus();
 
     /**
      * Can update status
-     * 
+     *
      * @param newStatus
      */
     void updateStatus(PeerStatus newStatus);

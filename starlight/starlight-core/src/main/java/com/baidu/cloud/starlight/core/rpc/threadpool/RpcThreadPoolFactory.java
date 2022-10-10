@@ -22,6 +22,7 @@ import com.baidu.cloud.starlight.api.rpc.threadpool.NamedThreadFactory;
 import com.baidu.cloud.starlight.api.rpc.threadpool.ThreadPoolFactory;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -42,7 +43,11 @@ public class RpcThreadPoolFactory implements ThreadPoolFactory {
         defaultThreadPool = new ThreadPoolExecutor(defaultSize, maxSize, Constants.IDlE_THREAD_KEEP_ALIVE_SECOND,
             TimeUnit.SECONDS, new SynchronousQueue<>(), new NamedThreadFactory(prefix + "-biz-work"));
     }
-
+    
+    public RpcThreadPoolFactory(ThreadPoolExecutor threadPool) {
+        this.defaultThreadPool = threadPool;
+    }
+    
     private final Map<RpcService, ThreadPoolExecutor> threadPoolMap = new ConcurrentHashMap<>();
 
     @Override
@@ -58,20 +63,22 @@ public class RpcThreadPoolFactory implements ThreadPoolFactory {
         }
 
         if (rpcService.getServiceConfig() != null) {
+            ThreadPoolExecutor threadPool = rpcService.getServiceConfig().getThreadPool();
             Integer corePoolSize = rpcService.getServiceConfig().getThreadPoolSize();
             Integer maxThreadPoolSize = rpcService.getServiceConfig().getMaxThreadPoolSize();
             Integer keepAliveTime = rpcService.getServiceConfig().getIdleThreadKeepAliveSecond();
             Integer maxQueueSize = rpcService.getServiceConfig().getMaxRunnableQueueSize();
 
-            if (corePoolSize != null && maxThreadPoolSize != null && keepAliveTime != null && maxQueueSize != null) {
-                ThreadPoolExecutor threadPool;
+            if (corePoolSize != null && maxThreadPoolSize != null && keepAliveTime != null && maxQueueSize != null
+            || threadPool != null) {
                 synchronized (this) {
                     if (threadPoolMap.get(rpcService) != null) {
                         return threadPoolMap.get(rpcService);
                     }
-                    threadPool =
-                        new ThreadPoolExecutor(corePoolSize, maxThreadPoolSize, keepAliveTime, TimeUnit.SECONDS,
-                            new LinkedBlockingQueue<>(maxQueueSize), new NamedThreadFactory("service-biz-work"));
+                    threadPool = Optional.ofNullable(threadPool).orElseGet(() -> new ThreadPoolExecutor(
+                            corePoolSize, maxThreadPoolSize, keepAliveTime, TimeUnit.SECONDS,
+                            new LinkedBlockingQueue<>(maxQueueSize),
+                            new NamedThreadFactory("service-biz-work")));
                     threadPoolMap.put(rpcService, threadPool);
                 }
                 return threadPool;

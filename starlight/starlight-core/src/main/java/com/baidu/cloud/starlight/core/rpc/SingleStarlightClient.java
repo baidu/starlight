@@ -39,7 +39,9 @@ import com.baidu.cloud.starlight.core.rpc.threadpool.RpcThreadPoolFactory;
 import com.baidu.cloud.starlight.core.statistics.StarlightStatsManager;
 import com.baidu.cloud.starlight.protocol.brpc.BrpcProtocol;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,6 +77,17 @@ public class SingleStarlightClient implements StarlightClient {
     @Override
     public URI remoteURI() {
         return this.uri;
+    }
+
+    @Override
+    public void setThreadPool(ThreadPoolExecutor threadPool) {
+        if (Objects.isNull(threadPool)) {
+            throw new StarlightRpcException("thread pool can not be null !");
+        }
+        if (isInitialed.get()) {
+            return;
+        }
+        threadPoolOfAll = new RpcThreadPoolFactory(threadPool);
     }
 
     @Override

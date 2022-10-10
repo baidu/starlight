@@ -18,6 +18,8 @@ package com.baidu.cloud.starlight.api.rpc.config;
 
 import com.baidu.cloud.starlight.api.utils.StringUtils;
 
+import java.util.concurrent.ThreadPoolExecutor;
+
 /**
  * Rpc Service config: Interface Use to config rpc service Created by liuruisen on 2020/2/24.
  */
@@ -72,6 +74,9 @@ public class ServiceConfig {
     private String version = "1.0.0";
 
     /*********** Server Side only: ThreadPool config ***********/
+    
+    private ThreadPoolExecutor threadPool;
+    
     private Integer threadPoolSize; // biz thread pool size
 
     private Integer maxThreadPoolSize;
@@ -111,7 +116,15 @@ public class ServiceConfig {
     public void setInvokeTimeoutMills(Integer invokeTimeoutMills) {
         this.invokeTimeoutMills = invokeTimeoutMills;
     }
-
+    
+    public ThreadPoolExecutor getThreadPool() {
+        return threadPool;
+    }
+    
+    public void setThreadPool(ThreadPoolExecutor threadPool) {
+        this.threadPool = threadPool;
+    }
+    
     public Integer getThreadPoolSize() {
         return threadPoolSize;
     }
