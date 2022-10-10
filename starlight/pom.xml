@@ -81,11 +81,6 @@
                         <target>${java.version}</target>
                     </configuration>
                 </plugin>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.21.0</version>
-                </plugin>
                 
                 <plugin>
                     <groupId>pl.project13.maven</groupId>
@@ -104,12 +99,6 @@
                             </goals>
                         </execution>
                     </executions>
-                </plugin>
-                
-                <plugin>
-                    <groupId>org.codehaus.mojo</groupId>
-                    <artifactId>cobertura-maven-plugin</artifactId>
-                    <version>2.7</version>
                 </plugin>
                 
                 <plugin>
@@ -144,35 +133,9 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <forkCount>1</forkCount>
-                    <reuseForks>false</reuseForks>
-                    <argLine>-Dfile.encoding=UTF-8 -Xms512m -Xmx1024m -XX:MaxPermSize=512m</argLine>
-                </configuration>
+                <version>2.21.0</version>
             </plugin>
-            
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>cobertura-maven-plugin</artifactId>
-                
-                <configuration>
-                    <instrumentation>
-                        <excludes>
-                            <exclude>com/baidu/cloud/starlight/benchmark/**/*.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/core/benchmark/**/*.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/api/exception/*.class</exclude>
-                            <exclude>com/baidu/cloud/starlight/api/extension/*.class</exclude>
-                            <exclude>org/openjdk/jmh/infra/generated/**/*.class</exclude>
-                        </excludes>
-                    </instrumentation>
-                    <formats>
-                        <format>xml</format>
-                        <format>html</format>
-                    </formats>
-                    <check />
-                    <aggregate>true</aggregate>
-                </configuration>
-            </plugin>
+
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
@@ -214,16 +177,17 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.8.5</version>
+                <version>0.8.6</version>
                 <executions>
                     <execution>
-                        <id>default-prepare-agent</id>
+                        <id>prepare-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
                     <execution>
-                        <id>default-report</id>
+                        <id>report</id>
+                        <phase>test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
