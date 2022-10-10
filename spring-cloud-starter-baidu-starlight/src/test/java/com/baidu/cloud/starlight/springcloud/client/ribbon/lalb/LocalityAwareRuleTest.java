@@ -214,10 +214,9 @@ public class LocalityAwareRuleTest {
         assertEquals(reqCount, sumCount);
         System.out.println(searchResult);
 
-        assertTrue(searchResult.get("localhost:0") > searchResult.get("localhost:50"));
-        assertTrue(searchResult.get("localhost:50") > searchResult.get("localhost:100"));
-        assertTrue(searchResult.get("localhost:100") > searchResult.get("localhost:500"));
-        assertTrue(searchResult.get("localhost:500") > searchResult.get("localhost:900"));
+        assertTrue(searchResult.get("localhost:0") > searchResult.get("localhost:300"));
+        assertTrue(searchResult.get("localhost:300") > searchResult.get("localhost:600"));
+        assertTrue(searchResult.get("localhost:600") > searchResult.get("localhost:900"));
 
     }
 
