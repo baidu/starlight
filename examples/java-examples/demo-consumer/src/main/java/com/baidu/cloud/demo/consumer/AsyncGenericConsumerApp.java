@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 package com.baidu.cloud.demo.consumer;
 
 import com.baidu.cloud.demo.api.model.User;
@@ -30,32 +30,33 @@ import java.util.Map;
 import java.util.concurrent.Future;
 
 public class AsyncGenericConsumerApp {
-    
+
     public static void main(String[] args) throws Exception {
         // 创建Client
         TransportConfig config = new TransportConfig(); // 传输配置
         StarlightClient starlightClient = new SingleStarlightClient("localhost", 8005, config);
         starlightClient.init();
-        
+
         // 引用服务
         ServiceConfig clientConfig = new ServiceConfig(); // 服务配置
         clientConfig.setProtocol("brpc");
         clientConfig.setServiceId("com.baidu.cloud.demo.api.UserService");
-        
+
         // 生成代理
         JDKProxyFactory proxyFactory = new JDKProxyFactory();
-        AsyncGenericService userService = proxyFactory.getProxy(AsyncGenericService.class, clientConfig, starlightClient);
-        
+        AsyncGenericService userService =
+            proxyFactory.getProxy(AsyncGenericService.class, clientConfig, starlightClient);
+
         // 发起调用
-        Future<Object> resultFuture = userService.$invokeFuture("getUser", new Object[]{1L});
+        Future<Object> resultFuture = userService.$invokeFuture("getUser", new Object[] {1L});
         @SuppressWarnings("unchecked")
         Map<String, String> result = (Map<String, String>) resultFuture.get();
-        User user = (User) PojoJsonUtils.realize(new Object[]{result}, new Type[]{User.class})[0];
+        User user = (User) PojoJsonUtils.realize(new Object[] {result}, new Type[] {User.class})[0];
         System.out.println(user.toString());
-        
+
         // 销毁client
         starlightClient.destroy();
-        
+
         System.exit(0);
     }
 }

@@ -6,3 +6,7 @@ starlight:
 spring:
   application:
     name: springcloud-demo-provider
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
