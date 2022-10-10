@@ -49,8 +49,8 @@ public class SpringRestHttpDecoder extends HttpDecoder {
     /**
      * Convert httpRequest to Request:
      * <ul>
-     *     <li>step1: convert headers to kvMap, requestId</li>
-     *     <li>step2: Get HandlerMethod map and resolve args</li>
+     * <li>step1: convert headers to kvMap, requestId</li>
+     * <li>step2: Get HandlerMethod map and resolve args</li>
      * </ul>
      */
     @Override
