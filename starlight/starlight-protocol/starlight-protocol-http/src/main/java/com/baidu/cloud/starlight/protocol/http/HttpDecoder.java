@@ -196,8 +196,8 @@ public abstract class HttpDecoder implements ProtocolDecoder {
      * <p>
      * Convert HttpResponse to Response
      * <ul>
-     *     <li>Step1: convert headers to kvMap, requestId</li>
-     *     <li>Step2: convert content to bodyBytes</li>
+     * <li>Step1: convert headers to kvMap, requestId</li>
+     * <li>Step2: convert content to bodyBytes</li>
      * </ul>
      *
      * @param httpResponse
