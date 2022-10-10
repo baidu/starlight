@@ -27,6 +27,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v3
 
+    - name: Setup Java JDK and Maven
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'temurin'
+        java-version: '8'
+
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
       uses: github/codeql-action/init@v2
