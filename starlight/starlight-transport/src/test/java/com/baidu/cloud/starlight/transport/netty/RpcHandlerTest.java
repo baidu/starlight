@@ -130,14 +130,15 @@ public class RpcHandlerTest {
             }
 
             @Override
-            public ThreadPoolExecutor getThreadPool() {
+            public ThreadPoolExecutor defaultThreadPool() {
                 return null;
             }
 
             @Override
-            public void close() {
+            public void initDefaultThreadPool(URI uri, String threadPrefix) {}
 
-            }
+            @Override
+            public void close() {}
         });
         NettyClient nettyClient = new NettyClient(builder.build());
         nettyClient.setProcessor(processor);

@@ -16,10 +16,13 @@
  
 package com.baidu.cloud.starlight.core.rpc;
 
+import com.baidu.cloud.starlight.api.common.Constants;
+import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.rpc.RpcService;
 import com.baidu.cloud.starlight.api.rpc.ServiceInvoker;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.api.exception.StarlightRpcException;
+import com.baidu.cloud.starlight.api.rpc.threadpool.ThreadPoolFactory;
 import com.baidu.cloud.starlight.core.integrate.service.UserService;
 import com.baidu.cloud.starlight.core.integrate.service.UserServiceImpl;
 import com.baidu.cloud.starlight.api.model.Request;
@@ -32,6 +35,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.any;
@@ -58,7 +63,12 @@ public class ServerProcessorTest {
             registry.register(invoker);
         }
 
-        serverProcessor = new ServerProcessor(registry, new RpcThreadPoolFactory(0, 10, "s"));
+        ThreadPoolFactory poolFactory = new RpcThreadPoolFactory();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(Constants.MAX_BIZ_WORKER_NUM_KEY, "100");
+        URI uri = new URI("protocol", "username", "password", "host", 0, "path", parameters);
+        poolFactory.initDefaultThreadPool(uri, "test");
+        serverProcessor = new ServerProcessor(registry, poolFactory);
     }
 
     @Test
@@ -76,7 +86,6 @@ public class ServerProcessorTest {
 
         RpcChannel rpcChannel = Mockito.mock(RpcChannel.class);
         doNothing().when(rpcChannel).send(any());
-        serverProcessor.setThreadPoolFactory(new RpcThreadPoolFactory(0, 10, "s"));
         serverProcessor.process(request, rpcChannel);
 
         TimeUnit.SECONDS.sleep(2);
@@ -94,7 +103,6 @@ public class ServerProcessorTest {
 
         RpcChannel rpcChannel = Mockito.mock(RpcChannel.class);
         doNothing().when(rpcChannel).send(any());
-        serverProcessor.setThreadPoolFactory(new RpcThreadPoolFactory(0, 10, "s"));
         // no such method
         serverProcessor.process(request, rpcChannel);
 
@@ -133,19 +141,16 @@ public class ServerProcessorTest {
 
     @Test
     public void waitTaskCount() {
-        serverProcessor.setThreadPoolFactory(new RpcThreadPoolFactory(0, 10, "s"));
         Assert.assertEquals(0, (int) serverProcessor.waitTaskCount(UserService.class.getName()));
     }
 
     @Test
     public void processingCount() {
-        serverProcessor.setThreadPoolFactory(new RpcThreadPoolFactory(0, 10, "s"));
         Assert.assertEquals(0, (int) serverProcessor.processingCount(UserService.class.getName()));
     }
 
     @Test
     public void allWaitTaskCount() {
-        serverProcessor.setThreadPoolFactory(new RpcThreadPoolFactory(0, 10, "s"));
         Assert.assertEquals(0, (int) serverProcessor.allWaitTaskCount());
     }
 }

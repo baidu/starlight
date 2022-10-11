@@ -223,7 +223,7 @@ public class ServerProcessor implements Processor {
 
     @Override
     public Integer allWaitTaskCount() {
-        ThreadPoolExecutor defaultThreadPool = threadPoolFactory.getThreadPool();
+        ThreadPoolExecutor defaultThreadPool = threadPoolFactory.defaultThreadPool();
         Integer allWaitTaskCount = defaultThreadPool.getQueue().size() // wait task
             + defaultThreadPool.getActiveCount(); // not complete task
 
