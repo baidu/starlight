@@ -3,10 +3,10 @@
 [![GitHub issues](https://img.shields.io/github/issues/baidu/starlight?style=social)](https://github.com/baidu/starlight/issues)
 ![Codecov branch](https://img.shields.io/codecov/c/gh/baidu/starlight/main?style=social)
 
-|     |  Snapshot   |  最新稳定版   |
-|-----|-----|-----|
-|**starlight**|![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.baidu.cloud/starlight-all?server=https%3A%2F%2Foss.sonatype.org&style=social)| ![Maven Central](https://img.shields.io/maven-central/v/com.baidu.cloud/starlight-all?style=social)    |
-|**starter**| ![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.baidu.cloud/spring-cloud-starter-baidu-starlight?server=https%3A%2F%2Foss.sonatype.org&style=social)| ![Maven Central](https://img.shields.io/maven-central/v/com.baidu.cloud/spring-cloud-starter-baidu-starlight?style=social)|
+| GroupId       | ArtifactId                           | Snapshot Version                                                                                                                                                      | Stable Version                                                                                                             |
+|---------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+|com.baidu.cloud| starlight-all                        | ![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.baidu.cloud/starlight-all?server=https%3A%2F%2Foss.sonatype.org&style=social)                        | ![Maven Central](https://img.shields.io/maven-central/v/com.baidu.cloud/starlight-all?style=social)                        |
+|com.baidu.cloud| spring-cloud-starter-baidu-starlight | ![Sonatype Nexus (Snapshots)](https://img.shields.io/nexus/s/com.baidu.cloud/spring-cloud-starter-baidu-starlight?server=https%3A%2F%2Foss.sonatype.org&style=social) | ![Maven Central](https://img.shields.io/maven-central/v/com.baidu.cloud/spring-cloud-starter-baidu-starlight?style=social) |
 
 # Starlight: Lightweight Java RPC Framework
 Starlight 是一套面向云原生的微服务通信框架，兼容Spring生态，基于此可快速构建高效、稳定、可控、可观测的微服务应用，获得研发效率提升、业务稳定性增强等舒适体验。
@@ -16,6 +16,9 @@ Starlight 是一套面向云原生的微服务通信框架，兼容Spring生态�
 * 易于使用：无需处理protobuf编译过程，通过原生Java接口和POJO对象加上类级别的注解，类似Java RMI和Spring MVC使用体验，即可实现brpc二进制协议的Server和Client；支持无损升级、异常实例摘除；规范化的日志可以秒级定位超时问题、序列化失败问题
 
 详细使用和设计文档参见[Github Wiki](https://github.com/baidu/starlight/wiki)
+
+## JDK Requirements
+minimum JDK 8
 
 ## License
 baidu/starlight is licensed under the Apache License 2.0
