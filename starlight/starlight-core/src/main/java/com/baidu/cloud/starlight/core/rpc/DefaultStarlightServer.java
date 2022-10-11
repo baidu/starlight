@@ -18,6 +18,7 @@ package com.baidu.cloud.starlight.core.rpc;
 
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.common.URI;
+import com.baidu.cloud.starlight.api.extension.ExtensionLoader;
 import com.baidu.cloud.starlight.api.heartbeat.HeartbeatService;
 import com.baidu.cloud.starlight.api.heartbeat.HeartbeatServiceImpl;
 import com.baidu.cloud.starlight.api.rpc.Processor;
@@ -25,11 +26,11 @@ import com.baidu.cloud.starlight.api.rpc.RpcService;
 import com.baidu.cloud.starlight.api.rpc.ServiceInvoker;
 import com.baidu.cloud.starlight.api.rpc.ServiceRegistry;
 import com.baidu.cloud.starlight.api.rpc.StarlightServer;
+import com.baidu.cloud.starlight.api.rpc.threadpool.ThreadPoolFactory;
 import com.baidu.cloud.starlight.api.utils.EnvUtils;
 import com.baidu.cloud.starlight.core.filter.FilterChain;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.api.rpc.config.TransportConfig;
-import com.baidu.cloud.starlight.core.rpc.threadpool.RpcThreadPoolFactory;
 import com.baidu.cloud.starlight.api.transport.ServerPeer;
 import com.baidu.cloud.starlight.transport.StarlightTransportFactory;
 import com.baidu.cloud.starlight.api.transport.TransportFactory;
@@ -68,10 +69,11 @@ public class DefaultStarlightServer implements StarlightServer {
     @Override
     public void init() {
         // <1> Processor
-        int maxBizWorkerNum =
-            uri.getParameter(Constants.MAX_BIZ_WORKER_NUM_KEY, Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
-        Processor processor = new ServerProcessor(RpcServiceRegistry.getInstance(),
-            new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE, maxBizWorkerNum, "s")); // s:server
+        String bizThreadPoolName = uri.getParameter(Constants.BIZ_THREAD_POOL_NAME_KEY);
+        ThreadPoolFactory threadPoolFactory =
+            ExtensionLoader.getInstance(ThreadPoolFactory.class).getExtension(bizThreadPoolName);
+        threadPoolFactory.initDefaultThreadPool(uri, Constants.SERVER_BIZ_THREAD_NAME_PREFIX);
+        Processor processor = new ServerProcessor(RpcServiceRegistry.getInstance(), threadPoolFactory);
         // <3> init ServerPeer
         serverPeer.init();
         serverPeer.setProcessor(processor);
@@ -190,6 +192,8 @@ public class DefaultStarlightServer implements StarlightServer {
             config.getBizWorkThreadNum() == null ? maxBizThreadNum() : config.getBizWorkThreadNum());
         uriBuilder.param(Constants.NETTY_IO_RATIO_KEY,
             config.getIoRatio() == null ? Constants.DEFAULT_NETTY_IO_RATIO : config.getIoRatio());
+        uriBuilder.param(Constants.BIZ_THREAD_POOL_NAME_KEY, StringUtils.isEmpty(config.getBizThreadPoolName())
+            ? Constants.DEFAULT_BIZ_THREAD_POOL_NAME : config.getBizThreadPoolName());
         return uriBuilder.build();
     }
 

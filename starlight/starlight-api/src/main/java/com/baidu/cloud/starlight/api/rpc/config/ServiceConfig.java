@@ -72,6 +72,9 @@ public class ServiceConfig {
     private String version = "1.0.0";
 
     /*********** Server Side only: ThreadPool config ***********/
+
+    private Boolean customizeThreadPool;
+
     private Integer threadPoolSize; // biz thread pool size
 
     private Integer maxThreadPoolSize;
@@ -174,6 +177,14 @@ public class ServiceConfig {
 
     public void setSerializeMode(String serializeMode) {
         this.serializeMode = serializeMode;
+    }
+
+    public Boolean getCustomizeThreadPool() {
+        return customizeThreadPool;
+    }
+
+    public void setCustomizeThreadPool(Boolean customizeThreadPool) {
+        this.customizeThreadPool = customizeThreadPool;
     }
 
     /**

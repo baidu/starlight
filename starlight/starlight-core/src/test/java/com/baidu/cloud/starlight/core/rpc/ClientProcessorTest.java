@@ -17,7 +17,9 @@
 package com.baidu.cloud.starlight.core.rpc;
 
 import com.baidu.cloud.starlight.api.common.Constants;
+import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.exception.StarlightRpcException;
+import com.baidu.cloud.starlight.api.rpc.threadpool.ThreadPoolFactory;
 import com.baidu.cloud.starlight.core.integrate.model.User;
 import com.baidu.cloud.starlight.core.integrate.service.UserService;
 import com.baidu.cloud.starlight.api.model.Request;
@@ -30,9 +32,12 @@ import com.baidu.cloud.starlight.core.rpc.threadpool.RpcThreadPoolFactory;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.thirdparty.netty.util.Timeout;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Matchers.anyLong;
@@ -43,7 +48,17 @@ import static org.mockito.Mockito.doReturn;
  */
 public class ClientProcessorTest {
 
-    private ClientProcessor clientProcessor = new ClientProcessor(new RpcThreadPoolFactory(0, 2, "c"));
+    private ClientProcessor clientProcessor;
+
+    @Before
+    public void before() {
+        ThreadPoolFactory poolFactory = new RpcThreadPoolFactory();
+        Map<String, String> parameters = new HashMap<>();
+        parameters.put(Constants.MAX_BIZ_WORKER_NUM_KEY, "100");
+        URI uri = new URI("protocol", "username", "password", "host", 0, "path", parameters);
+        poolFactory.initDefaultThreadPool(uri, "test");
+        clientProcessor = new ClientProcessor(poolFactory);
+    }
 
     @Test
     public void getRegistry() {

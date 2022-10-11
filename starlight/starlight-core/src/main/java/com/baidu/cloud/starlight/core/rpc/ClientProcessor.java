@@ -69,14 +69,13 @@ public class ClientProcessor implements Processor {
 
         ClientProcessTask processTask = new ClientProcessTask(response, context);
         LogUtils.addLogTimeAttachment(msgBase, Constants.BEFORE_THREAD_EXECUTE_TIME_KEY, System.currentTimeMillis());
-        threadPoolFactory.getThreadPool().execute(processTask);
+        threadPoolFactory.defaultThreadPool().execute(processTask);
     }
 
     @Override
     public void close() {
-        if (threadPoolFactory != null) {
-            threadPoolFactory.close();
-        }
+        // do nothing, 客户端的ThreadPoolFactory当前是虽有客户端公用，
+        // 不在此处close, 随进程推出close
     }
 
     @Override
@@ -86,17 +85,17 @@ public class ClientProcessor implements Processor {
 
     @Override
     public Integer waitTaskCount(String serviceKey) {
-        return threadPoolFactory.getThreadPool().getQueue().size();
+        return threadPoolFactory.defaultThreadPool().getQueue().size();
     }
 
     @Override
     public Integer processingCount(String serviceKey) {
-        return threadPoolFactory.getThreadPool().getActiveCount();
+        return threadPoolFactory.defaultThreadPool().getActiveCount();
     }
 
     @Override
     public Long completeCount(String serviceKey) {
-        return threadPoolFactory.getThreadPool().getCompletedTaskCount();
+        return threadPoolFactory.defaultThreadPool().getCompletedTaskCount();
     }
 
     private class ClientProcessTask implements Runnable {
@@ -192,6 +191,6 @@ public class ClientProcessor implements Processor {
     @Override
     public Integer allWaitTaskCount() {
         // wait task and running but not complete task
-        return waitTaskCount(null) + threadPoolFactory.getThreadPool().getActiveCount();
+        return waitTaskCount(null) + threadPoolFactory.defaultThreadPool().getActiveCount();
     }
 }

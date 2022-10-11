@@ -35,7 +35,6 @@ import com.baidu.cloud.starlight.api.transport.PeerStatus;
 import com.baidu.cloud.starlight.api.transport.TransportFactory;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.starlight.core.filter.FilterChain;
-import com.baidu.cloud.starlight.core.rpc.threadpool.RpcThreadPoolFactory;
 import com.baidu.cloud.starlight.core.statistics.StarlightStatsManager;
 import com.baidu.cloud.starlight.protocol.brpc.BrpcProtocol;
 import java.util.Map;
@@ -82,12 +81,10 @@ public class SingleStarlightClient implements StarlightClient {
         if (threadPoolOfAll == null) {
             synchronized (SingleStarlightClient.class) {
                 if (threadPoolOfAll == null) {
-                    // max=500
-                    int maxWorkerNum =
-                        uri.getParameter(Constants.MAX_BIZ_WORKER_NUM_KEY, Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
-                    // c: client
+                    String bizThreadPoolName = uri.getParameter(Constants.BIZ_THREAD_POOL_NAME_KEY);
                     threadPoolOfAll =
-                        new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE, maxWorkerNum, "c");
+                        ExtensionLoader.getInstance(ThreadPoolFactory.class).getExtension(bizThreadPoolName);
+                    threadPoolOfAll.initDefaultThreadPool(uri, Constants.CLIENT_BIZ_THREAD_NAME_PREFIX);
                 }
             }
         }
@@ -280,6 +277,8 @@ public class SingleStarlightClient implements StarlightClient {
             ? Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE : config.getBizWorkThreadNum());
         uriBuilder.param(Constants.NETTY_IO_RATIO_KEY,
             config.getIoRatio() == null ? Constants.DEFAULT_NETTY_IO_RATIO : config.getIoRatio());
+        uriBuilder.param(Constants.BIZ_THREAD_POOL_NAME_KEY, StringUtils.isEmpty(config.getBizThreadPoolName())
+            ? Constants.DEFAULT_BIZ_THREAD_POOL_NAME : config.getBizThreadPoolName());
 
         if (config.getAdditional() != null) {
             uriBuilder.params(config.getAdditional());

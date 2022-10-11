@@ -222,6 +222,16 @@ public class Constants {
     public static final String SESSION_ID_KEY = "session.id";
 
     /**
+     * biz thread pool name key, use spi to create ThreadPoolFactory
+     */
+    public static final String BIZ_THREAD_POOL_NAME_KEY = "biz_thread_pool_name";
+
+    /**
+     * default biz thread pool name, use spi to create ThreadPoolFactory
+     */
+    public static final String DEFAULT_BIZ_THREAD_POOL_NAME = "rpc";
+
+    /**
      * Default thread pool size
      */
     public static final Integer DEFAULT_BIZ_THREAD_POOL_SIZE = Math.min(EnvUtils.getCpuCores() + 1, 32);
@@ -573,4 +583,26 @@ public class Constants {
     public static final String STARGATE_SESSION_ID_KEY = "stargate.sid";
 
     public static final String STARGATE_REQUEST_ID_KEY = "stargate.rid";
+
+    /**
+     *  s means server side
+     */
+    public static final String SERVER_BIZ_THREAD_NAME_PREFIX = "star-s-biz";
+
+    /**
+     *  c means client side
+     */
+    public static final String CLIENT_BIZ_THREAD_NAME_PREFIX = "star-c-biz";
+
+    public static final String CLIENT_NIO_THREAD_NAME_PREFIX = "star-c-nio";
+
+    public static final String CLIENT_EPOLL_THREAD_NAME_PREFIX = "star-c-epoll";
+
+    public static final String SERVER_NIO_THREAD_NAME_PREFIX = "star-s-nio";
+
+    public static final String SERVER_EPOLL_THREAD_NAME_PREFIX = "star-s-epoll";
+
+    public static final String SERVER_EPOLL_ACCEPT_THREAD_NAME_PREFIX = "star-s-epoll-accept";
+
+    public static final String SERVER_NIO_ACCEPT_THREAD_NAME_PREFIX = "star-s-nio-accept";
 }

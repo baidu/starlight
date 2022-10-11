@@ -111,9 +111,7 @@ public class NettyClientTest {
         field.set(nettyClient, channelGroup);
         nettyClient.request(new RpcRequest(), new RpcCallback() {
             @Override
-            public void addTimeout(Timeout timeout) {
-
-            }
+            public void addTimeout(Timeout timeout) {}
 
             @Override
             public Request getRequest() {
@@ -121,14 +119,10 @@ public class NettyClientTest {
             }
 
             @Override
-            public void onResponse(Response response) {
-
-            }
+            public void onResponse(Response response) {}
 
             @Override
-            public void onError(Throwable e) {
-
-            }
+            public void onError(Throwable e) {}
         });
 
     }
