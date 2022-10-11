@@ -101,9 +101,9 @@ public class NettyServer implements ServerPeer {
 
         if (Epoll.isAvailable()) {
             parentGroup = new EpollEventLoopGroup(acceptThreadNum,
-                    new DefaultThreadFactory(Constants.SERVER_EPOLL_ACCEPT_THREAD_NAME_PREFIX, false));
+                new DefaultThreadFactory(Constants.SERVER_EPOLL_ACCEPT_THREAD_NAME_PREFIX, false));
             childGroup = new EpollEventLoopGroup(ioThreadNum,
-                    new DefaultThreadFactory(Constants.SERVER_EPOLL_THREAD_NAME_PREFIX, false));
+                new DefaultThreadFactory(Constants.SERVER_EPOLL_THREAD_NAME_PREFIX, false));
             ((EpollEventLoopGroup) parentGroup).setIoRatio(ioRatio);
             ((EpollEventLoopGroup) childGroup).setIoRatio(ioRatio);
             bootstrap.channel(EpollServerSocketChannel.class);
@@ -112,9 +112,9 @@ public class NettyServer implements ServerPeer {
             LOGGER.info("NettyServer use epoll mode.");
         } else {
             parentGroup = new NioEventLoopGroup(acceptThreadNum,
-                    new DefaultThreadFactory(Constants.SERVER_NIO_ACCEPT_THREAD_NAME_PREFIX, false));
+                new DefaultThreadFactory(Constants.SERVER_NIO_ACCEPT_THREAD_NAME_PREFIX, false));
             childGroup = new NioEventLoopGroup(ioThreadNum,
-                    new DefaultThreadFactory(Constants.SERVER_NIO_THREAD_NAME_PREFIX, false));
+                new DefaultThreadFactory(Constants.SERVER_NIO_THREAD_NAME_PREFIX, false));
             ((NioEventLoopGroup) parentGroup).setIoRatio(ioRatio);
             ((NioEventLoopGroup) childGroup).setIoRatio(ioRatio);
             bootstrap.channel(NioServerSocketChannel.class);

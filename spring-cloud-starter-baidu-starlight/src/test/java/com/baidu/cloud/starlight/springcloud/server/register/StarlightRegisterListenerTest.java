@@ -18,7 +18,6 @@ package com.baidu.cloud.starlight.springcloud.server.register;
 
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
-import com.baidu.cloud.starlight.springcloud.server.register.StarlightRegisterListener;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.cloud.client.serviceregistry.Registration;

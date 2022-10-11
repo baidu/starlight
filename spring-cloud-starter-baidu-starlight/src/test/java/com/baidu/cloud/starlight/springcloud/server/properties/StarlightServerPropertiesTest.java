@@ -17,7 +17,6 @@
 package com.baidu.cloud.starlight.springcloud.server.properties;
 
 import com.baidu.cloud.starlight.api.rpc.config.TransportConfig;
-import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

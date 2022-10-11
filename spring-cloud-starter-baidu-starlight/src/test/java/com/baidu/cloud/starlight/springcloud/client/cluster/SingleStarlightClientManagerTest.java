@@ -53,6 +53,7 @@ public class SingleStarlightClientManagerTest {
     @Test
     public void getOrCreateSingleClient() {
         SingleStarlightClientManager clientManager = SingleStarlightClientManager.getInstance();
+        clientManager.destroyAll();
         SingleStarlightClientManager starlightClientManager = Mockito.spy(clientManager);
         SingleStarlightClient singleStarlightClient = Mockito.mock(SingleStarlightClient.class);
         doReturn(singleStarlightClient).when(starlightClientManager).createSingleClient(HOST, PORT, transportConfig);
@@ -65,6 +66,7 @@ public class SingleStarlightClientManagerTest {
     @Test
     public void destroyAll() {
         SingleStarlightClientManager clientManager = SingleStarlightClientManager.getInstance();
+        clientManager.destroyAll();
         SingleStarlightClientManager starlightClientManager = Mockito.spy(clientManager);
 
         SingleStarlightClient singleStarlightClient = Mockito.mock(SingleStarlightClient.class);
