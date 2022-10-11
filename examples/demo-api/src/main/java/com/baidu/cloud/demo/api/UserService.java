@@ -17,10 +17,23 @@
 package com.baidu.cloud.demo.api;
 
 import com.baidu.cloud.demo.api.model.User;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.DeleteMapping;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.GetMapping;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.PathVariable;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.PostMapping;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.PutMapping;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.RequestBody;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.RequestMapping;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.Map;
 
+/**
+ * 默认情况无需增加SpringMVC注解，
+ * 服务端对外提供Rest服务时才需要添加SpringMVC注解
+ */
+@RequestMapping("/user")
 public interface UserService {
 
     /**
@@ -29,22 +42,27 @@ public interface UserService {
      * @param userId
      * @return
      */
-    User getUser(Long userId);
+    @GetMapping
+    User getUser(@RequestParam("userId") Long userId);
 
-    User updateUser(User user);
+    @PutMapping
+    User updateUser(@RequestBody User user);
 
     /**
      * 返回值void
      * 
      * @param userId
      */
-    void deleteUser(Long userId);
+    @DeleteMapping
+    void deleteUser(@RequestParam("userId")Long userId);
 
-    Long saveUser(User user);
+    @PostMapping
+    Long saveUser(@RequestBody User user);
 
     /**
      * 请求和响应参数均为空
      */
+    @GetMapping("/connect")
     void connect();
 
     /**
@@ -55,7 +73,8 @@ public interface UserService {
      * @param user
      * @return
      */
-    User multiParams(Long userId, User user);
+    @PostMapping("/multiparams")
+    User multiParams(@RequestParam("userId") Long userId, @RequestBody User user);
 
     /**
      * 返回List集合类 客户端需配置使用pb2-java序列化模式 - java api：ServiceConfig.setSerializeMode("pb2-java"); - spring boot 配置：
@@ -63,9 +82,11 @@ public interface UserService {
      * 
      * @return
      */
+    @GetMapping("/list")
     List<User> allUsers();
 
-    String userName(Long userId);
+    @GetMapping("/name/{userId}")
+    String userName(@PathVariable("userId") Long userId);
 
     /**
      * 返回map集合类 客户端需配置使用pb2-java序列化模式 - java api：ServiceConfig.setSerializeMode("pb2-java"); - spring boot 配置：
@@ -75,7 +96,8 @@ public interface UserService {
      * @param user
      * @return
      */
-    Map<Long, User> userMap(Long userId, User user);
+    @PostMapping("/map")
+    Map<Long, User> userMap(@RequestParam("userId") Long userId, @RequestBody User user);
 
     /**
      * 方法抛出异常
@@ -83,5 +105,6 @@ public interface UserService {
      * @param userId
      * @return
      */
+    @GetMapping("/exception")
     User userExp(Long userId);
 }

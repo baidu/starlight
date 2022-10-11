@@ -35,11 +35,18 @@ public class UserRestServiceImpl implements UserRestService {
     /**
      * 不依赖注册发现，直连方式调用
      */
-    @RpcProxy(remoteUrl = "brpc://localhost:8777")
+    @RpcProxy(remoteUrl = "localhost:8777", protocol = "brpc")
     private UserService userService;
+
+    /**
+     * 不依赖注册发现，直连方式调用
+     */
+    @RpcProxy(remoteUrl = "localhost:8777", protocol = "springrest")
+    private UserService restUserService;
 
     @Override
     public User getUser(Long userId) {
+        System.out.println("springrest result: " + restUserService.getUser(userId));
         return userService.getUser(userId);
     }
 
