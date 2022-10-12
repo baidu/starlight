@@ -23,6 +23,14 @@ jobs:
           git config user.email "actions@github.com"
           git config user.name "GitHub Actions"
 
+      - name: Cache local Maven repository
+        uses: actions/cache@v2
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: Publish Snaphot package
         run: mvn -B deploy -P deploy -Dmaven.test.skip --file starlight/pom.xml --no-transfer-progress
         env:
