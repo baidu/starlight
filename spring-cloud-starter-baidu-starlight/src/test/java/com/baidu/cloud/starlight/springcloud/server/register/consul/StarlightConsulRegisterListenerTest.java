@@ -18,7 +18,6 @@ package com.baidu.cloud.starlight.springcloud.server.register.consul;
 
 import com.baidu.cloud.starlight.springcloud.common.ApplicationContextUtils;
 import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
-import com.baidu.cloud.starlight.springcloud.server.register.consul.StarlightConsulRegisterListener;
 import com.ecwid.consul.v1.agent.model.NewService;
 import org.junit.Assert;
 import org.junit.Before;

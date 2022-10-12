@@ -18,8 +18,6 @@ package com.baidu.cloud.starlight.springcloud.server.register.gravity;
 
 import com.baidu.cloud.starlight.springcloud.common.ApplicationContextUtils;
 import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
-import com.baidu.cloud.starlight.springcloud.server.register.gravity.GravityRegistration;
-import com.baidu.cloud.starlight.springcloud.server.register.gravity.StarlightGravityRegisterListener;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

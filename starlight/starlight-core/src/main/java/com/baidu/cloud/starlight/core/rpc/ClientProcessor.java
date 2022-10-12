@@ -74,8 +74,8 @@ public class ClientProcessor implements Processor {
 
     @Override
     public void close() {
-        // do nothing, 客户端的ThreadPoolFactory当前是虽有客户端公用，
-        // 不在此处close, 随进程推出close
+        // do nothing, 客户端的ThreadPoolFactory当前所有客户端公用，
+        // 不在此处close, 随进程退出close
     }
 
     @Override

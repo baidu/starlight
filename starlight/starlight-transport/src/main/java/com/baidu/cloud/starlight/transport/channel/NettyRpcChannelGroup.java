@@ -16,6 +16,7 @@
  
 package com.baidu.cloud.starlight.transport.channel;
 
+import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.exception.TransportException;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannelGroup;
@@ -58,18 +59,28 @@ public abstract class NettyRpcChannelGroup implements RpcChannelGroup {
         ChannelFuture channelFuture = null;
         try {
             channelFuture = bootstrap.connect(getConnectAddress());
-            channelFuture.syncUninterruptibly(); // wait until connect complete, so we can return Channel
+            int connectTimeout = uri.getParameter(Constants.CONNECT_TIMEOUT_KEY, Constants.CONNECT_TIMEOUT_VALUE);
+            channelFuture.awaitUninterruptibly(connectTimeout); // wait until connect complete, so we can return Channel
             if (channelFuture.isSuccess()) {
                 Channel result = channelFuture.channel();
                 LOGGER.info("Create new channel {}, remoteAddress {}", result.id().asLongText(),
                     result.remoteAddress());
                 return result;
+            } else {
+                String causeByMsg =
+                    channelFuture.cause() == null ? "Connect timeout" : channelFuture.cause().getMessage();
+                LOGGER.info("Create new channel failed, remoteAddress {}, cause by {}", getConnectAddress(),
+                    causeByMsg);
+                throw new TransportException(TransportException.CONNECT_EXCEPTION, "Connect to url:"
+                    + getUri().getHost() + ":" + getUri().getPort() + " failed, " + " cause by : " + causeByMsg);
             }
         } catch (Exception e) {
-            if (channelFuture != null /* && !channelFuture.isSuccess() */) {
-                /*
-                 * // clean abnormal channel to prevent some unexpected error disconnect(channelFuture.channel());
-                 */
+            if (e instanceof TransportException) {
+                throw e;
+            }
+            if (channelFuture != null /*&& !channelFuture.isSuccess()*/) {
+                /*// clean abnormal channel to prevent some unexpected error
+                disconnect(channelFuture.channel());*/
                 String causeByMsg =
                     channelFuture.cause() == null ? "Connect timeout" : channelFuture.cause().getMessage();
                 LOGGER.info("Create new channel failed, remoteAddress {}, cause by {}", getConnectAddress(),
@@ -79,7 +90,6 @@ public abstract class NettyRpcChannelGroup implements RpcChannelGroup {
             }
             throw new TransportException(TransportException.CONNECT_EXCEPTION, e.getMessage(), e);
         }
-        return null;
     }
 
     protected InetSocketAddress getConnectAddress() {

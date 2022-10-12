@@ -16,7 +16,6 @@
  
 package com.baidu.cloud.starlight.springcloud.server.register.gravity;
 
-import com.baidu.cloud.starlight.springcloud.server.register.gravity.GravityRegistration;
 import org.junit.Test;
 
 import java.util.Collections;

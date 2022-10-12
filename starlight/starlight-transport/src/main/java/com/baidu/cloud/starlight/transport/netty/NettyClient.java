@@ -121,14 +121,12 @@ public class NettyClient implements ClientPeer {
                     int ioThreadNum = uri.getParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS_VALUE);
                     int ioRatio = uri.getParameter(Constants.NETTY_IO_RATIO_KEY, Constants.DEFAULT_NETTY_IO_RATIO);
                     if (Epoll.isAvailable()) {
-                        eventLoopGroup =
-                            new EpollEventLoopGroup(ioThreadNum,
-                                    new DefaultThreadFactory(Constants.CLIENT_EPOLL_THREAD_NAME_PREFIX, true));
+                        eventLoopGroup = new EpollEventLoopGroup(ioThreadNum,
+                            new DefaultThreadFactory(Constants.CLIENT_EPOLL_THREAD_NAME_PREFIX, true));
                         ((EpollEventLoopGroup) eventLoopGroup).setIoRatio(ioRatio);
                     } else {
-                        eventLoopGroup =
-                            new NioEventLoopGroup(ioThreadNum,
-                                    new DefaultThreadFactory(Constants.CLIENT_NIO_THREAD_NAME_PREFIX, true));
+                        eventLoopGroup = new NioEventLoopGroup(ioThreadNum,
+                            new DefaultThreadFactory(Constants.CLIENT_NIO_THREAD_NAME_PREFIX, true));
                         ((NioEventLoopGroup) eventLoopGroup).setIoRatio(ioRatio);
                     }
                 }

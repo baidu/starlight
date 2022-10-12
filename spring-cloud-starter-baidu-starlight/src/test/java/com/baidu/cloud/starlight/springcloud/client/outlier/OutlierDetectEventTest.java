@@ -16,7 +16,6 @@
  
 package com.baidu.cloud.starlight.springcloud.client.outlier;
 
-import com.baidu.cloud.starlight.springcloud.client.outlier.OutlierDetectEvent;
 import org.junit.Test;
 
 /**

@@ -585,12 +585,12 @@ public class Constants {
     public static final String STARGATE_REQUEST_ID_KEY = "stargate.rid";
 
     /**
-     *  s means server side
+     * s means server side
      */
     public static final String SERVER_BIZ_THREAD_NAME_PREFIX = "star-s-biz";
 
     /**
-     *  c means client side
+     * c means client side
      */
     public static final String CLIENT_BIZ_THREAD_NAME_PREFIX = "star-c-biz";
 
