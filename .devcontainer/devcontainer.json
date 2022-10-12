@@ -1,0 +1,11 @@
+{
+    "name": "starlight-devcontainer",
+    "image": "mcr.microsoft.com/devcontainers/base:ubuntu", // Any generic, debian-based image.
+    "features": {
+        "ghcr.io/devcontainers/features/java:1": {
+            "version": "latest",
+            "jdkDistro": "8",
+            "installMaven": true
+        }
+    }
+}
