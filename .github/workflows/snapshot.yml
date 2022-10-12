@@ -1,5 +1,8 @@
-name: Starlight Starter Snapshot
-on: workflow_dispatch
+name: Snapshot
+on:
+  push:
+    branches: [ "main" ]
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,9 +33,11 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
-            
+
       - name: Publish Snaphot package
-        run: mvn -B deploy -P deploy -Dmaven.test.skip --file spring-cloud-starter-baidu-starlight/pom.xml --no-transfer-progress
+        run: |
+          mvn -B deploy -P deploy -Dmaven.test.skip --file starlight/pom.xml --no-transfer-progress
+          mvn -B deploy -P deploy -Dmaven.test.skip --file spring-cloud-starter-baidu-starlight/pom.xml --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_USERNAME: ${{ secrets.OSSRH_USER }}
