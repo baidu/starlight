@@ -21,7 +21,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Setup Java JDK and Maven
-        uses: actions/setup-java@v2
+        uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '8'
@@ -46,7 +46,7 @@ jobs:
 
       - name: Generate changelog
         id: changelog
-        uses: metcalfc/changelog-generator@v2.0.0
+        uses: metcalfc/changelog-generator@v2
         with:
           myToken: ${{ secrets.GITHUB_TOKEN }}
 
