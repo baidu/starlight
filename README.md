@@ -1,7 +1,7 @@
 [![GitHub license](https://img.shields.io/github/license/baidu/starlight?style=social)](https://github.com/baidu/starlight/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/baidu/starlight?style=social)](https://github.com/baidu/starlight/stargazers)
 [![GitHub issues](https://img.shields.io/github/issues/baidu/starlight?style=social)](https://github.com/baidu/starlight/issues)
-[![Codecov branch](https://img.shields.io/codecov/c/gh/baidu/starlight/main?style=social)
+[![Codecov branch](https://img.shields.io/codecov/c/gh/baidu/starlight/main?style=social)](https://codecov.io/gh/baidu/starlight)
 
 | GroupId       | ArtifactId                           | Snapshot Version                                                                                                                                                      | Stable Version                                                                                                             |
 |---------------|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
