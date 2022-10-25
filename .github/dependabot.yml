@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/starlight"
+    schedule:
+      interval: "weekly"
+  - package-ecosystem: "maven"
+    directory: "/spring-cloud-starter-baidu-starlight"
+    schedule:
+      interval: "weekly"
