@@ -151,14 +151,14 @@ public class RibbonServerLocalStoreTest {
 
             Map<String, String> labels = new HashMap<>();
             labels.put("EM_PHY_IDC", "yq01");
-            labels.put("EM_HOST_NAME", "yq01-ecom-fengchao-emsin7.yq01.baidu.com");
-            labels.put("EM_INSTANCE_ID", "2.opera-online-starlightProvider-000-yq.FENGCHAO.yq01");
+            labels.put("EM_HOST_NAME", "localhost");
+            labels.put("EM_INSTANCE_ID", "instance.test");
             labels.put("EM_PLATFORM", "online");
             labels.put("env", "online");
             labels.put("GRAVITY_CLIENT_VERSION", "2020.0.2-SNAPSHOT");
             labels.put("EM_LOGIC_IDC", "yq");
             labels.put("EM_PRODUCT_LINE", "cpdinf");
-            labels.put("MATRIX_HOST_IP", "10.102.118.45");
+            labels.put("MATRIX_HOST_IP", "127.0.0.1");
             labels.put("EPOCH", "1619676145691");
             labels.put("EM_ENV_TYPE", "ONLINE");
             labels.put("protocols", "brpc,stargate,springrest");

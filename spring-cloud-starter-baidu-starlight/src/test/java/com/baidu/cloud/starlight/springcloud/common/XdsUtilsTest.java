@@ -29,7 +29,7 @@ public class XdsUtilsTest {
     @Test
     public void convertedInstanceId() {
 
-        String instanceId = "1.opera-online-starlightProvider-000-yq.FENGCHAO.yq011";
+        String instanceId = "1.test-test-test-test-yq.test.test";
         String expectId = "1-online-yq";
 
         assertEquals(expectId, RouteUtils.convertedInstanceId(instanceId));

@@ -61,8 +61,7 @@ public class StarlightRpcException extends RpcException {
             "Client call service {" + request.getServiceName() + "} " + "method {" + request.getMethodName()
                 + "} time out, remote addr " + remoteUri + ". " + "Maybe caused by: "
                 + "1. Biz method execution timeout(4801). " + "2. Abnormal server instance status(4802). "
-                + "3. Rpc message delay(4803). " + "4. Unknow reason(4810). "
-                + "See http://wiki.baidu.com/pages/viewpage.action?pageId=1348583072 to get solutions.");
+                + "3. Rpc message delay(4803). " + "4. Unknow reason(4810). ");
     }
 
 }

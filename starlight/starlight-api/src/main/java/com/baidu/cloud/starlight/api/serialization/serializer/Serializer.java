@@ -34,9 +34,7 @@ public interface Serializer {
 
     String DESERIALIZE_ERROR_MSG =
         "The problem is usually caused by" + "\n 1: difference of api.jar between server and client."
-            + "\n 2: API contains a type that Starlight(stargate) does not support. eg:HashMap.keySet()"
-            + "\n see http://wiki.baidu.com/pages/viewpage.action?pageId=1348583072 "
-            + "to get more information about incompatible APIs";
+            + "\n 2: API contains a type that Starlight(stargate) does not support. eg:HashMap.keySet()";
 
     byte[] serialize(Object obj, Type type) throws CodecException;
 
