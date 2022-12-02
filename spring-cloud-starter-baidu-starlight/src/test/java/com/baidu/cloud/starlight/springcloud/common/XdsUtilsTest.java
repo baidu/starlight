@@ -30,7 +30,7 @@ public class XdsUtilsTest {
     public void convertedInstanceId() {
 
         String instanceId = "1.test-test-test-test-yq.test.test";
-        String expectId = "1-online-yq";
+        String expectId = "1-test-yq";
 
         assertEquals(expectId, RouteUtils.convertedInstanceId(instanceId));
     }
