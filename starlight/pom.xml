@@ -7,53 +7,10 @@
     <artifactId>starlight</artifactId>
     <version>2022.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
-
+    
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Starlight: simple fast rpc framework</description>
-    <url>https://github.com/baidu/starlight</url>
-    <developers>
-        <developer>
-            <name>CPD Infra Team</name>
-            <email>cpd_inf@baidu.com</email>
-            <organization>Baidu</organization>
-            <organizationUrl>http://www2.baidu.com</organizationUrl>
-        </developer>
-    </developers>
-    <licenses>
-        <license>
-            <name>The Apache License, Version 2.0</name>
-            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-        </license>
-    </licenses>
-    <scm>
-        <connection>scm:git:${project.scm.url}</connection>
-        <developerConnection>scm:git:${project.scm.url}</developerConnection>
-        <url>https://github.com/baidu/starlight.git</url>
-        <tag>HEAD</tag>
-    </scm>
-    <repositories>
-        <repository>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
-    <distributionManagement>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-    </distributionManagement>
-
+    
     <modules>
         <module>starlight-api</module>
         <module>starlight-protocol</module>
@@ -255,6 +212,49 @@
             </plugin>
         </plugins>
     </build>
+    <url>https://github.com/baidu/starlight</url>
+    <licenses>
+        <license>
+            <name>The Apache License, Version 2.0</name>
+            <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+        </license>
+    </licenses>
+    <developers>
+        <developer>
+            <name>CPD Infra Team</name>
+            <email>cpd_inf@baidu.com</email>
+            <organization>Baidu</organization>
+            <organizationUrl>http://www2.baidu.com</organizationUrl>
+        </developer>
+    </developers>
+    <scm>
+        <connection>scm:git:${project.scm.url}</connection>
+        <developerConnection>scm:git:${project.scm.url}</developerConnection>
+        <url>https://github.com/baidu/starlight.git</url>
+        <tag>HEAD</tag>
+    </scm>
+    <repositories>
+        <repository>
+            <releases>
+                <enabled>false</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
+        </repository>
+    </repositories>
+    <distributionManagement>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
     
     <profiles>
         <profile>
