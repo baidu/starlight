@@ -38,8 +38,8 @@ jobs:
 
       - name: Publish package
         run: |
-          cp -r resources spring-cloud-starter-baidu-starlight/
-          mvn -B release:prepare release:perform -P deploy -Darguments="-Dmaven.test.skip" -DreleaseVersion=${{ github.event.inputs.releaseVersion }} -DdevelopmentVersion=${{ github.event.inputs.developmentVersion }} --file spring-cloud-starter-baidu-starlight/pom.xml --no-transfer-progress
+          cd spring-cloud-starter-baidu-starlight
+          mvn -B release:prepare release:perform -P deploy -Darguments="-Dmaven.test.skip" -DreleaseVersion=${{ github.event.inputs.releaseVersion }} -DdevelopmentVersion=${{ github.event.inputs.developmentVersion }} --no-transfer-progress
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MAVEN_USERNAME: ${{ secrets.OSSRH_USER }}
@@ -58,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.event.inputs.releaseVersion }}
-          release_name: ${{ github.event.inputs.releaseVersion }}
+          tag_name: starter-v${{ github.event.inputs.releaseVersion }}
+          release_name: starter-v${{ github.event.inputs.releaseVersion }}
           body: |
             ### Things that changed in this release
             ${{ steps.changelog.outputs.changelog }}
