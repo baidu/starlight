@@ -47,13 +47,13 @@ public class SpringCloudConstants {
     public static final Integer DEFAULT_WARM_UP_RATIO = 100;
 
     /**
-     * Client default filters, outlierdetect --> context -> monitor
+     * Client default filters, outlierdetect - context - monitor
      */
     public static final String DEFAULT_CLIENT_FILTERS = "outlierdetect,clientcontext,clientmonitor";
     // + ",formulacircuitbreaker,formularequestdecorate";
 
     /**
-     * Server default filters, context -> generic -> monitor
+     * Server default filters, context - generic - monitor
      */
     public static final String DEFAULT_SERVER_FILTERS = "servercontext,generic,servermonitor";
     // + ",formularatelimiter";

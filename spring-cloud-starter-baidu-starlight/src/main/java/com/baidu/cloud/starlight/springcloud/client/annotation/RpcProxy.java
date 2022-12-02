@@ -47,7 +47,7 @@ public @interface RpcProxy {
     String remoteUrl() default "";
 
     /**
-     * Rpc protocol, default is "" will select protocol according to priority Default priority: brpc > stargate >
+     * Rpc protocol, default is "" will select protocol according to priority Default priority: brpc - stargate -
      * springrest
      * 
      * @return

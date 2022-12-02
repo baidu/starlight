@@ -24,8 +24,7 @@ import java.util.Map;
  * 统一各种注册中心starter的数据模型，如gravity consul nacos 注：仅支持基于spring cloud 2.0.x版本的注册中心starter（含ribbon依赖） 接入新版的Spring Cloud
  * loadbalancer后，可使用如下思路 1. 剔除Ribbon依赖，直接使用ServiceInstance接口定义(推荐) 2. 定义专属starlight的ServiceInstance作为接口定义
  *
- * @Date 2022/9/27 17:00
- * @Created by liuruisen
+ * @author liuruisen
  */
 public class StarlightRibbonServer extends Server {
 

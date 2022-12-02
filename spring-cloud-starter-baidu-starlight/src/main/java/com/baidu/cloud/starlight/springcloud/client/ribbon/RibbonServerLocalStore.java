@@ -72,7 +72,7 @@ public class RibbonServerLocalStore {
     }
 
     /**
-     * init local cache <1> create disk file </1> <2> load from disk file and store in mem </2>
+     * init local cache 1. create disk file 2. load from disk file and store in mem
      */
     public void initLocalCache() {
         // enable local cache
