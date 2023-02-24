@@ -20,7 +20,7 @@
         <java.version>1.8</java.version>
         <spring-cloud.version>Finchley.SR2</spring-cloud.version>
         <!-- plugin versions -->
-        <powermock.version>2.0.2</powermock.version>
+        <powermock.version>2.0.9</powermock.version>
         <starlight.version>2022.2.0</starlight.version>
     </properties>
     
