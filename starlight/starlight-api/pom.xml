@@ -21,10 +21,7 @@
         <jackson.version>2.11.2</jackson.version>
         <dyuprotostuff.version>1.0.8</dyuprotostuff.version>
         <reactive-streams.version>1.0.2</reactive-streams.version>
-        <protobuf.version>3.9.1</protobuf.version>
         <async-http-client.version>2.12.1</async-http-client.version>
-        <protobuf-java-util.version>3.9.1</protobuf-java-util.version>
-        <guava.version>21.0</guava.version>
         <commons-lang3.version>3.7</commons-lang3.version>
     </properties>
     <dependencies>
@@ -166,17 +163,14 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
-            <version>${protobuf.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java-util</artifactId>
-            <version>${protobuf-java-util.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>${guava.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.commons</groupId>
