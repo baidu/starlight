@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster.route.label.match;
 
-import com.baidu.cloud.thirdparty.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;

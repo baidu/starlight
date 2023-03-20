@@ -26,24 +26,24 @@ import com.baidu.cloud.starlight.api.model.RpcRequest;
 import com.baidu.cloud.starlight.api.utils.GenericUtil;
 import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.protocol.http.HttpEncoder;
-import com.baidu.cloud.thirdparty.feign.Feign;
-import com.baidu.cloud.thirdparty.feign.MethodMetadata;
-import com.baidu.cloud.thirdparty.feign.RequestTemplate;
-import com.baidu.cloud.thirdparty.feign.Target;
-import com.baidu.cloud.thirdparty.feign.querymap.FieldQueryMapEncoder;
-import com.baidu.cloud.thirdparty.feign.spring.SpringContract;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultFullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpMessage;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderValues;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpMethod;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpVersion;
-import com.baidu.cloud.thirdparty.springframework.http.MediaType;
-import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.condition.ProducesRequestCondition;
-import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.RequestMappingInfo;
+import feign.Feign;
+import feign.MethodMetadata;
+import feign.RequestTemplate;
+import feign.Target;
+import feign.querymap.FieldQueryMapEncoder;
+import feign.spring.SpringContract;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpMessage;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpVersion;
+import org.springframework.http.MediaType;
+import org.springframework.web.servlet.mvc.condition.ProducesRequestCondition;
+import org.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
 import java.lang.reflect.Method;
 import java.util.Collection;
@@ -133,7 +133,7 @@ public class SpringRestHttpEncoder extends HttpEncoder {
      * @return
      */
     private FullHttpRequest convert(RequestTemplate requestTemplate, Request request) {
-        com.baidu.cloud.thirdparty.feign.Request feignRequest = requestTemplate.request();
+        feign.Request feignRequest = requestTemplate.request();
 
         FullHttpRequest httpRequest = null;
         if (feignRequest.body() != null && feignRequest.body().length > 0) {

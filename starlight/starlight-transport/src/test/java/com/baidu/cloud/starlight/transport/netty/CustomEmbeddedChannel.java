@@ -16,8 +16,8 @@
  
 package com.baidu.cloud.starlight.transport.netty;
 
-import com.baidu.cloud.thirdparty.netty.channel.ChannelHandler;
-import com.baidu.cloud.thirdparty.netty.channel.embedded.EmbeddedChannel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.embedded.EmbeddedChannel;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;

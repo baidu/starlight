@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.protocol.http;
 
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.protocol.ProtocolDecoder;
 import com.baidu.cloud.starlight.api.protocol.ProtocolEncoder;

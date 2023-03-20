@@ -16,10 +16,10 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBufAllocator;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBufOutputStream;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
-import com.baidu.cloud.thirdparty.servlet.WriteListener;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.Unpooled;
+import javax.servlet.WriteListener;
 import org.junit.Test;
 
 import java.io.IOException;

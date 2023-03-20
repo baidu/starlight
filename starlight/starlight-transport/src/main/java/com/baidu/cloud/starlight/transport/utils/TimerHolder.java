@@ -17,8 +17,8 @@
 package com.baidu.cloud.starlight.transport.utils;
 
 import com.baidu.cloud.starlight.api.rpc.threadpool.NamedThreadFactory;
-import com.baidu.cloud.thirdparty.netty.util.HashedWheelTimer;
-import com.baidu.cloud.thirdparty.netty.util.Timer;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timer;
 
 /**
  * Created by liuruisen on 2020/2/13.

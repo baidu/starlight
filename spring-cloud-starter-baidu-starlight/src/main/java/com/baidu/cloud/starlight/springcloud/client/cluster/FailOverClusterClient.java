@@ -26,7 +26,7 @@ import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientPr
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRouteProperties;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.configuration.Configuration;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 
 import java.util.Map;

@@ -22,8 +22,8 @@ import com.baidu.cloud.starlight.api.rpc.Processor;
 import com.baidu.cloud.starlight.api.rpc.ServiceRegistry;
 import com.baidu.cloud.starlight.api.rpc.threadpool.ThreadPoolFactory;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.thirdparty.netty.bootstrap.ServerBootstrap;
-import com.baidu.cloud.thirdparty.netty.channel.ServerChannel;
+import io.netty.bootstrap.ServerBootstrap;
+import io.netty.channel.ServerChannel;
 import org.junit.Assert;
 import org.junit.Test;
 

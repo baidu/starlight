@@ -22,7 +22,7 @@ import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.model.RpcResponse;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 
 /**
  * Async Filter Callback 异步过滤链的Callback，包裹BizWrapCallback or FutureCallback Created by liuruisen on 2019/12/8.

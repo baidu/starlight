@@ -17,28 +17,28 @@
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
 import com.baidu.cloud.starlight.api.utils.StringUtils;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBufInputStream;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
-import com.baidu.cloud.thirdparty.netty.channel.Channel;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.cookie.ServerCookieDecoder;
-import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.Channel;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.cookie.ServerCookieDecoder;
+import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
-import com.baidu.cloud.thirdparty.servlet.AsyncContext;
-import com.baidu.cloud.thirdparty.servlet.DispatcherType;
-import com.baidu.cloud.thirdparty.servlet.RequestDispatcher;
-import com.baidu.cloud.thirdparty.servlet.ServletContext;
-import com.baidu.cloud.thirdparty.servlet.ServletException;
-import com.baidu.cloud.thirdparty.servlet.ServletInputStream;
-import com.baidu.cloud.thirdparty.servlet.ServletRequest;
-import com.baidu.cloud.thirdparty.servlet.ServletResponse;
-import com.baidu.cloud.thirdparty.servlet.http.Cookie;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletRequest;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletResponse;
-import com.baidu.cloud.thirdparty.servlet.http.HttpSession;
-import com.baidu.cloud.thirdparty.servlet.http.HttpUpgradeHandler;
-import com.baidu.cloud.thirdparty.servlet.http.Part;
+import javax.servlet.AsyncContext;
+import javax.servlet.DispatcherType;
+import javax.servlet.RequestDispatcher;
+import javax.servlet.ServletContext;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
+import javax.servlet.http.HttpUpgradeHandler;
+import javax.servlet.http.Part;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -128,12 +128,11 @@ public class NettyServletRequestAdaptor implements HttpServletRequest {
     public Cookie[] getCookies() {
         String cookieString = nettyHttpRequest.headers().get(HttpHeaderNames.COOKIE);
         if (!StringUtils.isBlank(cookieString)) {
-            Set<com.baidu.cloud.thirdparty.netty.handler.codec.http.cookie.Cookie> cookieSet =
-                ServerCookieDecoder.LAX.decode(cookieString);
+            Set<io.netty.handler.codec.http.cookie.Cookie> cookieSet = ServerCookieDecoder.LAX.decode(cookieString);
             if (cookieSet != null && cookieSet.size() > 0) {
                 Cookie[] cookies = new Cookie[cookieSet.size()];
                 int index = 0;
-                for (com.baidu.cloud.thirdparty.netty.handler.codec.http.cookie.Cookie nettyCookie : cookieSet) {
+                for (io.netty.handler.codec.http.cookie.Cookie nettyCookie : cookieSet) {
                     Cookie cookie = new Cookie(nettyCookie.name(), nettyCookie.value());
                     cookie.setDomain(nettyCookie.domain() == null ? "" : nettyCookie.domain());
                     cookie.setMaxAge((int) nettyCookie.maxAge());

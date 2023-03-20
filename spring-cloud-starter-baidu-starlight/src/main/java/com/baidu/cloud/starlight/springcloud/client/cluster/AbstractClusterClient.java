@@ -37,7 +37,7 @@ import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRoutePro
 import com.baidu.cloud.starlight.springcloud.common.ApplicationContextUtils;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.configuration.Configuration;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;

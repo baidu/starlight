@@ -29,25 +29,24 @@ import com.baidu.cloud.starlight.api.protocol.ProtocolEncoder;
 import com.baidu.cloud.starlight.api.serialization.serializer.Serializer;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.starlight.protocol.http.springrest.NettyServletResponseAdaptor;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
-import com.baidu.cloud.thirdparty.netty.channel.embedded.EmbeddedChannel;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultFullHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpRequestEncoder;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseEncoder;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseStatus;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpVersion;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletResponse;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpRequestEncoder;
+import io.netty.handler.codec.http.HttpResponseEncoder;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.HttpVersion;
+import javax.servlet.http.HttpServletResponse;
 
 import java.util.Map;
 
 /**
- * Encode {@link MsgBase} to {@link ByteBuf}, use
- * {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpObjectEncoder}. Encode msgBase body: from Pojo to
- * bytes. Created by liuruisen on 2020/5/27.
+ * Encode {@link MsgBase} to {@link ByteBuf}, use {@link io.netty.handler.codec.http.HttpObjectEncoder}. Encode msgBase
+ * body: from Pojo to bytes. Created by liuruisen on 2020/5/27.
  */
 public abstract class HttpEncoder implements ProtocolEncoder {
 
@@ -145,7 +144,7 @@ public abstract class HttpEncoder implements ProtocolEncoder {
     }
 
     /**
-     * Convert MsgBase to {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpMessage}
+     * Convert MsgBase to {@link io.netty.handler.codec.http.FullHttpMessage}
      *
      * @param msgBase
      * @throws CodecException

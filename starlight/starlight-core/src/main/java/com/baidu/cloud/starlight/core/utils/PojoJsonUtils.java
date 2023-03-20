@@ -16,17 +16,17 @@
  
 package com.baidu.cloud.starlight.core.utils;
 
-import com.baidu.cloud.thirdparty.jackson.databind.JsonNode;
-import com.baidu.cloud.thirdparty.jackson.databind.ObjectMapper;
-import com.baidu.cloud.thirdparty.jackson.databind.node.ArrayNode;
-import com.baidu.cloud.thirdparty.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
 
-import static com.baidu.cloud.thirdparty.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
+import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES;
 
 /**
  * Used in generic filter. When filter request, convert generic args to json strings; when filter response, convert json

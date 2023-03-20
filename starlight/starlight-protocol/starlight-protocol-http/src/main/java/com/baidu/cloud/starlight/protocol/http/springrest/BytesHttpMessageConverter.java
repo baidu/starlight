@@ -18,14 +18,14 @@ package com.baidu.cloud.starlight.protocol.http.springrest;
 
 import com.baidu.cloud.starlight.api.model.MsgBase;
 import com.baidu.cloud.starlight.protocol.http.HttpDecoder;
-import com.baidu.cloud.thirdparty.springframework.http.MediaType;
-import com.baidu.cloud.thirdparty.springframework.http.converter.ByteArrayHttpMessageConverter;
+import org.springframework.http.MediaType;
+import org.springframework.http.converter.ByteArrayHttpMessageConverter;
 
 import java.util.Collections;
 
 /**
- * Subclass of spring-mvc {@link com.baidu.cloud.thirdparty.springframework.http.converter.HttpMessageConverter}. Read
- * body bytes from HttpMessage, but not change data format(not decode).
+ * Subclass of spring-mvc {@link org.springframework.http.converter.HttpMessageConverter}. Read body bytes from
+ * HttpMessage, but not change data format(not decode).
  * 
  * @see ByteArrayHttpMessageConverter#readInternal The decode operation takes place in
  *      {@link HttpDecoder#decodeBody(MsgBase)} Created by liuruisen on 2020/6/8.

@@ -16,15 +16,16 @@
  
 package com.baidu.cloud.starlight.springcloud.client.ribbon;
 
-import com.baidu.cloud.thirdparty.jackson.core.JsonProcessingException;
-import com.baidu.cloud.thirdparty.jackson.databind.JavaType;
-import com.baidu.cloud.thirdparty.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ecwid.consul.v1.health.model.Check;
 import com.ecwid.consul.v1.health.model.HealthService;
 import com.google.gson.Gson;
 import org.junit.Test;
 import org.springframework.cloud.consul.discovery.ConsulServer;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -71,7 +72,7 @@ public class RibbonServerTest {
         try {
             List<StarlightRibbonServer> servers2 = objectMapper.readValue(gravityServerJson, javaType);
             assertEquals(5, servers2.size());
-        } catch (JsonProcessingException e) {
+        } catch (IOException e) {
             // no default constructor
         }
     }

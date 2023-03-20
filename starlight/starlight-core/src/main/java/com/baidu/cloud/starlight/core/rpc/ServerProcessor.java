@@ -37,8 +37,8 @@ import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.api.utils.GenericUtil;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
 import com.baidu.cloud.starlight.transport.utils.TimerHolder;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
-import com.baidu.cloud.thirdparty.netty.util.TimerTask;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

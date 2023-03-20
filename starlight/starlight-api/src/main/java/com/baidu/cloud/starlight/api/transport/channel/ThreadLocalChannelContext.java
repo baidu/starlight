@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.api.transport.channel;
 
-import com.baidu.cloud.thirdparty.netty.channel.Channel;
+import io.netty.channel.Channel;
 
 /**
  * ThreadLocal Netty Channel Context Store thread-local netty {@link Channel} information, including netty channel and

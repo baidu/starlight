@@ -16,10 +16,10 @@
  
 package com.baidu.cloud.starlight.api.transport.buffer;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
-import com.baidu.cloud.thirdparty.netty.buffer.CompositeByteBuf;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
-import com.baidu.cloud.thirdparty.netty.buffer.UnpooledByteBufAllocator;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.CompositeByteBuf;
+import io.netty.buffer.Unpooled;
+import io.netty.buffer.UnpooledByteBufAllocator;
 
 import java.nio.ByteOrder;
 import java.util.ArrayDeque;

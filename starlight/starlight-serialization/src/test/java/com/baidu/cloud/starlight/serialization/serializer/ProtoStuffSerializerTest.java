@@ -16,8 +16,8 @@
  
 package com.baidu.cloud.starlight.serialization.serializer;
 
-import com.baidu.cloud.thirdparty.protostuff.runtime.DefaultIdStrategy;
-import com.baidu.cloud.thirdparty.protostuff.runtime.IdStrategy;
+import io.protostuff.runtime.DefaultIdStrategy;
+import io.protostuff.runtime.IdStrategy;
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.model.Wrapper;
 import org.junit.Assert;

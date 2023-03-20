@@ -16,11 +16,11 @@
  
 package com.baidu.cloud.starlight.protocol.http;
 
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpMessage;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponse;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.codec.http.HttpRequest;
+import io.netty.handler.codec.http.HttpResponse;
 import org.junit.Assert;
 import org.junit.Test;
 

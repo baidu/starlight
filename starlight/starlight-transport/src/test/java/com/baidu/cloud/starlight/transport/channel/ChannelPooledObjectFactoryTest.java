@@ -18,9 +18,9 @@ package com.baidu.cloud.starlight.transport.channel;
 
 import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.thirdparty.netty.bootstrap.Bootstrap;
-import com.baidu.cloud.thirdparty.pool2.PooledObject;
-import com.baidu.cloud.thirdparty.pool2.impl.DefaultPooledObject;
+import io.netty.bootstrap.Bootstrap;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 import org.junit.Test;
 import org.mockito.Mockito;
 

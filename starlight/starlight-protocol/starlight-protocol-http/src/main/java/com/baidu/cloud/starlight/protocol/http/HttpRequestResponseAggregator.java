@@ -16,10 +16,10 @@
  
 package com.baidu.cloud.starlight.protocol.http;
 
-import com.baidu.cloud.thirdparty.netty.channel.ChannelHandlerContext;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpObject;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpObjectAggregator;
-import com.baidu.cloud.thirdparty.netty.util.ReferenceCountUtil;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.HttpObjectAggregator;
+import io.netty.util.ReferenceCountUtil;
 
 import java.util.List;
 

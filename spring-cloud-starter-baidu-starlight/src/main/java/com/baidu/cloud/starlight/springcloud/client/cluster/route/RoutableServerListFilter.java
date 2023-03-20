@@ -23,7 +23,7 @@ import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRoutePro
 import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightRibbonServer;
 import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightServerListFilter;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 import com.netflix.loadbalancer.Server;
 
 import java.util.ArrayList;

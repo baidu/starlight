@@ -22,7 +22,7 @@ import com.baidu.cloud.starlight.api.model.MsgBase;
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBuf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

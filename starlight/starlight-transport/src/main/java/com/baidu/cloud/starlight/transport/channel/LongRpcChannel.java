@@ -29,11 +29,11 @@ import com.baidu.cloud.starlight.api.transport.channel.ChannelSide;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannelGroup;
 import com.baidu.cloud.starlight.protocol.http.springrest.SpringRestProtocol;
-import com.baidu.cloud.thirdparty.netty.channel.Channel;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelFuture;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelFutureListener;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

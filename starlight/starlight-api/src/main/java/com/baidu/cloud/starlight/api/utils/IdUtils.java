@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.api.utils;
 
-import com.baidu.cloud.thirdparty.uuid.UUIDGenerator;
+import org.safehaus.uuid.UUIDGenerator;
 
 /**
  * Created by liuruisen on 2020/9/3.

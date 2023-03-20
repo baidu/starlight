@@ -25,7 +25,7 @@ import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.model.RpcRequest;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

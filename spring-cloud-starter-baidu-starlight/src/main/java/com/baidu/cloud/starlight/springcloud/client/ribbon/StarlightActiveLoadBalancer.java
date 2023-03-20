@@ -19,7 +19,7 @@ package com.baidu.cloud.starlight.springcloud.client.ribbon;
 import com.baidu.cloud.starlight.core.rpc.SingleStarlightClient;
 import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 import com.netflix.client.config.IClientConfig;
 import com.netflix.loadbalancer.IPing;
 import com.netflix.loadbalancer.IRule;

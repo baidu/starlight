@@ -17,8 +17,8 @@
 package com.baidu.cloud.starlight.transport.netty;
 
 import com.baidu.cloud.starlight.api.rpc.threadpool.NamedThreadFactory;
-import com.baidu.cloud.thirdparty.netty.util.internal.PlatformDependent;
-import com.baidu.cloud.thirdparty.springframework.util.ReflectionUtils;
+import io.netty.util.internal.PlatformDependent;
+import org.springframework.util.ReflectionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

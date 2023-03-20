@@ -31,7 +31,7 @@ import com.baidu.cloud.starlight.api.transport.channel.ChannelAttribute;
 import com.baidu.cloud.starlight.api.transport.channel.ChannelSide;
 import com.baidu.cloud.starlight.transport.channel.LongRpcChannel;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.thirdparty.netty.channel.embedded.EmbeddedChannel;
+import io.netty.channel.embedded.EmbeddedChannel;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

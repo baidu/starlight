@@ -19,8 +19,8 @@ package com.baidu.cloud.starlight.protocol.brpc;
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.exception.StarlightRpcException;
 import com.baidu.cloud.starlight.api.exception.TransportException;
-import com.baidu.cloud.thirdparty.google.common.collect.BiMap;
-import com.baidu.cloud.thirdparty.google.common.collect.HashBiMap;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

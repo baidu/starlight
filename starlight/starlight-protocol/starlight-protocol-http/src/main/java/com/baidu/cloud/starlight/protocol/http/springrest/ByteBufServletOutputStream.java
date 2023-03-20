@@ -16,9 +16,9 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBufOutputStream;
-import com.baidu.cloud.thirdparty.servlet.ServletOutputStream;
-import com.baidu.cloud.thirdparty.servlet.WriteListener;
+import io.netty.buffer.ByteBufOutputStream;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.WriteListener;
 
 import java.io.IOException;
 

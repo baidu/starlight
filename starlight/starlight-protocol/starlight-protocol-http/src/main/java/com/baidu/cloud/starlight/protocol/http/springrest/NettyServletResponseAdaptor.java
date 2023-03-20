@@ -16,16 +16,16 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBufOutputStream;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseStatus;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.cookie.DefaultCookie;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.cookie.ServerCookieEncoder;
-import com.baidu.cloud.thirdparty.servlet.ServletException;
-import com.baidu.cloud.thirdparty.servlet.ServletOutputStream;
-import com.baidu.cloud.thirdparty.servlet.http.Cookie;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletResponse;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.handler.codec.http.cookie.DefaultCookie;
+import io.netty.handler.codec.http.cookie.ServerCookieEncoder;
+import javax.servlet.ServletException;
+import javax.servlet.ServletOutputStream;
+import javax.servlet.http.Cookie;
+import javax.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 import java.io.PrintWriter;

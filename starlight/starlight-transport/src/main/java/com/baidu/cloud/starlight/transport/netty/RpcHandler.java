@@ -37,10 +37,10 @@ import com.baidu.cloud.starlight.protocol.stargate.StargateProtocol;
 import com.baidu.cloud.starlight.transport.channel.LongRpcChannel;
 import com.baidu.cloud.starlight.api.transport.channel.ChannelAttribute;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.thirdparty.netty.channel.Channel;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelHandler;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelHandlerContext;
-import com.baidu.cloud.thirdparty.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.SimpleChannelInboundHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

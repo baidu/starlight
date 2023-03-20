@@ -16,9 +16,9 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBufInputStream;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
-import com.baidu.cloud.thirdparty.servlet.ReadListener;
+import io.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.Unpooled;
+import javax.servlet.ReadListener;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

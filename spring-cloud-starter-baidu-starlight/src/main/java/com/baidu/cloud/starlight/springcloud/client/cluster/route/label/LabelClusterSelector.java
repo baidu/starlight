@@ -23,7 +23,7 @@ import com.baidu.cloud.starlight.springcloud.client.cluster.route.label.match.La
 import com.baidu.cloud.starlight.springcloud.client.cluster.route.label.match.LabelSelectorRequirement;
 import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightRibbonServer;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
-import com.baidu.cloud.thirdparty.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import com.netflix.loadbalancer.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

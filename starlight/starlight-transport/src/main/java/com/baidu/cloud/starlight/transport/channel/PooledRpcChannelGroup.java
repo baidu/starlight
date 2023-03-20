@@ -21,11 +21,11 @@ import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.exception.TransportException;
 import com.baidu.cloud.starlight.api.rpc.LocalContext;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.thirdparty.netty.bootstrap.Bootstrap;
-import com.baidu.cloud.thirdparty.pool2.PooledObject;
-import com.baidu.cloud.thirdparty.pool2.impl.DefaultPooledObjectInfo;
-import com.baidu.cloud.thirdparty.pool2.impl.GenericObjectPool;
-import com.baidu.cloud.thirdparty.pool2.impl.GenericObjectPoolConfig;
+import io.netty.bootstrap.Bootstrap;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObjectInfo;
+import org.apache.commons.pool2.impl.GenericObjectPool;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 
 import java.lang.reflect.Field;
 import java.util.HashSet;

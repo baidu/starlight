@@ -34,7 +34,7 @@ import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClien
 import com.baidu.cloud.starlight.springcloud.client.properties.OutlierConfig;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
-import com.baidu.cloud.thirdparty.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.client.ServiceInstance;

@@ -16,11 +16,11 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.feign.MethodMetadata;
-import com.baidu.cloud.thirdparty.feign.RequestTemplate;
-import com.baidu.cloud.thirdparty.feign.Target;
-import com.baidu.cloud.thirdparty.feign.querymap.FieldQueryMapEncoder;
-import com.baidu.cloud.thirdparty.feign.spring.SpringContract;
+import feign.MethodMetadata;
+import feign.RequestTemplate;
+import feign.Target;
+import feign.querymap.FieldQueryMapEncoder;
+import feign.spring.SpringContract;
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.protocol.http.User;
 import com.baidu.cloud.starlight.serialization.serializer.JsonSerializer;

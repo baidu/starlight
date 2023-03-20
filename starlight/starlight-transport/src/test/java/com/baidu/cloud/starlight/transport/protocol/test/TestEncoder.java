@@ -19,7 +19,7 @@ package com.baidu.cloud.starlight.transport.protocol.test;
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.model.MsgBase;
 import com.baidu.cloud.starlight.api.protocol.ProtocolEncoder;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBuf;
 
 /**
  * Created by liuruisen on 2020/3/20.

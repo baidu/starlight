@@ -16,14 +16,14 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.feign.MethodMetadata;
-import com.baidu.cloud.thirdparty.feign.Param;
-import com.baidu.cloud.thirdparty.feign.QueryMapEncoder;
-import com.baidu.cloud.thirdparty.feign.RequestTemplate;
-import com.baidu.cloud.thirdparty.feign.Target;
-import com.baidu.cloud.thirdparty.feign.Util;
-import com.baidu.cloud.thirdparty.feign.codec.EncodeException;
-import com.baidu.cloud.thirdparty.feign.template.UriUtils;
+import feign.MethodMetadata;
+import feign.Param;
+import feign.QueryMapEncoder;
+import feign.RequestTemplate;
+import feign.Target;
+import feign.Util;
+import feign.codec.EncodeException;
+import feign.template.UriUtils;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -34,8 +34,7 @@ import java.util.Map;
 
 /**
  * Build {@link RequestTemplate} by resolving args. Use method parameters to improve {@link RequestTemplate}. Migrant
- * from {@link com.baidu.cloud.thirdparty.feign.ReflectiveFeign}, because it's native scope is protected we can't call
- * directly.
+ * from {@link feign.ReflectiveFeign}, because it's native scope is protected we can't call directly.
  */
 public class RequestTemplateArgsResolver {
 

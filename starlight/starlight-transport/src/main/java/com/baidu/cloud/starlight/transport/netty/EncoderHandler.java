@@ -31,10 +31,10 @@ import com.baidu.cloud.starlight.api.transport.channel.ChannelSide;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelHandler;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelHandlerContext;
-import com.baidu.cloud.thirdparty.netty.handler.codec.MessageToByteEncoder;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.MessageToByteEncoder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

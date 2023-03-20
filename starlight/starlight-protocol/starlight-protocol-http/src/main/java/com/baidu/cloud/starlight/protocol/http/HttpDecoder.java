@@ -29,13 +29,13 @@ import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.api.protocol.ProtocolDecoder;
 import com.baidu.cloud.starlight.api.serialization.serializer.Serializer;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
-import com.baidu.cloud.thirdparty.netty.channel.embedded.EmbeddedChannel;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpMessage;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.embedded.EmbeddedChannel;
+import io.netty.handler.codec.http.FullHttpMessage;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpResponse;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpResponseStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,8 +44,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Decode ByteBuf to MsgBase, use {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpObjectDecoder} Decode
- * msg body: from bytes to pojo. Created by liuruisen on 2020/5/27.
+ * Decode ByteBuf to MsgBase, use {@link io.netty.handler.codec.http.HttpObjectDecoder} Decode msg body: from bytes to
+ * pojo. Created by liuruisen on 2020/5/27.
  */
 public abstract class HttpDecoder implements ProtocolDecoder {
 

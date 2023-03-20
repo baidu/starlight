@@ -22,7 +22,7 @@ import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.rpc.callback.Callback;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 
 /**
  * Wrap Biz Callback, Async Call: Callback mode 用户采用Callback的异步调用方式时使用此类(依据用户参数信息进行判断) 在StarlightClient request 前封装

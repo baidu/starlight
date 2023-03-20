@@ -16,16 +16,16 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultFullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderValues;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpMethod;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpVersion;
-import com.baidu.cloud.thirdparty.servlet.ServletException;
-import com.baidu.cloud.thirdparty.servlet.ServletInputStream;
-import com.baidu.cloud.thirdparty.servlet.http.Cookie;
+import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.HttpHeaderNames;
+import io.netty.handler.codec.http.HttpHeaderValues;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpVersion;
+import javax.servlet.ServletException;
+import javax.servlet.ServletInputStream;
+import javax.servlet.http.Cookie;
 import org.junit.Assert;
 import org.junit.Test;
 

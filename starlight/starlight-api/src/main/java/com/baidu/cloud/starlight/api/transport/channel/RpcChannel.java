@@ -19,8 +19,8 @@ package com.baidu.cloud.starlight.api.transport.channel;
 import com.baidu.cloud.starlight.api.exception.TransportException;
 import com.baidu.cloud.starlight.api.model.MsgBase;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
-import com.baidu.cloud.thirdparty.netty.channel.Channel;
-import com.baidu.cloud.thirdparty.netty.util.AttributeKey;
+import io.netty.channel.Channel;
+import io.netty.util.AttributeKey;
 
 import java.net.InetSocketAddress;
 import java.util.Map;

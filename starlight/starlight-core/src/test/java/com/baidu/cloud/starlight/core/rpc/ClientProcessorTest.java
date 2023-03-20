@@ -30,7 +30,7 @@ import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.core.rpc.threadpool.RpcThreadPoolFactory;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;

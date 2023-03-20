@@ -18,19 +18,19 @@ package com.baidu.cloud.starlight.protocol.http;
 
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelHandlerContext;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultFullHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultFullHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultHttpRequest;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultHttpResponse;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpMessage;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpMethod;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpObjectDecoder;
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseStatus;
+import io.netty.buffer.ByteBuf;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.handler.codec.http.DefaultFullHttpRequest;
+import io.netty.handler.codec.http.DefaultFullHttpResponse;
+import io.netty.handler.codec.http.DefaultHttpRequest;
+import io.netty.handler.codec.http.DefaultHttpResponse;
+import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.codec.http.HttpMethod;
+import io.netty.handler.codec.http.HttpObjectDecoder;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpVersion;
-import com.baidu.cloud.thirdparty.netty.util.ReferenceCounted;
+import io.netty.handler.codec.http.HttpVersion;
+import io.netty.util.ReferenceCounted;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,8 +38,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Combine {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpRequestDecoder} and
- * {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseDecoder} to HttpRequestResponseDecoder.
+ * Combine {@link io.netty.handler.codec.http.HttpRequestDecoder} and
+ * {@link io.netty.handler.codec.http.HttpResponseDecoder} to HttpRequestResponseDecoder.
  * <p>
  * Un Thread Safe. Created by liuruisen on 2020/6/1.
  */

@@ -18,7 +18,7 @@ package com.baidu.cloud.starlight.serialization.serializer;
 
 import com.baidu.cloud.starlight.serialization.serializer.model.BasePageRequestDto;
 import com.baidu.cloud.starlight.serialization.serializer.model.OrderBy;
-import com.baidu.cloud.thirdparty.google.common.collect.Lists;
+import com.google.common.collect.Lists;
 import org.junit.Test;
 
 import java.util.Arrays;

@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.springcloud.client.properties;
 
-import com.baidu.cloud.thirdparty.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.util.Collection;

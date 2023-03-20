@@ -18,7 +18,7 @@ package com.baidu.cloud.starlight.core.utils;
 
 import com.baidu.cloud.starlight.core.integrate.model.ExtInfo;
 import com.baidu.cloud.starlight.core.integrate.model.User;
-import com.baidu.cloud.thirdparty.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 
 import java.lang.reflect.Method;

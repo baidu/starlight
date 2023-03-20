@@ -16,16 +16,15 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBufInputStream;
+import io.netty.buffer.ByteBufInputStream;
 
-import com.baidu.cloud.thirdparty.servlet.ReadListener;
-import com.baidu.cloud.thirdparty.servlet.ServletInputStream;
+import javax.servlet.ReadListener;
+import javax.servlet.ServletInputStream;
 import java.io.IOException;
 
 /**
  * Wrapper {@link ByteBufInputStream} as ServletInputStream. Used when converting
- * {@link com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest} to
- * {@link com.baidu.cloud.thirdparty.servlet.ServletRequest}.
+ * {@link io.netty.handler.codec.http.FullHttpRequest} to {@link javax.servlet.ServletRequest}.
  * 
  * @see NettyServletRequestAdaptor#getInputStream() Created by liuruisen on 2020/6/8.
  */

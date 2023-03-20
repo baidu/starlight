@@ -32,7 +32,7 @@ import com.baidu.cloud.starlight.api.protocol.ProtocolDecoder;
 import com.baidu.cloud.starlight.api.utils.ByteArrayUtils;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.starlight.serialization.serializer.ProtobufSerializer;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBuf;
 import com.baidu.cloud.starlight.serialization.serializer.ProtoStuffSerializer;
 
 import java.util.Arrays;

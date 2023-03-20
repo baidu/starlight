@@ -23,10 +23,10 @@ import com.baidu.cloud.starlight.api.rpc.LocalContext;
 import com.baidu.cloud.starlight.api.transport.channel.ChannelSide;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.starlight.transport.utils.TimerHolder;
-import com.baidu.cloud.thirdparty.netty.bootstrap.Bootstrap;
-import com.baidu.cloud.thirdparty.netty.channel.Channel;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
-import com.baidu.cloud.thirdparty.netty.util.TimerTask;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.util.Timeout;
+import io.netty.util.TimerTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

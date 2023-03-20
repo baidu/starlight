@@ -18,9 +18,9 @@ package com.baidu.cloud.starlight.springcloud.client.ribbon;
 
 import com.baidu.cloud.starlight.api.rpc.threadpool.NamedThreadFactory;
 import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
-import com.baidu.cloud.thirdparty.netty.util.HashedWheelTimer;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
-import com.baidu.cloud.thirdparty.netty.util.Timer;
+import io.netty.util.HashedWheelTimer;
+import io.netty.util.Timeout;
+import io.netty.util.Timer;
 import com.netflix.loadbalancer.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

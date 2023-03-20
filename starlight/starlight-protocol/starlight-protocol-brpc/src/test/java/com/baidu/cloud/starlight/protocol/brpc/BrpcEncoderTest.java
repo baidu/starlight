@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.protocol.brpc;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBuf;
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.model.AbstractMsgBase;

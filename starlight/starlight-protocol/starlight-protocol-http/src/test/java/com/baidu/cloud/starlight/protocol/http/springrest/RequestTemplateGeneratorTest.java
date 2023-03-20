@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.feign.RequestTemplate;
+import feign.RequestTemplate;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.Mockito;

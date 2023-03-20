@@ -21,12 +21,12 @@ import com.baidu.cloud.starlight.serialization.serializer.model.Address;
 import com.baidu.cloud.starlight.serialization.serializer.model.ExtInfo;
 import com.baidu.cloud.starlight.serialization.serializer.model.Sex;
 import com.baidu.cloud.starlight.serialization.serializer.model.User;
-import com.baidu.cloud.thirdparty.protostuff.LinkedBuffer;
-import com.baidu.cloud.thirdparty.protostuff.ProtobufIOUtil;
-import com.baidu.cloud.thirdparty.protostuff.Schema;
-import com.baidu.cloud.thirdparty.protostuff.runtime.DefaultIdStrategy;
-import com.baidu.cloud.thirdparty.protostuff.runtime.IdStrategy;
-import com.baidu.cloud.thirdparty.protostuff.runtime.RuntimeSchema;
+import io.protostuff.LinkedBuffer;
+import io.protostuff.ProtobufIOUtil;
+import io.protostuff.Schema;
+import io.protostuff.runtime.DefaultIdStrategy;
+import io.protostuff.runtime.IdStrategy;
+import io.protostuff.runtime.RuntimeSchema;
 import org.junit.Before;
 import org.junit.Test;
 

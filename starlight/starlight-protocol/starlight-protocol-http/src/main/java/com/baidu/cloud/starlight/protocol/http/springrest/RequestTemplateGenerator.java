@@ -17,8 +17,8 @@
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
 import com.baidu.cloud.starlight.api.model.RpcRequest;
-import com.baidu.cloud.thirdparty.feign.MethodMetadata;
-import com.baidu.cloud.thirdparty.feign.RequestTemplate;
+import feign.MethodMetadata;
+import feign.RequestTemplate;
 
 /**
  * Used to generate {@link RequestTemplate} when convert {@link RpcRequest} to Http request template. Composed of

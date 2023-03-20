@@ -17,8 +17,8 @@
 package com.baidu.cloud.starlight.api.rpc;
 
 import com.baidu.cloud.starlight.api.common.Constants;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletRequest;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 import java.util.LinkedHashMap;
 import java.util.Map;

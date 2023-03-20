@@ -21,7 +21,7 @@ import com.baidu.cloud.starlight.api.model.AbstractMsgBase;
 import com.baidu.cloud.starlight.api.model.MsgBase;
 import com.baidu.cloud.starlight.api.transport.buffer.DynamicCompositeByteBuf;
 import com.baidu.cloud.starlight.api.protocol.ProtocolDecoder;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBuf;
 
 import java.util.Arrays;
 

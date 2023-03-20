@@ -26,7 +26,7 @@ import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClien
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRouteProperties;
 import com.baidu.cloud.starlight.springcloud.configuration.Configuration;
-import com.baidu.cloud.thirdparty.apache.commons.lang3.reflect.FieldUtils;
+import org.apache.commons.lang3.reflect.FieldUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.BeansException;

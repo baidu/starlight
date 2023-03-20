@@ -18,7 +18,7 @@ package com.baidu.cloud.starlight.api.rpc.callback;
 
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 
 /**
  * Created by liuruisen on 2020/2/20.

@@ -20,9 +20,9 @@ import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.exception.TransportException;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannelGroup;
-import com.baidu.cloud.thirdparty.netty.bootstrap.Bootstrap;
-import com.baidu.cloud.thirdparty.netty.channel.Channel;
-import com.baidu.cloud.thirdparty.netty.channel.ChannelFuture;
+import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

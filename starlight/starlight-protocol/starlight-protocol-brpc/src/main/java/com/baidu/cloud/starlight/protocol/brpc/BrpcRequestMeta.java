@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.protocol.brpc;
 
-import com.baidu.cloud.thirdparty.protostuff.Tag;
+import io.protostuff.Tag;
 
 import java.util.List;
 

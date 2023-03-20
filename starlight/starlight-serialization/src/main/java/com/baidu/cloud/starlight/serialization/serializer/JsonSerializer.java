@@ -18,12 +18,12 @@ package com.baidu.cloud.starlight.serialization.serializer;
 
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.serialization.serializer.Serializer;
-import com.baidu.cloud.thirdparty.jackson.annotation.JsonInclude;
-import com.baidu.cloud.thirdparty.jackson.databind.DeserializationFeature;
-import com.baidu.cloud.thirdparty.jackson.databind.JavaType;
-import com.baidu.cloud.thirdparty.jackson.databind.ObjectMapper;
-import com.baidu.cloud.thirdparty.jackson.databind.SerializationFeature;
-import com.baidu.cloud.thirdparty.jackson.databind.type.TypeFactory;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.type.TypeFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

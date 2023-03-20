@@ -16,12 +16,12 @@
  
 package com.baidu.cloud.starlight.serialization.serializer;
 
-import com.baidu.cloud.thirdparty.dyuprotostuff.LinkedBuffer;
-import com.baidu.cloud.thirdparty.dyuprotostuff.ProtobufIOUtil;
-import com.baidu.cloud.thirdparty.dyuprotostuff.Schema;
-import com.baidu.cloud.thirdparty.dyuprotostuff.runtime.DefaultIdStrategy;
-import com.baidu.cloud.thirdparty.dyuprotostuff.runtime.IdStrategy;
-import com.baidu.cloud.thirdparty.dyuprotostuff.runtime.RuntimeSchema;
+import com.dyuproject.protostuff.LinkedBuffer;
+import com.dyuproject.protostuff.ProtobufIOUtil;
+import com.dyuproject.protostuff.Schema;
+import com.dyuproject.protostuff.runtime.DefaultIdStrategy;
+import com.dyuproject.protostuff.runtime.IdStrategy;
+import com.dyuproject.protostuff.runtime.RuntimeSchema;
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.serialization.serializer.Serializer;
 

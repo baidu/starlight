@@ -18,9 +18,9 @@ package com.baidu.cloud.starlight.transport.channel;
 
 import com.baidu.cloud.starlight.api.transport.channel.ChannelSide;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.thirdparty.pool2.BasePooledObjectFactory;
-import com.baidu.cloud.thirdparty.pool2.PooledObject;
-import com.baidu.cloud.thirdparty.pool2.impl.DefaultPooledObject;
+import org.apache.commons.pool2.BasePooledObjectFactory;
+import org.apache.commons.pool2.PooledObject;
+import org.apache.commons.pool2.impl.DefaultPooledObject;
 
 /**
  * Channel pool factory used in rpc client to produce Channel Created by liuruisen on 2020/3/31.

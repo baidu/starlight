@@ -16,7 +16,7 @@
  
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
-import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
+import io.netty.handler.codec.http.FullHttpRequest;
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.model.RpcRequest;
 import com.baidu.cloud.starlight.protocol.http.User;

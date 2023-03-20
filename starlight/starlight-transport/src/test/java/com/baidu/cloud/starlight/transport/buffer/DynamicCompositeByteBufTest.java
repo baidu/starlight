@@ -17,8 +17,8 @@
 package com.baidu.cloud.starlight.transport.buffer;
 
 import com.baidu.cloud.starlight.api.transport.buffer.DynamicCompositeByteBuf;
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import org.junit.Assert;
 import org.junit.Test;
 

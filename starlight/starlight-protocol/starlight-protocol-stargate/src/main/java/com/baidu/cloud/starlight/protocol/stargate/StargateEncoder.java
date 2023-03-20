@@ -16,8 +16,8 @@
  
 package com.baidu.cloud.starlight.protocol.stargate;
 
-import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
-import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.exception.CodecException;

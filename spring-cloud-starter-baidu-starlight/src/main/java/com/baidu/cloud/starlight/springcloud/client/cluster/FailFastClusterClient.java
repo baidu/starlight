@@ -22,7 +22,7 @@ import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRouteProperties;
 import com.baidu.cloud.starlight.springcloud.configuration.Configuration;
-import com.baidu.cloud.thirdparty.netty.util.Timeout;
+import io.netty.util.Timeout;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
 
 /**

@@ -21,8 +21,8 @@ import com.baidu.cloud.starlight.api.protocol.HeartbeatTrigger;
 import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.serialization.serializer.JsonSerializer;
 import com.baidu.cloud.starlight.api.serialization.serializer.Serializer;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletRequest;
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
 /**
  * HttpProtocol Created by liuruisen on 2020/5/27.

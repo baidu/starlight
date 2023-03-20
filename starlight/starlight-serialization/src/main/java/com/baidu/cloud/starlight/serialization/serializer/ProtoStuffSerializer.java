@@ -19,12 +19,12 @@ package com.baidu.cloud.starlight.serialization.serializer;
 import com.baidu.cloud.starlight.api.exception.CodecException;
 import com.baidu.cloud.starlight.api.serialization.serializer.Serializer;
 import com.baidu.cloud.starlight.serialization.utils.SerializationUtils;
-import com.baidu.cloud.thirdparty.protostuff.LinkedBuffer;
-import com.baidu.cloud.thirdparty.protostuff.ProtobufIOUtil;
-import com.baidu.cloud.thirdparty.protostuff.Schema;
-import com.baidu.cloud.thirdparty.protostuff.runtime.DefaultIdStrategy;
-import com.baidu.cloud.thirdparty.protostuff.runtime.IdStrategy;
-import com.baidu.cloud.thirdparty.protostuff.runtime.RuntimeSchema;
+import io.protostuff.LinkedBuffer;
+import io.protostuff.ProtobufIOUtil;
+import io.protostuff.Schema;
+import io.protostuff.runtime.DefaultIdStrategy;
+import io.protostuff.runtime.IdStrategy;
+import io.protostuff.runtime.RuntimeSchema;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
