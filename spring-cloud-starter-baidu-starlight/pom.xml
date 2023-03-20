@@ -22,6 +22,10 @@
         <spring-cloud.version>Finchley.SR2</spring-cloud.version>
         <!-- plugin versions -->
         <powermock.version>2.0.9</powermock.version>
+        <javassist.version>3.28.0-GA</javassist.version>
+        <protobuf.version>3.21.12</protobuf.version>
+        <protobuf-java-util.version>3.9.1</protobuf-java-util.version>
+        <guava.version>21.0</guava.version>
         <starlight.version>2022.2.1-SNAPSHOT</starlight.version>
     </properties>
     
@@ -34,7 +38,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            
             <dependency>
                 <groupId>org.springframework.cloud</groupId>
                 <artifactId>spring-cloud-dependencies</artifactId>
@@ -42,21 +45,53 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-            
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java</artifactId>
+                <version>${protobuf.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.protobuf</groupId>
+                <artifactId>protobuf-java-util</artifactId>
+                <version>${protobuf-java-util.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.guava</groupId>
+                <artifactId>guava</artifactId>
+                <version>${guava.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.objenesis</groupId>
+                <artifactId>objenesis</artifactId>
+                <version>3.0.1</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.gson</groupId>
+                <artifactId>gson</artifactId>
+                <version>2.10.1</version>
+            </dependency>
+            <dependency>
+                <groupId>org.javassist</groupId>
+                <artifactId>javassist</artifactId>
+                <version>${javassist.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.code.findbugs</groupId>
+                <artifactId>jsr305</artifactId>
+                <version>3.0.2</version>
+            </dependency>
             <dependency>
                 <groupId>org.powermock</groupId>
                 <artifactId>powermock-module-junit4</artifactId>
                 <version>${powermock.version}</version>
                 <scope>test</scope>
             </dependency>
-            
             <dependency>
                 <groupId>org.powermock</groupId>
                 <artifactId>powermock-api-mockito2</artifactId>
                 <version>${powermock.version}</version>
                 <scope>test</scope>
             </dependency>
-            
             <!-- https://mvnrepository.com/artifact/com.github.stefanbirkner/system-rules -->
             <!-- For System.getEnv test -->
             <dependency>
@@ -65,13 +100,11 @@
                 <version>1.19.0</version>
                 <scope>test</scope>
             </dependency>
-            
             <dependency>
                 <groupId>com.baidu.cloud</groupId>
                 <artifactId>starlight-all</artifactId>
                 <version>${starlight.version}</version>
             </dependency>
-            
         </dependencies>
     </dependencyManagement>
     
@@ -146,7 +179,6 @@
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
-            <version>2.10.1</version>
         </dependency>
         
         <dependency>
