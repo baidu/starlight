@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.baidu.cloud</groupId>
         <artifactId>starlight</artifactId>
-        <version>2022.2.1-SNAPSHOT</version>
+        <version>2022.2.2-SNAPSHOT</version>
     </parent>
     
     <artifactId>starlight-api</artifactId>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>com.baidu.cloud</groupId>
             <artifactId>spring-cloud-baidu-thirdparty-commons</artifactId>
-            <version>2022.2.0</version>
+            <version>2023.0.1-SNAPSHOT</version>
         </dependency>
         
     </dependencies>
