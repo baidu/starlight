@@ -89,6 +89,7 @@ public class NettyServer implements ServerPeer {
     public NettyServer(URI uri) {
         this.uri = uri;
         this.rpcChannels = new ConcurrentHashMap<>();
+        this.updateNettyResourceMetaHome();
     }
 
     @Override

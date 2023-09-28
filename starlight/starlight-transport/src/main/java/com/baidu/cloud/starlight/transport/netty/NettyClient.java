@@ -135,6 +135,7 @@ public class NettyClient implements ClientPeer {
 
         this.uri = uri;
         INSTANCE_SET.add(this.uri.getAddress());
+        this.updateNettyResourceMetaHome();
     }
 
     @Override

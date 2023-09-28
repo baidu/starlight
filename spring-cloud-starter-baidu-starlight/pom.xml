@@ -10,7 +10,7 @@
     
     <groupId>com.baidu.cloud</groupId>
     <artifactId>spring-cloud-starter-baidu-starlight</artifactId>
-    <version>2022.2.1-SNAPSHOT</version>
+    <version>2022.2.2-SNAPSHOT</version>
     
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Spring Cloud Starlight</description>
@@ -21,7 +21,7 @@
         <spring-cloud.version>Finchley.SR2</spring-cloud.version>
         <!-- plugin versions -->
         <powermock.version>2.0.9</powermock.version>
-        <starlight.version>2022.2.0</starlight.version>
+        <starlight.version>2022.2.2-SNAPSHOT</starlight.version>
     </properties>
     
     <dependencyManagement>

@@ -18,6 +18,10 @@ package com.baidu.cloud.starlight.api.transport;
 
 import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.rpc.Processor;
+import com.baidu.cloud.thirdparty.netty.util.internal.NativeLibraryLoader;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Network peer Created by liuruisen on 2019/11/27.
@@ -64,5 +68,25 @@ public interface Peer extends GracefullyShutdown {
      * @param status
      */
     void updateStatus(PeerStatus status);
+
+    /**
+     * starlight中使用的netty so文件与业务应用中使用的要区分开，防止业务也使用netty报错不兼容
+     * issue：https://github.com/baidu/starlight/issues/360
+     */
+    default void updateNettyResourceMetaHome() {
+        try {
+            Class loaderClass = NativeLibraryLoader.class;
+            Field homeFiled = loaderClass.getDeclaredField("NATIVE_RESOURCE_HOME");
+            homeFiled.setAccessible(true);
+            // 去除final修饰符的影响，将字段设为可修改的
+            Field modifiersField = Field.class.getDeclaredField("modifiers");
+            modifiersField.setAccessible(true);
+            modifiersField.setInt(homeFiled, homeFiled.getModifiers() & ~Modifier.FINAL);
+            // 修改字段的内容
+            homeFiled.set(null, "META-INF/native/thirdparty");
+        } catch (Throwable e) {
+            // ignore
+        }
+    }
 
 }
