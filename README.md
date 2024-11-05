@@ -23,6 +23,8 @@ minimum JDK 8
 ## License
 baidu/starlight is licensed under the Apache License 2.0
 
+![Comate PowerSource Initiative Logo](https://comate.baidu.com/images/powersource/powersource-dark-en-5.png)
+
 # 微信交流群
 添加管理员olivaw2077帮忙加群，备注starlight
 
