@@ -60,7 +60,7 @@
         <plugins>
             <plugin>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.0</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>javadoc-jar</id>
