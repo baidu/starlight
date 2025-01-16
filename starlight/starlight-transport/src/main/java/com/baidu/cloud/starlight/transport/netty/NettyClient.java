@@ -26,10 +26,12 @@ import com.baidu.cloud.starlight.api.rpc.RpcContext;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
 import com.baidu.cloud.starlight.api.transport.ClientPeer;
 import com.baidu.cloud.starlight.api.transport.PeerStatus;
-import com.baidu.cloud.starlight.api.transport.channel.RpcChannelGroup;
-import com.baidu.cloud.starlight.transport.channel.PooledRpcChannelGroup;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
+import com.baidu.cloud.starlight.api.transport.channel.RpcChannelGroup;
+import com.baidu.cloud.starlight.protocol.http.springrest.sse.SpringRestSseProtocol;
+import com.baidu.cloud.starlight.transport.channel.PooledRpcChannelGroup;
 import com.baidu.cloud.starlight.transport.channel.SingleRpcChannelGroup;
+import com.baidu.cloud.starlight.transport.concurrent.DelegateThreadFactory;
 import com.baidu.cloud.starlight.transport.utils.TimerHolder;
 import com.baidu.cloud.thirdparty.netty.bootstrap.Bootstrap;
 import com.baidu.cloud.thirdparty.netty.buffer.PooledByteBufAllocator;
@@ -53,6 +55,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -72,6 +75,8 @@ public class NettyClient implements ClientPeer {
     private URI uri;
 
     private volatile PeerStatus status;
+
+    private ThreadFactory threadFactory;
 
     // 存储NettyClient这个类的实例信息，以ip:port为key
     private static final Set<String> INSTANCE_SET = new CopyOnWriteArraySet<>();
@@ -115,32 +120,20 @@ public class NettyClient implements ClientPeer {
 
     // Uri: Ip:port + config
     public NettyClient(URI uri) {
-        if (eventLoopGroup == null) {
-            synchronized (this) {
-                if (eventLoopGroup == null) {
-                    int ioThreadNum = uri.getParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS_VALUE);
-                    int ioRatio = uri.getParameter(Constants.NETTY_IO_RATIO_KEY, Constants.DEFAULT_NETTY_IO_RATIO);
-                    if (Epoll.isAvailable()) {
-                        eventLoopGroup = new EpollEventLoopGroup(ioThreadNum,
-                            new DefaultThreadFactory(Constants.CLIENT_EPOLL_THREAD_NAME_PREFIX, true));
-                        ((EpollEventLoopGroup) eventLoopGroup).setIoRatio(ioRatio);
-                    } else {
-                        eventLoopGroup = new NioEventLoopGroup(ioThreadNum,
-                            new DefaultThreadFactory(Constants.CLIENT_NIO_THREAD_NAME_PREFIX, true));
-                        ((NioEventLoopGroup) eventLoopGroup).setIoRatio(ioRatio);
-                    }
-                }
-            }
-        }
 
         this.uri = uri;
         INSTANCE_SET.add(this.uri.getAddress());
-        this.updateNettyResourceMetaHome();
     }
 
     @Override
     public RpcChannelGroup getChannelGroup() {
         return this.rpcChannelGroup;
+    }
+
+    public RpcChannelGroup getSseChannelGroup() {
+        RpcChannelGroup singleRpcChannelGroup = new SingleRpcChannelGroup(getUri(), bootstrap);
+        singleRpcChannelGroup.init();
+        return singleRpcChannelGroup;
     }
 
     @Override
@@ -156,7 +149,17 @@ public class NettyClient implements ClientPeer {
         if (rpcChannelGroup == null) {
             throw new TransportException("RpcChannelGroup of NettyClient is null, plz check");
         }
-        RpcChannel rpcChannel = rpcChannelGroup.getRpcChannel();
+        boolean isSse = SpringRestSseProtocol.PROTOCOL_NAME.equals(request.getProtocolName());
+        // TODO 不用连接池 是不是可以的
+        RpcChannel rpcChannel = isSse ? getSseChannelGroup().getRpcChannel() : rpcChannelGroup.getRpcChannel();
+
+        // 如果是SSE，使用SSE连接池的连接，并给获取到的连接设置协议,便于解码器DecoderHandler识别协议
+        if (isSse) {
+            rpcChannel.setAttribute(Constants.PROTOCOL_ATTR_KEY, SpringRestSseProtocol.PROTOCOL_NAME);
+            callback.addRpcChannel(rpcChannel);
+            rpcChannel.setAttribute(Constants.SSE_CALLBACK_ATTR_KEY, callback);
+        }
+
         try {
             int requestTimeoutMills = Constants.REQUEST_TIMEOUT_VALUE; // default
 
@@ -187,12 +190,43 @@ public class NettyClient implements ClientPeer {
             rpcChannel.send(request); // send request
         } finally {
             // return rpc channel to reuse
-            rpcChannelGroup.returnRpcChannel(rpcChannel);
+            if (!isSse) {
+                // sse不需要在这里归还连接
+                rpcChannelGroup.returnRpcChannel(rpcChannel);
+            }
         }
     }
 
     @Override
     public void init() {
+        if (eventLoopGroup == null) {
+            synchronized (this) {
+                if (eventLoopGroup == null) {
+                    int ioThreadNum = uri.getParameter(Constants.IO_THREADS_KEY, Constants.DEFAULT_IO_THREADS_VALUE);
+                    int ioRatio = uri.getParameter(Constants.NETTY_IO_RATIO_KEY, Constants.DEFAULT_NETTY_IO_RATIO);
+                    if (Epoll.isAvailable()) {
+                        if (threadFactory == null) {
+                            eventLoopGroup =
+                                new EpollEventLoopGroup(ioThreadNum, new DefaultThreadFactory("client-epoll", true));
+                        } else {
+                            eventLoopGroup = new EpollEventLoopGroup(ioThreadNum,
+                                new DelegateThreadFactory(threadFactory, "client-epoll", true));
+                        }
+                        ((EpollEventLoopGroup) eventLoopGroup).setIoRatio(ioRatio);
+                    } else {
+                        if (threadFactory == null) {
+                            eventLoopGroup =
+                                new NioEventLoopGroup(ioThreadNum, new DefaultThreadFactory("client-nio", true));
+                        } else {
+                            eventLoopGroup = new NioEventLoopGroup(ioThreadNum,
+                                new DelegateThreadFactory(threadFactory, "client-epoll", true));
+                        }
+                        ((NioEventLoopGroup) eventLoopGroup).setIoRatio(ioRatio);
+                    }
+                }
+            }
+        }
+
         bootstrap = new Bootstrap();
         bootstrap.group(eventLoopGroup);
         if (Epoll.isAvailable()) {
@@ -365,5 +399,9 @@ public class NettyClient implements ClientPeer {
 
         LOGGER.debug("Update {} status from {} to {}", getUri().getAddress(), status, newStatus);
         this.status = newStatus;
+    }
+
+    public void setThreadFactory(ThreadFactory threadFactory) {
+        this.threadFactory = threadFactory;
     }
 }

@@ -13,8 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package com.baidu.cloud.starlight.transport.netty;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.common.URI;
@@ -26,8 +34,8 @@ import com.baidu.cloud.starlight.api.rpc.Processor;
 import com.baidu.cloud.starlight.api.transport.PeerStatus;
 import com.baidu.cloud.starlight.api.transport.ServerPeer;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
-import com.baidu.cloud.starlight.api.utils.EnvUtils;
 import com.baidu.cloud.starlight.protocol.stargate.StargateProtocol;
+import com.baidu.cloud.starlight.transport.concurrent.DelegateThreadFactory;
 import com.baidu.cloud.thirdparty.netty.bootstrap.ServerBootstrap;
 import com.baidu.cloud.thirdparty.netty.buffer.PooledByteBufAllocator;
 import com.baidu.cloud.thirdparty.netty.channel.Channel;
@@ -48,12 +56,6 @@ import com.baidu.cloud.thirdparty.netty.handler.timeout.IdleStateHandler;
 import com.baidu.cloud.thirdparty.netty.util.concurrent.DefaultThreadFactory;
 import com.baidu.cloud.thirdparty.netty.util.concurrent.EventExecutor;
 import com.baidu.cloud.thirdparty.netty.util.concurrent.GlobalEventExecutor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Created by liuruisen on 2020/2/3.
@@ -86,10 +88,11 @@ public class NettyServer implements ServerPeer {
 
     private DirectMemoryReporter reporter;
 
+    private ThreadFactory threadFactory;
+
     public NettyServer(URI uri) {
         this.uri = uri;
         this.rpcChannels = new ConcurrentHashMap<>();
-        this.updateNettyResourceMetaHome();
     }
 
     @Override
@@ -101,10 +104,18 @@ public class NettyServer implements ServerPeer {
         int ioRatio = uri.getParameter(Constants.NETTY_IO_RATIO_KEY, Constants.DEFAULT_NETTY_IO_RATIO);
 
         if (Epoll.isAvailable()) {
-            parentGroup = new EpollEventLoopGroup(acceptThreadNum,
-                new DefaultThreadFactory(Constants.SERVER_EPOLL_ACCEPT_THREAD_NAME_PREFIX, false));
-            childGroup = new EpollEventLoopGroup(ioThreadNum,
-                new DefaultThreadFactory(Constants.SERVER_EPOLL_THREAD_NAME_PREFIX, false));
+            if (threadFactory == null) {
+                parentGroup =
+                        new EpollEventLoopGroup(acceptThreadNum, new DefaultThreadFactory("server-accept", false));
+                childGroup = new EpollEventLoopGroup(ioThreadNum, new DefaultThreadFactory("server-epoll", false));
+
+            } else {
+                parentGroup = new EpollEventLoopGroup(acceptThreadNum,
+                        new DelegateThreadFactory(threadFactory, "server-accept", false));
+                childGroup = new EpollEventLoopGroup(acceptThreadNum,
+                        new DelegateThreadFactory(threadFactory, "server-epoll", false));
+            }
+
             ((EpollEventLoopGroup) parentGroup).setIoRatio(ioRatio);
             ((EpollEventLoopGroup) childGroup).setIoRatio(ioRatio);
             bootstrap.channel(EpollServerSocketChannel.class);
@@ -112,10 +123,16 @@ public class NettyServer implements ServerPeer {
             bootstrap.childOption(EpollChannelOption.EPOLL_MODE, EpollMode.EDGE_TRIGGERED);
             LOGGER.info("NettyServer use epoll mode.");
         } else {
-            parentGroup = new NioEventLoopGroup(acceptThreadNum,
-                new DefaultThreadFactory(Constants.SERVER_NIO_ACCEPT_THREAD_NAME_PREFIX, false));
-            childGroup = new NioEventLoopGroup(ioThreadNum,
-                new DefaultThreadFactory(Constants.SERVER_NIO_THREAD_NAME_PREFIX, false));
+            if (threadFactory == null) {
+                parentGroup = new NioEventLoopGroup(acceptThreadNum, new DefaultThreadFactory("server-accept", false));
+                childGroup = new NioEventLoopGroup(ioThreadNum, new DefaultThreadFactory("server-nio", false));
+            } else {
+                parentGroup = new NioEventLoopGroup(acceptThreadNum,
+                        new DelegateThreadFactory(threadFactory, "server-accept", false));
+                childGroup = new NioEventLoopGroup(acceptThreadNum,
+                        new DelegateThreadFactory(threadFactory, "server-nio", false));
+            }
+
             ((NioEventLoopGroup) parentGroup).setIoRatio(ioRatio);
             ((NioEventLoopGroup) childGroup).setIoRatio(ioRatio);
             bootstrap.channel(NioServerSocketChannel.class);
@@ -138,15 +155,16 @@ public class NettyServer implements ServerPeer {
             protected void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline().addLast(new DecoderHandler()); // inbound 1 DecoderHandler
                 if (getUri().getParameter(Constants.CONNECT_KEEPALIVE_ENABLED_KEY,
-                    Constants.CONNECT_KEEPALIVE_ENABLED_VALUE)) {
+                        Constants.CONNECT_KEEPALIVE_ENABLED_VALUE)) {
                     ch.pipeline()
-                        .addLast(new IdleStateHandler(0, 0,
-                            getUri().getParameter(Constants.ALL_IDLE_TIMEOUT_KEY, Constants.ALL_IDLE_TIMEOUT_VALUE),
-                            TimeUnit.SECONDS))
-                        .addLast(new HeartbeatHandler()); // inbound 2 heartbeatHandler
+                            .addLast(new IdleStateHandler(0, 0,
+                                    getUri().getParameter(Constants.ALL_IDLE_TIMEOUT_KEY,
+                                            Constants.ALL_IDLE_TIMEOUT_VALUE),
+                                    TimeUnit.SECONDS))
+                            .addLast(new HeartbeatHandler()); // inbound 2 heartbeatHandler
                 }
                 ch.pipeline().addLast(new RpcHandler(NettyServer.this)) // inbound 3 RpcHandler
-                    .addLast(new EncoderHandler()); // outbound EncoderHandler
+                        .addLast(new EncoderHandler()); // outbound EncoderHandler
             }
         };
         bootstrap.childHandler(initializer);
@@ -159,15 +177,15 @@ public class NettyServer implements ServerPeer {
         channelFuture.syncUninterruptibly();
         if (!channelFuture.isSuccess()) {
             throw new TransportException(TransportException.BIND_EXCEPTION,
-                "Server bind to ip {" + getUri().getHost() + "}, port {" + getUri().getPort() + "} failed",
-                channelFuture.cause());
+                    "Server bind to ip {" + getUri().getHost() + "}, port {" + getUri().getPort() + "} failed",
+                    channelFuture.cause());
         }
         LOGGER.info("Starlight server bind to ip {} port {}", getUri().getHost(), getUri().getPort());
         serverChannel = channelFuture.channel();
-        // 测试用，上线不开启
-        if (!EnvUtils.isJarvisOnline()) {
-            reporter = new DirectMemoryReporter();
-        }
+        // 测试用，上线不开启 
+        //        if (!EnvUtils.isJarvisOnline()) {
+        //            reporter = new DirectMemoryReporter();
+        //        }
         updateStatus(new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
     }
 
@@ -216,7 +234,7 @@ public class NettyServer implements ServerPeer {
                 try {
                     RpcResponse shuttingDownEvent = shuttingDownEvent(StargateProtocol.PROTOCOL_NAME);
                     Protocol protocol =
-                        ExtensionLoader.getInstance(Protocol.class).getExtension(StargateProtocol.PROTOCOL_NAME);
+                            ExtensionLoader.getInstance(Protocol.class).getExtension(StargateProtocol.PROTOCOL_NAME);
                     protocol.getEncoder().encodeBody(shuttingDownEvent);
 
                     entry.getValue().send(shuttingDownEvent);
@@ -227,7 +245,7 @@ public class NettyServer implements ServerPeer {
                 }
             }
             LOGGER.info("Notify server shutting down end, cost {} clients {}", System.currentTimeMillis() - startTime,
-                rpcChannels.size());
+                    rpcChannels.size());
 
             long shutdownTimeoutTime = System.currentTimeMillis() + timeout * 1000;
 
@@ -251,17 +269,17 @@ public class NettyServer implements ServerPeer {
 
             // execute unfinished task and wait for the timeout to arrive
             if (timeout > 0) {
-                for (;;) {
+                for (; ; ) {
                     if (pendingTaskNum().equals(0) && getProcessor().allWaitTaskCount().equals(0)) { // whether the
-                                                                                                     // requests is
-                                                                                                     // completed
+                        // requests is
+                        // completed
                         LOGGER.info("NettyServer has processed all requests, gracefully shutdown.");
                         break;
                     }
 
                     if (System.currentTimeMillis() >= shutdownTimeoutTime) {
                         LOGGER.info("NettyServer reach the maximum timeout time, force shutdown. "
-                            + "Number of unfinished request {}", getProcessor().allWaitTaskCount());
+                                + "Number of unfinished request {}", getProcessor().allWaitTaskCount());
                         break;
                     }
 
@@ -342,5 +360,9 @@ public class NettyServer implements ServerPeer {
 
         LOGGER.info("Netty pending tasks num is {}", pendingTaskNum);
         return pendingTaskNum;
+    }
+
+    public void setThreadFactory(ThreadFactory threadFactory) {
+        this.threadFactory = threadFactory;
     }
 }

@@ -18,6 +18,7 @@ package com.baidu.cloud.starlight.core.filter;
 
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.filter.Filter;
+import com.baidu.cloud.starlight.api.heartbeat.HeartbeatService;
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.rpc.Invoker;
@@ -82,6 +83,10 @@ public class ClientMonitorFilter implements Filter {
 
     // record stats
     private void recordStats(Request request, Response response) {
+        if (HeartbeatService.HEART_BEAT_SERVICE_NAME.equals(request.getServiceName())) {
+            // 心跳检测接口不参与业务统计信息的记录
+            return;
+        }
         if (request.getRemoteURI() != null && StarlightStatsManager.getStats(request.getRemoteURI()) != null) {
             LOGGER.debug("ClientMonitorFilter start record stats");
             long startTime = System.currentTimeMillis();

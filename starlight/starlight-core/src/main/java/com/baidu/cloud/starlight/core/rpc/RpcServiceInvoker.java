@@ -24,6 +24,7 @@ import com.baidu.cloud.starlight.api.model.RpcResponse;
 import com.baidu.cloud.starlight.api.rpc.RpcService;
 import com.baidu.cloud.starlight.api.rpc.ServiceInvoker;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
+import com.baidu.cloud.starlight.api.rpc.sse.RpcSseEmitter;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,7 +91,13 @@ public class RpcServiceInvoker implements ServiceInvoker {
             response.setReturnType(method.getReturnType());
             response.setGenericReturnType(method.getGenericReturnType());
 
-            callback.onResponse(response);
+            // init sseEmitter
+            if (result instanceof RpcSseEmitter) {
+                RpcSseEmitter rpcSseEmitter = (RpcSseEmitter) result;
+                rpcSseEmitter.init(callback);
+            } else {
+                callback.onResponse(response);
+            }
         } catch (Throwable e) {
             LOGGER.error("Failed to execute method " + request.getMethodName() + ", caused by ", e);
             callback.onError(convertThrowable(e));

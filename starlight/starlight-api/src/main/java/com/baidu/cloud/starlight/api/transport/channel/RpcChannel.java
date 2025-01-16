@@ -141,6 +141,13 @@ public interface RpcChannel {
     Object getAttribute(String attributeKey);
 
     /**
+     * Remove the attribute releated to the key
+     *
+     * Returns: the previous value associated with key, or null if there was no mapping for key.
+     */
+    Object removeAttribute(String attributeKey);
+
+    /**
      * Get RpcChannel linked RpcChannelGroup
      * 
      * @return

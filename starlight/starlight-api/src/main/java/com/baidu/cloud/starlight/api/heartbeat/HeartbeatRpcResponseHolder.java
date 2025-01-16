@@ -32,6 +32,7 @@ public class HeartbeatRpcResponseHolder {
         heartbeatResponse.setReturnType(Heartbeat.class);
         heartbeatResponse.setResult(new Heartbeat(Constants.PONG));
         heartbeatResponse.setProtocolName(heartbeatRequest.getProtocolName());
+        heartbeatResponse.setGenericReturnType(Heartbeat.class);
 
         return heartbeatResponse;
     }

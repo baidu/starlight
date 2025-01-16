@@ -27,6 +27,7 @@ import com.baidu.cloud.starlight.api.model.RpcResponse;
 import com.baidu.cloud.starlight.api.model.ShuttingDownEvent;
 import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.api.rpc.LocalContext;
+import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
 import com.baidu.cloud.starlight.api.transport.ClientPeer;
 import com.baidu.cloud.starlight.api.transport.Peer;
 import com.baidu.cloud.starlight.api.transport.PeerStatus;
@@ -62,7 +63,6 @@ public class RpcHandler extends SimpleChannelInboundHandler<MsgBase> {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         Channel channel = ctx.channel();
-        ThreadLocalChannelContext.getContext().setChannel(channel);
         ChannelAttribute attribute = channel.attr(RpcChannel.ATTRIBUTE_KEY).get();
         if (attribute == null && peer instanceof ServerPeer) { // server side
             RpcChannel rpcChannel = new LongRpcChannel(channel, ChannelSide.SERVER);
@@ -161,6 +161,15 @@ public class RpcHandler extends SimpleChannelInboundHandler<MsgBase> {
                 channel.id().asLongText(), channel.remoteAddress());
             // fixme Whether to reconnect
             // attribute.getRpcChannel().reconnect();
+
+            if (peer instanceof ClientPeer) {
+                // 当连接关闭的时候，需要通知一下SSEClientCallBack
+                RpcCallback sseCallBack =
+                    (RpcCallback) attribute.getRpcChannel().getAttribute(Constants.SSE_CALLBACK_ATTR_KEY);
+                if (sseCallBack != null) {
+                    sseCallBack.onError(new TransportException("Channel inactive"));
+                }
+            }
         }
 
         // remove old channel related classloader from LocalContext

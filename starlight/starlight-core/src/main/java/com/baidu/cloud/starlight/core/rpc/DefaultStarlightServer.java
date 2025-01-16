@@ -18,7 +18,6 @@ package com.baidu.cloud.starlight.core.rpc;
 
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.common.URI;
-import com.baidu.cloud.starlight.api.extension.ExtensionLoader;
 import com.baidu.cloud.starlight.api.heartbeat.HeartbeatService;
 import com.baidu.cloud.starlight.api.heartbeat.HeartbeatServiceImpl;
 import com.baidu.cloud.starlight.api.rpc.Processor;
@@ -26,18 +25,21 @@ import com.baidu.cloud.starlight.api.rpc.RpcService;
 import com.baidu.cloud.starlight.api.rpc.ServiceInvoker;
 import com.baidu.cloud.starlight.api.rpc.ServiceRegistry;
 import com.baidu.cloud.starlight.api.rpc.StarlightServer;
-import com.baidu.cloud.starlight.api.rpc.threadpool.ThreadPoolFactory;
-import com.baidu.cloud.starlight.api.utils.EnvUtils;
-import com.baidu.cloud.starlight.core.filter.FilterChain;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.api.rpc.config.TransportConfig;
 import com.baidu.cloud.starlight.api.transport.ServerPeer;
-import com.baidu.cloud.starlight.transport.StarlightTransportFactory;
 import com.baidu.cloud.starlight.api.transport.TransportFactory;
-import com.baidu.cloud.starlight.protocol.http.springrest.SpringRestHandlerMapping;
+import com.baidu.cloud.starlight.api.utils.EnvUtils;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
+import com.baidu.cloud.starlight.core.filter.FilterChain;
+import com.baidu.cloud.starlight.core.rpc.threadpool.RpcThreadPoolFactory;
+import com.baidu.cloud.starlight.protocol.http.springrest.SpringRestHandlerMapping;
+import com.baidu.cloud.starlight.transport.StarlightTransportFactory;
+import com.baidu.cloud.starlight.transport.netty.NettyServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by liuruisen on 2020/1/13.
@@ -50,7 +52,38 @@ public class DefaultStarlightServer implements StarlightServer {
 
     private URI uri;
 
+    private String protocol;
+
+    private String host;
+
+    private Integer port;
+
+    private TransportConfig transportConfig;
+
+    private ThreadFactory threadFactory;
+
+    public DefaultStarlightServer(String protocol, String host, Integer port, TransportConfig transportConfig,
+        ThreadFactory threadFactory) {
+        this.protocol = protocol;
+        this.host = host;
+        this.port = port;
+        this.transportConfig = transportConfig;
+        this.threadFactory = threadFactory;
+    }
+
     public DefaultStarlightServer(String protocol, String host, Integer port, TransportConfig transportConfig) {
+        this(protocol, host, port, transportConfig, null);
+    }
+
+    public DefaultStarlightServer(String host, Integer port, TransportConfig transportConfig) {
+        this(null, host, port, transportConfig);
+    }
+
+    /**
+     * 构造函数中的初始化逻辑移到 init() 方法
+     */
+    @Override
+    public void init() {
         if (StringUtils.isBlank(protocol)) {
             this.uri = assembleUri(null, host, port, transportConfig);
         } else {
@@ -58,29 +91,49 @@ public class DefaultStarlightServer implements StarlightServer {
         }
         TransportFactory transportFactory = new StarlightTransportFactory();
         this.serverPeer = transportFactory.server(uri);
-    }
 
-    public DefaultStarlightServer(String host, Integer port, TransportConfig transportConfig) {
-        this.uri = assembleUri(null, host, port, transportConfig);
-        TransportFactory transportFactory = new StarlightTransportFactory();
-        this.serverPeer = transportFactory.server(uri);
-    }
-
-    @Override
-    public void init() {
+        if (threadFactory != null) {
+            ((NettyServer) this.serverPeer).setThreadFactory(threadFactory);
+        }
         // <1> Processor
-        String bizThreadPoolName = uri.getParameter(Constants.BIZ_THREAD_POOL_NAME_KEY);
-        ThreadPoolFactory threadPoolFactory =
-            ExtensionLoader.getInstance(ThreadPoolFactory.class).getExtension(bizThreadPoolName);
-        threadPoolFactory.initDefaultThreadPool(uri, Constants.SERVER_BIZ_THREAD_NAME_PREFIX);
-        Processor processor = new ServerProcessor(RpcServiceRegistry.getInstance(), threadPoolFactory);
+        int maxBizWorkerNum =
+            uri.getParameter(Constants.MAX_BIZ_WORKER_NUM_KEY, Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
+        Processor processor = new ServerProcessor(RpcServiceRegistry.getInstance(),
+            new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE, maxBizWorkerNum, "s")); // s:server
         // <3> init ServerPeer
         serverPeer.init();
         serverPeer.setProcessor(processor);
         // export heartbeat service
         ServiceConfig serviceConfig = new ServiceConfig();
-        serviceConfig.setFilters(""); // no filter
+        serviceConfig.setFilters("servermonitor"); // traceID and log record
         export(HeartbeatService.class, new HeartbeatServiceImpl(), serviceConfig);
+    }
+
+    /**
+     * CRaC Restore 场景重启 Server
+     * 少了 export HeartbeatService 部分逻辑:
+     * export HeartbeatService 管理本地数据结构，之前讨论过，Checkpoint 和 Restore 时对本地数据结构不做干预
+     */
+    public void restart() {
+        if (StringUtils.isBlank(protocol)) {
+            this.uri = assembleUri(null, host, this.port, transportConfig);
+        } else {
+            this.uri = assembleUri(protocol, host, this.port, transportConfig);
+        }
+        TransportFactory transportFactory = new StarlightTransportFactory();
+        this.serverPeer = transportFactory.server(uri);
+
+        if (threadFactory != null) {
+            ((NettyServer) this.serverPeer).setThreadFactory(threadFactory);
+        }
+        // <1> Processor
+        int maxBizWorkerNum =
+                uri.getParameter(Constants.MAX_BIZ_WORKER_NUM_KEY, Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
+        Processor processor = new ServerProcessor(RpcServiceRegistry.getInstance(),
+                new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE, maxBizWorkerNum, "s")); // s:server
+        // <3> init ServerPeer
+        serverPeer.init();
+        serverPeer.setProcessor(processor);
     }
 
     @Override
@@ -100,8 +153,6 @@ public class DefaultStarlightServer implements StarlightServer {
                 serverPeer.close();
             }
         }
-        ServiceRegistry serviceRegistry = RpcServiceRegistry.getInstance();
-        serviceRegistry.destroy();
     }
 
     @Override
@@ -192,13 +243,15 @@ public class DefaultStarlightServer implements StarlightServer {
             config.getBizWorkThreadNum() == null ? maxBizThreadNum() : config.getBizWorkThreadNum());
         uriBuilder.param(Constants.NETTY_IO_RATIO_KEY,
             config.getIoRatio() == null ? Constants.DEFAULT_NETTY_IO_RATIO : config.getIoRatio());
-        uriBuilder.param(Constants.BIZ_THREAD_POOL_NAME_KEY, StringUtils.isEmpty(config.getBizThreadPoolName())
-            ? Constants.DEFAULT_BIZ_THREAD_POOL_NAME : config.getBizThreadPoolName());
         return uriBuilder.build();
     }
 
     private int maxBizThreadNum() {
         int maxBizWorkerNum = EnvUtils.getContainerThreadNum(Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
         return maxBizWorkerNum;
+    }
+
+    public void setPort(Integer port) {
+        this.port = port;
     }
 }

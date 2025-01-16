@@ -21,6 +21,7 @@ import com.baidu.cloud.starlight.serialization.serializer.model.User;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -219,6 +220,21 @@ public class JsonSerializerTest {
         public void setData(T data) {
             this.data = data;
         }
+    }
+
+    @Test
+    public void testLocalDateTime() {
+        User user = new User();
+        LocalDateTime birthDay = LocalDateTime.now();
+        user.setBirthDay(birthDay);
+
+        byte[] data = jsonSerializer.serialize(user, User.class);
+        Assert.assertNotNull(data);
+
+        User deserializeUser = (User) jsonSerializer.deserialize(data, User.class);
+        Assert.assertNotNull(deserializeUser);
+        Assert.assertNotNull(deserializeUser.getBirthDay());
+        Assert.assertEquals(deserializeUser.getBirthDay(), birthDay);
     }
 
 }

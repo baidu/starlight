@@ -118,7 +118,7 @@ public abstract class HttpEncoder implements ProtocolEncoder {
      * @param response
      * @return
      */
-    private ByteBuf encodeResponse(Response response) {
+    protected ByteBuf encodeResponse(Response response) {
         if (response.getResult() == null || !(response.getResult() instanceof FullHttpResponse)) {
             throw new CodecException(CodecException.PROTOCOL_ENCODE_EXCEPTION,
                 "RpcResponse have not been converted to HttpResponse, please check");
@@ -175,7 +175,7 @@ public abstract class HttpEncoder implements ProtocolEncoder {
         request.setParams(new Object[] {httpRequest});
     }
 
-    private void encodeResponseBody(Response response) {
+    protected void encodeResponseBody(Response response) {
         FullHttpResponse httpResponse = convertResponse(response);
         /**
          * EncodeResponseBody only serialize body an encode Response to FullHttpResponse. So we fill response result

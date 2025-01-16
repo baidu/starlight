@@ -32,6 +32,7 @@ public class HeartbeatRpcRequestHolder {
         heartbeatRequest.setParamsTypes(new Class[] {Heartbeat.class});
         heartbeatRequest.setProtocolName(Constants.BRPC_VALUE);
         heartbeatRequest.setReturnType(Heartbeat.class);
+        heartbeatRequest.setGenericReturnType(Heartbeat.class);
 
         return heartbeatRequest;
     }

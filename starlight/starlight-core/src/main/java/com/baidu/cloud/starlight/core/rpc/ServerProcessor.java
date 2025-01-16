@@ -18,13 +18,11 @@ package com.baidu.cloud.starlight.core.rpc;
 
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.exception.CodecException;
-import com.baidu.cloud.starlight.api.exception.RpcException;
 import com.baidu.cloud.starlight.api.exception.StarlightRpcException;
 import com.baidu.cloud.starlight.api.extension.ExtensionLoader;
 import com.baidu.cloud.starlight.api.model.MsgBase;
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
-import com.baidu.cloud.starlight.api.model.RpcResponse;
 import com.baidu.cloud.starlight.api.rpc.Processor;
 import com.baidu.cloud.starlight.api.rpc.RpcService;
 import com.baidu.cloud.starlight.api.rpc.ServiceInvoker;
@@ -36,6 +34,9 @@ import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.api.utils.GenericUtil;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
+import com.baidu.cloud.starlight.core.rpc.callback.InvokeCallBack;
+import com.baidu.cloud.starlight.core.rpc.callback.SseServerCallBack;
+import com.baidu.cloud.starlight.protocol.http.springrest.sse.SpringRestSseProtocol;
 import com.baidu.cloud.starlight.transport.utils.TimerHolder;
 import com.baidu.cloud.thirdparty.netty.util.Timeout;
 import com.baidu.cloud.thirdparty.netty.util.TimerTask;
@@ -43,6 +44,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.util.Objects;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -78,80 +80,8 @@ public class ServerProcessor implements Processor {
 
         Request request = (Request) msgBase;
         // construct callback
-        RpcCallback callback = new RpcCallback() {
-            private Timeout timeout;
-
-            private volatile boolean isExecuted = false;
-
-            @Override
-            public void onResponse(Response response) { // service execute return object
-                if (timeout != null && !timeout.isCancelled()) {
-                    timeout.cancel();
-                }
-                if (!isExecuted) {
-                    isExecuted = true;
-                    response.setRequest(request);
-                    // serialize result body
-                    Protocol protocol =
-                        ExtensionLoader.getInstance(Protocol.class).getExtension(request.getProtocolName());
-
-                    // encode body
-                    long beforeTime = System.currentTimeMillis();
-                    LogUtils.addLogTimeAttachment(response, Constants.BEFORE_ENCODE_BODY_TIME_KEY, beforeTime);
-                    protocol.getEncoder().encodeBody(response);
-                    LogUtils.addLogTimeAttachment(response, Constants.ENCODE_BODY_COST,
-                        System.currentTimeMillis() - beforeTime);
-
-                    // send msg
-                    LogUtils.addLogTimeAttachment(response, Constants.BEFORE_IO_THREAD_EXECUTE_TIME_KEY,
-                        System.currentTimeMillis());
-                    context.send(response);
-                }
-            }
-
-            @Override
-            public void onError(Throwable e) { // service execute throw exception
-                if (timeout != null && !timeout.isCancelled()) {
-                    timeout.cancel();
-                }
-                if (!isExecuted) {
-                    isExecuted = true;
-                    Response response = new RpcResponse(request.getId());
-                    response.setProtocolName(request.getProtocolName());
-                    if (e instanceof RpcException) {
-                        response.setStatus(((RpcException) e).getCode());
-                    } else {
-                        response.setStatus(StarlightRpcException.INTERNAL_SERVER_ERROR);
-                    }
-                    response.setErrorMsg(e.getMessage());
-                    response.setRequest(request); // store as context
-                    Protocol protocol =
-                        ExtensionLoader.getInstance(Protocol.class).getExtension(request.getProtocolName());
-
-                    // encode body
-                    long beforeTime = System.currentTimeMillis();
-                    LogUtils.addLogTimeAttachment(response, Constants.BEFORE_ENCODE_BODY_TIME_KEY, beforeTime);
-                    protocol.getEncoder().encodeBody(response);
-                    LogUtils.addLogTimeAttachment(response, Constants.ENCODE_BODY_COST,
-                        System.currentTimeMillis() - beforeTime);
-
-                    // send msg
-                    LogUtils.addLogTimeAttachment(response, Constants.BEFORE_IO_THREAD_EXECUTE_TIME_KEY,
-                        System.currentTimeMillis());
-                    context.send(response);
-                }
-            }
-
-            @Override
-            public void addTimeout(Timeout timeout) {
-                this.timeout = timeout;
-            }
-
-            @Override
-            public Request getRequest() {
-                return request;
-            }
-        };
+        RpcCallback callback = Objects.equals(request.getProtocolName(), SpringRestSseProtocol.PROTOCOL_NAME)
+            ? new SseServerCallBack(request, context) : new InvokeCallBack(request, context);
 
         // service check
         ServiceInvoker serviceInvoker = serviceRegistry.discover(request.getServiceName());
@@ -223,7 +153,7 @@ public class ServerProcessor implements Processor {
 
     @Override
     public Integer allWaitTaskCount() {
-        ThreadPoolExecutor defaultThreadPool = threadPoolFactory.defaultThreadPool();
+        ThreadPoolExecutor defaultThreadPool = threadPoolFactory.getThreadPool();
         Integer allWaitTaskCount = defaultThreadPool.getQueue().size() // wait task
             + defaultThreadPool.getActiveCount(); // not complete task
 

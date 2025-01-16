@@ -28,7 +28,7 @@ public interface Compress {
      *
      * @param inputByte
      * @return
-     * @throws CodecException
+     * @throws Exception
      */
     byte[] compress(byte[] inputByte) throws CodecException;
 
@@ -37,7 +37,7 @@ public interface Compress {
      *
      * @param inputByte
      * @return
-     * @throws CodecException
+     * @throws Exception
      */
     byte[] decompress(byte[] inputByte) throws CodecException;
 }

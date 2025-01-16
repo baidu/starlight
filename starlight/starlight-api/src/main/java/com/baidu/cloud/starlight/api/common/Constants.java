@@ -222,16 +222,6 @@ public class Constants {
     public static final String SESSION_ID_KEY = "session.id";
 
     /**
-     * biz thread pool name key, use spi to create ThreadPoolFactory
-     */
-    public static final String BIZ_THREAD_POOL_NAME_KEY = "biz_thread_pool_name";
-
-    /**
-     * default biz thread pool name, use spi to create ThreadPoolFactory
-     */
-    public static final String DEFAULT_BIZ_THREAD_POOL_NAME = "rpc";
-
-    /**
      * Default thread pool size
      */
     public static final Integer DEFAULT_BIZ_THREAD_POOL_SIZE = Math.min(EnvUtils.getCpuCores() + 1, 32);
@@ -352,12 +342,12 @@ public class Constants {
     public static final String LOCALHOST_VALUE = "127.0.0.1";
 
     /**
-     * Generic Key, support Starlight Client to generic call to stargate server
+     * Generic Key, used in stargate protocol support Starlight Client ---> generic call ----> stargate server
      */
     public static final String GENERIC_KEY = "generic";
 
     /**
-     * Stargate uuid, used in stargate protocol support stargate Client call to starlight server
+     * Stargate uuid, used in stargate protocol support stargate Client ---> call ----> starlight server
      */
     public static final String STARGATE_UUID = "stargate.id";
 
@@ -585,24 +575,17 @@ public class Constants {
     public static final String STARGATE_REQUEST_ID_KEY = "stargate.rid";
 
     /**
-     * s means server side
+     * sse call back attribute key
      */
-    public static final String SERVER_BIZ_THREAD_NAME_PREFIX = "star-s-biz";
+    public static final String SSE_CALLBACK_ATTR_KEY = "sse_callback";
 
     /**
-     * c means client side
+     * sse embedded channel attribute key
      */
-    public static final String CLIENT_BIZ_THREAD_NAME_PREFIX = "star-c-biz";
+    public static final String SSE_EMBEDDED_CHANNEL_KEY = "sse_embedded_channel";
 
-    public static final String CLIENT_NIO_THREAD_NAME_PREFIX = "star-c-nio";
-
-    public static final String CLIENT_EPOLL_THREAD_NAME_PREFIX = "star-c-epoll";
-
-    public static final String SERVER_NIO_THREAD_NAME_PREFIX = "star-s-nio";
-
-    public static final String SERVER_EPOLL_THREAD_NAME_PREFIX = "star-s-epoll";
-
-    public static final String SERVER_EPOLL_ACCEPT_THREAD_NAME_PREFIX = "star-s-epoll-accept";
-
-    public static final String SERVER_NIO_ACCEPT_THREAD_NAME_PREFIX = "star-s-nio-accept";
+    /**
+     * sse call back request id
+     */
+    public static final String SSE_REQUEST_ID_KEY = "sse_requset_id";
 }

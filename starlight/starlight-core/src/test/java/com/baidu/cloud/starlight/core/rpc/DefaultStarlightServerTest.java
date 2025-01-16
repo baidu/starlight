@@ -16,12 +16,9 @@
  
 package com.baidu.cloud.starlight.core.rpc;
 
-import com.baidu.cloud.starlight.api.heartbeat.HeartbeatService;
 import com.baidu.cloud.starlight.api.rpc.RpcService;
-import com.baidu.cloud.starlight.api.rpc.ServiceRegistry;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.api.rpc.config.TransportConfig;
-import com.baidu.cloud.starlight.core.integrate.service.AsyncUserService;
 import com.baidu.cloud.starlight.core.integrate.service.UserService;
 import com.baidu.cloud.starlight.core.integrate.service.UserServiceImpl;
 import com.baidu.cloud.starlight.api.transport.ServerPeer;
@@ -38,12 +35,22 @@ import java.util.concurrent.TimeUnit;
  */
 public class DefaultStarlightServerTest {
 
+    private DefaultStarlightServer starlightServer;
+
+    @Before
+    public void before() {
+        TransportConfig transportConfig = new TransportConfig();
+        transportConfig.setAcceptThreadNum(1);
+        transportConfig.setIoThreadNum(2);
+        transportConfig.setAllIdleTimeout(100);
+        transportConfig.setConnectTimeoutMills(1000);
+        transportConfig.setWriteTimeoutMills(1000);
+        starlightServer = new DefaultStarlightServer("brpc", "localhost", 8005, transportConfig);
+    }
+
     @Test
     public void init() throws NoSuchFieldException, IllegalAccessException {
-        DefaultStarlightServer starlightServer =
-            new DefaultStarlightServer("brpc", "localhost", 8005, new TransportConfig());
         starlightServer.init();
-        starlightServer.unexport(HeartbeatService.class); // 排除并发单测时的干扰
         Field field = starlightServer.getClass().getDeclaredField("serverPeer");
         field.setAccessible(true);
         ServerPeer serverPeer = (ServerPeer) field.get(starlightServer);
@@ -54,11 +61,9 @@ public class DefaultStarlightServerTest {
 
     @Test
     public void serve() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
-        DefaultStarlightServer starlightServer =
-            new DefaultStarlightServer("brpc", "localhost", 8005, new TransportConfig());
         starlightServer.init();
-        starlightServer.unexport(HeartbeatService.class); // 排除并发单测时的干扰
         starlightServer.serve();
+
         Field field = starlightServer.getClass().getDeclaredField("serverPeer");
         field.setAccessible(true);
         ServerPeer serverPeer = (ServerPeer) field.get(starlightServer);
@@ -73,11 +78,7 @@ public class DefaultStarlightServerTest {
 
     @Test
     public void export() {
-        DefaultStarlightServer starlightServer =
-            new DefaultStarlightServer("brpc", "localhost", 8005, new TransportConfig());
         starlightServer.init();
-        starlightServer.unexport(HeartbeatService.class); // 排除并发单测时的干扰
-        starlightServer.unexport(UserService.class); // 排除并发单测时的干扰
         starlightServer.export(UserService.class, new UserServiceImpl());
         RpcService rpcService = new RpcService(UserService.class, new UserServiceImpl());
         Assert.assertNotNull(RpcServiceRegistry.getInstance().discover(rpcService.getServiceName()));
@@ -85,17 +86,21 @@ public class DefaultStarlightServerTest {
     }
 
     @Test
-    public void unexport() {
-        DefaultStarlightServer starlightServer =
-            new DefaultStarlightServer("brpc", "localhost", 8005, new TransportConfig());
+    public void testExport() {
+        ServiceConfig serviceConfig = new ServiceConfig();
+        serviceConfig.setThreadPoolSize(1);
         starlightServer.init();
-        starlightServer.unexport(HeartbeatService.class); // 排除并发单测时的干扰
-        starlightServer.unexport(AsyncUserService.class); // 排除并发单测时的干扰
-        starlightServer.export(AsyncUserService.class, new UserServiceImpl());
-        RpcService rpcService = new RpcService(AsyncUserService.class, new UserServiceImpl());
+        starlightServer.export(UserService.class, new UserServiceImpl(), serviceConfig);
+        RpcService rpcService = new RpcService(UserService.class, new UserServiceImpl(), serviceConfig);
+        Assert.assertNotNull(RpcServiceRegistry.getInstance().discover(rpcService.getServiceName()));
+    }
+
+    @Test
+    public void unexport() {
+        starlightServer.export(UserService.class, new UserServiceImpl());
+        RpcService rpcService = new RpcService(UserService.class, new UserServiceImpl());
         Assert.assertNotNull(RpcServiceRegistry.getInstance().discover(rpcService.getServiceName()));
         starlightServer.unexport(rpcService);
         Assert.assertNull(RpcServiceRegistry.getInstance().discover(rpcService.getServiceName()));
-        starlightServer.destroy();
     }
 }

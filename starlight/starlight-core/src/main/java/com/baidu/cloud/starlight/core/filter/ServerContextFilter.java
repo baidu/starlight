@@ -26,6 +26,8 @@ import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.baidu.cloud.starlight.protocol.http.AbstractHttpProtocol.X_STARLIGHT_ID;
+
 /**
  * Created by liuruisen on 2020/9/2.
  */
@@ -60,6 +62,7 @@ public class ServerContextFilter implements Filter {
             RpcContext.getContext().remove(Constants.SERIALIZER_MODE_KEY);
             RpcContext.getContext().remove(Constants.REQUEST_TIMEOUT_KEY);
             RpcContext.getContext().remove(Constants.BEFORE_ENCODE_HEADER_TIME_KEY);
+            RpcContext.getContext().remove(X_STARLIGHT_ID);
             LOGGER.debug("Server RpcContext values in thread {} is {}", Thread.currentThread().getName(),
                 RpcContext.getContext().get());
         } catch (Throwable e) {

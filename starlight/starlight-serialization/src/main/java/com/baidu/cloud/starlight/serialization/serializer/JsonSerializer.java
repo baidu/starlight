@@ -24,6 +24,7 @@ import com.baidu.cloud.thirdparty.jackson.databind.JavaType;
 import com.baidu.cloud.thirdparty.jackson.databind.ObjectMapper;
 import com.baidu.cloud.thirdparty.jackson.databind.SerializationFeature;
 import com.baidu.cloud.thirdparty.jackson.databind.type.TypeFactory;
+import com.baidu.cloud.thirdparty.jackson.datatype.jsr310.JavaTimeModule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,6 +53,7 @@ public class JsonSerializer implements Serializer {
         // 取消时间的转化格式,默认是时间戳,可以取消,同时需要设置要表现的时间格式
         OBJECT_MAPPER.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         OBJECT_MAPPER.setDateFormat(new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"));
+        OBJECT_MAPPER.registerModule(new JavaTimeModule());
     }
 
     @Override

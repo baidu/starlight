@@ -70,7 +70,8 @@ public abstract class HttpDecoder implements ProtocolDecoder {
             embeddedChannel.writeInbound(byteBuf);
             httpMessage = embeddedChannel.readInbound();
             if (httpMessage == null || !httpMessage.decoderResult().isSuccess()) {
-                LOGGER.debug("Cannot use Http protocol to decode: decoded result is null or failed");
+                LOGGER.debug("Cannot use Http protocol to decode: ",
+                        httpMessage == null ? "result is null" : "result failed " + httpMessage.decoderResult());
                 throw new CodecException(CodecException.PROTOCOL_DECODE_NOTMATCH_EXCEPTION,
                     "Cannot use Http protocol to decode: decoded result is null");
             }
@@ -165,7 +166,7 @@ public abstract class HttpDecoder implements ProtocolDecoder {
         }
     }
 
-    private void decodeResponseBody(Response response) {
+    protected void decodeResponseBody(Response response) {
         // TODO generic call
         if (response.getBodyBytes() == null) {
             return;

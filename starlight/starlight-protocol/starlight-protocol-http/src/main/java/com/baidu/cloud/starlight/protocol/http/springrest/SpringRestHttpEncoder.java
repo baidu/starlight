@@ -26,6 +26,7 @@ import com.baidu.cloud.starlight.api.model.RpcRequest;
 import com.baidu.cloud.starlight.api.utils.GenericUtil;
 import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.protocol.http.HttpEncoder;
+import com.baidu.cloud.thirdparty.apache.commons.lang3.StringUtils;
 import com.baidu.cloud.thirdparty.feign.Feign;
 import com.baidu.cloud.thirdparty.feign.MethodMetadata;
 import com.baidu.cloud.thirdparty.feign.RequestTemplate;
@@ -42,14 +43,17 @@ import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderValues;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpMethod;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpVersion;
 import com.baidu.cloud.thirdparty.springframework.http.MediaType;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.ModelAttribute;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.condition.ProducesRequestCondition;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.RequestMappingInfo;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 /**
  * HttpDecoder that can encode {@link RpcRequest} to {@link FullHttpRequest} in accordance with spring-mvc annotation.
@@ -112,8 +116,14 @@ public class SpringRestHttpEncoder extends HttpEncoder {
         for (MethodMetadata metadata : methodMetadatas) {
             RequestTemplateGenerator generator = null;
             if (metadata.bodyIndex() != null) {
-                generator = new RequestTemplateGenerator(metadata, new EncodedRequestTemplateArgsResolver(
-                    new FieldQueryMapEncoder(), Target.EmptyTarget.create(serviceClass), protocol.getSerialize()));
+                if (isFormData(metadata)) {
+                    generator = new RequestTemplateGenerator(metadata, new FormRequestTemplateArgsResolver(
+                        new FieldQueryMapEncoder(), Target.EmptyTarget.create(serviceClass)));
+                } else {
+                    generator = new RequestTemplateGenerator(metadata, new EncodedRequestTemplateArgsResolver(
+                        new FieldQueryMapEncoder(), Target.EmptyTarget.create(serviceClass), protocol.getSerialize()));
+                }
+
             } else {
                 generator =
                     new RequestTemplateGenerator(metadata, new RequestTemplateArgsResolver(new FieldQueryMapEncoder(),
@@ -152,10 +162,19 @@ public class SpringRestHttpEncoder extends HttpEncoder {
         httpRequest.headers().add(SpringRestProtocol.X_STARLIGHT_ID, request.getId());
         httpRequest.headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
 
+        FullHttpRequest finalHttpRequest = httpRequest;
+        Function<String, Boolean> findRepeatHeaderFunc = (newHeaderKey) ->
+                finalHttpRequest.headers()
+                        .names()
+                        .stream()
+                        .filter(name -> StringUtils.equalsAnyIgnoreCase(name, newHeaderKey))
+                        .findAny()
+                        .isPresent();
+
         // request kvAttachment
         if (request.getAttachmentKv() != null) {
             for (Map.Entry<String, Object> kv : request.getAttachmentKv().entrySet()) {
-                if (kv.getKey() != null && kv.getValue() != null) {
+                if (kv.getKey() != null && kv.getValue() != null && !findRepeatHeaderFunc.apply(kv.getKey())) {
                     httpRequest.headers().add(kv.getKey(), kv.getValue());
                 }
             }
@@ -165,7 +184,9 @@ public class SpringRestHttpEncoder extends HttpEncoder {
         // feignRequest headers
         if (feignRequest.headers().size() > 0) {
             for (Map.Entry<String, Collection<String>> header : feignRequest.headers().entrySet()) {
-                httpRequest.headers().add(header.getKey(), header.getValue());
+                if (!findRepeatHeaderFunc.apply(header.getKey())) {
+                    httpRequest.headers().add(header.getKey(), header.getValue());
+                }
             }
         }
 
@@ -213,5 +234,24 @@ public class SpringRestHttpEncoder extends HttpEncoder {
         } else { // default is application/json
             return HttpHeaderValues.APPLICATION_JSON.toString();
         }
+    }
+
+    private boolean isFormData(MethodMetadata metadata) {
+
+        Annotation[][] parameterAnnotations = metadata.method().getParameterAnnotations();
+        if (parameterAnnotations != null) {
+            for (Annotation[] annotations : parameterAnnotations) {
+                if (annotations == null) {
+                    continue;
+                }
+                for (Annotation annotation : annotations) {
+                    boolean match = ModelAttribute.class.isAssignableFrom(annotation.getClass());
+                    if (match) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

@@ -16,7 +16,6 @@
  
 package com.baidu.cloud.starlight.api.rpc.threadpool;
 
-import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.rpc.Processor;
 import com.baidu.cloud.starlight.api.rpc.RpcService;
 
@@ -28,15 +27,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 public interface ThreadPoolFactory {
 
     /**
-     * init default thread pool
-     *
-     * @param uri have thread pool config
-     * @param threadPrefix thread name prefix
-     */
-    void initDefaultThreadPool(URI uri, String threadPrefix);
-
-    /**
-     * Get or create ThreadPool for service(interface). If no thread pool is specified, the default thread pool is
+     * Get or create ThreadPool for <param>serviceKey<param/> If no thread pool is specified, the default thread pool is
      * returned
      * 
      * @param rpcService
@@ -49,11 +40,10 @@ public interface ThreadPoolFactory {
      * 
      * @return
      */
-    ThreadPoolExecutor defaultThreadPool();
+    ThreadPoolExecutor getThreadPool();
 
     /**
-     * Close the thread pool factory Resource clear，clear the task and close the thread pool only close service thread
-     * pool(do not close defaultThreadPool)
+     * Close the thread pool factory Resource clear，clear the task and close the thread pool
      */
     void close();
 
