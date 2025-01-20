@@ -18,6 +18,7 @@ package com.baidu.cloud.starlight.api.rpc.callback;
 
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
+import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.thirdparty.netty.util.Timeout;
 
 /**
@@ -26,15 +27,19 @@ import com.baidu.cloud.thirdparty.netty.util.Timeout;
 public interface RpcCallback extends Callback<Response> {
     /**
      * Timeout will be set by Invoker
-     * 
+     *
      * @param timeout
      */
     void addTimeout(Timeout timeout);
 
     /**
      * Get Request of the Callback
-     * 
+     *
      * @return
      */
     Request getRequest();
+
+    default void addRpcChannel(RpcChannel rpcChannel) {
+        throw new UnsupportedOperationException();
+    }
 }

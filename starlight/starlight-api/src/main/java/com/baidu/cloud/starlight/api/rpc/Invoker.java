@@ -21,8 +21,6 @@ import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
 import com.baidu.cloud.starlight.api.transport.ClientPeer;
 import com.baidu.cloud.starlight.api.serialization.serializer.Serializer;
 
-import java.lang.reflect.Type;
-
 /**
  * Invoker, invoke the rpc call and handle exceptions There are two types: Client and Server. Created by liuruisen on
  * 2019/12/18.
@@ -31,12 +29,12 @@ public interface Invoker {
     /**
      * Invoke on the client or server side. Async call.
      * <p>
-     * <b>Client side</b> Pack and {@link Serializer#serialize(Object, Type)} message. Delegate {@link ClientPeer} to
+     * <b>Client side</b> Pack and {@link Serializer#serialize(Object, Class)} message. Delegate {@link ClientPeer} to
      * implement real communication.
      * </p>
      *
      * <p>
-     * <b>Server side</b> Unpack and {@link Serializer#deserialize(byte[], Type)} message. Invoke the real method by
+     * <b>Server side</b> Unpack and {@link Serializer#deserialize(byte[], Class)} message. Invoke the real method by
      * java reflection.
      * </p>
      *

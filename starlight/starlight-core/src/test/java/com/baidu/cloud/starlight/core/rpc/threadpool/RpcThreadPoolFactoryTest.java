@@ -17,18 +17,13 @@
 package com.baidu.cloud.starlight.core.rpc.threadpool;
 
 import com.baidu.cloud.starlight.api.common.Constants;
-import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.rpc.RpcService;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.core.integrate.service.UserService;
 import com.baidu.cloud.starlight.core.integrate.service.UserServiceImpl;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
 /**
@@ -36,16 +31,8 @@ import java.util.concurrent.ThreadPoolExecutor;
  */
 public class RpcThreadPoolFactoryTest {
 
-    private RpcThreadPoolFactory rpcThreadPoolFactory;
-
-    @Before
-    public void before() {
-        Map<String, String> parameters = new HashMap<>();
-        parameters.put(Constants.MAX_BIZ_WORKER_NUM_KEY, String.valueOf(Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE));
-        URI uri = new URI("protocol", "username", "password", "host", 0, "path", parameters);
-        rpcThreadPoolFactory = new RpcThreadPoolFactory();
-        rpcThreadPoolFactory.initDefaultThreadPool(uri, "test");
-    }
+    private RpcThreadPoolFactory rpcThreadPoolFactory = new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE,
+        Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE, "r");
 
     @Test
     public void getThreadPool() {
@@ -58,12 +45,13 @@ public class RpcThreadPoolFactoryTest {
         serviceConfig.setMaxRunnableQueueSize(100);
         rpcService.setServiceConfig(serviceConfig);
         ThreadPoolExecutor poolExecutor2 = rpcThreadPoolFactory.getThreadPool(rpcService);
-        Assert.assertEquals(Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE.intValue(), poolExecutor2.getMaximumPoolSize());
+        Assert.assertTrue(poolExecutor2.getCorePoolSize() == 1);
+        Assert.assertTrue(poolExecutor2.getMaximumPoolSize() == 3);
     }
 
     @Test
     public void testGetThreadPool() {
-        ThreadPoolExecutor poolExecutor = rpcThreadPoolFactory.defaultThreadPool();
+        ThreadPoolExecutor poolExecutor = rpcThreadPoolFactory.getThreadPool();
         Assert.assertEquals(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE.intValue(), poolExecutor.getCorePoolSize());
         Assert.assertEquals(Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE.intValue(), poolExecutor.getMaximumPoolSize());
     }

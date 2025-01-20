@@ -22,10 +22,14 @@ import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.ResultFuture;
 import com.baidu.cloud.starlight.api.model.RpcRequest;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
+import com.baidu.cloud.starlight.api.rpc.sse.RpcSseEmitter;
 import com.baidu.cloud.starlight.core.rpc.callback.BizWrapCallback;
 import com.baidu.cloud.starlight.api.rpc.callback.Callback;
 import com.baidu.cloud.starlight.core.rpc.callback.FutureCallback;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
+import com.baidu.cloud.starlight.core.rpc.callback.SseClientCallBack;
+import com.baidu.cloud.starlight.core.rpc.sse.StarlightClientSseEmitter;
+import com.baidu.cloud.starlight.protocol.http.springrest.sse.SpringRestSseProtocol;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -72,6 +76,13 @@ public class JdkInvocationHandler implements InvocationHandler {
             rpcCallback = new BizWrapCallback(bizCallBack, request);
             client.request(request, rpcCallback);
             return null;
+        } else if (RpcSseEmitter.class.isAssignableFrom(resultType)) {
+            request = buildRequest(targetMethod(method), args);
+            request.setProtocolName(SpringRestSseProtocol.PROTOCOL_NAME);
+            StarlightClientSseEmitter clientSseEmitter = new StarlightClientSseEmitter(request);
+            rpcCallback = new SseClientCallBack(clientSseEmitter, request);
+            client.request(request, rpcCallback);
+            return clientSseEmitter;
         } else {
             request = buildRequest(targetMethod(method), args);
             ResultFuture resultFuture = new ResultFuture();
@@ -148,7 +159,7 @@ public class JdkInvocationHandler implements InvocationHandler {
 
     /**
      * 判断本方法是否是异步方法
-     * 
+     *
      * @param proxyMethod 未进行最终同步方法转换前的方法
      * @return
      */

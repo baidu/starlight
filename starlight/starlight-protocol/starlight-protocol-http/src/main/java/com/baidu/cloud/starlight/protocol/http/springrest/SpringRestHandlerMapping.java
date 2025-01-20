@@ -17,6 +17,7 @@
 package com.baidu.cloud.starlight.protocol.http.springrest;
 
 import com.baidu.cloud.starlight.api.model.RpcRequest;
+import com.baidu.cloud.thirdparty.servlet.http.HttpServletRequest;
 import com.baidu.cloud.thirdparty.servlet.http.HttpServletResponse;
 import com.baidu.cloud.thirdparty.springframework.aop.support.AopUtils;
 import com.baidu.cloud.thirdparty.springframework.core.DefaultParameterNameDiscoverer;
@@ -26,20 +27,14 @@ import com.baidu.cloud.thirdparty.springframework.core.ParameterNameDiscoverer;
 import com.baidu.cloud.thirdparty.springframework.http.converter.HttpMessageConverter;
 import com.baidu.cloud.thirdparty.springframework.http.converter.StringHttpMessageConverter;
 import com.baidu.cloud.thirdparty.springframework.util.ClassUtils;
-import com.baidu.cloud.thirdparty.springframework.web.bind.support.DefaultDataBinderFactory;
 import com.baidu.cloud.thirdparty.springframework.web.bind.support.WebDataBinderFactory;
 import com.baidu.cloud.thirdparty.springframework.web.context.request.NativeWebRequest;
 import com.baidu.cloud.thirdparty.springframework.web.context.request.ServletWebRequest;
 import com.baidu.cloud.thirdparty.springframework.web.method.HandlerMethod;
-import com.baidu.cloud.thirdparty.springframework.web.method.annotation.ExpressionValueMethodArgumentResolver;
-import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestHeaderMapMethodArgumentResolver;
-import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestHeaderMethodArgumentResolver;
-import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestParamMapMethodArgumentResolver;
-import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestParamMethodArgumentResolver;
 import com.baidu.cloud.thirdparty.springframework.web.method.support.HandlerMethodArgumentResolver;
 import com.baidu.cloud.thirdparty.springframework.web.method.support.HandlerMethodArgumentResolverComposite;
+import com.baidu.cloud.thirdparty.springframework.web.method.support.ModelAndViewContainer;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.RequestMappingInfo;
-import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.MatrixVariableMapMethodArgumentResolver;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.MatrixVariableMethodArgumentResolver;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.PathVariableMapMethodArgumentResolver;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.PathVariableMethodArgumentResolver;
@@ -51,8 +46,14 @@ import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotat
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.ServletRequestMethodArgumentResolver;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.ServletResponseMethodArgumentResolver;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.SessionAttributeMethodArgumentResolver;
-
-import com.baidu.cloud.thirdparty.servlet.http.HttpServletRequest;
+import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestHeaderMapMethodArgumentResolver;
+import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestHeaderMethodArgumentResolver;
+import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestParamMapMethodArgumentResolver;
+import com.baidu.cloud.thirdparty.springframework.web.method.annotation.RequestParamMethodArgumentResolver;
+import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.MatrixVariableMapMethodArgumentResolver;
+import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.ServletModelAttributeMethodProcessor;
+import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.ServletRequestDataBinderFactory;
+import com.baidu.cloud.thirdparty.springframework.web.method.annotation.ExpressionValueMethodArgumentResolver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,12 +83,12 @@ public class SpringRestHandlerMapping extends RequestMappingHandlerMapping {
 
     private static SpringRestHandlerMapping requestMappingHandlerMapping;
 
-    private static final HandlerMethodArgumentResolverComposite argumentResolvers =
+    private static final HandlerMethodArgumentResolverComposite ARGUMENT_RESOLVERS =
         new HandlerMethodArgumentResolverComposite();
 
-    private static final ParameterNameDiscoverer parameterNameDiscoverer = new DefaultParameterNameDiscoverer();
+    private static final ParameterNameDiscoverer PARAMETER_NAME_DISCOVERER = new DefaultParameterNameDiscoverer();
 
-    private static final WebDataBinderFactory dataBinderFactory = new DefaultDataBinderFactory(null);
+    private static final WebDataBinderFactory DATA_BINDER_FACTOR = new ServletRequestDataBinderFactory(null, null);
 
     private SpringRestHandlerMapping() {}
 
@@ -95,14 +96,14 @@ public class SpringRestHandlerMapping extends RequestMappingHandlerMapping {
         synchronized (SpringRestHandlerMapping.class) {
             if (requestMappingHandlerMapping == null) {
                 requestMappingHandlerMapping = new SpringRestHandlerMapping();
-                argumentResolvers.addResolvers(getDefaultArgumentResolvers());
+                ARGUMENT_RESOLVERS.addResolvers(getDefaultArgumentResolvers());
             }
         }
         return requestMappingHandlerMapping;
     }
 
     /**
-     * Called in the initialization phase to establish the mapping relationship between request uri and Method
+     * Called in the initialization phase to establish the mapping relationship. uri <-> Method
      *
      * @param serviceType
      * @param serviceObj
@@ -163,11 +164,11 @@ public class SpringRestHandlerMapping extends RequestMappingHandlerMapping {
         Object[] args = new Object[parameters.length];
         for (int i = 0; i < parameters.length; i++) {
             MethodParameter parameter = parameters[i];
-            parameter.initParameterNameDiscovery(SpringRestHandlerMapping.parameterNameDiscoverer);
-            if (SpringRestHandlerMapping.argumentResolvers.supportsParameter(parameter)) {
+            parameter.initParameterNameDiscovery(SpringRestHandlerMapping.PARAMETER_NAME_DISCOVERER);
+            if (SpringRestHandlerMapping.ARGUMENT_RESOLVERS.supportsParameter(parameter)) {
                 try {
-                    args[i] = SpringRestHandlerMapping.argumentResolvers.resolveArgument(parameter, null, request,
-                        dataBinderFactory);
+                    args[i] = SpringRestHandlerMapping.ARGUMENT_RESOLVERS.resolveArgument(parameter,
+                        new ModelAndViewContainer(), request, DATA_BINDER_FACTOR);
                     continue;
                 } catch (Exception ex) {
                     if (logger.isDebugEnabled()) {
@@ -200,6 +201,7 @@ public class SpringRestHandlerMapping extends RequestMappingHandlerMapping {
         resolvers.add(new PathVariableMapMethodArgumentResolver()); // @PathVariable map
         resolvers.add(new MatrixVariableMethodArgumentResolver()); // @MatrixVariable (not support)
         resolvers.add(new MatrixVariableMapMethodArgumentResolver()); // @MatrixVariable map (not support)
+        resolvers.add(new ServletModelAttributeMethodProcessor(false)); // @ModelAttribute nonessential
 
         StringHttpMessageConverter stringHttpMessageConverter = new StringHttpMessageConverter();
         stringHttpMessageConverter.setWriteAcceptCharset(false); // see SPR-7316

@@ -37,13 +37,14 @@ public interface ClientPeer extends Peer {
     /**
      * Use {@link RpcChannel} to Connect to ServerPeer
      * 
+     * @return
      */
     void connect();
 
     /**
      * Use {@link RpcChannel} to send message Callbacks will be stored in RpcChannel
      * 
-     * @param request rpc request
+     * @param request
      * @param callback async {@link RpcCallback}
      */
     void request(Request request, RpcCallback callback) throws TransportException;

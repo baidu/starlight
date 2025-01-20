@@ -23,8 +23,8 @@ import com.baidu.cloud.thirdparty.netty.channel.Channel;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.cookie.ServerCookieDecoder;
+import com.baidu.cloud.thirdparty.springframework.util.CollectionUtils;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
-
 import com.baidu.cloud.thirdparty.servlet.AsyncContext;
 import com.baidu.cloud.thirdparty.servlet.DispatcherType;
 import com.baidu.cloud.thirdparty.servlet.RequestDispatcher;
@@ -39,12 +39,12 @@ import com.baidu.cloud.thirdparty.servlet.http.HttpServletResponse;
 import com.baidu.cloud.thirdparty.servlet.http.HttpSession;
 import com.baidu.cloud.thirdparty.servlet.http.HttpUpgradeHandler;
 import com.baidu.cloud.thirdparty.servlet.http.Part;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
 import java.security.Principal;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Enumeration;
@@ -53,7 +53,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * NettyServletRequestAdaptor Since Spring-mvc {@link RequestMappingHandlerMapping} handle with HttpServletRequest, so
@@ -420,6 +419,12 @@ public class NettyServletRequestAdaptor implements HttpServletRequest {
     @Override
     public Map<String, String[]> getParameterMap() {
         return params;
+    }
+
+    public void putAllParameterMap(Map<String, String[]> paramMap) {
+        if (!CollectionUtils.isEmpty(paramMap)) {
+            this.params.putAll(paramMap);
+        }
     }
 
     @Override

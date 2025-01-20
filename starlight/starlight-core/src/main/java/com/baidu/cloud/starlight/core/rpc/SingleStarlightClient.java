@@ -35,13 +35,17 @@ import com.baidu.cloud.starlight.api.transport.PeerStatus;
 import com.baidu.cloud.starlight.api.transport.TransportFactory;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.starlight.core.filter.FilterChain;
+import com.baidu.cloud.starlight.core.rpc.threadpool.RpcThreadPoolFactory;
 import com.baidu.cloud.starlight.core.statistics.StarlightStatsManager;
 import com.baidu.cloud.starlight.protocol.brpc.BrpcProtocol;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
+import com.baidu.cloud.starlight.transport.netty.NettyClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * Starlight Client associated with a single Server instance, facade of {@link ClientPeer} and {@link ClientInvoker} Can
@@ -63,12 +67,22 @@ public class SingleStarlightClient implements StarlightClient {
 
     private static volatile ThreadPoolFactory threadPoolOfAll;
 
-    public SingleStarlightClient(String remoteIp, Integer remotePort, TransportConfig transportConfig) {
+    public SingleStarlightClient(String remoteIp, Integer remotePort, TransportConfig transportConfig,
+        ThreadFactory ioThreadFactory) {
         this.clientInvokers = new ConcurrentHashMap<>();
         this.uri = assembleUri(remoteIp, remotePort, transportConfig);
         TransportFactory transportFactory =
             ExtensionLoader.getInstance(TransportFactory.class).getExtension(Constants.DEFAULT_TRANSPORT_FACTORY_NAME);
         this.clientPeer = transportFactory.client(uri);
+
+        if (ioThreadFactory != null && (clientPeer instanceof NettyClient)) {
+            ((NettyClient) clientPeer).setThreadFactory(ioThreadFactory);
+        }
+
+    }
+
+    public SingleStarlightClient(String remoteIp, Integer remotePort, TransportConfig transportConfig) {
+        this(remoteIp, remotePort, transportConfig, null);
     }
 
     @Override
@@ -81,10 +95,12 @@ public class SingleStarlightClient implements StarlightClient {
         if (threadPoolOfAll == null) {
             synchronized (SingleStarlightClient.class) {
                 if (threadPoolOfAll == null) {
-                    String bizThreadPoolName = uri.getParameter(Constants.BIZ_THREAD_POOL_NAME_KEY);
+                    // max=500
+                    int maxWorkerNum =
+                        uri.getParameter(Constants.MAX_BIZ_WORKER_NUM_KEY, Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
+                    // c: client
                     threadPoolOfAll =
-                        ExtensionLoader.getInstance(ThreadPoolFactory.class).getExtension(bizThreadPoolName);
-                    threadPoolOfAll.initDefaultThreadPool(uri, Constants.CLIENT_BIZ_THREAD_NAME_PREFIX);
+                        new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE, maxWorkerNum, "c");
                 }
             }
         }
@@ -103,7 +119,7 @@ public class SingleStarlightClient implements StarlightClient {
             }
             // refer heartbeat service
             ServiceConfig serviceConfig = new ServiceConfig();
-            serviceConfig.setFilters(""); // zero filter
+            serviceConfig.setFilters("clientmonitor"); // record heartbeat log
             refer(HeartbeatService.class, serviceConfig);
             updateStatus(new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
         }
@@ -277,8 +293,6 @@ public class SingleStarlightClient implements StarlightClient {
             ? Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE : config.getBizWorkThreadNum());
         uriBuilder.param(Constants.NETTY_IO_RATIO_KEY,
             config.getIoRatio() == null ? Constants.DEFAULT_NETTY_IO_RATIO : config.getIoRatio());
-        uriBuilder.param(Constants.BIZ_THREAD_POOL_NAME_KEY, StringUtils.isEmpty(config.getBizThreadPoolName())
-            ? Constants.DEFAULT_BIZ_THREAD_POOL_NAME : config.getBizThreadPoolName());
 
         if (config.getAdditional() != null) {
             uriBuilder.params(config.getAdditional());

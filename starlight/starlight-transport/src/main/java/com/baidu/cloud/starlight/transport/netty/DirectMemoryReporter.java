@@ -61,8 +61,10 @@ public class DirectMemoryReporter {
         }
         schedulePool.scheduleAtFixedRate(() -> {
             try {
-                LOGGER.info("netty_direct_memory: {}B", directMemory.get());
-                LOGGER.info("netty_direct_memory: {}K", directMemory.get() / 1024);
+                if (directMemory != null) {
+                    LOGGER.info("netty_direct_memory: {}B", directMemory.get());
+                    LOGGER.info("netty_direct_memory: {}K", directMemory.get() / 1024);
+                }
             } catch (Throwable e) {
                 LOGGER.warn("Get DIRECT_MEMORY_COUNTER from directMemory failed.", e);
             }

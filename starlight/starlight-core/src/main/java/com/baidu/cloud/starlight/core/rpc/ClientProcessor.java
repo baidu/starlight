@@ -33,6 +33,8 @@ import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.starlight.api.protocol.Protocol;
 import com.baidu.cloud.starlight.api.utils.GenericUtil;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
+import com.baidu.cloud.starlight.core.utils.KeyOrderedExecutor;
+import com.baidu.cloud.starlight.protocol.http.springrest.sse.SpringRestSseProtocol;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +52,8 @@ public class ClientProcessor implements Processor {
     public ClientProcessor(ThreadPoolFactory threadPoolFactory) {
         this.threadPoolFactory = threadPoolFactory;
     }
+
+    private KeyOrderedExecutor sseCallBackExecutor = new KeyOrderedExecutor("sse-callback");
 
     @Override
     public ServiceRegistry getRegistry() {
@@ -69,13 +73,18 @@ public class ClientProcessor implements Processor {
 
         ClientProcessTask processTask = new ClientProcessTask(response, context);
         LogUtils.addLogTimeAttachment(msgBase, Constants.BEFORE_THREAD_EXECUTE_TIME_KEY, System.currentTimeMillis());
-        threadPoolFactory.defaultThreadPool().execute(processTask);
+        if (SpringRestSseProtocol.PROTOCOL_NAME.equals(response.getProtocolName())) {
+            sseCallBackExecutor.execute(response.getId(), processTask);
+        } else {
+            threadPoolFactory.getThreadPool().execute(processTask);
+        }
     }
 
     @Override
     public void close() {
-        // do nothing, 客户端的ThreadPoolFactory当前所有客户端公用，
-        // 不在此处close, 随进程退出close
+        if (threadPoolFactory != null) {
+            threadPoolFactory.close();
+        }
     }
 
     @Override
@@ -85,17 +94,17 @@ public class ClientProcessor implements Processor {
 
     @Override
     public Integer waitTaskCount(String serviceKey) {
-        return threadPoolFactory.defaultThreadPool().getQueue().size();
+        return threadPoolFactory.getThreadPool().getQueue().size();
     }
 
     @Override
     public Integer processingCount(String serviceKey) {
-        return threadPoolFactory.defaultThreadPool().getActiveCount();
+        return threadPoolFactory.getThreadPool().getActiveCount();
     }
 
     @Override
     public Long completeCount(String serviceKey) {
-        return threadPoolFactory.defaultThreadPool().getCompletedTaskCount();
+        return threadPoolFactory.getThreadPool().getCompletedTaskCount();
     }
 
     private class ClientProcessTask implements Runnable {
@@ -129,6 +138,11 @@ public class ClientProcessor implements Processor {
             }
 
             RpcCallback rpcCallback = context.removeCallback(response.getId());
+
+            if (SpringRestSseProtocol.PROTOCOL_NAME.equals(response.getProtocolName())) {
+                rpcCallback = (RpcCallback) context.getAttribute(Constants.SSE_CALLBACK_ATTR_KEY);
+            }
+
             if (rpcCallback == null) {
                 LogUtils.timeoutReqAdditionalLog(response);
                 // FIXME rpcCallback为null是会不会存在别的需要额外处理的情况
@@ -191,6 +205,6 @@ public class ClientProcessor implements Processor {
     @Override
     public Integer allWaitTaskCount() {
         // wait task and running but not complete task
-        return waitTaskCount(null) + threadPoolFactory.defaultThreadPool().getActiveCount();
+        return waitTaskCount(null) + threadPoolFactory.getThreadPool().getActiveCount();
     }
 }

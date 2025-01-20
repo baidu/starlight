@@ -16,6 +16,7 @@
  
 package com.baidu.cloud.starlight.serialization.serializer.model;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -56,6 +57,8 @@ public class User {
     private Object[] array;
 
     private Map<String, String> map;
+
+    private LocalDateTime birthDay;
 
     public long getUserId() {
         return userId;
@@ -167,6 +170,14 @@ public class User {
 
     public void setMap(Map<String, String> map) {
         this.map = map;
+    }
+
+    public LocalDateTime getBirthDay() {
+        return birthDay;
+    }
+
+    public void setBirthDay(LocalDateTime birthDay) {
+        this.birthDay = birthDay;
     }
 
     @Override

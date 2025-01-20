@@ -1,1 +1,2 @@
 com.baidu.cloud.starlight.protocol.http.springrest.SpringRestProtocol
+com.baidu.cloud.starlight.protocol.http.springrest.sse.SpringRestSseProtocol

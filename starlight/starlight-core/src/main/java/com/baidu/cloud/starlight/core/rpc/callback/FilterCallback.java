@@ -22,6 +22,7 @@ import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.model.RpcResponse;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
+import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.thirdparty.netty.util.Timeout;
 
 /**
@@ -70,5 +71,10 @@ public class FilterCallback implements RpcCallback {
     @Override
     public void addTimeout(Timeout timeout) {
         callback.addTimeout(timeout);
+    }
+
+    @Override
+    public void addRpcChannel(RpcChannel rpcChannel) {
+        callback.addRpcChannel(rpcChannel);
     }
 }

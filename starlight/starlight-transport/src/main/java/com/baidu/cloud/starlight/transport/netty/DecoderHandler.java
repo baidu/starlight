@@ -28,6 +28,7 @@ import com.baidu.cloud.starlight.api.transport.channel.ChannelAttribute;
 import com.baidu.cloud.starlight.api.transport.channel.ChannelSide;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.starlight.api.protocol.Protocol;
+import com.baidu.cloud.starlight.api.transport.channel.ThreadLocalChannelContext;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
 import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
 import com.baidu.cloud.thirdparty.netty.channel.ChannelHandlerContext;
@@ -87,6 +88,7 @@ public class DecoderHandler extends SimpleChannelInboundHandler<ByteBuf> {
         // protocol decode and fire message
         while (attribute.getDynamicByteBuf().readableBytes() > 0) {
             try {
+                ThreadLocalChannelContext.getContext().setChannel(attribute.getRpcChannel().channel());
                 // protocol decode
                 MsgBase msgBase = protocolDecode(attribute, attribute.getDynamicByteBuf());
 
@@ -132,6 +134,8 @@ public class DecoderHandler extends SimpleChannelInboundHandler<ByteBuf> {
                         rpcChannel.side(), remoteAddress, receiveTime, msgSize, e.getMessage());
                     throw e;
                 }
+            } finally {
+                ThreadLocalChannelContext.removeContext();
             }
         }
 

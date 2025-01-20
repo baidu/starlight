@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.baidu.cloud</groupId>
         <artifactId>starlight</artifactId>
-        <version>2022.2.2-SNAPSHOT</version>
+        <version>2024.0.2-SNAPSHOT</version>
     </parent>
     
     <artifactId>starlight-serialization</artifactId>
@@ -22,6 +22,12 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
+            <version>3.25.2</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.google.protobuf</groupId>
+            <artifactId>protobuf-java-util</artifactId>
             <version>3.25.2</version>
         </dependency>
         

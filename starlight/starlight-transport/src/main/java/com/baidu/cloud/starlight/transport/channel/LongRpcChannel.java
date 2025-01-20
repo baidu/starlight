@@ -218,6 +218,11 @@ public class LongRpcChannel implements RpcChannel {
         return attributes.get(attributeKey);
     }
 
+    @Override
+    public Object removeAttribute(String attributeKey) {
+        return attributes.remove(attributeKey);
+    }
+
     private boolean isHttpShortConnection(MsgBase msgBase) {
         if (msgBase == null) {
             return false;

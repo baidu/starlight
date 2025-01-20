@@ -22,15 +22,19 @@ import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.model.RpcRequest;
 import com.baidu.cloud.starlight.api.model.RpcResponse;
+import com.baidu.cloud.starlight.api.rpc.sse.RpcSseEmitter;
 import com.baidu.cloud.starlight.api.transport.channel.ThreadLocalChannelContext;
 import com.baidu.cloud.starlight.protocol.http.AbstractHttpProtocol;
 import com.baidu.cloud.starlight.protocol.http.HttpDecoder;
+import com.baidu.cloud.starlight.protocol.http.springrest.sse.SpringRestSseProtocol;
+import com.baidu.cloud.thirdparty.apache.commons.lang3.StringUtils;
 import com.baidu.cloud.thirdparty.netty.channel.Channel;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultFullHttpResponse;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpRequest;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.FullHttpResponse;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseStatus;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpVersion;
+import com.baidu.cloud.thirdparty.servlet.ServletInputStream;
 import com.baidu.cloud.thirdparty.springframework.http.HttpHeaders;
 import com.baidu.cloud.thirdparty.springframework.http.converter.HttpMessageConversionException;
 import com.baidu.cloud.thirdparty.springframework.web.method.HandlerMethod;
@@ -38,7 +42,10 @@ import com.baidu.cloud.thirdparty.springframework.web.method.HandlerMethod;
 import com.baidu.cloud.thirdparty.servlet.ServletException;
 import com.baidu.cloud.thirdparty.springframework.web.servlet.NoHandlerFoundException;
 
+import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -67,6 +74,26 @@ public class SpringRestHttpDecoder extends HttpDecoder {
         Channel channel = ThreadLocalChannelContext.getContext().getChannel();
         // convert FullHttpRequest to HttpServletRequest
         NettyServletRequestAdaptor servletRequestAdaptor = new NettyServletRequestAdaptor(httpRequest, channel);
+
+        // form表单类型没有body的序列化器解码，需要在此解码
+        String contentType = servletRequestAdaptor.getContentType();
+        if (contentType != null && contentType.contains("application/x-www-form-urlencoded")) {
+            String formBody = null;
+            try {
+                ServletInputStream inputStream = servletRequestAdaptor.getInputStream();
+                byte[] contentBytes = new byte[inputStream.available()];
+                inputStream.read(contentBytes);
+                formBody = new String(contentBytes, servletRequestAdaptor.getCharacterEncoding());
+            } catch (IOException e) {
+                throw new CodecException(CodecException.PROTOCOL_DECODE_EXCEPTION,
+                    "Error occur when use SpringRestHttpDecoder to reverseConvertRequest: " + e.getMessage());
+            }
+
+            if (StringUtils.isNoneEmpty(formBody)) {
+                Map<String, String[]> paramMap = resolveFromBody(formBody);
+                servletRequestAdaptor.putAllParameterMap(paramMap);
+            }
+        }
 
         // A response of the intermediate state, which will be replaced in the subsequent process
         NettyServletResponseAdaptor servletResponseAdaptor =
@@ -113,6 +140,12 @@ public class SpringRestHttpDecoder extends HttpDecoder {
                 handlerMapping.resolveArguments(handlerMethod, servletRequestAdaptor, servletResponseAdaptor);
 
             request.setParams(args); // set params
+
+            // sse协议
+            boolean isSse = RpcSseEmitter.class.isAssignableFrom(request.getMethod().getReturnType());
+            if (isSse) {
+                request.setProtocolName(SpringRestSseProtocol.PROTOCOL_NAME);
+            }
 
             return request;
         } catch (Exception e) {
@@ -178,5 +211,26 @@ public class SpringRestHttpDecoder extends HttpDecoder {
             response.setProtocolName(SpringRestProtocol.PROTOCOL_NAME);
         }
         return response;
+    }
+
+    private Map<String, String[]> resolveFromBody(String formBodyString) {
+        Map<String, String[]> params = new HashMap<>();
+        String[] paramsStrs = formBodyString.split("&");
+        for (String paramStr : paramsStrs) {
+            String[] paramArr = paramStr.split("=");
+            String key = paramArr[0];
+            String value = paramArr[1];
+            if (params.get(key) == null) {
+                params.put(key, new String[] {value});
+            } else {
+                List<String> values = Arrays.asList(params.get(key));
+                values.add(value);
+                String[] valueArr = new String[] {};
+                values.toArray(valueArr);
+                params.put(key, valueArr);
+            }
+        }
+
+        return params;
     }
 }

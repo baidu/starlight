@@ -47,8 +47,6 @@ public class TransportConfig {
 
     private Integer minIdleConnections;
 
-    private String bizThreadPoolName;
-
     private Integer bizWorkThreadNum;
 
     private Integer ioRatio;
@@ -215,13 +213,5 @@ public class TransportConfig {
 
     public void setIoRatio(Integer ioRatio) {
         this.ioRatio = ioRatio;
-    }
-
-    public String getBizThreadPoolName() {
-        return bizThreadPoolName;
-    }
-
-    public void setBizThreadPoolName(String bizThreadPoolName) {
-        this.bizThreadPoolName = bizThreadPoolName;
     }
 }

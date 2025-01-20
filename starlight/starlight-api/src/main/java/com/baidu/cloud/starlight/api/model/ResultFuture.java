@@ -63,6 +63,9 @@ public class ResultFuture implements Future {
     @Override
     public Object get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
         countDownLatch.await(timeout, unit);
+        if (response == null) { // 在限定时间内未返回，则返回TimeoutException
+            throw new TimeoutException();
+        }
         return result();
     }
 

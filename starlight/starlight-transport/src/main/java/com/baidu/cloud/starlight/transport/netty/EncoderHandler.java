@@ -29,6 +29,7 @@ import com.baidu.cloud.starlight.api.rpc.LocalContext;
 import com.baidu.cloud.starlight.api.transport.channel.ChannelAttribute;
 import com.baidu.cloud.starlight.api.transport.channel.ChannelSide;
 import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
+import com.baidu.cloud.starlight.api.transport.channel.ThreadLocalChannelContext;
 import com.baidu.cloud.starlight.api.utils.LogUtils;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
@@ -86,6 +87,7 @@ public class EncoderHandler extends MessageToByteEncoder<MsgBase> {
         // Protocol encode
         ByteBuf encodeResult = null;
         try {
+            ThreadLocalChannelContext.getContext().setChannel(attribute.getRpcChannel().channel());
             long beforeEncodeHeaderTime = System.currentTimeMillis();
             LogUtils.addLogTimeAttachment(msgBase, Constants.BEFORE_ENCODE_HEADER_TIME_KEY, beforeEncodeHeaderTime);
             if (msgBase instanceof Request) { // server端感知客户端发送请求的近似时间，用于超时原因推断，notice:不随调用链向下传递
@@ -114,6 +116,7 @@ public class EncoderHandler extends MessageToByteEncoder<MsgBase> {
             if (encodeResult != null && encodeResult.refCnt() > 0) {
                 encodeResult.release();
             }
+            ThreadLocalChannelContext.removeContext();
         }
     }
 }
