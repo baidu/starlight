@@ -84,14 +84,14 @@ public interface MsgBase {
     void setCompressType(int compressType);
 
     /**
-     * Get Protocol name, used to decode <1>Get when decoding</1>
+     * Get Protocol name, used to decode Get when decoding
      * 
      * @return
      */
     String getProtocolName();
 
     /**
-     * Set Protocol name, used to encode <1>Set when making a request</1> <2>Set when decoding</2>
+     * Set Protocol name, used to encode Set when making a request Set when decoding
      * 
      * @param protocolName
      */

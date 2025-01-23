@@ -29,13 +29,11 @@ public interface Invoker {
     /**
      * Invoke on the client or server side. Async call.
      * <p>
-     * <b>Client side</b> Pack and {@link Serializer#serialize(Object, Class)} message. Delegate {@link ClientPeer} to
-     * implement real communication.
+     * <b>Client side</b> Pack and serialize message. Delegate {@link ClientPeer} to implement real communication.
      * </p>
      *
      * <p>
-     * <b>Server side</b> Unpack and {@link Serializer#deserialize(byte[], Class)} message. Invoke the real method by
-     * java reflection.
+     * <b>Server side</b> Unpack and deserialize message. Invoke the real method by java reflection.
      * </p>
      *
      * @param request request message

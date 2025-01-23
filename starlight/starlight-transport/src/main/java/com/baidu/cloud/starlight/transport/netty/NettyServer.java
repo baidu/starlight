@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 package com.baidu.cloud.starlight.transport.netty;
 
 import java.util.Map;
@@ -106,14 +106,14 @@ public class NettyServer implements ServerPeer {
         if (Epoll.isAvailable()) {
             if (threadFactory == null) {
                 parentGroup =
-                        new EpollEventLoopGroup(acceptThreadNum, new DefaultThreadFactory("server-accept", false));
+                    new EpollEventLoopGroup(acceptThreadNum, new DefaultThreadFactory("server-accept", false));
                 childGroup = new EpollEventLoopGroup(ioThreadNum, new DefaultThreadFactory("server-epoll", false));
 
             } else {
                 parentGroup = new EpollEventLoopGroup(acceptThreadNum,
-                        new DelegateThreadFactory(threadFactory, "server-accept", false));
+                    new DelegateThreadFactory(threadFactory, "server-accept", false));
                 childGroup = new EpollEventLoopGroup(acceptThreadNum,
-                        new DelegateThreadFactory(threadFactory, "server-epoll", false));
+                    new DelegateThreadFactory(threadFactory, "server-epoll", false));
             }
 
             ((EpollEventLoopGroup) parentGroup).setIoRatio(ioRatio);
@@ -128,9 +128,9 @@ public class NettyServer implements ServerPeer {
                 childGroup = new NioEventLoopGroup(ioThreadNum, new DefaultThreadFactory("server-nio", false));
             } else {
                 parentGroup = new NioEventLoopGroup(acceptThreadNum,
-                        new DelegateThreadFactory(threadFactory, "server-accept", false));
+                    new DelegateThreadFactory(threadFactory, "server-accept", false));
                 childGroup = new NioEventLoopGroup(acceptThreadNum,
-                        new DelegateThreadFactory(threadFactory, "server-nio", false));
+                    new DelegateThreadFactory(threadFactory, "server-nio", false));
             }
 
             ((NioEventLoopGroup) parentGroup).setIoRatio(ioRatio);
@@ -155,16 +155,15 @@ public class NettyServer implements ServerPeer {
             protected void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline().addLast(new DecoderHandler()); // inbound 1 DecoderHandler
                 if (getUri().getParameter(Constants.CONNECT_KEEPALIVE_ENABLED_KEY,
-                        Constants.CONNECT_KEEPALIVE_ENABLED_VALUE)) {
+                    Constants.CONNECT_KEEPALIVE_ENABLED_VALUE)) {
                     ch.pipeline()
-                            .addLast(new IdleStateHandler(0, 0,
-                                    getUri().getParameter(Constants.ALL_IDLE_TIMEOUT_KEY,
-                                            Constants.ALL_IDLE_TIMEOUT_VALUE),
-                                    TimeUnit.SECONDS))
-                            .addLast(new HeartbeatHandler()); // inbound 2 heartbeatHandler
+                        .addLast(new IdleStateHandler(0, 0,
+                            getUri().getParameter(Constants.ALL_IDLE_TIMEOUT_KEY, Constants.ALL_IDLE_TIMEOUT_VALUE),
+                            TimeUnit.SECONDS))
+                        .addLast(new HeartbeatHandler()); // inbound 2 heartbeatHandler
                 }
                 ch.pipeline().addLast(new RpcHandler(NettyServer.this)) // inbound 3 RpcHandler
-                        .addLast(new EncoderHandler()); // outbound EncoderHandler
+                    .addLast(new EncoderHandler()); // outbound EncoderHandler
             }
         };
         bootstrap.childHandler(initializer);
@@ -177,15 +176,15 @@ public class NettyServer implements ServerPeer {
         channelFuture.syncUninterruptibly();
         if (!channelFuture.isSuccess()) {
             throw new TransportException(TransportException.BIND_EXCEPTION,
-                    "Server bind to ip {" + getUri().getHost() + "}, port {" + getUri().getPort() + "} failed",
-                    channelFuture.cause());
+                "Server bind to ip {" + getUri().getHost() + "}, port {" + getUri().getPort() + "} failed",
+                channelFuture.cause());
         }
         LOGGER.info("Starlight server bind to ip {} port {}", getUri().getHost(), getUri().getPort());
         serverChannel = channelFuture.channel();
-        // 测试用，上线不开启 
-        //        if (!EnvUtils.isJarvisOnline()) {
-        //            reporter = new DirectMemoryReporter();
-        //        }
+        // 测试用，上线不开启
+        // if (!EnvUtils.isJarvisOnline()) {
+        // reporter = new DirectMemoryReporter();
+        // }
         updateStatus(new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
     }
 
@@ -234,7 +233,7 @@ public class NettyServer implements ServerPeer {
                 try {
                     RpcResponse shuttingDownEvent = shuttingDownEvent(StargateProtocol.PROTOCOL_NAME);
                     Protocol protocol =
-                            ExtensionLoader.getInstance(Protocol.class).getExtension(StargateProtocol.PROTOCOL_NAME);
+                        ExtensionLoader.getInstance(Protocol.class).getExtension(StargateProtocol.PROTOCOL_NAME);
                     protocol.getEncoder().encodeBody(shuttingDownEvent);
 
                     entry.getValue().send(shuttingDownEvent);
@@ -245,7 +244,7 @@ public class NettyServer implements ServerPeer {
                 }
             }
             LOGGER.info("Notify server shutting down end, cost {} clients {}", System.currentTimeMillis() - startTime,
-                    rpcChannels.size());
+                rpcChannels.size());
 
             long shutdownTimeoutTime = System.currentTimeMillis() + timeout * 1000;
 
@@ -269,7 +268,7 @@ public class NettyServer implements ServerPeer {
 
             // execute unfinished task and wait for the timeout to arrive
             if (timeout > 0) {
-                for (; ; ) {
+                for (;;) {
                     if (pendingTaskNum().equals(0) && getProcessor().allWaitTaskCount().equals(0)) { // whether the
                         // requests is
                         // completed
@@ -279,7 +278,7 @@ public class NettyServer implements ServerPeer {
 
                     if (System.currentTimeMillis() >= shutdownTimeoutTime) {
                         LOGGER.info("NettyServer reach the maximum timeout time, force shutdown. "
-                                + "Number of unfinished request {}", getProcessor().allWaitTaskCount());
+                            + "Number of unfinished request {}", getProcessor().allWaitTaskCount());
                         break;
                     }
 

@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.protocol.http.springrest.sse;
 
 import com.baidu.cloud.starlight.api.model.MsgBase;
@@ -53,8 +69,9 @@ public class SpringRestSseProtocolTest {
         httpResponse.headers().set("X-Accel-Buffering", "no");
 
         // part2
-        String data = "data:{\"status\":200,\"data\":{\"sessionId\":\"AIX-618e2f8e-8e96-4076-911c-9054ee476b2a\",\"answer\":{\"content\":\"为您找到全部营销方案。\",\"cards\":[],\"instructions\":[{\"type\":202,\"payload\":{\"campaignParams\":{\"orderby\":\"addTime\",\"rowFilters\":[],\"limit\":[500],\"desc\":true},\"reportParams\":{\"token\":\"409f4eaa-ad19-464f-ac33-ab8b480asdds\",\"reportType\":1900001,\"userIds\":[630152],\"startDate\":\"2024-05-14\",\"endDate\":\"2024-05-14\",\"timeUnit\":\"SUMMARY\",\"columns\":[\"userId\",\"campaignNameStatus\",\"campaignId\",\"click\",\"ocpcTargetTrans\",\"deepConversions\",\"cost\",\"impression\",\"aixOcpcConversionsDetail28CVR\",\"aixOcpcConversionsDetail29CVR\"],\"startRow\":0,\"rowCount\":200,\"needSum\":true,\"needCache\":false,\"addZeroRows\":false,\"withColumnMeta\":false,\"topCount\":0},\"distribution\":\"space-between\",\"instructionParameters\":{\"reportParams\":{\"token\":\"409f4eaa-ad19-464f-ac33-ab8b480asdds\",\"reportType\":1900040,\"userIds\":[630152],\"startDate\":\"2024-05-14\",\"endDate\":\"2024-05-14\",\"timeUnit\":\"SUMMARY\",\"columns\":[\"userId\",\"projectNameStatus\",\"projectId\",\"click\",\"ocpcTargetTrans\",\"deepConversions\",\"cost\",\"impression\",\"aixOcpcConversionsDetail28CVR\",\"aixOcpcConversionsDetail29CVR\"],\"startRow\":0,\"rowCount\":200,\"needSum\":true,\"needCache\":false,\"addZeroRows\":false,\"withColumnMeta\":false,\"topCount\":0},\"focusOn\":\"Campaign\",\"projectParams\":{\"projectIds\":[]}},\"failInfo\":false}},{\"type\":206,\"payload\":{\"distribution\":\"space-between\",\"failInfo\":false}}],\"sugs\":[{\"content\":\"诊断账户\",\"prompt\":\"诊断账户\",\"api\":\"getNewDiagnosisInfo\",\"path\":\"aurora/GET/AixDiagnosisService/getNewDiagnosisInfo\",\"params\":\"{\\\"ids\\\":[630152],\\\"idType\\\":2,\\\"caseLevel\\\":[2,3]}\"},{\"content\":\"修改产品/服务描述\",\"prompt\":\"修改产品/服务描述\"},{\"content\":\"修改重点人群描述\",\"prompt\":\"修改重点人群描述\"},{\"content\":\"修改目标转化成本\",\"prompt\":\"修改目标转化成本\"},{\"content\":\"修改预算\",\"prompt\":\"修改预算\"},{\"content\":\"查看创意素材\",\"prompt\":\"查看创意素材\"}]},\"done\":true,\"scene\":3,\"tag\":0,\"agentContext\":{\"logInfo\":{\"raw\":[{\"intentType\":\"GET_CAMPAIGN\",\"operate\":\"GET\"}],\"rewrite\":{\"intentTypes\":[\"GET_CAMPAIGN\"],\"operate\":\"GET\"}},\"scene\":3}}}\n" +
-                "\n";
+        String data =
+            "data:{\"status\":200,\"data\":{\"sessionId\":\"AIX-618e2f8e-8e96-4076-911c-9054ee476b2a\",\"answer\":{\"content\":\"为您找到全部营销方案。\",\"cards\":[],\"instructions\":[{\"type\":202,\"payload\":{\"campaignParams\":{\"orderby\":\"addTime\",\"rowFilters\":[],\"limit\":[500],\"desc\":true},\"reportParams\":{\"token\":\"409f4eaa-ad19-464f-ac33-ab8b480asdds\",\"reportType\":1900001,\"userIds\":[630152],\"startDate\":\"2024-05-14\",\"endDate\":\"2024-05-14\",\"timeUnit\":\"SUMMARY\",\"columns\":[\"userId\",\"campaignNameStatus\",\"campaignId\",\"click\",\"ocpcTargetTrans\",\"deepConversions\",\"cost\",\"impression\",\"aixOcpcConversionsDetail28CVR\",\"aixOcpcConversionsDetail29CVR\"],\"startRow\":0,\"rowCount\":200,\"needSum\":true,\"needCache\":false,\"addZeroRows\":false,\"withColumnMeta\":false,\"topCount\":0},\"distribution\":\"space-between\",\"instructionParameters\":{\"reportParams\":{\"token\":\"409f4eaa-ad19-464f-ac33-ab8b480asdds\",\"reportType\":1900040,\"userIds\":[630152],\"startDate\":\"2024-05-14\",\"endDate\":\"2024-05-14\",\"timeUnit\":\"SUMMARY\",\"columns\":[\"userId\",\"projectNameStatus\",\"projectId\",\"click\",\"ocpcTargetTrans\",\"deepConversions\",\"cost\",\"impression\",\"aixOcpcConversionsDetail28CVR\",\"aixOcpcConversionsDetail29CVR\"],\"startRow\":0,\"rowCount\":200,\"needSum\":true,\"needCache\":false,\"addZeroRows\":false,\"withColumnMeta\":false,\"topCount\":0},\"focusOn\":\"Campaign\",\"projectParams\":{\"projectIds\":[]}},\"failInfo\":false}},{\"type\":206,\"payload\":{\"distribution\":\"space-between\",\"failInfo\":false}}],\"sugs\":[{\"content\":\"诊断账户\",\"prompt\":\"诊断账户\",\"api\":\"getNewDiagnosisInfo\",\"path\":\"aurora/GET/AixDiagnosisService/getNewDiagnosisInfo\",\"params\":\"{\\\"ids\\\":[630152],\\\"idType\\\":2,\\\"caseLevel\\\":[2,3]}\"},{\"content\":\"修改产品/服务描述\",\"prompt\":\"修改产品/服务描述\"},{\"content\":\"修改重点人群描述\",\"prompt\":\"修改重点人群描述\"},{\"content\":\"修改目标转化成本\",\"prompt\":\"修改目标转化成本\"},{\"content\":\"修改预算\",\"prompt\":\"修改预算\"},{\"content\":\"查看创意素材\",\"prompt\":\"查看创意素材\"}]},\"done\":true,\"scene\":3,\"tag\":0,\"agentContext\":{\"logInfo\":{\"raw\":[{\"intentType\":\"GET_CAMPAIGN\",\"operate\":\"GET\"}],\"rewrite\":{\"intentTypes\":[\"GET_CAMPAIGN\"],\"operate\":\"GET\"}},\"scene\":3}}}\n"
+                + "\n";
         ByteBuf byteBuf = Unpooled.wrappedBuffer(data.getBytes(StandardCharsets.UTF_8));
         HttpContent httpContent = new DefaultHttpContent(byteBuf);
 
@@ -69,7 +86,6 @@ public class SpringRestSseProtocolTest {
         // 构造了一份response的数据块儿
         ByteBuf outboundByteBuf = Unpooled.wrappedBuffer(outputBufs);
 
-
         // 把数据块儿分为 多份
         int count = 5;
         int size_per_count = outboundByteBuf.readableBytes() / count;
@@ -79,7 +95,7 @@ public class SpringRestSseProtocolTest {
             if (i == count - 1) {
                 // 最后一份 取剩下所有的
                 byteBufList.add(
-                        outboundByteBuf.copy(i * size_per_count, outboundByteBuf.readableBytes() - i * size_per_count));
+                    outboundByteBuf.copy(i * size_per_count, outboundByteBuf.readableBytes() - i * size_per_count));
             } else {
                 byteBufList.add(outboundByteBuf.copy(i * size_per_count, size_per_count));
             }
@@ -98,7 +114,6 @@ public class SpringRestSseProtocolTest {
         channel.attr(RpcChannel.ATTRIBUTE_KEY).set(attribute);
         ThreadLocalChannelContext.getContext().setChannel(channel);
 
-
         List<Response> msgs = new ArrayList<>();
         DynamicCompositeByteBuf input = new DynamicCompositeByteBuf();
         SpringRestSseHttpDecoder springRestSseHttpDecoder = new SpringRestSseHttpDecoder();
@@ -115,10 +130,8 @@ public class SpringRestSseProtocolTest {
             }
         }
 
-
-
-        List<HttpObject> httpObjects = msgs.stream().flatMap(response -> ((List<HttpObject>) response.getResult()).stream())
-                .collect(Collectors.toList());
+        List<HttpObject> httpObjects = msgs.stream()
+            .flatMap(response -> ((List<HttpObject>) response.getResult()).stream()).collect(Collectors.toList());
 
         Assert.assertTrue(httpObjects.size() == 3);
         Assert.assertTrue(httpObjects.get(0) instanceof HttpResponse);

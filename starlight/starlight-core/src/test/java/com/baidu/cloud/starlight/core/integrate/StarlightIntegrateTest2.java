@@ -90,7 +90,7 @@ public class StarlightIntegrateTest2 {
         JDKProxyFactory proxyFactory = new JDKProxyFactory();
         UserSseService userService = proxyFactory.getProxy(UserSseService.class, clientConfig, starlightClient);
 
-        for (int i= 0; i< 20 ; i++){
+        for (int i = 0; i < 20; i++) {
             List<User> userList = new ArrayList<>();
             CountDownLatch countDownLatch = new CountDownLatch(1);
             RpcSseEmitter<User> sseEmitter = userService.getUserList();
@@ -98,7 +98,7 @@ public class StarlightIntegrateTest2 {
                 Assert.assertNotNull(u);
                 userList.add(u);
             });
-            sseEmitter.onError(t->{
+            sseEmitter.onError(t -> {
                 t.printStackTrace();
                 countDownLatch.countDown();
             });

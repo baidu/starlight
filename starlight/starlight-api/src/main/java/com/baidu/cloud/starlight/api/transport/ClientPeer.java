@@ -36,8 +36,6 @@ public interface ClientPeer extends Peer {
 
     /**
      * Use {@link RpcChannel} to Connect to ServerPeer
-     * 
-     * @return
      */
     void connect();
 

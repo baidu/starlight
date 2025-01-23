@@ -27,6 +27,7 @@ import org.slf4j.LoggerFactory;
  */
 public class SseServerCallBack extends BaseInvokeCallBack {
     private static Logger logger = LoggerFactory.getLogger(SseServerCallBack.class);
+
     public SseServerCallBack(Request request, RpcChannel context) {
         super(request, context);
     }

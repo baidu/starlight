@@ -103,7 +103,7 @@ public class SpringRestHandlerMapping extends RequestMappingHandlerMapping {
     }
 
     /**
-     * Called in the initialization phase to establish the mapping relationship. uri <-> Method
+     * Called in the initialization phase to establish the mapping relationship. uri &lt;-&gt; Method
      *
      * @param serviceType
      * @param serviceObj

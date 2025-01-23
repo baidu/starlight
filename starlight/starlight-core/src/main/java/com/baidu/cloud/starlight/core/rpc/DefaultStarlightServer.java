@@ -110,9 +110,8 @@ public class DefaultStarlightServer implements StarlightServer {
     }
 
     /**
-     * CRaC Restore 场景重启 Server
-     * 少了 export HeartbeatService 部分逻辑:
-     * export HeartbeatService 管理本地数据结构，之前讨论过，Checkpoint 和 Restore 时对本地数据结构不做干预
+     * CRaC Restore 场景重启 Server 少了 export HeartbeatService 部分逻辑: export HeartbeatService 管理本地数据结构，之前讨论过，Checkpoint 和
+     * Restore 时对本地数据结构不做干预
      */
     public void restart() {
         if (StringUtils.isBlank(protocol)) {
@@ -128,9 +127,9 @@ public class DefaultStarlightServer implements StarlightServer {
         }
         // <1> Processor
         int maxBizWorkerNum =
-                uri.getParameter(Constants.MAX_BIZ_WORKER_NUM_KEY, Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
+            uri.getParameter(Constants.MAX_BIZ_WORKER_NUM_KEY, Constants.DEFAULT_MAX_BIZ_THREAD_POOL_SIZE);
         Processor processor = new ServerProcessor(RpcServiceRegistry.getInstance(),
-                new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE, maxBizWorkerNum, "s")); // s:server
+            new RpcThreadPoolFactory(Constants.DEFAULT_BIZ_THREAD_POOL_SIZE, maxBizWorkerNum, "s")); // s:server
         // <3> init ServerPeer
         serverPeer.init();
         serverPeer.setProcessor(processor);
