@@ -18,6 +18,7 @@ package com.baidu.cloud.starlight.protocol.http.springrest;
 
 import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.DeleteMapping;
 import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.GetMapping;
+import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.ModelAttribute;
 import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.PathVariable;
 import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.PostMapping;
 import com.baidu.cloud.thirdparty.springframework.web.bind.annotation.PutMapping;
@@ -42,7 +43,7 @@ public interface RestService {
     String delete(@PathVariable("id") String id);
 
     @PostMapping
-    String post(@RequestBody User user);
+    String post(@ModelAttribute User user);
 
     @GetMapping
     // not support querymap

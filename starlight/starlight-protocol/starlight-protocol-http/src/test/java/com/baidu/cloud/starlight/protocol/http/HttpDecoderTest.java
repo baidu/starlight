@@ -16,6 +16,14 @@
  
 package com.baidu.cloud.starlight.protocol.http;
 
+import com.baidu.cloud.starlight.api.exception.CodecException;
+import com.baidu.cloud.starlight.api.model.MsgBase;
+import com.baidu.cloud.starlight.api.model.Request;
+import com.baidu.cloud.starlight.api.model.Response;
+import com.baidu.cloud.starlight.api.model.RpcRequest;
+import com.baidu.cloud.starlight.api.model.RpcResponse;
+import com.baidu.cloud.starlight.api.transport.buffer.DynamicCompositeByteBuf;
+import com.baidu.cloud.starlight.serialization.serializer.JsonSerializer;
 import com.baidu.cloud.thirdparty.netty.buffer.ByteBuf;
 import com.baidu.cloud.thirdparty.netty.buffer.Unpooled;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.DefaultFullHttpRequest;
@@ -26,21 +34,11 @@ import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpHeaderNames;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpMethod;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpResponseStatus;
 import com.baidu.cloud.thirdparty.netty.handler.codec.http.HttpVersion;
-import com.baidu.cloud.starlight.api.exception.CodecException;
-import com.baidu.cloud.starlight.api.model.MsgBase;
-import com.baidu.cloud.starlight.api.model.Request;
-import com.baidu.cloud.starlight.api.model.Response;
-import com.baidu.cloud.starlight.api.model.RpcRequest;
-import com.baidu.cloud.starlight.api.model.RpcResponse;
-import com.baidu.cloud.starlight.api.transport.buffer.DynamicCompositeByteBuf;
-import com.baidu.cloud.starlight.serialization.serializer.JsonSerializer;
 import org.junit.Test;
 
 import static com.baidu.cloud.starlight.api.exception.CodecException.BODY_DECODE_EXCEPTION;
-import static com.baidu.cloud.starlight.api.exception.CodecException.PROTOCOL_DECODE_EXCEPTION;
 import static com.baidu.cloud.starlight.api.exception.CodecException.PROTOCOL_INSUFFICIENT_DATA_EXCEPTION;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 

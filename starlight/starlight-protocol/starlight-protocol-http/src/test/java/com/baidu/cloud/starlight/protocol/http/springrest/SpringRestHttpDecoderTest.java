@@ -153,6 +153,33 @@ public class SpringRestHttpDecoderTest {
     }
 
     @Test
+    public void reverseConvertGetRequest() {
+
+        RpcRequest getRpcRequest = (RpcRequest) springDecoder.reverseConvertRequest(getRequest);
+        Assert.assertNotNull(getRpcRequest);
+        Assert.assertEquals(getRpcRequest.getMethodName(), "get");
+        Assert.assertEquals(getRpcRequest.getServiceName(), SpringRestService.class.getName());
+        Assert.assertNotNull(getRpcRequest);
+        Assert.assertEquals(getRpcRequest.getParams().length, 2);
+        Assert.assertEquals(getRpcRequest.getParams()[0], "1");
+    }
+
+    @Test
+    public void reverseConvertPostRequest() {
+
+        // decode post request
+        RpcRequest postRpcRequest = (RpcRequest) springDecoder.reverseConvertRequest(postRequest);
+        Assert.assertNotNull(postRpcRequest);
+        Assert.assertEquals(postRpcRequest.getMethodName(), "post");
+        Assert.assertEquals(postRpcRequest.getServiceName(), SpringRestService.class.getName());
+        Assert.assertNotNull(postRpcRequest);
+        Assert.assertEquals(postRpcRequest.getParams().length, 1);
+        springDecoder.decodeBody(postRpcRequest);
+        Assert.assertEquals(postRpcRequest.getParams()[0], "1");
+
+    }
+
+    @Test
     public void reverseConvertRequest() {
         JsonSerializer serializer = new JsonSerializer();
 
