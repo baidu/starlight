@@ -18,7 +18,9 @@ package com.baidu.cloud.starlight.api.transport;
 
 import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.rpc.Processor;
-
+import com.baidu.cloud.thirdparty.netty.util.internal.NativeLibraryLoader;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 /**
  * Network peer Created by liuruisen on 2019/11/27.
  */
