@@ -45,14 +45,14 @@ public class StargateProtocol implements Protocol {
     private static final StargateDecoder decoder = new StargateDecoder();
 
     /**
-     * stargate header size is 4, first byte of body is 10d(key = 1, type Length-delimited),
-     * {@see https://linghutf.github.io/2016/06/08/protobuf/}
+     * stargate header size is 4, first byte of body is 10d(key = 1, type Length-delimited), see
+     * <a href="https://linghutf.github.io/2016/06/08/protobuf/">protobuf key definition</a>
      */
     protected static final int FIXED_LEN = HEAD_LEN + 1;
 
     /**
-     * stargate first byte value of body is 10. protobuf key 定义 (field_number << 3) | wire_type 0000 1010 ==> 000 1010
-     * (去掉最高位） ==> 0001 --> key 1 ==> 010 --> wire_type 2(Length-delimited)
+     * stargate first byte value of body is 10. protobuf key 定义 (field_number &lt;&lt; 3) | wire_type 0000 1010 ==&gt;
+     * 000 1010 (去掉最高位） ==&gt; 0001 --&gt; key 1 ==&gt; 010 --&gt; wire_type 2(Length-delimited)
      */
     protected static final int FIRST_BYTE_VALUE_OF_BODY = 10;
 

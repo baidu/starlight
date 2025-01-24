@@ -18,6 +18,9 @@ package com.baidu.cloud.starlight.api.transport;
 
 import com.baidu.cloud.starlight.api.common.URI;
 import com.baidu.cloud.starlight.api.rpc.Processor;
+import com.baidu.cloud.thirdparty.netty.util.internal.NativeLibraryLoader;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * Network peer Created by liuruisen on 2019/11/27.
@@ -27,7 +30,7 @@ public interface Peer extends GracefullyShutdown {
     void init();
 
     /**
-     * get Uri: IP+Port && Config
+     * get Uri: IP+Port and Config
      */
     URI getUri();
 
@@ -66,8 +69,7 @@ public interface Peer extends GracefullyShutdown {
     void updateStatus(PeerStatus status);
 
     /**
-     * starlight中使用的netty so文件与业务应用中使用的要区分开，防止业务也使用netty报错不兼容
-     * issue：https://github.com/baidu/starlight/issues/360
+     * starlight中使用的netty so文件与业务应用中使用的要区分开，防止业务也使用netty报错不兼容 issue：https://github.com/baidu/starlight/issues/360
      */
     default void updateNettyResourceMetaHome() {
         try {

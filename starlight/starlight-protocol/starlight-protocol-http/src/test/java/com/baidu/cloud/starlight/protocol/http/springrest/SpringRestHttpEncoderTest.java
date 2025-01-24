@@ -33,6 +33,30 @@ public class SpringRestHttpEncoderTest {
     private static final SpringRestHttpEncoder httpEncoder = new SpringRestHttpEncoder();
 
     @Test
+    public void convertPostRequest() throws NoSuchMethodException {
+        User user = new User();
+        user.setUserId(12);
+        user.setName("test");
+        RpcRequest rpcRequest = new RpcRequest(1);
+        rpcRequest.setServiceClass(SpringRestService.class);
+        rpcRequest.setProtocolName(SpringRestProtocol.PROTOCOL_NAME);
+        // post http request
+        rpcRequest.setMethodName("post");
+        rpcRequest.setMethod(SpringRestService.class.getMethod("post", User.class));
+        rpcRequest.setParams(new Object[] {user});
+        rpcRequest.setParamsTypes(new Class[] {User.class});
+        rpcRequest.setAttachmentKv(Collections.singletonMap("headerKey", "headerValue"));
+
+        FullHttpRequest postRequest = httpEncoder.convertRequest(rpcRequest);
+        Assert.assertNotNull(postRequest);
+        Assert.assertNotNull(postRequest.uri());
+        Assert.assertTrue(postRequest.uri().contains("/spring-rest"));
+        Assert.assertTrue(postRequest.method().name().equalsIgnoreCase("post"));
+        Assert.assertNotNull(postRequest.content());
+        Assert.assertEquals(postRequest.headers().get("headerKey"), "headerValue");
+    }
+
+    @Test
     public void convertRequest() throws NoSuchMethodException {
         RpcRequest rpcRequest = new RpcRequest(1);
         rpcRequest.setServiceClass(SpringRestService.class);

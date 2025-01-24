@@ -48,8 +48,6 @@ public interface Processor {
 
     /**
      * ThreadPoolFactory is used to execute real biz invoke
-     * 
-     * @return
      */
     void setThreadPoolFactory(ThreadPoolFactory threadPoolFactory);
 

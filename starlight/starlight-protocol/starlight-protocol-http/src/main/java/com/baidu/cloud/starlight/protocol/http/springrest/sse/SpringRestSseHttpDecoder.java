@@ -64,7 +64,7 @@ public class SpringRestSseHttpDecoder extends SpringRestHttpDecoder {
         // 客户端侧在发送请求的时候在channelAttribute设置了sse协议，所以如果不是sse协议，那就跳过，避免误解其他协议的response包
         if (!StringUtils.equalsIgnoreCase(channelAttribute.getChannelProtocol(), SpringRestSseProtocol.PROTOCOL_NAME)) {
             throw new CodecException(CodecException.PROTOCOL_DECODE_NOTMATCH_EXCEPTION,
-                    "channelAttribute#getChannelProtocol not springrestsse");
+                "channelAttribute#getChannelProtocol not springrestsse");
         }
 
         // sse客户端的 response 解码进行适配
@@ -92,8 +92,7 @@ public class SpringRestSseHttpDecoder extends SpringRestHttpDecoder {
             // 读取完之后，记得清空，不然影响下次读取
             embeddedChannel.inboundMessages().clear();
 
-            decodeFail =
-                httpObjects.stream().filter(e -> !e.getDecoderResult().isSuccess()).findAny().isPresent();
+            decodeFail = httpObjects.stream().filter(e -> !e.getDecoderResult().isSuccess()).findAny().isPresent();
             if (decodeFail) {
                 LOGGER.debug("Cannot use Http sse protocol to decode: decoded result is null or failed");
                 throw new CodecException(CodecException.PROTOCOL_DECODE_NOTMATCH_EXCEPTION,

@@ -56,7 +56,8 @@ public class SseClientCallBack implements RpcCallback {
             if (response.getException() != null) {
                 onError(response.getException());
             } else {
-                onError(new StarlightRpcException(response.getStatus(), response.getErrorMsg(), response.getException()));
+                onError(
+                    new StarlightRpcException(response.getStatus(), response.getErrorMsg(), response.getException()));
             }
             return;
         }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 package com.baidu.cloud.starlight.core.rpc.sse;
 
 import com.baidu.cloud.starlight.api.common.Constants;
@@ -158,7 +158,7 @@ public class StarlightServerSseEmitter<T> implements RpcSseEmitter<T> {
             if (complete) {
                 if (this.failure != null) {
                     throw new IllegalStateException("StarlightServerSseEmitter has already completedWithError",
-                            failure);
+                        failure);
                 }
                 throw new IllegalStateException("StarlightServerSseEmitter has already completed");
             }
@@ -166,7 +166,7 @@ public class StarlightServerSseEmitter<T> implements RpcSseEmitter<T> {
             if (earlyComplete) {
                 if (this.earlyFailure != null) {
                     throw new IllegalStateException("StarlightServerSseEmitter has already completedWithError",
-                            earlyFailure);
+                        earlyFailure);
                 }
                 throw new IllegalStateException("StarlightServerSseEmitter has already completed");
             }
@@ -183,7 +183,6 @@ public class StarlightServerSseEmitter<T> implements RpcSseEmitter<T> {
             return;
         }
 
-
         if (!alreadySendResponse) {
             // 如果还没发送过response，那么就发送开始事件
             alreadySendResponse = true;
@@ -193,7 +192,7 @@ public class StarlightServerSseEmitter<T> implements RpcSseEmitter<T> {
         sendResponse(serverEvent);
     }
 
-    private void sendResponse(ServerEvent serverEvent){
+    private void sendResponse(ServerEvent serverEvent) {
         Request request = rpcCallback.getRequest();
         Response response = new RpcResponse(request.getId());
         response.setProtocolName(SpringRestSseProtocol.PROTOCOL_NAME);
@@ -305,7 +304,7 @@ public class StarlightServerSseEmitter<T> implements RpcSseEmitter<T> {
     @Override
     public void close() {
         throw new UnsupportedOperationException(
-                "server not support close() method, please use complete()/completeWithError() method");
+            "server not support close() method, please use complete()/completeWithError() method");
     }
 
 }

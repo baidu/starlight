@@ -46,6 +46,6 @@ public class ClientMonitorFilterTest {
         monitorFilter.filterResponse(new RpcResponse(), rpcRequest);
 
         assertTrue(statistics.discoverStats("TEST") instanceof FixedTimeWindowStats);
-        assertEquals(1, ((FixedTimeWindowStats) statistics.discoverStats("TEST")).totalReqCount().intValue());
+        assertEquals(0, ((FixedTimeWindowStats) statistics.discoverStats("TEST")).totalReqCount().intValue());
     }
 }

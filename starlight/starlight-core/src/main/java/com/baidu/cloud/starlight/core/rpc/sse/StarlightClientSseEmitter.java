@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+ 
 package com.baidu.cloud.starlight.core.rpc.sse;
 
 import com.baidu.cloud.starlight.api.model.Request;
@@ -51,7 +51,6 @@ public class StarlightClientSseEmitter<T> implements RpcSseEmitter<T> {
     private Throwable earlyError;
 
     private List<ServerEvent> earlyServerEvents = new ArrayList<>();
-
 
     public StarlightClientSseEmitter(Request request) {
         this.request = request;

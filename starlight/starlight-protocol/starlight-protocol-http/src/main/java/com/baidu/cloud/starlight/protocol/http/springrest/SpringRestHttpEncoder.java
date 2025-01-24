@@ -163,13 +163,8 @@ public class SpringRestHttpEncoder extends HttpEncoder {
         httpRequest.headers().add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
 
         FullHttpRequest finalHttpRequest = httpRequest;
-        Function<String, Boolean> findRepeatHeaderFunc = (newHeaderKey) ->
-                finalHttpRequest.headers()
-                        .names()
-                        .stream()
-                        .filter(name -> StringUtils.equalsAnyIgnoreCase(name, newHeaderKey))
-                        .findAny()
-                        .isPresent();
+        Function<String, Boolean> findRepeatHeaderFunc = (newHeaderKey) -> finalHttpRequest.headers().names().stream()
+            .filter(name -> StringUtils.equalsAnyIgnoreCase(name, newHeaderKey)).findAny().isPresent();
 
         // request kvAttachment
         if (request.getAttachmentKv() != null) {

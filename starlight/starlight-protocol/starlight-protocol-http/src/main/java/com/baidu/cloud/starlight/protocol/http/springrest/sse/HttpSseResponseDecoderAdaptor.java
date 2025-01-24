@@ -66,8 +66,8 @@ public class HttpSseResponseDecoderAdaptor extends HttpResponseDecoder {
     }
 
     /**
-     * 为什么要重写这个方法，是因为我们不想用 ByteToMessageDecoder 里面的 CUMULATOR 实现
-     * starlight 有个特殊的ByteBuf可以实现 CUMULATOR 效果
+     * 为什么要重写这个方法，是因为我们不想用 ByteToMessageDecoder 里面的 CUMULATOR 实现 starlight 有个特殊的ByteBuf可以实现 CUMULATOR 效果
+     * 
      * @param ctx
      * @param msg
      * @throws Exception
@@ -80,11 +80,11 @@ public class HttpSseResponseDecoderAdaptor extends HttpResponseDecoder {
                 callDecode(ctx, (ByteBuf) msg, out);
             } catch (Exception e) {
                 LOGGER.debug(
-                        "Bytebuf cannot be decoded by http protocol, will retry another protocol. " + "the reason is : {}",
-                        e.getMessage());
+                    "Bytebuf cannot be decoded by http protocol, will retry another protocol. " + "the reason is : {}",
+                    e.getMessage());
                 throw new CodecException(CodecException.PROTOCOL_DECODE_NOTMATCH_EXCEPTION,
-                        "Bytebuf cannot be decoded by http protocol, will retry another protocol. " + "The reason is "
-                                + e.getMessage());
+                    "Bytebuf cannot be decoded by http protocol, will retry another protocol. " + "The reason is "
+                        + e.getMessage());
             } finally {
                 for (Object result : out) {
                     ctx.fireChannelRead(result);
