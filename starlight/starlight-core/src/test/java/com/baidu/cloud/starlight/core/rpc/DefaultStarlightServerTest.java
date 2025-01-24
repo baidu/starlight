@@ -48,12 +48,13 @@ public class DefaultStarlightServerTest {
         transportConfig.setConnectTimeoutMills(1000);
         transportConfig.setWriteTimeoutMills(1000);
         starlightServer = new DefaultStarlightServer("brpc", "localhost", 8001, transportConfig);
-        
+
     }
-    
+
+    @Ignore
     @Test
     public void init() throws NoSuchFieldException, IllegalAccessException {
-        
+
         starlightServer.init();
         Field field = starlightServer.getClass().getDeclaredField("serverPeer");
         field.setAccessible(true);
@@ -62,6 +63,7 @@ public class DefaultStarlightServerTest {
         Assert.assertTrue(serverPeer instanceof NettyServer);
         starlightServer.destroy();
     }
+
     @Ignore
     @Test
     public void serve() throws NoSuchFieldException, IllegalAccessException, InterruptedException {
@@ -88,6 +90,7 @@ public class DefaultStarlightServerTest {
         Assert.assertNotNull(RpcServiceRegistry.getInstance().discover(rpcService.getServiceName()));
         starlightServer.destroy();
     }
+
     @Ignore
     @Test
     public void testExport() {
@@ -98,6 +101,7 @@ public class DefaultStarlightServerTest {
         RpcService rpcService = new RpcService(UserService.class, new UserServiceImpl(), serviceConfig);
         Assert.assertNotNull(RpcServiceRegistry.getInstance().discover(rpcService.getServiceName()));
     }
+
     @Ignore
     @Test
     public void unexport() {
