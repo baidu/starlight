@@ -19,20 +19,26 @@ package com.baidu.cloud.starlight.springcloud.client.cluster;
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.model.Response;
 import com.baidu.cloud.starlight.api.rpc.callback.RpcCallback;
+import com.baidu.cloud.starlight.api.transport.channel.RpcChannel;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRouteProperties;
 import com.baidu.cloud.starlight.springcloud.configuration.Configuration;
 import com.baidu.cloud.thirdparty.netty.util.Timeout;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 
 /**
- * FailFastClusterClient SPI name: "failfast" Created by liuruisen on 2020/2/27.
+ * FailFastClusterClient
+ * SPI name: "failfast"
+ * Created by liuruisen on 2020/2/27.
  */
 public class FailFastClusterClient extends AbstractClusterClient {
 
-    public FailFastClusterClient(String name, StarlightClientProperties properties, LoadBalancer loadBalancer,
-        DiscoveryClient discoveryClient, SingleStarlightClientManager clientManager, Configuration configuration,
-        StarlightRouteProperties routeProperties) {
+
+    public FailFastClusterClient(String name, StarlightClientProperties properties,
+                                 LoadBalancer loadBalancer, DiscoveryClient discoveryClient,
+                                 SingleStarlightClientManager clientManager,
+                                 Configuration configuration, StarlightRouteProperties routeProperties) {
         super(name, properties, loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
     }
 
@@ -40,6 +46,7 @@ public class FailFastClusterClient extends AbstractClusterClient {
     public void request(Request request, RpcCallback callback) {
         super.request(request, new FailFastClusterCallback(callback));
     }
+
 
     protected class FailFastClusterCallback implements RpcCallback {
         private final RpcCallback chainedCallback;
@@ -66,6 +73,11 @@ public class FailFastClusterClient extends AbstractClusterClient {
         @Override
         public void onError(Throwable e) {
             chainedCallback.onError(e);
+        }
+
+        @Override
+        public void addRpcChannel(RpcChannel rpcChannel) {
+            chainedCallback.addRpcChannel(rpcChannel);
         }
     }
 

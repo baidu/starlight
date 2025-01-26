@@ -1,0 +1,6 @@
+com.baidu.cloud.starlight.springcloud.client.StarlightClientAutoConfiguration
+com.baidu.cloud.starlight.springcloud.server.StarlightServerAutoConfiguration
+com.baidu.cloud.starlight.springcloud.server.register.StarlightRegisterAutoConfiguration
+com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.StarlightLoadBalancerAutoConfiguration
+com.baidu.cloud.starlight.springcloud.lifecycle.StarlightServerLifecycleAutoConfiguration
+com.baidu.cloud.starlight.springcloud.lifecycle.StarlightClientLifecycleAutoConfiguration

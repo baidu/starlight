@@ -27,7 +27,7 @@ import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.lang.reflect.Field;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -46,7 +46,8 @@ public class StarlightGravityRegisterListenerTest {
         // mock environment
         environment = Mockito.mock(ConfigurableEnvironment.class);
         doReturn("rpc-provider").when(environment).getProperty("starlight.server.name");
-        doReturn("instanceId").when(environment).getProperty("spring.cloud.consul.discovery.instanceId", "instanceId");
+        doReturn("instanceId").when(environment)
+                .getProperty("spring.cloud.consul.discovery.instanceId", "instanceId");
         doReturn("brpc,stargate,springrest").when(environment).getProperty("starlight.server.protocols");
 
         // StarlightServerProperties
@@ -57,6 +58,7 @@ public class StarlightGravityRegisterListenerTest {
         ConfigurableApplicationContext applicationContext = Mockito.mock(ConfigurableApplicationContext.class);
         doReturn(environment).when(applicationContext).getEnvironment();
         doReturn(properties).when(applicationContext).getBean(StarlightServerProperties.class);
+
 
         // set applicationContext
         Field field2 = listener.getClass().getSuperclass().getDeclaredField("applicationContext");

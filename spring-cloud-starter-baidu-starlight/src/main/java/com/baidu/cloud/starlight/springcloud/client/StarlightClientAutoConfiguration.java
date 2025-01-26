@@ -16,6 +16,7 @@
  
 package com.baidu.cloud.starlight.springcloud.client;
 
+
 import com.baidu.cloud.starlight.springcloud.client.annotation.RpcProxy;
 import com.baidu.cloud.starlight.springcloud.client.cluster.LoadBalancer;
 import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
@@ -31,6 +32,12 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.util.StringUtils;
+
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by liuruisen on 2020/3/5.
@@ -58,6 +65,30 @@ public class StarlightClientAutoConfiguration {
     @ConditionalOnMissingBean
     public SingleStarlightClientManager singleStarlightClientManager() {
         return SingleStarlightClientManager.getInstance();
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    public RpcProxyProviders rpcProxyProviders(StarlightRouteProperties routeProperties) {
+        RpcProxyProviders proxyProviders = new RpcProxyProviders();
+        long startTime = System.currentTimeMillis();
+        Reflections reflections = new Reflections("com", new FieldAnnotationsScanner());
+        Set<Field> fields = reflections.getFieldsAnnotatedWith(RpcProxy.class);
+        for (Field field : fields) {
+            RpcProxy rpcProxy = field.getAnnotation(RpcProxy.class);
+            if (!StringUtils.isEmpty(rpcProxy.name())
+                    && StringUtils.isEmpty(rpcProxy.remoteUrl())) {
+                if (routeProperties.getServiceIdMap() != null
+                        && routeProperties.getServiceIdMap().containsKey(rpcProxy.name())) {
+                    proxyProviders.getProviders().add(routeProperties.getServiceIdMap().get(rpcProxy.name()));
+                } else {
+                    proxyProviders.getProviders().add(rpcProxy.name());
+                }
+            }
+        }
+        LOGGER.info("Scanpackage {}, Provider list size is {}, content is {}, cost {}",
+                "com", proxyProviders.getProviders().size(), proxyProviders, System.currentTimeMillis() - startTime);
+        return proxyProviders;
     }
 
     @Bean

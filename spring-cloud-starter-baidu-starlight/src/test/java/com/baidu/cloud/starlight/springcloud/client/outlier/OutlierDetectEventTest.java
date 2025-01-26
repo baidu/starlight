@@ -18,6 +18,8 @@ package com.baidu.cloud.starlight.springcloud.client.outlier;
 
 import org.junit.Test;
 
+import static org.junit.Assert.*;
+
 /**
  * Created by liuruisen on 2021/9/7.
  */

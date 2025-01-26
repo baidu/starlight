@@ -17,6 +17,7 @@
 package com.baidu.cloud.starlight.springcloud.client;
 
 import com.baidu.cloud.starlight.api.rpc.StarlightClient;
+import com.baidu.cloud.starlight.api.utils.EnvUtils;
 import com.baidu.cloud.starlight.core.rpc.SingleStarlightClient;
 import com.baidu.cloud.starlight.springcloud.client.annotation.RpcProxy;
 import com.baidu.cloud.starlight.springcloud.client.cluster.FailFastClusterClient;
@@ -37,7 +38,7 @@ import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
-import org.springframework.beans.factory.config.InstantiationAwareBeanPostProcessorAdapter;
+import org.springframework.beans.factory.config.SmartInstantiationAwareBeanPostProcessor;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionReaderUtils;
@@ -51,7 +52,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.util.ReflectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
@@ -60,17 +60,19 @@ import java.util.Map;
 
 /**
  * Created by liuruisen on 2019-06-26.
+ * TODO 研究AOT的逻辑，继承BeanRegistrationAotProcessor实现AOT逻辑
+ * - postProcessMergedBeanDefinition + postProcessProperties + findInjectionMetadata 参考 @autowire
  */
-public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanPostProcessorAdapter
-    implements BeanFactoryAware, EnvironmentAware, PriorityOrdered {
+public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAwareBeanPostProcessor,
+        BeanFactoryAware, EnvironmentAware, PriorityOrdered {
 
     public static final String BEAN_NAME = "rpcClientAnnotationBeanPostProcessor";
 
     private static final String CLIENT_BEAN_NAME_SUFFIX = ".StarlightClient";
 
     /**
-     * Bean name prefix for target beans behind scoped proxies. Used to exclude those targets from handler method
-     * detection, in favor of the corresponding proxies.
+     * Bean name prefix for target beans behind scoped proxies.
+     * Used to exclude those targets from handler method detection, in favor of the corresponding proxies.
      * <p>
      * see org.springframework.web.servlet.handler.AbstractHandlerMethodMapping
      */
@@ -83,17 +85,17 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
     private PropertySourcesPlaceholdersResolver placeholdersResolver;
 
     @Override
-    public PropertyValues postProcessPropertyValues(PropertyValues pvs, PropertyDescriptor[] pds, Object bean,
-        String beanName) throws BeansException {
+    public PropertyValues postProcessProperties(PropertyValues pvs,
+                                                    Object bean, String beanName) throws BeansException {
         Class<?> clazz = bean.getClass();
         List<Field> fields = FieldUtils.getAllFieldsList(clazz);
         if (fields != null && fields.size() > 0) {
             for (Field field : fields) {
                 RpcProxy rpcProxy = field.getAnnotation(RpcProxy.class);
                 if (rpcProxy != null) {
-                    resolveRpcProxy(rpcProxy); // get and set real @RpcProxy#name value
+                    RpcProxyInfo rpcProxyInfo = resolveRpcProxy(rpcProxy); // get and set real @RpcProxy#name value
                     try {
-                        Object proxyBean = buildRpcProxyBean(field.getType(), rpcProxy);
+                        Object proxyBean = buildRpcProxyBean(field.getType(), rpcProxyInfo);
                         ReflectionUtils.makeAccessible(field);
                         field.set(bean, proxyBean);
                     } catch (Exception e) {
@@ -111,28 +113,19 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
      * @param rpcProxy
      * @return
      */
-    private void resolveRpcProxy(RpcProxy rpcProxy) {
+    private RpcProxyInfo resolveRpcProxy(RpcProxy rpcProxy) {
         String name = rpcProxy.name();
-        if (StringUtils.isEmpty(name)) {
-            return;
+        if (!StringUtils.hasText(name)) {
+            return new RpcProxyInfo(rpcProxy, name);
         }
 
         String realName = (String) placeholdersResolver.resolvePlaceholders(name);
-        if (StringUtils.isEmpty(realName)) {
-            throw new IllegalArgumentException(
-                "Resolve name value of @RpcProxy#name failed, " + "the value must not be null");
+        if (!StringUtils.hasText(realName)) {
+            throw new IllegalArgumentException("Resolve name value of @RpcProxy#name failed, "
+                    + "the value must not be null");
         }
 
-        try {
-            InvocationHandler rpcProxyHandler = Proxy.getInvocationHandler(rpcProxy);
-            Field nameField = rpcProxyHandler.getClass().getDeclaredField("memberValues");
-            nameField.setAccessible(true);
-            Map<String, Object> memberValuesMap = (Map<String, Object>) nameField.get(rpcProxyHandler);
-            memberValuesMap.put("name", realName);
-        } catch (Exception e) {
-            LOGGER.error("Failed to set @RpcProxy#name through reflection", e);
-            throw new IllegalStateException("Failed to set @RpcProxy#name through reflection", e);
-        }
+        return new RpcProxyInfo(rpcProxy, realName);
     }
 
     @Override
@@ -140,13 +133,14 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
         return Ordered.LOWEST_PRECEDENCE - 5; // 保证本BeanPostProcessor在Autowire PostProcessor之前执行
     }
 
+
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         if (beanFactory instanceof ConfigurableListableBeanFactory) {
             this.beanFactory = (DefaultListableBeanFactory) beanFactory;
         } else {
             throw new IllegalArgumentException(
-                "RpcProxyAnnotationBeanPostProcessor requires a ConfigurableListableBeanFactory");
+                    "RpcProxyAnnotationBeanPostProcessor requires a ConfigurableListableBeanFactory");
         }
     }
 
@@ -155,10 +149,10 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
         this.placeholdersResolver = new PropertySourcesPlaceholdersResolver(environment);
     }
 
-    private Object buildRpcProxyBean(Class<?> rpcProxyClass, RpcProxy rpcProxy) throws Exception {
+    private Object buildRpcProxyBean(Class<?> rpcProxyClass, RpcProxyInfo rpcProxyInfo) throws Exception {
         // get from spring ioc (cache)
         try {
-            String proxyBeanName = "&" + proxyBeanName(rpcProxy, rpcProxyClass);
+            String proxyBeanName = "&" + proxyBeanName(rpcProxyInfo, rpcProxyClass);
             RpcProxyFactoryBean proxyBean = beanFactory.getBean(proxyBeanName, RpcProxyFactoryBean.class);
             if (proxyBean != null) {
                 return proxyBean.getObject();
@@ -167,25 +161,27 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
             LOGGER.info("Get Bean {} form BeanFactory failed, will create", ex.getBeanName());
         }
 
-        return rpcProxyBean(rpcProxyClass, rpcProxy);
+        return rpcProxyBean(rpcProxyClass, rpcProxyInfo);
     }
+
 
     /**
      * Register {@link RpcProxyFactoryBean} and get proxy object
      *
      * @param proxyType
-     * @param rpcProxy
+     * @param rpcProxyInfo
      * @return
      * @throws Exception
      */
-    private Object rpcProxyBean(Class<?> proxyType, RpcProxy rpcProxy) throws Exception {
+    private Object rpcProxyBean(Class<?> proxyType, RpcProxyInfo rpcProxyInfo) throws Exception {
         // register or get starlight client
-        StarlightClient starlightClient = registerOrGetStarlightClient(rpcProxy);
+        StarlightClient starlightClient = registerOrGetStarlightClient(rpcProxyInfo);
 
         // register factory bean
-        BeanDefinitionBuilder definitionBuilder =
-            BeanDefinitionBuilder.genericBeanDefinition(RpcProxyFactoryBean.class);
-        definitionBuilder.addPropertyValue("annotationInfos", rpcProxy);
+        BeanDefinitionBuilder definitionBuilder = BeanDefinitionBuilder
+                .genericBeanDefinition(RpcProxyFactoryBean.class);
+        definitionBuilder.addPropertyValue("annotationInfos", rpcProxyInfo.getRpcProxy());
+        definitionBuilder.addPropertyValue("clientName", rpcProxyInfo.getRealName());
         definitionBuilder.addPropertyValue("type", proxyType);
         definitionBuilder.addPropertyValue("client", starlightClient);
         definitionBuilder.addPropertyValue("clientProperties", clientProperties());
@@ -193,67 +189,73 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
 
         AbstractBeanDefinition beanDefinition = definitionBuilder.getBeanDefinition();
 
-        String proxyBeanName = proxyBeanName(rpcProxy, proxyType);
+        String proxyBeanName = proxyBeanName(rpcProxyInfo, proxyType);
         String aliasName = proxyBeanName;
-        if (StringUtils.hasText(rpcProxy.qualifier())) {
-            aliasName = rpcProxy.qualifier();
+        if (StringUtils.hasText(rpcProxyInfo.getRpcProxy().qualifier())) {
+            aliasName = rpcProxyInfo.getRpcProxy().qualifier();
         }
-        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, proxyBeanName, new String[] {aliasName});
+        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, proxyBeanName,
+                new String[]{aliasName});
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, beanFactory);
 
         RpcProxyFactoryBean proxyBean = beanFactory.getBean("&" + proxyBeanName, RpcProxyFactoryBean.class);
         return proxyBean.getObject();
     }
 
+
     /**
-     * Register StarlightClient Bean Types: Single / Cluster
+     * Register StarlightClient Bean
+     * Types: Single / Cluster
      *
-     * @param rpcProxy
+     * @param rpcProxyInfo
      * @return
      */
-    private StarlightClient registerOrGetStarlightClient(RpcProxy rpcProxy) {
-        String clientBeanName = clientBeanName(rpcProxy);
+    private StarlightClient registerOrGetStarlightClient(RpcProxyInfo rpcProxyInfo) {
+        String clientBeanName = clientBeanName(rpcProxyInfo);
 
-        if (!StringUtils.isEmpty(rpcProxy.remoteUrl())) {
+        RpcProxy rpcProxy = rpcProxyInfo.getRpcProxy();
+
+        if (StringUtils.hasText(rpcProxy.remoteUrl())) {
             String protocol = null;
             if (rpcProxy.remoteUrl().contains("://")) {
-                protocol = rpcProxy.remoteUrl().split("://")[0];
+                 protocol = rpcProxy.remoteUrl().split("://")[0];
             }
 
-            if (StringUtils.isEmpty(rpcProxy.protocol()) && StringUtils.isEmpty(protocol)) {
-                throw new IllegalArgumentException(
-                    "protocol in @RpcProxy#protocol is null, " + "when specify @RpcProxy#remoteUrl");
+            if (!StringUtils.hasText(rpcProxy.protocol()) && !StringUtils.hasText(protocol)) {
+                throw new IllegalArgumentException("protocol in @RpcProxy#protocol is null, "
+                        + "when specify @RpcProxy#remoteUrl");
             }
-            return registerOrGetSingleClient(clientBeanName, rpcProxy);
+            return registerOrGetSingleClient(clientBeanName, rpcProxyInfo);
         }
 
-        if (!StringUtils.isEmpty(rpcProxy.name())) {
-            return registerOrGetClusterClient(clientBeanName, rpcProxy);
+        if (StringUtils.hasText(rpcProxyInfo.getRealName())) {
+            return registerOrGetClusterClient(clientBeanName, rpcProxyInfo);
         }
 
         return null;
     }
 
+
     /**
      * Support direct URL request
      *
      * @param clientBeanName
-     * @param rpcProxy
+     * @param rpcProxyInfo
      * @return
      */
-    private StarlightClient registerOrGetSingleClient(String clientBeanName, RpcProxy rpcProxy) {
+    private StarlightClient registerOrGetSingleClient(String clientBeanName, RpcProxyInfo rpcProxyInfo) {
         StarlightClient starlightClient = getClientFormIocCache(clientBeanName);
         if (starlightClient != null) {
             return starlightClient;
         }
-        String remoteUrl = rpcProxy.remoteUrl();
+        String remoteUrl = rpcProxyInfo.getRpcProxy().remoteUrl();
         if (remoteUrl.contains("://")) {
             remoteUrl = remoteUrl.split("://")[1];
         }
         String[] ipAndPort = remoteUrl.split(":");
         StarlightClientProperties properties = clientProperties();
-        BeanDefinitionBuilder definitionBuilder =
-            BeanDefinitionBuilder.genericBeanDefinition(SingleStarlightClient.class);
+        BeanDefinitionBuilder definitionBuilder = BeanDefinitionBuilder
+                .genericBeanDefinition(SingleStarlightClient.class);
         definitionBuilder.addConstructorArgValue(ipAndPort[0]);
         definitionBuilder.addConstructorArgValue(ipAndPort[1]);
         definitionBuilder.addConstructorArgValue(properties.transportConfig(remoteUrl));
@@ -262,8 +264,8 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
         definitionBuilder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
         AbstractBeanDefinition beanDefinition = definitionBuilder.getBeanDefinition();
-        BeanDefinitionHolder holder =
-            new BeanDefinitionHolder(beanDefinition, clientBeanName, new String[] {clientBeanName});
+        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, clientBeanName,
+                new String[]{clientBeanName});
         // register
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, beanFactory);
         // get bean
@@ -274,28 +276,30 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
      * Support Cluster request
      *
      * @param clientBeanName
-     * @param rpcProxy
+     * @param rpcProxyInfo
      * @return
      */
-    private StarlightClient registerOrGetClusterClient(String clientBeanName, RpcProxy rpcProxy) {
+    private StarlightClient registerOrGetClusterClient(String clientBeanName, RpcProxyInfo rpcProxyInfo) {
         StarlightClient starlightClient = getClientFormIocCache(clientBeanName);
         if (starlightClient != null) {
             return starlightClient;
         }
         StarlightClientProperties properties = clientProperties();
-        String clusterModel = clusterModel(properties, rpcProxy);
+        String clusterModel = clusterModel(properties, rpcProxyInfo);
 
         BeanDefinitionBuilder definitionBuilder = null;
         switch (clusterModel) {
             case "failfast":
-                definitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(FailFastClusterClient.class);
+                definitionBuilder =
+                        BeanDefinitionBuilder.genericBeanDefinition(FailFastClusterClient.class);
                 break;
             case "failover":
-                definitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(FailOverClusterClient.class);
+                definitionBuilder =
+                        BeanDefinitionBuilder.genericBeanDefinition(FailOverClusterClient.class);
                 break;
             default:
-                throw new IllegalStateException(
-                    "starlight.client.config {clusterModel} is null, " + "please config it before run");
+                throw new IllegalStateException("starlight.client.config {clusterModel} is null, "
+                        + "please config it before run");
         }
         LoadBalancer loadBalancer = beanFactory.getBean(LoadBalancer.class);
         DiscoveryClient discoveryClient = beanFactory.getBean(DiscoveryClient.class);
@@ -307,7 +311,7 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
             LOGGER.error("No such bean of Configuration, does not depend on gravity?", e);
         }
         StarlightRouteProperties routeProperties = beanFactory.getBean(StarlightRouteProperties.class);
-        definitionBuilder.addConstructorArgValue(rpcProxy.name());
+        definitionBuilder.addConstructorArgValue(rpcProxyInfo.getRealName());
         definitionBuilder.addConstructorArgValue(properties);
         definitionBuilder.addConstructorArgValue(loadBalancer);
         definitionBuilder.addConstructorArgValue(discoveryClient);
@@ -319,12 +323,13 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
         definitionBuilder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
         AbstractBeanDefinition beanDefinition = definitionBuilder.getBeanDefinition();
-        BeanDefinitionHolder holder =
-            new BeanDefinitionHolder(beanDefinition, clientBeanName, new String[] {clientBeanName});
+        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, clientBeanName,
+                new String[]{clientBeanName});
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, beanFactory);
 
         return beanFactory.getBean(clientBeanName, StarlightClient.class);
     }
+
 
     private StarlightClientProperties clientProperties() {
         StarlightClientProperties properties = beanFactory.getBean(StarlightClientProperties.class);
@@ -339,29 +344,30 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
      * Get Cluster model from properties
      *
      * @param properties
-     * @param rpcProxy
+     * @param rpcProxyInfo
      * @return
      */
-    private String clusterModel(StarlightClientProperties properties, RpcProxy rpcProxy) {
-        String clusterModel = properties.getClusterModel(rpcProxy.name());
-        if (StringUtils.isEmpty(clusterModel)) {
-            throw new IllegalStateException(
-                "starlight.client.config {clusterModel} is null, " + "please config it before run");
+    private String clusterModel(StarlightClientProperties properties, RpcProxyInfo rpcProxyInfo) {
+        String clusterModel = properties.getClusterModel(rpcProxyInfo.getRealName());
+        if (!StringUtils.hasText(clusterModel)) {
+            throw new IllegalStateException("starlight.client.config {clusterModel} is null, "
+                    + "please config it before run");
         }
 
         return clusterModel;
     }
 
     /**
-     * Starlight Client bean name <1> when specify remoteUrl, clientBeanName will be "remoteUrl.StarlightClient</1> <2>
-     * When not specify remoteUrl but specify name, clientBeanName will be "name.StarlightClient"</2> We create
-     * StarlightClient bean at addressing level
+     * Starlight Client bean name
+     * <1> when specify remoteUrl, clientBeanName will be "remoteUrl.StarlightClient</1>
+     * <2> When not specify remoteUrl but specify name, clientBeanName will be "name.StarlightClient"</2>
+     * We create StarlightClient bean at addressing level
      *
-     * @param rpcProxy
+     * @param rpcProxyInfo
      * @return
      */
-    private String clientBeanName(RpcProxy rpcProxy) {
-        String remoteUrl = rpcProxy.remoteUrl();
+    private String clientBeanName(RpcProxyInfo rpcProxyInfo) {
+        String remoteUrl = rpcProxyInfo.getRpcProxy().remoteUrl();
         if (!remoteUrl.isEmpty()) {
             if (remoteUrl.contains("://")) {
                 remoteUrl = remoteUrl.split("://")[1];
@@ -369,33 +375,36 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
             return remoteUrl + CLIENT_BEAN_NAME_SUFFIX;
         }
 
-        String name = rpcProxy.name();
+        String name = rpcProxyInfo.getRealName();
         if (!name.isEmpty()) {
             return name + CLIENT_BEAN_NAME_SUFFIX;
         }
 
-        throw new IllegalStateException(
-            "Either name() or remoteUrl() must be provided in @" + RpcProxy.class.getSimpleName());
+        throw new IllegalStateException("Either name() or remoteUrl() must be provided in @"
+                + RpcProxy.class.getSimpleName());
     }
 
     /**
-     * Proxy bean name scopedTarget.starlightClientBeanName:{protocol}:interfaceName </2>
+     * Proxy bean name
+     * scopedTarget.starlightClientBeanName:{protocol}:interfaceName </2>
      *
-     * @param rpcProxy
+     * @param rpcProxyInfo
      * @param proxyType
      * @return
      */
-    private String proxyBeanName(RpcProxy rpcProxy, Class<?> proxyType) {
-        StringBuilder buf = new StringBuilder(TARGET_NAME_PREFIX + clientBeanName(rpcProxy) + ".");
-        if (!StringUtils.isEmpty(rpcProxy.protocol())) {
-            buf.append(rpcProxy.protocol()).append(".");
+    private String proxyBeanName(RpcProxyInfo rpcProxyInfo, Class<?> proxyType) {
+        StringBuilder buf = new StringBuilder(TARGET_NAME_PREFIX + clientBeanName(rpcProxyInfo) + ".");
+        if (StringUtils.hasText(rpcProxyInfo.getRpcProxy().protocol())) {
+            buf.append(rpcProxyInfo.getRpcProxy().protocol()).append(".");
         }
         buf.append(proxyType.getName());
         return buf.toString();
     }
 
+
     /**
-     * Get Bean from spring ioc first Preventing repeated injection of beans
+     * Get Bean from spring ioc first
+     * Preventing repeated injection of beans
      *
      * @param clientBeanName
      * @return
@@ -412,5 +421,37 @@ public class RpcProxyAnnotationBeanPostProcessor extends InstantiationAwareBeanP
             }
         }
         return starlightClient;
+    }
+
+    /**
+     * 去掉通过反射更改注解的属性值，改为额外的包装类
+     * 以解决jdk9模块化后java.base不暴露给unnamed module问题
+     */
+    private static class RpcProxyInfo {
+
+        private RpcProxy rpcProxy;
+
+        private String realName;
+
+        public RpcProxyInfo(RpcProxy rpcProxy, String name) {
+            this.rpcProxy = rpcProxy;
+            this.realName = name;
+        }
+
+        public RpcProxy getRpcProxy() {
+            return rpcProxy;
+        }
+
+        public void setRpcProxy(RpcProxy rpcProxy) {
+            this.rpcProxy = rpcProxy;
+        }
+
+        public String getRealName() {
+            return realName;
+        }
+
+        public void setRealName(String realName) {
+            this.realName = realName;
+        }
     }
 }

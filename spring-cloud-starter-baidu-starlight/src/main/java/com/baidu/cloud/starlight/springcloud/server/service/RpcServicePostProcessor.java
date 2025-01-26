@@ -50,10 +50,11 @@ import java.util.Set;
 import static org.springframework.context.annotation.AnnotationConfigUtils.CONFIGURATION_BEAN_NAME_GENERATOR;
 
 /**
- * Used to register RpcServiceBean Created by liuruisen on 2020/3/2.
+ * Used to register RpcServiceBean
+ * Created by liuruisen on 2020/3/2.
  */
-public class RpcServicePostProcessor implements BeanDefinitionRegistryPostProcessor, ApplicationContextAware,
-    EnvironmentAware, ResourceLoaderAware, BeanClassLoaderAware, Ordered {
+public class RpcServicePostProcessor implements BeanDefinitionRegistryPostProcessor,
+        ApplicationContextAware, EnvironmentAware, ResourceLoaderAware, BeanClassLoaderAware, Ordered {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(RpcServicePostProcessor.class);
 
@@ -86,8 +87,8 @@ public class RpcServicePostProcessor implements BeanDefinitionRegistryPostProces
     }
 
     private void registerRpcServiceBean(Set<String> packagesToScan, BeanDefinitionRegistry registry) {
-        ClassPathBeanDefinitionScanner scanner =
-            new ClassPathBeanDefinitionScanner(registry, false, environment, resourceLoader);
+        ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(registry, false,
+                environment, resourceLoader);
         scanner.addIncludeFilter(new AnnotationTypeFilter(RpcService.class));
         String[] stringPackages = new String[packagesToScan.size()];
         stringPackages = packagesToScan.toArray(stringPackages);
@@ -99,8 +100,8 @@ public class RpcServicePostProcessor implements BeanDefinitionRegistryPostProces
             BeanDefinition beanDefinition = definitionHolder.getBeanDefinition();
             Class<?> targetClass = ClassUtils.resolveClassName(beanDefinition.getBeanClassName(), classLoader);
             if (targetClass.getInterfaces().length == 0) {
-                throw new IllegalArgumentException("@RpcService should be written on the implementation class, "
-                    + "but is on {" + targetClass.getName() + "}");
+                throw new IllegalArgumentException("@RpcService should be written on the implementation class, " +
+                        "but is on {" + targetClass.getName() + "}");
             }
             Class<?> targetInterfaceClass = targetClass.getInterfaces()[0];
             RpcService rpcService = AnnotationUtils.findAnnotation(targetClass, RpcService.class);
@@ -119,7 +120,8 @@ public class RpcServicePostProcessor implements BeanDefinitionRegistryPostProces
     }
 
     private Set<BeanDefinitionHolder> findRpcServiceBeanHolder(Set<String> packagesToScan,
-        ClassPathBeanDefinitionScanner scanner, BeanDefinitionRegistry registry) {
+                                                               ClassPathBeanDefinitionScanner scanner,
+                                                               BeanDefinitionRegistry registry) {
         BeanNameGenerator beanNameGenerator = resolveBeanNameGenerator(registry);
         Set<BeanDefinitionHolder> beanDefinitions = new LinkedHashSet<>();
         for (String basePackage : packagesToScan) {
@@ -133,6 +135,7 @@ public class RpcServicePostProcessor implements BeanDefinitionRegistryPostProces
         return beanDefinitions;
     }
 
+
     /**
      * Get BeanNameGenerator
      *
@@ -144,14 +147,15 @@ public class RpcServicePostProcessor implements BeanDefinitionRegistryPostProces
         if (registry instanceof SingletonBeanRegistry) {
             SingletonBeanRegistry singletonBeanRegistry = SingletonBeanRegistry.class.cast(registry);
             beanNameGenerator =
-                (BeanNameGenerator) singletonBeanRegistry.getSingleton(CONFIGURATION_BEAN_NAME_GENERATOR);
+                    (BeanNameGenerator) singletonBeanRegistry.getSingleton(CONFIGURATION_BEAN_NAME_GENERATOR);
         }
 
         if (beanNameGenerator == null) {
             LOGGER.info("BeanNameGenerator bean can't be found in BeanFactory with name ["
-                + CONFIGURATION_BEAN_NAME_GENERATOR + "]");
-            LOGGER.info("BeanNameGenerator will be a instance of " + AnnotationBeanNameGenerator.class.getName()
-                + " , it maybe a potential problem on bean name generation.");
+                    + CONFIGURATION_BEAN_NAME_GENERATOR + "]");
+            LOGGER.info("BeanNameGenerator will be a instance of " +
+                    AnnotationBeanNameGenerator.class.getName() +
+                    " , it maybe a potential problem on bean name generation.");
             beanNameGenerator = new AnnotationBeanNameGenerator();
         }
         return beanNameGenerator;

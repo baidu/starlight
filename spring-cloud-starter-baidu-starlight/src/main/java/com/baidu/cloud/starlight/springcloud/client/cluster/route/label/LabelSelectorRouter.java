@@ -16,11 +16,11 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster.route.label;
 
+import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.starlight.springcloud.client.cluster.Cluster;
 import com.baidu.cloud.starlight.springcloud.client.cluster.ClusterSelector;
 import com.baidu.cloud.starlight.springcloud.client.cluster.LoadBalancer;
-import com.baidu.cloud.starlight.springcloud.client.cluster.RequestContext;
 import com.baidu.cloud.starlight.springcloud.client.cluster.route.AbstractRouter;
 import com.baidu.cloud.starlight.springcloud.client.cluster.subcluster.DefaultCluster;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
@@ -50,8 +50,10 @@ public class LabelSelectorRouter extends AbstractRouter {
 
     private final StarlightClientProperties clientProperties;
 
-    public LabelSelectorRouter(String serviceId, StarlightRouteProperties routeProperties,
-        StarlightClientProperties clientProperties, LoadBalancer loadBalancer) {
+    public LabelSelectorRouter(String serviceId,
+                               StarlightRouteProperties routeProperties,
+                               StarlightClientProperties clientProperties,
+                               LoadBalancer loadBalancer) {
         this.serviceId = serviceId;
         this.routeProperties = routeProperties;
         this.clientProperties = clientProperties;
@@ -59,10 +61,19 @@ public class LabelSelectorRouter extends AbstractRouter {
     }
 
     @Override
-    public Cluster route(RequestContext requestContext) {
+    public Cluster route(Request request) {
         long routeStart = System.currentTimeMillis();
         // TODO 后续可考虑用RDS支持label路由
-        String labelSelector = routeProperties.getServiceLabelSelector(getServiceId());
+        // 支持海若请求级的label selector选择, 用完删除防止向下传递（ugly实现）
+        Map<String, Object> routeContext =
+                (Map<String, Object>) request.getNoneAdditionKv().get(SpringCloudConstants.ROUTE_CONTEXT_KEY);
+        LOGGER.debug("LabelSelectorRouter route context {}", routeContext);
+        String labelSelector =
+                (String) routeContext.get(SpringCloudConstants.REQUEST_LABEL_SELECTOR_ROUTE_KEY);
+        LOGGER.debug("LabelSelectorRouter label selector from route context {}", labelSelector);
+        if (StringUtils.isEmpty(labelSelector)) {
+            labelSelector = routeProperties.getServiceLabelSelector(getRouteServiceId());
+        }
         if (StringUtils.isEmpty(labelSelector)) {
             LOGGER.debug("[LABEL_ROUTE]LabelSelector for service {} is empty", getServiceId());
             labelSelector = "";
@@ -76,7 +87,7 @@ public class LabelSelectorRouter extends AbstractRouter {
         clusterLabels.put(SpringCloudConstants.LABEL_SELECTOR_ROUTE_KEY, labelSelector);
         clusterSelector.setMeta(clusterLabels);
 
-        recordRouteMatch(requestContext, labelSelector, routeStart);
+        recordRouteMatch(request, labelSelector, routeStart);
 
         return new DefaultCluster(clusterSelector, clientProperties, loadBalancer);
     }
@@ -91,10 +102,20 @@ public class LabelSelectorRouter extends AbstractRouter {
         return this.serviceId;
     }
 
-    private void recordRouteMatch(RequestContext reqContext, String labelSelector, long routeStart) {
-        LOGGER.info(
-            "[LABEL_ROUTE] Request matched label-selector route: " + "serviceId {}, req{}, labelSelector {}, cost {}",
-            getServiceId(), RouteUtils.reqMsg(reqContext.getRequest()), labelSelector,
-            System.currentTimeMillis() - routeStart);
+    @Override
+    public String getRouteServiceId() {
+        // 配置了map映射，使用map指定的value
+        if (routeProperties.getServiceIdMap() != null
+                && routeProperties.getServiceIdMap().containsKey(serviceId)) {
+            return routeProperties.getServiceIdMap().get(serviceId);
+        }
+        return this.serviceId;
+    }
+
+    private void recordRouteMatch(Request request, String labelSelector, long routeStart) {
+        LOGGER.info("[LABEL_ROUTE] Request matched label-selector route: "
+                        + "serviceId {}, req{}, labelSelector {}, cost {}",
+                getServiceId(), RouteUtils.reqMsg(request), labelSelector,
+                System.currentTimeMillis() - routeStart);
     }
 }

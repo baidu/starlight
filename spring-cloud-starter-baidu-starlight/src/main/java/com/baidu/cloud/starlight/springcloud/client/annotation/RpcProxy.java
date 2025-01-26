@@ -31,15 +31,18 @@ import java.lang.annotation.Target;
 public @interface RpcProxy {
 
     /**
-     * Service discovery name. In spring cloud context is provider Spring Application Name. A name must be specified for
-     * all proxy, whether or not a url is provider.
+     * Service discovery name.
+     * In spring cloud context is provider Spring Application Name.
+     * A name must be specified for all proxy, whether or not a url is provider.
      *
      * @return
      */
     String name() default "";
 
     /**
-     * A Real URL, contains of protocol IP port. Example: "protocol://ip:port". Higher priority than {@link #name()}.
+     * A Real URL, contains of protocol IP port.
+     * Example: "protocol://ip:port".
+     * Higher priority than {@link #name()}.
      * The protocol is optional, default is "brpc"
      *
      * @return
@@ -47,16 +50,16 @@ public @interface RpcProxy {
     String remoteUrl() default "";
 
     /**
-     * Rpc protocol, default is "" will select protocol according to priority Default priority: brpc - stargate -
-     * springrest
-     * 
+     * Rpc protocol, default is "" will select protocol according to priority
+     * Default priority: brpc &gt; stargate &gt; springrest
      * @return
      */
     String protocol() default "";
 
     /**
-     * Rpc Service Id Default is interface.getName() Only if protocol value is "brpc", user can specify this value.
-     * 
+     * Rpc Service Id
+     * Default is interface.getName()
+     * Only if protocol value is "brpc", user can specify this value.
      * @return
      */
     String serviceId() default "";

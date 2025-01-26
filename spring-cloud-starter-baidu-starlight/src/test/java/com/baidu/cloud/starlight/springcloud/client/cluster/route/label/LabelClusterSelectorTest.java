@@ -16,10 +16,10 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster.route.label;
 
-import com.baidu.cloud.starlight.springcloud.client.cluster.route.label.LabelClusterSelector;
-import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightRibbonServer;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import org.junit.Test;
+import org.springframework.cloud.client.DefaultServiceInstance;
+import org.springframework.cloud.client.ServiceInstance;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -42,27 +42,27 @@ public class LabelClusterSelectorTest {
         labelService.getMeta().put(SpringCloudConstants.LABEL_SELECTOR_ROUTE_KEY, labelSelector);
 
         long startTime10 = System.currentTimeMillis();
-        List result1 = labelService.selectorClusterInstances(endpoints(10));
+        List result1 = labelService.selectorClusterInstances(serviceInstances(10));
         System.out.println("LabelService filter 10 endpoint cost: " + (System.currentTimeMillis() - startTime10));
         assertEquals(0, result1.size());
 
         long startTime500 = System.currentTimeMillis();
-        List result2 = labelService.selectorClusterInstances(endpoints(500));
+        List result2 = labelService.selectorClusterInstances(serviceInstances(500));
         System.out.println("LabelService filter 500 endpoint cost: " + (System.currentTimeMillis() - startTime500));
         assertEquals(0, result2.size());
 
         long startTime1000 = System.currentTimeMillis();
-        List result3 = labelService.selectorClusterInstances(endpoints(1000));
+        List result3 = labelService.selectorClusterInstances(serviceInstances(1000));
         System.out.println("LabelService filter 1000 endpoint cost: " + (System.currentTimeMillis() - startTime1000));
         assertEquals(0, result3.size());
 
         long startTime5000 = System.currentTimeMillis();
-        List result4 = labelService.selectorClusterInstances(endpoints(5000));
+        List result4 = labelService.selectorClusterInstances(serviceInstances(5000));
         System.out.println("LabelService filter 5000 endpoint cost: " + (System.currentTimeMillis() - startTime5000));
         assertEquals(0, result4.size());
 
         long startTime10000 = System.currentTimeMillis();
-        List result5 = labelService.selectorClusterInstances(endpoints(10000));
+        List result5 = labelService.selectorClusterInstances(serviceInstances(10000));
         System.out.println("LabelService filter 10000 endpoint cost: " + (System.currentTimeMillis() - startTime10000));
         assertEquals(0, result5.size());
 
@@ -76,36 +76,37 @@ public class LabelClusterSelectorTest {
         labelService.getMeta().put(SpringCloudConstants.LABEL_SELECTOR_ROUTE_KEY, labelSelector);
 
         long startTime10 = System.currentTimeMillis();
-        List result1 = labelService.selectorClusterInstances(endpoints(10));
+        List result1 = labelService.selectorClusterInstances(serviceInstances(10));
         System.out.println("LabelService filter 10 endpoint cost: " + (System.currentTimeMillis() - startTime10));
         assertEquals(10, result1.size());
 
         long startTime500 = System.currentTimeMillis();
-        List result2 = labelService.selectorClusterInstances(endpoints(500));
+        List result2 = labelService.selectorClusterInstances(serviceInstances(500));
         System.out.println("LabelService filter 500 endpoint cost: " + (System.currentTimeMillis() - startTime500));
         assertEquals(500, result2.size());
 
         long startTime1000 = System.currentTimeMillis();
-        List result3 = labelService.selectorClusterInstances(endpoints(1000));
+        List result3 = labelService.selectorClusterInstances(serviceInstances(1000));
         System.out.println("LabelService filter 1000 endpoint cost: " + (System.currentTimeMillis() - startTime1000));
         assertEquals(1000, result3.size());
 
         long startTime5000 = System.currentTimeMillis();
-        List result4 = labelService.selectorClusterInstances(endpoints(5000));
+        List result4 = labelService.selectorClusterInstances(serviceInstances(5000));
         System.out.println("LabelService filter 5000 endpoint cost: " + (System.currentTimeMillis() - startTime5000));
         assertEquals(5000, result4.size());
 
         long startTime10000 = System.currentTimeMillis();
-        List result5 = labelService.selectorClusterInstances(endpoints(10000));
+        List result5 = labelService.selectorClusterInstances(serviceInstances(10000));
         System.out.println("LabelService filter 10000 endpoint cost: " + (System.currentTimeMillis() - startTime10000));
         assertEquals(10000, result5.size());
 
     }
 
-    private List<StarlightRibbonServer> endpoints(Integer size) {
-        List<StarlightRibbonServer> endpoints = new ArrayList<>();
+    private List<ServiceInstance> serviceInstances(Integer size) {
+        List<ServiceInstance> endpoints = new ArrayList<>();
 
         for (int i = 0; i < size; i++) {
+
             Map<String, String> labels = new HashMap<>();
             labels.put("EM_PRODUCT_LINE", "ns");
             labels.put("EM_APP", "service");
@@ -118,9 +119,11 @@ public class LabelClusterSelectorTest {
                 labels.put("EM_LOGIC_IDC", "nj");
             }
 
-            StarlightRibbonServer starlightServer = new StarlightRibbonServer("ip." + i, i);
-            starlightServer.setMetadata(labels);
-            endpoints.add(starlightServer);
+            DefaultServiceInstance endpoint =
+                    new DefaultServiceInstance(i + "", "service", "ip." + i, i, true,
+                    labels);
+
+            endpoints.add(endpoint);
         }
 
         return endpoints;

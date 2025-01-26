@@ -22,12 +22,12 @@ import com.baidu.cloud.starlight.core.rpc.SingleStarlightClient;
 import com.baidu.cloud.starlight.core.statistics.StarlightStatsManager;
 import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
-import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightRibbonServer;
-import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightServerListFilter;
+import com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.StarlightServerListFilter;
+import com.baidu.cloud.starlight.springcloud.common.InstanceUtils;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.thirdparty.netty.util.Timeout;
 import com.baidu.cloud.thirdparty.netty.util.TimerTask;
-import com.netflix.loadbalancer.Server;
+import org.springframework.cloud.client.ServiceInstance;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -36,14 +36,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Remove shutdown instance filter, used in {@link com.netflix.loadbalancer.ILoadBalancer#getAllServers()}
+ * Remove shutdown instance filter
  * <p>
  * Created by liuruisen on 2021/4/23.
  */
-public class ShutdownServerListFilter implements StarlightServerListFilter<Server> {
+public class ShutdownServerListFilter implements StarlightServerListFilter {
 
     /**
-     * 30 min fixme 可配置
+     * 30 min
      */
     private static final Integer SHUTDOWN_CLEAN_UP_PERIOD = 30 * 60 * 1000;
 
@@ -54,33 +54,31 @@ public class ShutdownServerListFilter implements StarlightServerListFilter<Serve
     private final Map<String, Timeout> shutdownCleanTasks;
 
     public ShutdownServerListFilter(SingleStarlightClientManager clientManager,
-        StarlightClientProperties clientProperties) {
+                                    StarlightClientProperties clientProperties) {
         this.clientManager = clientManager;
         this.clientProperties = clientProperties;
         this.shutdownCleanTasks = new ConcurrentHashMap<>();
     }
 
     @Override
-    public List<Server> getFilteredList(List<Server> originServers) {
+    public List<ServiceInstance> getFilteredList(List<ServiceInstance> originServers) {
 
         long filterStartTime = System.currentTimeMillis();
 
-        if (originServers == null || originServers.size() <= 1) {
+        if (originServers == null || originServers.isEmpty()) {
             return originServers;
         }
+
         // Since the original servers is unmodifiable, we copy once
-        List<Server> serverList = new LinkedList<>(originServers);
+        List<ServiceInstance> serverList = new LinkedList<>(originServers);
 
-        for (Server server : originServers) {
-            // 不参与过滤逻辑，防止误判(正常不会为别的类型）
-            if (!(server instanceof StarlightRibbonServer)) {
-                continue;
-            }
-            Map<String, String> serverMetas = ((StarlightRibbonServer) server).getMetadata();
+        for (ServiceInstance server : originServers) {
+            Map<String, String> serverMetas = server.getMetadata();
 
-            if (serverMetas != null && serverMetas.size() > 0) { // 为null不参与判断，防止误判(正常不会为null)
+            if (serverMetas != null && serverMetas.size() > 0) {
+
                 SingleStarlightClient starlightClient =
-                    clientManager.getSingleClient(server.getHost(), server.getPort());
+                        clientManager.getSingleClient(server.getHost(), server.getPort());
                 // starlight client is null, this client is not used in a long period
                 // have the right to be selected by load balancing
                 if (starlightClient == null) {
@@ -103,17 +101,10 @@ public class ShutdownServerListFilter implements StarlightServerListFilter<Serve
                 }
 
                 // epoch > in active time, the server is reboot
-                /*if (!starlightClient.isActive()) {
-                    if (epochTime > peerStatus.getStatusRecordTime()) {
-                        LOGGER.info("Shutdown filter remove {}", server.getHostPort());
-                        clientManager.removeSingleClient(server.getHost(), server.getPort());
-                        continue;
-                    }
-                }*/
 
                 // starlight client is not shutdown, have the right to be selected by load balancing
                 if (!PeerStatus.Status.SHUTTING_DOWN.equals(peerStatus.getStatus())
-                    && !PeerStatus.Status.SHUTDOWN.equals(peerStatus.getStatus())) {
+                        && !PeerStatus.Status.SHUTDOWN.equals(peerStatus.getStatus())) {
                     continue;
                 }
                 long shutdownTime = peerStatus.getStatusRecordTime();
@@ -122,12 +113,13 @@ public class ShutdownServerListFilter implements StarlightServerListFilter<Serve
                 if (epochTime < shutdownTime) {
                     serverList.remove(server);
                     LOGGER.info("Remote server {} had been removed because of shutdown, shutdownTime {}.",
-                        server.getHostPort(), peerStatus.getStatusRecordTime());
+                            InstanceUtils.ipPortStr(server), peerStatus.getStatusRecordTime());
                     submitTimerTask(server, SHUTDOWN_CLEAN_UP_PERIOD);
                 }
             }
         }
-        LOGGER.debug("ShutdownServerListFilter getFilteredList cost {}", System.currentTimeMillis() - filterStartTime);
+        LOGGER.debug("ShutdownServerListFilter getFilteredList cost {}",
+                System.currentTimeMillis() - filterStartTime);
 
         return serverList;
     }
@@ -148,13 +140,14 @@ public class ShutdownServerListFilter implements StarlightServerListFilter<Serve
     }
 
     @Override
-    public void submitTimerTask(Server server, Integer execDelay) {
-        if (shutdownCleanTasks.get(server.getHostPort()) != null) {
+    public void submitTimerTask(ServiceInstance server, Integer execDelay) {
+        if (shutdownCleanTasks.get(InstanceUtils.ipPortStr(server)) != null) {
             return;
         }
         Timeout timeout =
-            SERVER_LIST_FILTER_TIMER.newTimeout(new ShutdownInstanceCleanTask(server), execDelay, TimeUnit.SECONDS);
-        shutdownCleanTasks.put(server.getHostPort(), timeout);
+                SERVER_LIST_FILTER_TIMER.newTimeout(
+                        new ShutdownInstanceCleanTask(server), execDelay, TimeUnit.SECONDS);
+        shutdownCleanTasks.put(InstanceUtils.ipPortStr(server), timeout);
     }
 
     @Override
@@ -170,9 +163,9 @@ public class ShutdownServerListFilter implements StarlightServerListFilter<Serve
 
     private class ShutdownInstanceCleanTask implements TimerTask {
 
-        private final Server server;
+        private final ServiceInstance server;
 
-        public ShutdownInstanceCleanTask(Server server) {
+        public ShutdownInstanceCleanTask(ServiceInstance server) {
             this.server = server;
         }
 
@@ -189,7 +182,7 @@ public class ShutdownServerListFilter implements StarlightServerListFilter<Serve
             }
 
             if (!PeerStatus.Status.SHUTTING_DOWN.equals(peerStatus.getStatus())
-                || !PeerStatus.Status.SHUTDOWN.equals(peerStatus.getStatus())) {
+                    || !PeerStatus.Status.SHUTDOWN.equals(peerStatus.getStatus())) {
                 return;
             }
 

@@ -16,14 +16,20 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster;
 
+
+import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
+import org.springframework.cloud.client.ServiceInstance;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Metadata and config of the cluster Can selector instance of this cluster Created by liuruisen on 2021/9/6.
+ * Metadata and config of the cluster
+ * Can selector instance of this cluster
+ * Created by liuruisen on 2021/9/6.
  */
-public abstract class ClusterSelector<T> {
+public abstract class ClusterSelector {
 
     /**
      * serviceId of the cluster(app name of provider)
@@ -42,11 +48,11 @@ public abstract class ClusterSelector<T> {
 
     /**
      * 筛选本集群服务列表
-     * 
      * @param originList
      * @return
      */
-    public abstract List<T> selectorClusterInstances(List<T> originList);
+    public abstract List<ServiceInstance> selectorClusterInstances(List<ServiceInstance> originList);
+
 
     public String getClusterName() {
         return clusterName;
@@ -70,6 +76,16 @@ public abstract class ClusterSelector<T> {
 
     public void setMeta(Map<String, String> meta) {
         this.meta = meta;
+    }
+
+    protected Map<String, String> getServerMeta(ServiceInstance server) {
+        Map<String, String> meta = new HashMap<>(server.getMetadata());
+        if (!meta.containsKey(SpringCloudConstants.EM_PRODUCT_LINE)) { // 真对BNS的兼容
+            meta.put(SpringCloudConstants.EM_PRODUCT_LINE, getMeta().get(SpringCloudConstants.EM_PRODUCT_LINE));
+            meta.put(SpringCloudConstants.EM_APP, getMeta().get(SpringCloudConstants.EM_APP));
+        }
+
+        return meta;
     }
 
     @Override

@@ -1,9 +1,3 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
-  com.baidu.cloud.starlight.springcloud.client.StarlightClientAutoConfiguration,\
-  com.baidu.cloud.starlight.springcloud.server.StarlightServerAutoConfiguration,\
-  com.baidu.cloud.starlight.springcloud.server.register.StarlightRegisterAutoConfiguration,\
-  com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightRibbonAutoConfiguration,\
-  com.baidu.cloud.starlight.springcloud.shutdown.GracefullyShutdownAutoConfiguration
 com.baidu.formula.config.application.name=cpdinf-starlight-config
 com.baidu.formula.config.application.order=1
 

@@ -36,7 +36,7 @@ public class LabelParser {
         String[] labels = label.split("&&");
 
         List<LabelSelectorRequirement> lsr =
-            Arrays.stream(labels).map(this::doParse).filter(Objects::nonNull).collect(Collectors.toList());
+                Arrays.stream(labels).map(this::doParse).filter(Objects::nonNull).collect(Collectors.toList());
 
         LabelSelector ls = new LabelSelector();
         ls.setMatchExpressions(lsr);
@@ -56,7 +56,8 @@ public class LabelParser {
                 String lhs = labelSplit[0].trim();
                 String rhs = labelSplit[1].trim();
                 // rhs去掉括号
-                rhs = rhs.replaceAll("^\\(", "").replaceAll("\\)$", "");
+                rhs = rhs.replaceAll("^\\(", "")
+                        .replaceAll("\\)$", "");
 
                 LabelSelectorRequirement ls = new LabelSelectorRequirement();
                 ls.setKey(lhs);

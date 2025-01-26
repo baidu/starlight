@@ -1,29 +1,13 @@
-/*
- * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
- 
-package com.baidu.cloud.starlight.springcloud.client.ribbon;
+package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance;
 
 import com.baidu.cloud.starlight.api.rpc.threadpool.NamedThreadFactory;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
-import com.netflix.loadbalancer.Server;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.util.StringUtils;
 
 import java.io.File;
@@ -44,9 +28,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Created by liuruisen on 2021/7/27.
  */
-public class RibbonServerLocalStore {
+public class ServiceInstanceLocalStore {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RibbonServerLocalStore.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServiceInstanceLocalStore.class);
 
     private static final Integer STORE_LOCAL_CACHE_DELAY = 3 * 60 * 1000;
 
@@ -65,14 +49,17 @@ public class RibbonServerLocalStore {
 
     private ScheduledExecutorService storeCacheExecutor;
 
-    public RibbonServerLocalStore(String clientName, StarlightClientProperties clientProperties) {
+
+    public ServiceInstanceLocalStore(String clientName, StarlightClientProperties clientProperties) {
         this.clientName = clientName;
         this.starlightProperties = clientProperties;
         initLocalCache();
     }
 
     /**
-     * init local cache 1. create disk file 2. load from disk file and store in mem
+     * init local cache
+     * <1> create disk file </1>
+     * <2> load from disk file and store in mem </2>
      */
     public void initLocalCache() {
         // enable local cache
@@ -85,10 +72,10 @@ public class RibbonServerLocalStore {
             loadCachedListOfServers();
 
             // store cache executor
-            storeCacheExecutor =
-                Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("StoreLocal-" + clientName));
-            storeCacheExecutor.scheduleWithFixedDelay(this::storeCachedListOfServer, STORE_LOCAL_CACHE_DELAY,
-                STORE_LOCAL_CACHE_DELAY, TimeUnit.MILLISECONDS);
+            storeCacheExecutor = Executors.newSingleThreadScheduledExecutor(
+                    new NamedThreadFactory("StoreLocal-" + clientName));
+            storeCacheExecutor.scheduleWithFixedDelay(this::storeCachedListOfServer,
+                    STORE_LOCAL_CACHE_DELAY, STORE_LOCAL_CACHE_DELAY, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -121,8 +108,8 @@ public class RibbonServerLocalStore {
      *
      * @return
      */
-    public List<Server> getCachedListOfServers() {
-        List<Server> cachedServerList = new ArrayList<>();
+    public List<ServiceInstance> getCachedListOfServers() {
+        List<ServiceInstance> cachedServerList = new ArrayList<>();
 
         Set<Map.Entry<Object, Object>> cacheEntries = localSrvListCache.entrySet();
         if (cacheEntries.size() == 0) {
@@ -139,7 +126,8 @@ public class RibbonServerLocalStore {
                 try {
                     List cachedList = jsonToServerList(serverListJson, Class.forName(serversClassName));
                     cachedServerList.addAll(cachedList);
-                    LOGGER.info("Get server list from local cache success, size {}", cachedServerList.size());
+                    LOGGER.info("Get server list from local cache success, size {}",
+                            cachedServerList.size());
                     break;
                 } catch (ClassNotFoundException e) {
                     LOGGER.warn("Get server list from local cache failed. ", e);
@@ -156,7 +144,8 @@ public class RibbonServerLocalStore {
     }
 
     private <T> List<T> jsonToServerList(String json, Class<T> serverClass) {
-        Type type = new TypeToken<ArrayList<JsonObject>>() {}.getType();
+        Type type = new TypeToken<ArrayList<JsonObject>>() {
+        }.getType();
         ArrayList<JsonObject> jsonObjs = GSON.fromJson(json, type);
 
         List<T> serverList = new ArrayList<>();
@@ -172,7 +161,7 @@ public class RibbonServerLocalStore {
      *
      * @param servers
      */
-    public void updateCachedListOfServers(List<Server> servers) {
+    public void updateCachedListOfServers(List<ServiceInstance> servers) {
         if (servers == null || servers.size() == 0) {
             return;
         }
@@ -191,7 +180,8 @@ public class RibbonServerLocalStore {
     }
 
     /**
-     * Store server list to local disk synchronized 防止退出时更新本地文件与定时任务更新
+     * Store server list to local disk
+     * synchronized 防止退出时更新本地文件与定时任务更新
      */
     public synchronized void storeCachedListOfServer() {
         if (cacheFile == null || !cacheFile.exists()) {
@@ -213,6 +203,7 @@ public class RibbonServerLocalStore {
         LOGGER.debug("Store CachedListOfServers cost {}ms", storeCost);
     }
 
+
     /**
      * Close local store
      */
@@ -224,6 +215,7 @@ public class RibbonServerLocalStore {
         storeCachedListOfServer();
     }
 
+
     private String getCacheFileName() {
         return System.getProperty("java.io.tmpdir") + "/starlight/local-registry/" + clientName + ".cache";
     }
@@ -232,8 +224,8 @@ public class RibbonServerLocalStore {
         cacheFile = new File(cacheFilePath);
         if (!cacheFile.getParentFile().exists()) { // dir not exist create
             if (!cacheFile.getParentFile().mkdirs()) {
-                LOGGER.warn("Invalid file cache path " + cacheFilePath + ", failed to create dirs "
-                    + cacheFile.getParentFile());
+                LOGGER.warn("Invalid file cache path " + cacheFilePath
+                        + ", failed to create dirs " + cacheFile.getParentFile());
             } else {
                 try {
                     if (!cacheFile.exists()) {

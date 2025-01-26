@@ -16,6 +16,8 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster;
 
+import com.baidu.cloud.starlight.api.model.Request;
+
 /**
  *
  * Created by liuruisen on 2021/9/6.
@@ -24,15 +26,13 @@ public interface Router extends Comparable<Router> {
 
     /**
      * Route and return subset cluster
-     * 
-     * @param requestContext
+     * @param request
      * @return subset cluster
      */
-    Cluster route(RequestContext requestContext);
+    Cluster route(Request request);
 
     /**
      * 每个Router绑定一个serviceId，或者是元信息？
-     * 
      * @return
      */
     default String getServiceId() {
@@ -40,8 +40,13 @@ public interface Router extends Comparable<Router> {
     }
 
     /**
+     * 获取路由用的serviceId，用于支持跨注册中心路由场景
+     * @return
+     */
+    String getRouteServiceId();
+
+    /**
      * 路由优先级，从高优先级到低优先级匹配，匹配到一个Router后返回
-     * 
      * @return
      */
     int getPriority();

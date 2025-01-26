@@ -25,8 +25,8 @@ import org.springframework.context.ApplicationContext;
 
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
 
 /**
@@ -47,6 +47,7 @@ public class StarlightRegisterListenerTest {
         StarlightServerProperties properties = new StarlightServerProperties();
         properties.setPort(8006);
         properties.setProtocols("brpc");
+
 
         registerListener.applicationContext = Mockito.mock(ApplicationContext.class);
         doReturn(properties).when(registerListener.applicationContext).getBean(StarlightServerProperties.class);

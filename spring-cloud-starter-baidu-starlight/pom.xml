@@ -5,12 +5,12 @@
     <parent>
         <groupId>org.springframework.cloud</groupId>
         <artifactId>spring-cloud-build</artifactId>
-        <version>2.0.4.RELEASE</version>
+        <version>4.0.0</version>
     </parent>
     
     <groupId>com.baidu.cloud</groupId>
     <artifactId>spring-cloud-starter-baidu-starlight</artifactId>
-    <version>2022.2.2-SNAPSHOT</version>
+    <version>2024.2.0-SNAPSHOT</version>
     
     <name>${project.groupId}:${project.artifactId}</name>
     <description>Spring Cloud Starlight</description>
@@ -18,10 +18,11 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
-        <spring-cloud.version>Finchley.SR2</spring-cloud.version>
+        <spring-cloud.version>2022.0.0</spring-cloud.version>
         <!-- plugin versions -->
         <powermock.version>2.0.9</powermock.version>
-        <starlight.version>2022.2.2-SNAPSHOT</starlight.version>
+        <starlight.version>2024.0.2-SNAPSHOT</starlight.version>
+	<git-commit-id-plugin.version>2.2.5</git-commit-id-plugin.version>
     </properties>
     
     <dependencyManagement>
@@ -103,19 +104,13 @@
         
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-netflix-ribbon</artifactId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
         </dependency>
         
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <scope>test</scope>
-        </dependency>
-        
-        <!--ribbon使用需要依赖web的部分类-->
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
         </dependency>
         
         <dependency>
@@ -152,6 +147,18 @@
             <groupId>org.reflections</groupId>
             <artifactId>reflections</artifactId>
             <version>0.10.2</version>
+        </dependency>
+	
+	<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+            <scope>test</scope>
+        </dependency>
+	
+	<dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <scope>test</scope>
         </dependency>
         
     </dependencies>
@@ -316,6 +323,45 @@
                     </execution>
                 </executions>
             </plugin>
+	    <plugin>
+                    <groupId>com.github.os72</groupId>
+                    <artifactId>protoc-jar-maven-plugin</artifactId>
+                    <version>3.6.0.1</version>
+                    <executions>
+                        <execution>
+                            <id>generate-sources</id>
+                            <phase>generate-sources</phase>
+                            <goals>
+                                <goal>run</goal>
+                            </goals>
+                            <configuration>
+                                <protocVersion>2.5.0</protocVersion>
+                                <addSources>none</addSources>
+                                <includeStdTypes>true</includeStdTypes>
+                                <outputDirectory>src/main/java</outputDirectory>
+                                <inputDirectories>
+                                    <include>src/main/proto</include>
+                                </inputDirectories>
+                            </configuration>
+                        </execution>
+                        <execution>
+                            <id>generate-test-sources</id>
+                            <phase>generate-test-sources</phase>
+                            <goals>
+                                <goal>run</goal>
+                            </goals>
+                            <configuration>
+                                <protocVersion>2.5.0</protocVersion>
+                                <includeStdTypes>true</includeStdTypes>
+                                <addSources>none</addSources>
+                                <outputDirectory>src/test/java</outputDirectory>
+                                <inputDirectories>
+                                    <include>src/test/proto</include>
+                                </inputDirectories>
+                            </configuration>
+                        </execution>
+                    </executions>
+                </plugin>
         </plugins>
     </build>
     <url>https://github.com/baidu/starlight</url>

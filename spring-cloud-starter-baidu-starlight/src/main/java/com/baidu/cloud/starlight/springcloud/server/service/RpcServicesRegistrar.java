@@ -29,6 +29,7 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.util.ClassUtils;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -43,6 +44,7 @@ public class RpcServicesRegistrar implements ImportBeanDefinitionRegistrar, Envi
     private static final String SERVER_ENABLE = "true";
     private Environment environment;
 
+
     // ImportBeanDefinitionRegistrar method
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
@@ -55,7 +57,7 @@ public class RpcServicesRegistrar implements ImportBeanDefinitionRegistrar, Envi
         Set<String> packagesToScan = new HashSet<>();
         if (importingClassMetadata.hasAnnotation(StarlightScan.class.getName())) {
             Map<String, Object> selfBasePackages =
-                importingClassMetadata.getAnnotationAttributes(StarlightScan.class.getName());
+                    importingClassMetadata.getAnnotationAttributes(StarlightScan.class.getName());
             if (selfBasePackages != null && selfBasePackages.size() > 0) {
                 packagesToScan.addAll(Arrays.asList((String[]) selfBasePackages.get("basePackages")));
             }
@@ -73,12 +75,14 @@ public class RpcServicesRegistrar implements ImportBeanDefinitionRegistrar, Envi
      * @param registry
      */
     private void registerRpcServicePostProcessor(Set<String> packageToScan, BeanDefinitionRegistry registry) {
-        BeanDefinitionBuilder builder = BeanDefinitionBuilder.genericBeanDefinition(RpcServicePostProcessor.class);
+        BeanDefinitionBuilder builder = BeanDefinitionBuilder
+                .genericBeanDefinition(RpcServicePostProcessor.class);
         builder.addConstructorArgValue(packageToScan);
 
         AbstractBeanDefinition beanDefinition = builder.getBeanDefinition();
         BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinition, registry);
     }
+
 
     @Override
     public void setEnvironment(Environment environment) {

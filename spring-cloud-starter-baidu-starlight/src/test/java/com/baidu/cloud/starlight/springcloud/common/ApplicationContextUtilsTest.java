@@ -16,29 +16,25 @@
  
 package com.baidu.cloud.starlight.springcloud.common;
 
-import com.baidu.cloud.starlight.springcloud.common.ApplicationContextUtils;
-import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.contrib.java.lang.system.EnvironmentVariables;
 import org.junit.runner.RunWith;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by liuruisen on 2020/3/26.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(ApplicationContextUtils.class)
+@RunWith(MockitoJUnitRunner.class)
 public class ApplicationContextUtilsTest {
     private Environment environment;
 
@@ -46,8 +42,8 @@ public class ApplicationContextUtilsTest {
 
     @Before
     public void before() {
-        environment = PowerMockito.mock(Environment.class);
-        applicationContext = PowerMockito.mock(ApplicationContext.class);
+        environment = mock(Environment.class);
+        applicationContext = mock(ApplicationContext.class);
         ApplicationContextUtils applicationContextUtils = new ApplicationContextUtils();
         applicationContextUtils.setApplicationContext(applicationContext);
         when(applicationContext.getEnvironment()).thenReturn(environment);
@@ -80,6 +76,7 @@ public class ApplicationContextUtilsTest {
         assertEquals(Integer.valueOf(8888), ApplicationContextUtils.getServerPort());
     }
 
+
     @Test
     public void getServerPortFromStarlightProperties() {
         StarlightServerProperties properties = new StarlightServerProperties();
@@ -96,6 +93,7 @@ public class ApplicationContextUtilsTest {
         when(environment.getProperty("spring.main.web-application-type")).thenReturn("servlet");
         ApplicationContextUtils.getServerPort();
     }
+
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
@@ -114,7 +112,8 @@ public class ApplicationContextUtilsTest {
         environmentVariables.set(SpringCloudConstants.EM_PLATFORM, "em-platform");
         environmentVariables.set(SpringCloudConstants.EM_PRODUCT_LINE, "em-product");
 
-        doReturn(null).when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
+        doReturn(null)
+                .when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
 
         assertEquals("em-name", ApplicationContextUtils.getApplicationName());
     }
@@ -123,9 +122,11 @@ public class ApplicationContextUtilsTest {
     public void getAppNameFromSpringName() {
         environmentVariables.set(SpringCloudConstants.EM_APP, "em-name");
 
-        doReturn(null).when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
+        doReturn(null)
+                .when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
 
-        doReturn("spring-name").when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
+        doReturn("spring-name")
+                .when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
 
         assertEquals("spring-name", ApplicationContextUtils.getApplicationName());
 
@@ -135,9 +136,11 @@ public class ApplicationContextUtilsTest {
     public void getAppNameFromDefault() {
         environmentVariables.set(SpringCloudConstants.EM_APP, null);
 
-        doReturn(null).when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
+        doReturn(null)
+                .when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
 
-        doReturn(null).when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
+        doReturn(null)
+                .when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
 
         assertEquals("application", ApplicationContextUtils.getApplicationName());
     }

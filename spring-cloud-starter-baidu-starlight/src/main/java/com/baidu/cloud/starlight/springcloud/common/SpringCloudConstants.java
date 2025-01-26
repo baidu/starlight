@@ -42,7 +42,8 @@ public class SpringCloudConstants {
     public static final String DEFAULT_CLUSTER_MODEL = "failfast";
 
     /**
-     * Default warm up ration 100 present all instance will be init
+     * Default warm up ration
+     * 100 present all instance will be init
      */
     public static final Integer DEFAULT_WARM_UP_RATIO = 100;
 
@@ -50,13 +51,13 @@ public class SpringCloudConstants {
      * Client default filters, outlierdetect - context - monitor
      */
     public static final String DEFAULT_CLIENT_FILTERS = "outlierdetect,clientcontext,clientmonitor";
-    // + ",formulacircuitbreaker,formularequestdecorate";
+            // + ",formulacircuitbreaker,formularequestdecorate";
 
     /**
      * Server default filters, context - generic - monitor
      */
     public static final String DEFAULT_SERVER_FILTERS = "servercontext,generic,servermonitor";
-    // + ",formularatelimiter";
+            // + ",formularatelimiter";
 
     /**
      * Cloud Env
@@ -101,7 +102,7 @@ public class SpringCloudConstants {
     /**
      * starlight server port key name
      */
-    public static final String STARLIGHT_SERVER_PORT_KEY = "starlight.server.port";
+    public static final  String STARLIGHT_SERVER_PORT_KEY = "starlight.server.port";
 
     /**
      * Server port key
@@ -113,10 +114,12 @@ public class SpringCloudConstants {
      */
     public static final Integer DEFAULT_RETRY_TIMES = 2;
 
+
     /**
      * default retry delay mills, used in failover cluster client
      */
     public static final Integer DEFAULT_RETRY_DELAY_MILLS = 100;
+
 
     public static final String RETRYABLE_SPLIT_KEY = ",";
 
@@ -235,6 +238,7 @@ public class SpringCloudConstants {
      */
     public static final Boolean LOCAL_CACHE_ENABLED = true;
 
+
     /**
      * Default value of whether to store asynchronously
      */
@@ -244,6 +248,7 @@ public class SpringCloudConstants {
      * The execution order of outlier server list filter, second
      */
     public static final Boolean OUTLIER_RECOVER_BY_CHECK_ENABLED = true;
+
 
     /**
      * 用于执行路由
@@ -263,4 +268,6 @@ public class SpringCloudConstants {
      * 请求级别的label selector，当前用于海若场景
      */
     public static final String REQUEST_LABEL_SELECTOR_ROUTE_KEY = "request_label_selector_route";
+
+    public static final String ROUTE_CONTEXT_KEY = "route_context";
 }

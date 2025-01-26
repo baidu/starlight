@@ -17,12 +17,8 @@
 package com.baidu.cloud.starlight.springcloud.client.cluster.route.label;
 
 import com.baidu.cloud.starlight.api.model.RpcRequest;
-import com.baidu.cloud.starlight.api.rpc.RpcContext;
 import com.baidu.cloud.starlight.springcloud.client.cluster.Cluster;
 import com.baidu.cloud.starlight.springcloud.client.cluster.LoadBalancer;
-import com.baidu.cloud.starlight.springcloud.client.cluster.RequestContext;
-import com.baidu.cloud.starlight.springcloud.client.cluster.route.label.LabelClusterSelector;
-import com.baidu.cloud.starlight.springcloud.client.cluster.route.label.LabelSelectorRouter;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRouteProperties;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
@@ -31,8 +27,7 @@ import org.mockito.Mockito;
 
 import java.util.Collections;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by liuruisen on 2021/12/8.
@@ -48,18 +43,19 @@ public class LabelSelectorRouterTest {
         selector.setGlobalSelector("env=offline");
         selector.setProviderSelector(Collections.singletonMap("app-a", "EM_PLATFORM in (online,onlinenew)"));
         routeProperties.setLabelSelector(selector);
-        LabelSelectorRouter router = new LabelSelectorRouter("app-a", routeProperties, new StarlightClientProperties(),
-            Mockito.mock(LoadBalancer.class));
+        LabelSelectorRouter router = new LabelSelectorRouter("app-a",
+                routeProperties, new StarlightClientProperties(), Mockito.mock(LoadBalancer.class));
 
         RpcRequest request = new RpcRequest();
         request.setServiceName("com.baidu.TestService");
         request.setServiceName("echo");
 
-        Cluster cluster = router.route(new RequestContext(request, RpcContext.getContext()));
+        Cluster cluster = router.route(request);
         assertNotNull(cluster);
         assertTrue(cluster.getClusterSelector() instanceof LabelClusterSelector);
-        String labelSelector = ((LabelClusterSelector) cluster.getClusterSelector()).getMeta()
-            .get(SpringCloudConstants.LABEL_SELECTOR_ROUTE_KEY);
+        String labelSelector =
+                ((LabelClusterSelector) cluster.getClusterSelector())
+                        .getMeta().get(SpringCloudConstants.LABEL_SELECTOR_ROUTE_KEY);
         assertTrue(labelSelector.contains("env=offline"));
         assertTrue(labelSelector.contains("EM_PLATFORM in (online,onlinenew)"));
     }

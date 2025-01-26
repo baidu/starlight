@@ -16,8 +16,10 @@
  
 package com.baidu.cloud.starlight.springcloud.client.outlier;
 
+
 /**
- * Record outlier reason Created by liuruisen on 2021/9/6.
+ * Record outlier reason
+ * Created by liuruisen on 2021/9/6.
  */
 public class OutlierDetectEvent {
 
@@ -98,12 +100,12 @@ public class OutlierDetectEvent {
         builder.append("reqcnt " + getReqCount() + ", ");
         builder.append("succcnt " + getSuccReqCount() + ", ");
         if (getDetectFailCount() != null) {
-            builder.append("failcnt(trh" + getDetectFailCount() + ") " + getFailCount() + ", ");
+            builder.append("failcnt(trh" + getDetectFailCount() + ") " +getFailCount() + ", ");
         } else {
             builder.append("failcnt " + getFailCount() + ", ");
         }
         if (getDetectFailPercent() != null) {
-            builder.append("failpct(trh" + getDetectFailPercent() + "%) " + getFailPercent() + "%");
+            builder.append("failpct(trh" + getDetectFailPercent()+ "%) " + getFailPercent() + "%");
         }
         builder.append("]");
 

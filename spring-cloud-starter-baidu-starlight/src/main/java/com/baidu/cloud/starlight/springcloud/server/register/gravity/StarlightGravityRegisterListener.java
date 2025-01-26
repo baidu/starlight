@@ -16,11 +16,12 @@
  
 package com.baidu.cloud.starlight.springcloud.server.register.gravity;
 
-import com.baidu.cloud.starlight.springcloud.server.register.StarlightRegisterListener;
-import org.springframework.cloud.client.serviceregistry.Registration;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
+
+import org.springframework.cloud.client.serviceregistry.Registration;
+
+import com.baidu.cloud.starlight.springcloud.server.register.StarlightRegisterListener;
 
 /**
  * Created by liuruisen on 2020/8/10.
@@ -44,4 +45,24 @@ public class StarlightGravityRegisterListener extends StarlightRegisterListener 
 
         return registration;
     }
+
+    @Override
+    protected Registration updateStarlightRegistration(Registration oldRegistration, Integer port) {
+        GravityRegistration newRegistration = new GravityRegistration();
+        newRegistration.setPort(port);
+        newRegistration.setServiceId(oldRegistration.getServiceId());
+        newRegistration.setSchema(RPC_TYPE);
+
+        // 不复用 oldRegistration 的 metadata,
+        // 因为其中的 EPOCH 时间戳需要更新，Consumer 端根据时间戳判断 Provider 是否重启了
+        Map<String, String> metadata = newRegistration.getMetadata();
+        if (metadata == null) {
+            metadata = new LinkedHashMap<>();
+        }
+        metadata.putAll(starlightMetas());
+        newRegistration.setMetadata(metadata);
+
+        return newRegistration;
+    }
+
 }

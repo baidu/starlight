@@ -98,8 +98,8 @@ public class OutlierDetectFilter implements Filter {
             }
 
             CountStats outlierStats = (CountStats) stats;
-            Integer outlierMinReqNum =
-                remoteURI.getParameter(OUTLIER_DETECT_MINI_REQUEST_NUM_KEY, OUTLIER_DETECT_MINI_REQUEST_NUM);
+            Integer outlierMinReqNum = remoteURI.getParameter(OUTLIER_DETECT_MINI_REQUEST_NUM_KEY,
+                    OUTLIER_DETECT_MINI_REQUEST_NUM);
 
             Integer totalReqCount = outlierStats.totalReqCount();
             Integer failReqCount = outlierStats.failReqCount();
@@ -115,7 +115,7 @@ public class OutlierDetectFilter implements Filter {
                 }
             } else {
                 int outlierDetectFailPercent = remoteURI.getParameter(OUTLIER_DETECT_FAIL_PERCENT_THRESHOLD_KEY,
-                    OUTLIER_DETECT_FAIL_PERCENT_THRESHOLD);
+                        OUTLIER_DETECT_FAIL_PERCENT_THRESHOLD);
                 int failPercent = failPercent(failReqCount, totalReqCount);
                 if (failPercent > outlierDetectFailPercent) { // Failure threshold exceeded, mark client as outlier
                     markOutlier(remoteURI, starlightClientManager, outlierStats);
@@ -128,14 +128,13 @@ public class OutlierDetectFilter implements Filter {
     }
 
     private void markOutlier(URI remoteURI, SingleStarlightClientManager starlightClientManager,
-        CountStats outlierStats) {
+                             CountStats outlierStats) {
         SingleStarlightClient singleClient =
-            starlightClientManager.getSingleClient(remoteURI.getHost(), remoteURI.getPort());
+                starlightClientManager.getSingleClient(remoteURI.getHost(), remoteURI.getPort());
         if (singleClient == null) {
-            LOGGER.warn(
-                "Statistics of {} is exist in StatisticsManager, "
-                    + "but SingleStarlightClient associated with it is not exist in ClientManager",
-                remoteURI.getAddress());
+            LOGGER.warn("Statistics of {} is exist in StatisticsManager, "
+                            + "but SingleStarlightClient associated with it is not exist in ClientManager",
+                    remoteURI.getAddress());
             return;
         }
 

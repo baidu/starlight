@@ -16,10 +16,9 @@
  
 package com.baidu.cloud.starlight.springcloud.common;
 
-import com.baidu.cloud.starlight.springcloud.common.RouteUtils;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Created by liuruisen on 2021/11/8.
@@ -29,8 +28,8 @@ public class XdsUtilsTest {
     @Test
     public void convertedInstanceId() {
 
-        String instanceId = "1.test-test-test-test-yq.test.test";
-        String expectId = "1-test-yq";
+        String instanceId = "1.opera-online-starlightProvider-000-yq.FENGCHAO.yq011";
+        String expectId = "1-online-yq";
 
         assertEquals(expectId, RouteUtils.convertedInstanceId(instanceId));
     }
