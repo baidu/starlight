@@ -16,7 +16,6 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster;
 
-
 import com.baidu.cloud.starlight.api.model.Request;
 import com.baidu.cloud.starlight.springcloud.common.RouteUtils;
 import org.slf4j.Logger;
@@ -45,6 +44,7 @@ public class RouterChain {
 
     /**
      * 具有兜底的机制
+     * 
      * @param requestContext
      * @return
      */
@@ -63,15 +63,14 @@ public class RouterChain {
     }
 
     /**
-     * 降级路由执行逻辑，
-     * 一定能match到Cluster
+     * 降级路由执行逻辑， 一定能match到Cluster
      *
      * @param requestContext
      * @return
      */
     public Cluster noneRoute(Request request) {
-        LOGGER.info("[NONE_ROUTE] Request matched none route: req {}, routeClass {}",
-                RouteUtils.reqMsg(request), noneRouter.getClass().getSimpleName());
+        LOGGER.info("[NONE_ROUTE] Request matched none route: req {}, routeClass {}", RouteUtils.reqMsg(request),
+            noneRouter.getClass().getSimpleName());
         return noneRouter.route(request);
     }
 }

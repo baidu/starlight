@@ -34,8 +34,8 @@ public class ApplicationContextUtils implements ApplicationContextAware {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ApplicationContextUtils.class);
 
-    private static final String[] WEB_ENVIRONMENT_CLASSES = {"javax.servlet.Servlet",
-            "org.springframework.web.context.ConfigurableWebApplicationContext"};
+    private static final String[] WEB_ENVIRONMENT_CLASSES =
+        {"javax.servlet.Servlet", "org.springframework.web.context.ConfigurableWebApplicationContext"};
 
     private static ApplicationContext applicationContext;
 
@@ -46,6 +46,7 @@ public class ApplicationContextUtils implements ApplicationContextAware {
 
     /**
      * Get Bean
+     * 
      * @param tClass
      * @param <T>
      * @return
@@ -59,6 +60,7 @@ public class ApplicationContextUtils implements ApplicationContextAware {
 
     /**
      * Get application context
+     * 
      * @return
      */
     public static ApplicationContext getApplicationContext() {
@@ -67,21 +69,19 @@ public class ApplicationContextUtils implements ApplicationContextAware {
 
     /**
      * Get Environment
+     * 
      * @return
      */
     public static Environment getEnvironment() {
         return applicationContext.getEnvironment();
     }
 
-
     public static boolean isJarvisEnv() {
         String emProductLine = System.getenv(SpringCloudConstants.EM_PRODUCT_LINE);
         String emPlatform = System.getenv(SpringCloudConstants.EM_PLATFORM);
         String emApp = System.getenv(SpringCloudConstants.EM_APP);
 
-        return !StringUtils.isEmpty(emProductLine)
-                && !StringUtils.isEmpty(emPlatform)
-                && !StringUtils.isEmpty(emApp);
+        return !StringUtils.isEmpty(emProductLine) && !StringUtils.isEmpty(emPlatform) && !StringUtils.isEmpty(emApp);
     }
 
     public static boolean deduceWebEnvironment() {
@@ -91,7 +91,7 @@ public class ApplicationContextUtils implements ApplicationContextAware {
             }
         }
         if (getEnvironment().getProperty("spring.main.web-application-type") != null
-                && getEnvironment().getProperty("spring.main.web-application-type").equalsIgnoreCase("none")) {
+            && getEnvironment().getProperty("spring.main.web-application-type").equalsIgnoreCase("none")) {
             return false;
         }
 
@@ -100,7 +100,6 @@ public class ApplicationContextUtils implements ApplicationContextAware {
         }
         return true;
     }
-
 
     /**
      * Get starlight port
@@ -113,20 +112,20 @@ public class ApplicationContextUtils implements ApplicationContextAware {
         Integer port = starlightServerProperties.getPort();
 
         if ((port == null || port <= 0) && !deduceWebEnvironment()) {
-            port = Integer.parseInt(getEnvironment()
-                    .getProperty(SpringCloudConstants.SERVER_PORT_KEY, "8080").trim());
+            port = Integer.parseInt(getEnvironment().getProperty(SpringCloudConstants.SERVER_PORT_KEY, "8080").trim());
         }
 
         if (port == null || port <= 0) {
-            throw new IllegalArgumentException("The following two properties are all illegal, please check: "
-                    + "{" + SpringCloudConstants.STARLIGHT_SERVER_PORT_KEY + "} "
-                    + "{" + SpringCloudConstants.SERVER_PORT_KEY + "}");
+            throw new IllegalArgumentException("The following two properties are all illegal, please check: " + "{"
+                + SpringCloudConstants.STARLIGHT_SERVER_PORT_KEY + "} " + "{" + SpringCloudConstants.SERVER_PORT_KEY
+                + "}");
         }
         return port;
     }
 
     /**
      * Get application name from environment or env variable
+     * 
      * @return
      */
     public static String getApplicationName() {
@@ -148,10 +147,10 @@ public class ApplicationContextUtils implements ApplicationContextAware {
 
         // default value "application"
         if (StringUtils.isEmpty(appName)) {
-            LOGGER.warn("The following three properties are all empty : "
-                    + "{" + SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY + "} "
-                    + "{" + SpringCloudConstants.SPRING_APPLICATION_NAME_KEY + "}"
-                    + "{" + SpringCloudConstants.EM_APP + "}, will use default value {application}");
+            LOGGER.warn(
+                "The following three properties are all empty : " + "{" + SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY
+                    + "} " + "{" + SpringCloudConstants.SPRING_APPLICATION_NAME_KEY + "}" + "{"
+                    + SpringCloudConstants.EM_APP + "}, will use default value {application}");
 
             appName = "application";
         }

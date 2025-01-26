@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.lifecycle;
 
 import org.slf4j.Logger;
@@ -6,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.SmartLifecycle;
 
-import com.baidu.cloud.gravity.discovery.core.GravityProperties;
 import com.baidu.cloud.starlight.api.rpc.StarlightServer;
 import com.baidu.cloud.starlight.core.rpc.DefaultStarlightServer;
 import com.baidu.cloud.starlight.springcloud.server.register.StarlightRegisterListener;
@@ -29,14 +44,8 @@ public class StarlightServerLifecycle implements SmartLifecycle {
 
     private final ApplicationContext applicationContext;
 
-    // 可能使用 Consul 注册，则 gravityProperties 为 null
-    @Autowired(required = false)
-    private GravityProperties gravityProperties;
-
-    public StarlightServerLifecycle(StarlightServer starlightServer,
-                                    StarlightRegisterListener registerListener,
-                                    ApplicationContext applicationContext
-    ) {
+    public StarlightServerLifecycle(StarlightServer starlightServer, StarlightRegisterListener registerListener,
+        ApplicationContext applicationContext) {
         this.starlightServer = starlightServer;
         this.registerListener = registerListener;
         this.applicationContext = applicationContext;
@@ -49,18 +58,12 @@ public class StarlightServerLifecycle implements SmartLifecycle {
 
     @Override
     public void start() {
-        LOGGER.info("StarlightServerLifecycle start: thread: {}, loader:{}",
-                Thread.currentThread(), Thread.currentThread().getContextClassLoader());
+        LOGGER.info("StarlightServerLifecycle start: thread: {}, loader:{}", Thread.currentThread(),
+            Thread.currentThread().getContextClassLoader());
 
         // Server Restore
         if (!firstStart) {
             if (starlightServer instanceof DefaultStarlightServer defaultStarlightServer) {
-                if (gravityProperties != null) {
-                    // rpcPort: 端口合一，来自 EM_PORT; 非端口合一，来自 EM_PORT_RPC
-                    defaultStarlightServer.setPort(gravityProperties.getRegistration().getRpcPort());
-                    LOGGER.info("StarlightServerLifecycle Restore, setServerPort: {}",
-                            gravityProperties.getRegistration().getRpcPort());
-                }
                 // 如果未使用 Gravity, 例如使用 Consul 注册，则体现为 Restore 时不设置新端口，不支持 CRaC
                 defaultStarlightServer.restart();
                 defaultStarlightServer.serve();
@@ -73,11 +76,6 @@ public class StarlightServerLifecycle implements SmartLifecycle {
             registerListener.register(applicationContext);
         } else {
             registerListener.restartRegisterExecutor();
-            if (gravityProperties != null) {
-                // rpcPort: 端口合一，来自 EM_PORT; 非端口合一，来自 EM_PORT_RPC
-                registerListener.reRegister(applicationContext,
-                        gravityProperties.getRegistration().getRpcPort());
-            }
             // 同上，未使用 Gravity, 则 Restore 阶段不会重新注册，不支持 CRaC
         }
 
@@ -86,15 +84,14 @@ public class StarlightServerLifecycle implements SmartLifecycle {
     }
 
     /**
-     * stop(Runnable callback);
-     * callback 由 Spring 框架传入, 用于通知 Spring 容器该组件已经安全停止
+     * stop(Runnable callback); callback 由 Spring 框架传入, 用于通知 Spring 容器该组件已经安全停止
      *
      * @param callback
      */
     @Override
     public void stop(Runnable callback) {
-        LOGGER.info("StarlightServerLifecycle stop: thread: {}, loader:{}",
-                Thread.currentThread(), Thread.currentThread().getContextClassLoader());
+        LOGGER.info("StarlightServerLifecycle stop: thread: {}, loader:{}", Thread.currentThread(),
+            Thread.currentThread().getContextClassLoader());
 
         registerListener.deRegister(); // async and catch error
 

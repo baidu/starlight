@@ -59,20 +59,19 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by liuruisen on 2019-06-26.
- * TODO 研究AOT的逻辑，继承BeanRegistrationAotProcessor实现AOT逻辑
- * - postProcessMergedBeanDefinition + postProcessProperties + findInjectionMetadata 参考 @autowire
+ * Created by liuruisen on 2019-06-26. TODO 研究AOT的逻辑，继承BeanRegistrationAotProcessor实现AOT逻辑 -
+ * postProcessMergedBeanDefinition + postProcessProperties + findInjectionMetadata 参考 @autowire
  */
-public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAwareBeanPostProcessor,
-        BeanFactoryAware, EnvironmentAware, PriorityOrdered {
+public class RpcProxyAnnotationBeanPostProcessor
+    implements SmartInstantiationAwareBeanPostProcessor, BeanFactoryAware, EnvironmentAware, PriorityOrdered {
 
     public static final String BEAN_NAME = "rpcClientAnnotationBeanPostProcessor";
 
     private static final String CLIENT_BEAN_NAME_SUFFIX = ".StarlightClient";
 
     /**
-     * Bean name prefix for target beans behind scoped proxies.
-     * Used to exclude those targets from handler method detection, in favor of the corresponding proxies.
+     * Bean name prefix for target beans behind scoped proxies. Used to exclude those targets from handler method
+     * detection, in favor of the corresponding proxies.
      * <p>
      * see org.springframework.web.servlet.handler.AbstractHandlerMethodMapping
      */
@@ -85,8 +84,8 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
     private PropertySourcesPlaceholdersResolver placeholdersResolver;
 
     @Override
-    public PropertyValues postProcessProperties(PropertyValues pvs,
-                                                    Object bean, String beanName) throws BeansException {
+    public PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName)
+        throws BeansException {
         Class<?> clazz = bean.getClass();
         List<Field> fields = FieldUtils.getAllFieldsList(clazz);
         if (fields != null && fields.size() > 0) {
@@ -121,8 +120,8 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
 
         String realName = (String) placeholdersResolver.resolvePlaceholders(name);
         if (!StringUtils.hasText(realName)) {
-            throw new IllegalArgumentException("Resolve name value of @RpcProxy#name failed, "
-                    + "the value must not be null");
+            throw new IllegalArgumentException(
+                "Resolve name value of @RpcProxy#name failed, " + "the value must not be null");
         }
 
         return new RpcProxyInfo(rpcProxy, realName);
@@ -133,14 +132,13 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         return Ordered.LOWEST_PRECEDENCE - 5; // 保证本BeanPostProcessor在Autowire PostProcessor之前执行
     }
 
-
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
         if (beanFactory instanceof ConfigurableListableBeanFactory) {
             this.beanFactory = (DefaultListableBeanFactory) beanFactory;
         } else {
             throw new IllegalArgumentException(
-                    "RpcProxyAnnotationBeanPostProcessor requires a ConfigurableListableBeanFactory");
+                "RpcProxyAnnotationBeanPostProcessor requires a ConfigurableListableBeanFactory");
         }
     }
 
@@ -164,7 +162,6 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         return rpcProxyBean(rpcProxyClass, rpcProxyInfo);
     }
 
-
     /**
      * Register {@link RpcProxyFactoryBean} and get proxy object
      *
@@ -178,8 +175,8 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         StarlightClient starlightClient = registerOrGetStarlightClient(rpcProxyInfo);
 
         // register factory bean
-        BeanDefinitionBuilder definitionBuilder = BeanDefinitionBuilder
-                .genericBeanDefinition(RpcProxyFactoryBean.class);
+        BeanDefinitionBuilder definitionBuilder =
+            BeanDefinitionBuilder.genericBeanDefinition(RpcProxyFactoryBean.class);
         definitionBuilder.addPropertyValue("annotationInfos", rpcProxyInfo.getRpcProxy());
         definitionBuilder.addPropertyValue("clientName", rpcProxyInfo.getRealName());
         definitionBuilder.addPropertyValue("type", proxyType);
@@ -194,18 +191,15 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         if (StringUtils.hasText(rpcProxyInfo.getRpcProxy().qualifier())) {
             aliasName = rpcProxyInfo.getRpcProxy().qualifier();
         }
-        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, proxyBeanName,
-                new String[]{aliasName});
+        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, proxyBeanName, new String[] {aliasName});
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, beanFactory);
 
         RpcProxyFactoryBean proxyBean = beanFactory.getBean("&" + proxyBeanName, RpcProxyFactoryBean.class);
         return proxyBean.getObject();
     }
 
-
     /**
-     * Register StarlightClient Bean
-     * Types: Single / Cluster
+     * Register StarlightClient Bean Types: Single / Cluster
      *
      * @param rpcProxyInfo
      * @return
@@ -218,12 +212,12 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         if (StringUtils.hasText(rpcProxy.remoteUrl())) {
             String protocol = null;
             if (rpcProxy.remoteUrl().contains("://")) {
-                 protocol = rpcProxy.remoteUrl().split("://")[0];
+                protocol = rpcProxy.remoteUrl().split("://")[0];
             }
 
             if (!StringUtils.hasText(rpcProxy.protocol()) && !StringUtils.hasText(protocol)) {
-                throw new IllegalArgumentException("protocol in @RpcProxy#protocol is null, "
-                        + "when specify @RpcProxy#remoteUrl");
+                throw new IllegalArgumentException(
+                    "protocol in @RpcProxy#protocol is null, " + "when specify @RpcProxy#remoteUrl");
             }
             return registerOrGetSingleClient(clientBeanName, rpcProxyInfo);
         }
@@ -234,7 +228,6 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
 
         return null;
     }
-
 
     /**
      * Support direct URL request
@@ -254,8 +247,8 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         }
         String[] ipAndPort = remoteUrl.split(":");
         StarlightClientProperties properties = clientProperties();
-        BeanDefinitionBuilder definitionBuilder = BeanDefinitionBuilder
-                .genericBeanDefinition(SingleStarlightClient.class);
+        BeanDefinitionBuilder definitionBuilder =
+            BeanDefinitionBuilder.genericBeanDefinition(SingleStarlightClient.class);
         definitionBuilder.addConstructorArgValue(ipAndPort[0]);
         definitionBuilder.addConstructorArgValue(ipAndPort[1]);
         definitionBuilder.addConstructorArgValue(properties.transportConfig(remoteUrl));
@@ -264,8 +257,8 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         definitionBuilder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
         AbstractBeanDefinition beanDefinition = definitionBuilder.getBeanDefinition();
-        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, clientBeanName,
-                new String[]{clientBeanName});
+        BeanDefinitionHolder holder =
+            new BeanDefinitionHolder(beanDefinition, clientBeanName, new String[] {clientBeanName});
         // register
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, beanFactory);
         // get bean
@@ -290,16 +283,14 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         BeanDefinitionBuilder definitionBuilder = null;
         switch (clusterModel) {
             case "failfast":
-                definitionBuilder =
-                        BeanDefinitionBuilder.genericBeanDefinition(FailFastClusterClient.class);
+                definitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(FailFastClusterClient.class);
                 break;
             case "failover":
-                definitionBuilder =
-                        BeanDefinitionBuilder.genericBeanDefinition(FailOverClusterClient.class);
+                definitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(FailOverClusterClient.class);
                 break;
             default:
-                throw new IllegalStateException("starlight.client.config {clusterModel} is null, "
-                        + "please config it before run");
+                throw new IllegalStateException(
+                    "starlight.client.config {clusterModel} is null, " + "please config it before run");
         }
         LoadBalancer loadBalancer = beanFactory.getBean(LoadBalancer.class);
         DiscoveryClient discoveryClient = beanFactory.getBean(DiscoveryClient.class);
@@ -323,13 +314,12 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         definitionBuilder.setAutowireMode(AbstractBeanDefinition.AUTOWIRE_BY_TYPE);
 
         AbstractBeanDefinition beanDefinition = definitionBuilder.getBeanDefinition();
-        BeanDefinitionHolder holder = new BeanDefinitionHolder(beanDefinition, clientBeanName,
-                new String[]{clientBeanName});
+        BeanDefinitionHolder holder =
+            new BeanDefinitionHolder(beanDefinition, clientBeanName, new String[] {clientBeanName});
         BeanDefinitionReaderUtils.registerBeanDefinition(holder, beanFactory);
 
         return beanFactory.getBean(clientBeanName, StarlightClient.class);
     }
-
 
     private StarlightClientProperties clientProperties() {
         StarlightClientProperties properties = beanFactory.getBean(StarlightClientProperties.class);
@@ -350,18 +340,17 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
     private String clusterModel(StarlightClientProperties properties, RpcProxyInfo rpcProxyInfo) {
         String clusterModel = properties.getClusterModel(rpcProxyInfo.getRealName());
         if (!StringUtils.hasText(clusterModel)) {
-            throw new IllegalStateException("starlight.client.config {clusterModel} is null, "
-                    + "please config it before run");
+            throw new IllegalStateException(
+                "starlight.client.config {clusterModel} is null, " + "please config it before run");
         }
 
         return clusterModel;
     }
 
     /**
-     * Starlight Client bean name
-     * <1> when specify remoteUrl, clientBeanName will be "remoteUrl.StarlightClient</1>
-     * <2> When not specify remoteUrl but specify name, clientBeanName will be "name.StarlightClient"</2>
-     * We create StarlightClient bean at addressing level
+     * Starlight Client bean name <1> when specify remoteUrl, clientBeanName will be "remoteUrl.StarlightClient</1> <2>
+     * When not specify remoteUrl but specify name, clientBeanName will be "name.StarlightClient"</2> We create
+     * StarlightClient bean at addressing level
      *
      * @param rpcProxyInfo
      * @return
@@ -380,13 +369,12 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
             return name + CLIENT_BEAN_NAME_SUFFIX;
         }
 
-        throw new IllegalStateException("Either name() or remoteUrl() must be provided in @"
-                + RpcProxy.class.getSimpleName());
+        throw new IllegalStateException(
+            "Either name() or remoteUrl() must be provided in @" + RpcProxy.class.getSimpleName());
     }
 
     /**
-     * Proxy bean name
-     * scopedTarget.starlightClientBeanName:{protocol}:interfaceName </2>
+     * Proxy bean name scopedTarget.starlightClientBeanName:{protocol}:interfaceName </2>
      *
      * @param rpcProxyInfo
      * @param proxyType
@@ -401,10 +389,8 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
         return buf.toString();
     }
 
-
     /**
-     * Get Bean from spring ioc first
-     * Preventing repeated injection of beans
+     * Get Bean from spring ioc first Preventing repeated injection of beans
      *
      * @param clientBeanName
      * @return
@@ -424,8 +410,7 @@ public class RpcProxyAnnotationBeanPostProcessor implements SmartInstantiationAw
     }
 
     /**
-     * 去掉通过反射更改注解的属性值，改为额外的包装类
-     * 以解决jdk9模块化后java.base不暴露给unnamed module问题
+     * 去掉通过反射更改注解的属性值，改为额外的包装类 以解决jdk9模块化后java.base不暴露给unnamed module问题
      */
     private static class RpcProxyInfo {
 

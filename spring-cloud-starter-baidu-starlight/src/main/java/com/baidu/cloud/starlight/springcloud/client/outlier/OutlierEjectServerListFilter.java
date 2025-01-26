@@ -70,16 +70,13 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
 
     private final String clientName;
 
-
     public OutlierEjectServerListFilter(SingleStarlightClientManager clientManager,
-                                        StarlightClientProperties clientProperties,
-                                        String clientName) {
+        StarlightClientProperties clientProperties, String clientName) {
         this.singleStarlightClientManager = clientManager; // not null
         this.clientProperties = clientProperties; // not null
         this.clientName = clientName;
         this.outlierRecoverTasks = new ConcurrentHashMap<>();
     }
-
 
     @Override
     public List<ServiceInstance> getFilteredList(List<ServiceInstance> originList) {
@@ -104,7 +101,7 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
             double maxEjectCountDouble = (((double) outlierConfig.getMaxEjectPercent() / 100) * originSize);
             if (maxEjectCountDouble < 0.5d) {
                 LOGGER.info("Max eject count of {} is 0, max eject double {}, origin size {}, maxEjectPercent {}",
-                        getClientName(), maxEjectCountDouble, originSize, outlierConfig.getMaxEjectPercent());
+                    getClientName(), maxEjectCountDouble, originSize, outlierConfig.getMaxEjectPercent());
             }
             int maxEjectCount = (int) Math.round(maxEjectCountDouble);
             int ejectCount = 0;
@@ -115,7 +112,7 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
                 }
 
                 SingleStarlightClient client =
-                        singleStarlightClientManager.getSingleClient(server.getHost(), server.getPort());
+                    singleStarlightClientManager.getSingleClient(server.getHost(), server.getPort());
                 // not use this server instance, not filter
                 if (client == null) {
                     continue;
@@ -129,8 +126,8 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
                 if (PeerStatus.Status.OUTLIER.equals(client.getStatus().getStatus())) {
                     filtered.remove(server);
                     ejectCount++;
-                    if ((System.currentTimeMillis() - client.getStatus().getStatusRecordTime())
-                            < OUTLIER_LOG_RECORD_DURATION) {
+                    if ((System.currentTimeMillis()
+                        - client.getStatus().getStatusRecordTime()) < OUTLIER_LOG_RECORD_DURATION) {
                         ClusterLogUtils.logOutlierInstanceEject(LOGGER, getClientName(), server, client.getStatus());
                     }
                     // detect recover
@@ -142,8 +139,8 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
                 ClusterLogUtils.logOutlierAppEject(LOGGER, getClientName(), originSize, ejectCount, maxEjectCount);
             }
         } catch (Throwable e) {
-            LOGGER.warn("OutlierEjectServerListFilter getFilteredList failed, will use all instances, "
-                    + "caused by ", e);
+            LOGGER.warn("OutlierEjectServerListFilter getFilteredList failed, will use all instances, " + "caused by ",
+                e);
         }
         LOGGER.debug("OutlierEjectServerListFilter getFilteredList cost {}", System.currentTimeMillis() - startTime);
         return filtered;
@@ -170,14 +167,13 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
         OutlierConfig outlierConfig = clientProperties.getOutlierConfig(clientName);
 
         if (outlierRecoverTasks.get(InstanceUtils.ipPortStr(server)) != null
-                && outlierConfig.getBaseEjectTime().equals(ejectTime)) {
+            && outlierConfig.getBaseEjectTime().equals(ejectTime)) {
             return;
         }
 
         LOGGER.debug("Add new detect timer server {}, eject time {}s", InstanceUtils.ipPortStr(server), ejectTime);
-        Timeout timeout = SERVER_LIST_FILTER_TIMER.newTimeout(
-                new OutlierRecoverTask(server, ejectTime, outlierConfig),
-                ejectTime, TimeUnit.SECONDS);
+        Timeout timeout = SERVER_LIST_FILTER_TIMER.newTimeout(new OutlierRecoverTask(server, ejectTime, outlierConfig),
+            ejectTime, TimeUnit.SECONDS);
         outlierRecoverTasks.put(InstanceUtils.ipPortStr(server), timeout);
     }
 
@@ -203,7 +199,7 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
                 String host = hostPort[0];
                 String port = hostPort[1];
                 SingleStarlightClient client =
-                        singleStarlightClientManager.getSingleClient(host, Integer.valueOf(port));
+                    singleStarlightClientManager.getSingleClient(host, Integer.valueOf(port));
                 // client为空，表示这个应用已经下线清理，修正下异常实例恢复任务
                 if (client == null) {
                     Timeout timeout = outlierRecoverTasks.remove(entry.getKey());
@@ -216,12 +212,10 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
                     timeout.cancel();
                 }
             } catch (Exception e) {
-                LOGGER.warn("Revise outlier task failed, hostPort {}, errorMsg {}",
-                        entry.getKey(), e.getMessage());
+                LOGGER.warn("Revise outlier task failed, hostPort {}, errorMsg {}", entry.getKey(), e.getMessage());
             }
         }
     }
-
 
     private String getClientName() {
         return clientName;
@@ -244,7 +238,7 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
         @Override
         public void run(Timeout timeout) throws Exception {
             SingleStarlightClient singleClient =
-                    singleStarlightClientManager.getSingleClient(server.getHost(), server.getPort());
+                singleStarlightClientManager.getSingleClient(server.getHost(), server.getPort());
             if (singleClient == null) { // removed client, the service instance is offline
                 return;
             }
@@ -254,11 +248,10 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
             }
 
             if (!outlierConfig.getRecoverByCheckEnabled()) {
-                singleClient.updateStatus(
-                        new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
+                singleClient.updateStatus(new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
                 getServerListFilterTasks().remove(InstanceUtils.ipPortStr(server));
-                ClusterLogUtils.logOutlierRecoverySucc(LOGGER, getClientName(), server,
-                        FORCED_RECOVERY_HEALTH, lastEjectTime);
+                ClusterLogUtils.logOutlierRecoverySucc(LOGGER, getClientName(), server, FORCED_RECOVERY_HEALTH,
+                    lastEjectTime);
                 return;
             }
 
@@ -276,12 +269,11 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
                     singleClient.request(heartbeatReq, rpcCallback);
                     Object result = resultFuture.get();
 
-                    if (result instanceof Heartbeat
-                            && Constants.PONG.equals(((Heartbeat) result).getMessage())) {
+                    if (result instanceof Heartbeat && Constants.PONG.equals(((Heartbeat) result).getMessage())) {
                         heartbeatSucCount++;
                     } else {
                         LOGGER.warn("Outlier recover heartbeat receive response from {} success, "
-                                + "but message is not correct {}", InstanceUtils.ipPortStr(server), result);
+                            + "but message is not correct {}", InstanceUtils.ipPortStr(server), result);
                     }
                 } catch (Throwable exp) {
                     if (exp instanceof StarlightRpcException) {
@@ -297,19 +289,17 @@ public class OutlierEjectServerListFilter implements StarlightServerListFilter {
             }
 
             if (heartbeatSucCount >= 3) { // success
-                singleClient.updateStatus(
-                        new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
+                singleClient.updateStatus(new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
                 getServerListFilterTasks().remove(InstanceUtils.ipPortStr(server));
-                ClusterLogUtils.logOutlierRecoverySucc(LOGGER, getClientName(), server,
-                        RECOVERY_HEALTH, lastEjectTime);
+                ClusterLogUtils.logOutlierRecoverySucc(LOGGER, getClientName(), server, RECOVERY_HEALTH, lastEjectTime);
             } else { // fail
                 // Accumulate the detection time of recover
                 int nextEjectTime = lastEjectTime + outlierConfig.getBaseEjectTime();
                 if (nextEjectTime > outlierConfig.getMaxEjectTime()) {
                     nextEjectTime = outlierConfig.getMaxEjectTime();
                 }
-                ClusterLogUtils.logOutlierRecoveryFail(LOGGER, getClientName(), server,
-                        RECOVERY_FAIL, lastEjectTime, nextEjectTime);
+                ClusterLogUtils.logOutlierRecoveryFail(LOGGER, getClientName(), server, RECOVERY_FAIL, lastEjectTime,
+                    nextEjectTime);
                 // resubmit task
                 submitTimerTask(server, nextEjectTime);
             }

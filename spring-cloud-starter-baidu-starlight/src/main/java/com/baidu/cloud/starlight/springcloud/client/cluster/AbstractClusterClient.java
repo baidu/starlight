@@ -90,18 +90,16 @@ public abstract class AbstractClusterClient implements StarlightClient {
 
     /**
      * 构造注入，1是符合spring 4.x之后的推荐，2是给海若构造使用
+     * 
      * @param name
      * @param properties
      * @param loadBalancer
      * @param discoveryClient
      * @param clientManager
      */
-    public AbstractClusterClient(String name, StarlightClientProperties properties,
-                                 LoadBalancer loadBalancer,
-                                 DiscoveryClient discoveryClient,
-                                 SingleStarlightClientManager clientManager,
-                                 Configuration configuration,
-                                 StarlightRouteProperties routeProperties) {
+    public AbstractClusterClient(String name, StarlightClientProperties properties, LoadBalancer loadBalancer,
+        DiscoveryClient discoveryClient, SingleStarlightClientManager clientManager, Configuration configuration,
+        StarlightRouteProperties routeProperties) {
         this.name = name;
         this.properties = properties;
         this.loadBalancer = loadBalancer;
@@ -158,16 +156,16 @@ public abstract class AbstractClusterClient implements StarlightClient {
         if (outlierConfig != null) {
             Map<String, String> transConfigAdd = new HashMap<>();
             transConfigAdd.put(SpringCloudConstants.OUTLIER_DETECT_ENABLED_KEY,
-                    String.valueOf(outlierConfig.getEnabled()));
+                String.valueOf(outlierConfig.getEnabled()));
             transConfigAdd.put(SpringCloudConstants.OUTLIER_DETECT_INTERVAL_KEY,
-                    String.valueOf(outlierConfig.getDetectInterval()));
+                String.valueOf(outlierConfig.getDetectInterval()));
             transConfigAdd.put(SpringCloudConstants.OUTLIER_DETECT_MINI_REQUEST_NUM_KEY,
-                    String.valueOf(outlierConfig.getFailurePercentMinRequest()));
+                String.valueOf(outlierConfig.getFailurePercentMinRequest()));
             transConfigAdd.put(SpringCloudConstants.OUTLIER_DETECT_FAIL_PERCENT_THRESHOLD_KEY,
-                    String.valueOf(outlierConfig.getFailurePercentThreshold()));
+                String.valueOf(outlierConfig.getFailurePercentThreshold()));
             if (outlierConfig.getFailureCountThreshold() != null) {
                 transConfigAdd.put(SpringCloudConstants.OUTLIER_DETECT_FAIL_COUNT_THRESHOLD_KEY,
-                        String.valueOf(outlierConfig.getFailureCountThreshold()));
+                    String.valueOf(outlierConfig.getFailureCountThreshold()));
             }
             transportConfig.setAdditional(transConfigAdd);
         }
@@ -199,27 +197,26 @@ public abstract class AbstractClusterClient implements StarlightClient {
         } catch (Throwable e) {
             // not enable fallback, throw
             if (routeProperties.getNoInstanceFallBack() == null || !routeProperties.getNoInstanceFallBack()) {
-                LOGGER.error("Request failed and cannot fallback, req:{}#{}, caused by",
-                        request.getServiceName(), request.getMethodName(), e);
+                LOGGER.error("Request failed and cannot fallback, req:{}#{}, caused by", request.getServiceName(),
+                    request.getMethodName(), e);
                 throw e;
             }
             // fallback
             if (e instanceof StarlightRpcException
-                    && SpringCloudConstants.NO_INSTANCE_ERROR_CODE.equals(((StarlightRpcException) e).getCode())
-                    && !labelRouter) {
+                && SpringCloudConstants.NO_INSTANCE_ERROR_CODE.equals(((StarlightRpcException) e).getCode())
+                && !labelRouter) {
                 LOGGER.info("No instance found from the routed cluster, fallback to the label selector route");
                 Cluster cluster = routerChain.noneRoute(request);
                 // 此处set由volatile保证可见性，应不涉及线程并发问题
                 cluster.setServiceRefers(serviceConfigs);
                 cluster.execute(request, callback);
             } else {
-                LOGGER.error("Request failed, req:{}#{}, caused by",
-                        request.getServiceName(), request.getMethodName(), e);
+                LOGGER.error("Request failed, req:{}#{}, caused by", request.getServiceName(), request.getMethodName(),
+                    e);
                 throw e;
             }
         }
     }
-
 
     // generate ClientInvoker for all Instances(Ip + port)
     @Override
@@ -258,10 +255,8 @@ public abstract class AbstractClusterClient implements StarlightClient {
         return instanceSize;
     }
 
-
     private void addNetErrorRetryTimes(Request request) {
-        netErrorRetryTimes.putIfAbsent(request,
-                new AtomicInteger(properties.getNetworkErrorRetryTimes(getName())));
+        netErrorRetryTimes.putIfAbsent(request, new AtomicInteger(properties.getNetworkErrorRetryTimes(getName())));
     }
 
     private void removeNetErrorRetryTimes(Request request) {
@@ -277,14 +272,12 @@ public abstract class AbstractClusterClient implements StarlightClient {
         try {
             // used for logging
             request.getAttachmentKv().put(Constants.CONSUMER_APP_NAME_KEY,
-                    ApplicationContextUtils.getApplicationName());
+                ApplicationContextUtils.getApplicationName());
         } catch (Exception e) {
             LOGGER.warn("Get appName failed, do not need to pay attention, appName will be used for logging. msg {}",
-                    e.getMessage());
+                e.getMessage());
         }
     }
-
-
 
     @Override
     public boolean isActive() {
@@ -338,17 +331,17 @@ public abstract class AbstractClusterClient implements StarlightClient {
         @Override
         public void onError(Throwable e) {
             if (e instanceof TransportException && netErrorRetryTimes.get(getRequest()) == null) {
-                LOGGER.warn("Request to {} failed caused by network error {}, configured retryTimes {}, "
-                                + "reqId {}, mapSize {}",
-                        getRequest().getRemoteURI().getAddress(), ((TransportException) e).getCode(),
-                        netErrorRetryTimes.get(getRequest()), getRequest().getId(), netErrorRetryTimes.size());
+                LOGGER.warn(
+                    "Request to {} failed caused by network error {}, configured retryTimes {}, "
+                        + "reqId {}, mapSize {}",
+                    getRequest().getRemoteURI().getAddress(), ((TransportException) e).getCode(),
+                    netErrorRetryTimes.get(getRequest()), getRequest().getId(), netErrorRetryTimes.size());
             }
-            if (e instanceof TransportException
-                    && netErrorRetryTimes.get(getRequest()) != null) {
+            if (e instanceof TransportException && netErrorRetryTimes.get(getRequest()) != null) {
                 int retryTimes = netErrorRetryTimes.get(getRequest()).getAndDecrement();
                 if (retryTimes > 0) {
                     LOGGER.info("Request to {} failed because network error will retry {}",
-                            getRequest().getRemoteURI().getAddress(), retryTimes);
+                        getRequest().getRemoteURI().getAddress(), retryTimes);
                     request(getRequest(), chainedCallback); // retry
                 } else {
                     removeNetErrorRetryTimes(getRequest());

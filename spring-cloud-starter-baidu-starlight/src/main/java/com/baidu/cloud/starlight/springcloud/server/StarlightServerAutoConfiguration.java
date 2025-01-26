@@ -42,14 +42,13 @@ import java.util.concurrent.ThreadFactory;
 @ConditionalOnProperty(value = "starlight.server.enable")
 public class StarlightServerAutoConfiguration {
 
-
     @Bean(name = SpringCloudConstants.STARLIGHT_SERVER_NAME)
     public StarlightServer starlightServer(StarlightServerProperties serverProperties,
-             @Qualifier(value = ConstantUtils.STARLIGHT_NETTY_SERVER_FACTORY)
-                     ObjectProvider<ThreadFactory> threadFactoryProvider)  {
-        StarlightServer starlightServer = new DefaultStarlightServer(null, serverProperties.getHost(),
-                ApplicationContextUtils.getServerPort(), serverProperties.transportConfig(),
-                threadFactoryProvider.getIfAvailable());
+        @Qualifier(value = ConstantUtils.STARLIGHT_NETTY_SERVER_FACTORY) ObjectProvider<
+            ThreadFactory> threadFactoryProvider) {
+        StarlightServer starlightServer =
+            new DefaultStarlightServer(null, serverProperties.getHost(), ApplicationContextUtils.getServerPort(),
+                serverProperties.transportConfig(), threadFactoryProvider.getIfAvailable());
         starlightServer.init();
         starlightServer.serve();
         return starlightServer;

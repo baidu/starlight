@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance;
 
 import org.slf4j.Logger;
@@ -14,11 +30,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * 用于预加载Loadbalancer子Context以及相应的bean，优化第一次请求的速度，相应的会造成启动时间变长
- * Created by liuruisen on 2021/9/27.
+ * 用于预加载Loadbalancer子Context以及相应的bean，优化第一次请求的速度，相应的会造成启动时间变长 Created by liuruisen on 2021/9/27.
  */
-public class LoadbalancerNamedContextInitializer implements ApplicationListener<ApplicationStartedEvent>,
-        ApplicationContextAware {
+public class LoadbalancerNamedContextInitializer
+    implements ApplicationListener<ApplicationStartedEvent>, ApplicationContextAware {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LoadbalancerNamedContextInitializer.class);
 
@@ -28,19 +43,16 @@ public class LoadbalancerNamedContextInitializer implements ApplicationListener<
 
     private final LoadBalancerEagerLoadProperties eagerProperties;
 
-
     public LoadbalancerNamedContextInitializer(LoadBalancerClientFactory factory,
-                                               LoadBalancerEagerLoadProperties properties) {
+        LoadBalancerEagerLoadProperties properties) {
         this.factory = factory;
         this.eagerProperties = properties;
     }
-
 
     @Override
     public void onApplicationEvent(ApplicationStartedEvent event) {
         autoInit();
     }
-
 
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {

@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.lifecycle;
 
 import org.slf4j.Logger;
@@ -21,15 +37,15 @@ public class StarlightClientLifecycle implements SmartLifecycle {
     private final ApplicationContext applicationContext;
 
     public StarlightClientLifecycle(SingleStarlightClientManager singleStarlightClientManager,
-                                    ApplicationContext applicationContext) {
+        ApplicationContext applicationContext) {
         this.singleStarlightClientManager = singleStarlightClientManager;
         this.applicationContext = applicationContext;
     }
 
     @Override
     public void start() {
-        LOGGER.info("StarlightClientLifecycle start: thread: {}, loader:{}",
-                Thread.currentThread(), Thread.currentThread().getContextClassLoader());
+        LOGGER.info("StarlightClientLifecycle start: thread: {}, loader:{}", Thread.currentThread(),
+            Thread.currentThread().getContextClassLoader());
         // 初始化 Client, ClusterClient 或者 SingleClient
         if (!firstStart) {
             for (String beanName : applicationContext.getBeanNamesForType(FailFastClusterClient.class)) {
@@ -48,8 +64,8 @@ public class StarlightClientLifecycle implements SmartLifecycle {
 
     @Override
     public void stop(Runnable callback) {
-        LOGGER.info("StarlightClientLifecycle stop: thread: {}, loader:{}",
-                Thread.currentThread(), Thread.currentThread().getContextClassLoader());
+        LOGGER.info("StarlightClientLifecycle stop: thread: {}, loader:{}", Thread.currentThread(),
+            Thread.currentThread().getContextClassLoader());
 
         singleStarlightClientManager.destroyAll();
 
@@ -73,8 +89,8 @@ public class StarlightClientLifecycle implements SmartLifecycle {
     }
 
     /**
-     * phase 越小，越早执行 start(), 越晚执行 stop()
-     * 设计 Client 的 phase 大于 server
+     * phase 越小，越早执行 start(), 越晚执行 stop() 设计 Client 的 phase 大于 server
+     * 
      * @return
      */
     @Override

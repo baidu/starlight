@@ -119,9 +119,7 @@ public class LabelClusterSelectorTest {
                 labels.put("EM_LOGIC_IDC", "nj");
             }
 
-            DefaultServiceInstance endpoint =
-                    new DefaultServiceInstance(i + "", "service", "ip." + i, i, true,
-                    labels);
+            DefaultServiceInstance endpoint = new DefaultServiceInstance(i + "", "service", "ip." + i, i, true, labels);
 
             endpoints.add(endpoint);
         }

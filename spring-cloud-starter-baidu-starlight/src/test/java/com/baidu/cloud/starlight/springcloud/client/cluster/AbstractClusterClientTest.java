@@ -88,7 +88,6 @@ public class AbstractClusterClientTest {
         appConfig.setWarmUpRatio(100);
         appConfig.setFilters("");
 
-
         Map<String, ClientConfig> configs = new HashMap();
         configs.put(properties.getDefaultConfig(), defaultConfig);
         configs.put("rpc-provider", appConfig);
@@ -146,8 +145,7 @@ public class AbstractClusterClientTest {
         ApplicationContext applicationContext = mock(ApplicationContext.class);
         ApplicationContextUtils applicationContextUtils = new ApplicationContextUtils();
         applicationContextUtils.setApplicationContext(applicationContext);
-        when(applicationContext.getBean(LoadBalancerClient.class))
-                .thenReturn(loadBalancerClient);
+        when(applicationContext.getBean(LoadBalancerClient.class)).thenReturn(loadBalancerClient);
 
     }
 }

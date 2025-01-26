@@ -44,8 +44,7 @@ import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerPr
 import com.baidu.cloud.thirdparty.jackson.core.JsonProcessingException;
 
 /**
- * Listen to ApplicationStartedEvent and perform service registration
- * Created by liuruisen on 2020/3/2.
+ * Listen to ApplicationStartedEvent and perform service registration Created by liuruisen on 2020/3/2.
  */
 public abstract class StarlightRegisterListener {
 
@@ -61,15 +60,14 @@ public abstract class StarlightRegisterListener {
 
     protected static final String RPC_TYPE = "rpc";
 
-    private ExecutorService registerExecutor = Executors.newSingleThreadExecutor(
-            new NamedThreadFactory("StarlightRegisterWorker"));
+    private ExecutorService registerExecutor =
+        Executors.newSingleThreadExecutor(new NamedThreadFactory("StarlightRegisterWorker"));
 
     /**
      * Register and deregister thread pool, single
      */
     public void restartRegisterExecutor() {
-        this.registerExecutor = Executors.newSingleThreadExecutor(
-                new NamedThreadFactory("StarlightRegisterWorker"));
+        this.registerExecutor = Executors.newSingleThreadExecutor(new NamedThreadFactory("StarlightRegisterWorker"));
     }
 
     public void register(ApplicationContext applicationContext) {
@@ -89,21 +87,20 @@ public abstract class StarlightRegisterListener {
         // register StarlightRegistration
         registerExecutor.execute(() -> {
             try {
-                LOGGER.info("Register starlight server instance {}:{} start",
-                        registration.getHost(), registration.getPort());
+                LOGGER.info("Register starlight server instance {}:{} start", registration.getHost(),
+                    registration.getPort());
                 serviceRegistry.register(registration);
-                LOGGER.info("Register starlight server instance {}:{} success",
-                        registration.getHost(), registration.getPort());
+                LOGGER.info("Register starlight server instance {}:{} success", registration.getHost(),
+                    registration.getPort());
             } catch (Throwable e) {
-                LOGGER.warn("Register server instance {}:{} failed, cause by ",
-                        registration.getHost(), registration.getPort(), e);
+                LOGGER.warn("Register server instance {}:{} failed, cause by ", registration.getHost(),
+                    registration.getPort(), e);
             }
         });
     }
 
     /**
-     * CRaC Restore 之后, 基于新实例的相关信息, 进行 RPC 注册
-     * 和 register() 的主要区别: 更新了 registration.port
+     * CRaC Restore 之后, 基于新实例的相关信息, 进行 RPC 注册 和 register() 的主要区别: 更新了 registration.port
      *
      * @param port
      */
@@ -126,29 +123,27 @@ public abstract class StarlightRegisterListener {
         registerExecutor.execute(() -> {
             try {
                 LOGGER.info("Register starlight server instance {}:{} start",
-                        registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
-                        registration.getPort());
+                    registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
+                    registration.getPort());
                 serviceRegistry.register(registration);
                 LOGGER.info("Register starlight server instance {}:{} success",
-                        registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
-                        registration.getPort());
+                    registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
+                    registration.getPort());
             } catch (Throwable e) {
-                LOGGER.warn("Register server instance {}:{} failed, cause by ",
-                        registration.getHost(), registration.getPort(), e);
+                LOGGER.warn("Register server instance {}:{} failed, cause by ", registration.getHost(),
+                    registration.getPort(), e);
             }
         });
     }
 
     protected abstract Registration createStarlightRegistration();
 
-    protected Registration updateStarlightRegistration(
-            Registration oldRegistration, Integer port) {
+    protected Registration updateStarlightRegistration(Registration oldRegistration, Integer port) {
         return null;
     }
 
     /**
-     * Get starlight app name
-     * AppName will serve as the service discovery name for SpringCloud
+     * Get starlight app name AppName will serve as the service discovery name for SpringCloud
      *
      * @param env
      * @return
@@ -204,11 +199,11 @@ public abstract class StarlightRegisterListener {
         if (registration != null) {
             registerExecutor.execute(() -> {
                 try {
-                    LOGGER.info("Deregister server instance {}:{} start",
-                            registration.getHost(), registration.getPort());
+                    LOGGER.info("Deregister server instance {}:{} start", registration.getHost(),
+                        registration.getPort());
                     serviceRegistry.deregister(registration);
-                    LOGGER.info("Deregister server instance {}:{} success",
-                            registration.getHost(), registration.getPort());
+                    LOGGER.info("Deregister server instance {}:{} success", registration.getHost(),
+                        registration.getPort());
                 } catch (Exception e) {
                     LOGGER.warn("Deregister server instance failed, cause by: ", e);
                 }
@@ -223,7 +218,7 @@ public abstract class StarlightRegisterListener {
         try {
             List<String> interfaces = getInterfaces(); // interfaces meta
             starlightMetas.put(SpringCloudConstants.INTERFACES_KEY,
-                    JsonSerializer.OBJECT_MAPPER.writeValueAsString(interfaces));
+                JsonSerializer.OBJECT_MAPPER.writeValueAsString(interfaces));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Add interfaces to register meta failed.", e);
         }

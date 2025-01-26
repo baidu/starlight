@@ -49,35 +49,26 @@ public class ShutdownServerListFilterTest {
             long shutdownTime = System.currentTimeMillis();
             DefaultServiceInstance server = null;
             if (i < 2000) { // mark server as shutting down, shutdown time > epoch will remove
-                server = new DefaultServiceInstance(i + "", "testApp",
-                        "localhost", 1000 + i,
-                        true,
-                        Collections.singletonMap(SpringCloudConstants.EPOCH_KEY, String.valueOf(shutdownTime - 10)));
+                server = new DefaultServiceInstance(i + "", "testApp", "localhost", 1000 + i, true,
+                    Collections.singletonMap(SpringCloudConstants.EPOCH_KEY, String.valueOf(shutdownTime - 10)));
                 SingleStarlightClient singleClient =
-                        clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(),
-                                new TransportConfig());
+                    clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
                 singleClient.updateStatus(new PeerStatus(PeerStatus.Status.SHUTTING_DOWN, shutdownTime));
             }
 
             if (i >= 2000 && i < 4000) { // mark server as shutdown, shutdown time < epoch will not remove
-                server = new DefaultServiceInstance(i + "", "testApp",
-                        "localhost", 1000 + i,
-                        true,
-                        Collections.singletonMap(SpringCloudConstants.EPOCH_KEY, String.valueOf(shutdownTime + 10)));
+                server = new DefaultServiceInstance(i + "", "testApp", "localhost", 1000 + i, true,
+                    Collections.singletonMap(SpringCloudConstants.EPOCH_KEY, String.valueOf(shutdownTime + 10)));
                 SingleStarlightClient singleClient =
-                        clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(),
-                                new TransportConfig());
+                    clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
                 singleClient.updateStatus(new PeerStatus(PeerStatus.Status.SHUTDOWN, shutdownTime));
             }
 
             if (i >= 4000) {
-                server = new DefaultServiceInstance(i + "", "testApp",
-                        "localhost", 1000 + i,
-                        true,
-                        Collections.singletonMap(SpringCloudConstants.EPOCH_KEY, String.valueOf(shutdownTime - 10)));
+                server = new DefaultServiceInstance(i + "", "testApp", "localhost", 1000 + i, true,
+                    Collections.singletonMap(SpringCloudConstants.EPOCH_KEY, String.valueOf(shutdownTime - 10)));
                 SingleStarlightClient singleClient =
-                        clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(),
-                                new TransportConfig());
+                    clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
                 singleClient.updateStatus(new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
             }
             originalList.add(server);
@@ -88,7 +79,7 @@ public class ShutdownServerListFilterTest {
     @Test
     public void getFilteredList() {
         ShutdownServerListFilter shutdownServerListFilter =
-                new ShutdownServerListFilter(clientManager, new StarlightClientProperties());
+            new ShutdownServerListFilter(clientManager, new StarlightClientProperties());
 
         List<ServiceInstance> filteredList = shutdownServerListFilter.getFilteredList(originalList);
         assertEquals(8000, filteredList.size());

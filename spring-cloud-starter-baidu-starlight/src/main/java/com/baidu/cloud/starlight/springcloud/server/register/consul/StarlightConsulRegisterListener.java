@@ -29,10 +29,8 @@ import org.springframework.util.StringUtils;
 import java.util.HashMap;
 import java.util.Map;
 
-
 /**
- * Register Starlight Service to Consul
- * Created by liuruisen on 2020/3/2.
+ * Register Starlight Service to Consul Created by liuruisen on 2020/3/2.
  */
 public class StarlightConsulRegisterListener extends StarlightRegisterListener {
 
@@ -62,13 +60,13 @@ public class StarlightConsulRegisterListener extends StarlightRegisterListener {
         return new ConsulRegistration(service, discoveryProperties);
     }
 
-
     /***
      * Rpc service Check
+     * 
      * @return
      */
     public static NewService.Check createCheck(Integer port, HeartbeatProperties ttlConfig,
-                                               ConsulDiscoveryProperties properties) {
+        ConsulDiscoveryProperties properties) {
         NewService.Check check = new NewService.Check();
         if (ttlConfig.isEnabled()) {
             check.setTtl(ttlConfig.getTtl().getSeconds() + "s");
@@ -94,7 +92,6 @@ public class StarlightConsulRegisterListener extends StarlightRegisterListener {
         check.setTlsSkipVerify(properties.getHealthCheckTlsSkipVerify());
         return check;
     }
-
 
     private Map<String, String> getMetadata(ConsulDiscoveryProperties properties) {
         Map<String, String> metadata = new HashMap<>();

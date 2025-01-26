@@ -74,8 +74,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getClientConfig() {
         clientConfigMap.put(clientProperties.getDefaultConfig(), defaultConfig);
-        ClientConfig defaultConfig =
-                clientProperties.getClientConfig(clientProperties.getDefaultConfig());
+        ClientConfig defaultConfig = clientProperties.getClientConfig(clientProperties.getDefaultConfig());
         Assert.assertNull(defaultConfig.getProtocol());
         clientConfigMap.clear();
     }
@@ -136,8 +135,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getConnectTimeoutMills() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.CONNECT_TIMEOUT_VALUE.intValue(),
-                properties.getConnectTimeoutMills("Test").intValue());
+        assertEquals(Constants.CONNECT_TIMEOUT_VALUE.intValue(), properties.getConnectTimeoutMills("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -158,8 +156,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getMaxHeartbeatTimes() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.MAX_HEARTBEAT_TIMES_VALUE,
-                properties.getMaxHeartbeatTimes("Test").intValue());
+        assertEquals(Constants.MAX_HEARTBEAT_TIMES_VALUE, properties.getMaxHeartbeatTimes("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -180,8 +177,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getWriteTimeoutMills() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.WRITE_TIMEOUT_VALUE.intValue(),
-                properties.getWriteTimeoutMills("Test").intValue());
+        assertEquals(Constants.WRITE_TIMEOUT_VALUE.intValue(), properties.getWriteTimeoutMills("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -202,8 +198,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getReadIdleTimeout() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.READ_IDLE_TIMEOUT_VALUE,
-                properties.getReadIdleTimeout("Test").intValue());
+        assertEquals(Constants.READ_IDLE_TIMEOUT_VALUE, properties.getReadIdleTimeout("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -225,8 +220,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getRequestTimeoutMills() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.REQUEST_TIMEOUT_VALUE.intValue(),
-                properties.getRequestTimeoutMills("Test").intValue());
+        assertEquals(Constants.REQUEST_TIMEOUT_VALUE.intValue(), properties.getRequestTimeoutMills("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -249,7 +243,7 @@ public class StarlightClientPropertiesTest {
     public void getWarmUpRatio() {
         StarlightClientProperties properties = new StarlightClientProperties();
         assertEquals(SpringCloudConstants.DEFAULT_WARM_UP_RATIO.intValue(),
-                properties.getWarmUpRatio("Test").intValue());
+            properties.getWarmUpRatio("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -315,8 +309,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getMaxConnections() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.MAX_TOTAL_CONNECTIONS.intValue(),
-                properties.getMaxConnections("Test").intValue());
+        assertEquals(Constants.MAX_TOTAL_CONNECTIONS.intValue(), properties.getMaxConnections("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -337,8 +330,7 @@ public class StarlightClientPropertiesTest {
     @Test
     public void getMaxIdleConnections() {
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.MAX_IDLE_CONNECTIONS.intValue(),
-                properties.getMaxIdleConnections("Test").intValue());
+        assertEquals(Constants.MAX_IDLE_CONNECTIONS.intValue(), properties.getMaxIdleConnections("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -360,8 +352,7 @@ public class StarlightClientPropertiesTest {
     public void getMinIdleConnections() {
 
         StarlightClientProperties properties = new StarlightClientProperties();
-        assertEquals(Constants.MIN_IDLE_CONNECTIONS.intValue(),
-                properties.getMinIdleConnections("Test").intValue());
+        assertEquals(Constants.MIN_IDLE_CONNECTIONS.intValue(), properties.getMinIdleConnections("Test").intValue());
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -435,24 +426,20 @@ public class StarlightClientPropertiesTest {
         defalutConfig.setFilters("brpc");
         clientConfigMap.put(properties.getDefaultConfig(), defalutConfig);
 
-        assertEquals(SpringCloudConstants.DEFAULT_CLIENT_FILTERS + ",brpc",
-                properties.getFilters("Test"));
+        assertEquals(SpringCloudConstants.DEFAULT_CLIENT_FILTERS + ",brpc", properties.getFilters("Test"));
 
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.setFilters("stargate");
         clientConfigMap.put("Test", clientConfig);
 
-        assertEquals(SpringCloudConstants.DEFAULT_CLIENT_FILTERS + ",stargate",
-                properties.getFilters("Test"));
+        assertEquals(SpringCloudConstants.DEFAULT_CLIENT_FILTERS + ",stargate", properties.getFilters("Test"));
     }
-
-
 
     @Test
     public void getRequestTimeoutMills2() {
         StarlightClientProperties properties = new StarlightClientProperties();
         assertEquals(Constants.REQUEST_TIMEOUT_VALUE,
-                properties.getRequestTimeoutMills("Test", this.getClass().getName()));
+            properties.getRequestTimeoutMills("Test", this.getClass().getName()));
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -461,15 +448,13 @@ public class StarlightClientPropertiesTest {
         defalutConfig.setRequestTimeoutMills(111);
         clientConfigMap.put(properties.getDefaultConfig(), defalutConfig);
 
-        assertEquals(111,
-                properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
+        assertEquals(111, properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
 
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.setRequestTimeoutMills(222);
         clientConfigMap.put("Test", clientConfig);
 
-        assertEquals(222,
-                properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
+        assertEquals(222, properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
 
         Map<String, InterfaceConfig> interfaceConfigMap = new HashMap<>();
         defalutConfig.setInterfaceConfig(interfaceConfigMap);
@@ -477,23 +462,21 @@ public class StarlightClientPropertiesTest {
         interfaceConfigMap.put(this.getClass().getName(), interfaceConfig);
         interfaceConfig.setRequestTimeoutMills(333);
 
-        assertEquals(222,
-                properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
+        assertEquals(222, properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
 
         Map<String, InterfaceConfig> interfaceConfigMap1 = new HashMap<>();
         clientConfig.setInterfaceConfig(interfaceConfigMap1);
         InterfaceConfig config = new InterfaceConfig();
         interfaceConfigMap1.put(this.getClass().getName(), config);
         config.setRequestTimeoutMills(444);
-        assertEquals(444,
-                properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
+        assertEquals(444, properties.getRequestTimeoutMills("Test", this.getClass().getName()).intValue());
     }
 
     @Test
     public void getRetryTimes() {
         StarlightClientProperties properties = new StarlightClientProperties();
         assertEquals(SpringCloudConstants.DEFAULT_RETRY_TIMES,
-                properties.getRetryTimes("Test", this.getClass().getName()));
+            properties.getRetryTimes("Test", this.getClass().getName()));
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -502,15 +485,13 @@ public class StarlightClientPropertiesTest {
         defalutConfig.setRetryTimes(111);
         clientConfigMap.put(properties.getDefaultConfig(), defalutConfig);
 
-        assertEquals(111,
-                properties.getRetryTimes("Test", this.getClass().getName()).intValue());
+        assertEquals(111, properties.getRetryTimes("Test", this.getClass().getName()).intValue());
 
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.setRetryTimes(222);
         clientConfigMap.put("Test", clientConfig);
 
-        assertEquals(222,
-                properties.getRetryTimes("Test", this.getClass().getName()).intValue());
+        assertEquals(222, properties.getRetryTimes("Test", this.getClass().getName()).intValue());
 
         Map<String, InterfaceConfig> interfaceConfigMap = new HashMap<>();
         defalutConfig.setInterfaceConfig(interfaceConfigMap);
@@ -518,16 +499,14 @@ public class StarlightClientPropertiesTest {
         interfaceConfigMap.put(this.getClass().getName(), interfaceConfig);
         interfaceConfig.setRetryTimes(333);
 
-        assertEquals(222,
-                properties.getRetryTimes("Test", this.getClass().getName()).intValue());
+        assertEquals(222, properties.getRetryTimes("Test", this.getClass().getName()).intValue());
 
         Map<String, InterfaceConfig> interfaceConfigMap1 = new HashMap<>();
         clientConfig.setInterfaceConfig(interfaceConfigMap1);
         InterfaceConfig config = new InterfaceConfig();
         interfaceConfigMap1.put(this.getClass().getName(), config);
         config.setRetryTimes(444);
-        assertEquals(444,
-                properties.getRetryTimes("Test", this.getClass().getName()).intValue());
+        assertEquals(444, properties.getRetryTimes("Test", this.getClass().getName()).intValue());
 
     }
 
@@ -536,7 +515,7 @@ public class StarlightClientPropertiesTest {
 
         StarlightClientProperties properties = new StarlightClientProperties();
         assertEquals(SpringCloudConstants.DEFAULT_RETRY_DELAY_MILLS,
-                properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()));
+            properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()));
 
         Map<String, ClientConfig> clientConfigMap = new HashMap<>();
         properties.setConfig(clientConfigMap);
@@ -545,15 +524,13 @@ public class StarlightClientPropertiesTest {
         defalutConfig.setRetryDelayTimeUnitMills(111);
         clientConfigMap.put(properties.getDefaultConfig(), defalutConfig);
 
-        assertEquals(111,
-                properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
+        assertEquals(111, properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
 
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.setRetryDelayTimeUnitMills(222);
         clientConfigMap.put("Test", clientConfig);
 
-        assertEquals(222,
-                properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
+        assertEquals(222, properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
 
         Map<String, InterfaceConfig> interfaceConfigMap = new HashMap<>();
         defalutConfig.setInterfaceConfig(interfaceConfigMap);
@@ -561,16 +538,14 @@ public class StarlightClientPropertiesTest {
         interfaceConfigMap.put(this.getClass().getName(), interfaceConfig);
         interfaceConfig.setRetryDelayTimeUnitMills(333);
 
-        assertEquals(222,
-                properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
+        assertEquals(222, properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
 
         Map<String, InterfaceConfig> interfaceConfigMap1 = new HashMap<>();
         clientConfig.setInterfaceConfig(interfaceConfigMap1);
         InterfaceConfig config = new InterfaceConfig();
         interfaceConfigMap1.put(this.getClass().getName(), config);
         config.setRetryDelayTimeUnitMills(444);
-        assertEquals(444,
-                properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
+        assertEquals(444, properties.getRetryDelayTimeUnitMills("Test", this.getClass().getName()).intValue());
     }
 
     @Test
@@ -586,15 +561,13 @@ public class StarlightClientPropertiesTest {
         defalutConfig.setRetryMethods("111");
         clientConfigMap.put(properties.getDefaultConfig(), defalutConfig);
 
-        assertEquals("111",
-                properties.getRetryMethods("Test", this.getClass().getName()));
+        assertEquals("111", properties.getRetryMethods("Test", this.getClass().getName()));
 
         ClientConfig clientConfig = new ClientConfig();
         clientConfig.setRetryMethods("222");
         clientConfigMap.put("Test", clientConfig);
 
-        assertEquals("222",
-                properties.getRetryMethods("Test", this.getClass().getName()));
+        assertEquals("222", properties.getRetryMethods("Test", this.getClass().getName()));
 
         Map<String, InterfaceConfig> interfaceConfigMap = new HashMap<>();
         defalutConfig.setInterfaceConfig(interfaceConfigMap);
@@ -602,16 +575,14 @@ public class StarlightClientPropertiesTest {
         interfaceConfigMap.put(this.getClass().getName(), interfaceConfig);
         interfaceConfig.setRetryMethods("333");
 
-        assertEquals("222",
-                properties.getRetryMethods("Test", this.getClass().getName()));
+        assertEquals("222", properties.getRetryMethods("Test", this.getClass().getName()));
 
         Map<String, InterfaceConfig> interfaceConfigMap1 = new HashMap<>();
         clientConfig.setInterfaceConfig(interfaceConfigMap1);
         InterfaceConfig config = new InterfaceConfig();
         interfaceConfigMap1.put(this.getClass().getName(), config);
         config.setRetryMethods("444");
-        assertEquals("444",
-                properties.getRetryMethods("Test", this.getClass().getName()));
+        assertEquals("444", properties.getRetryMethods("Test", this.getClass().getName()));
 
     }
 
@@ -639,7 +610,6 @@ public class StarlightClientPropertiesTest {
         assertEquals(true, properties.getOutlierConfig("starlight-provider").getEnabled());
         assertEquals(true, outlierConfig.getEnabled());
 
-
         OutlierConfig config = new OutlierConfig();
         config.setEnabled(false);
         config.setDetectInterval(120);
@@ -650,12 +620,10 @@ public class StarlightClientPropertiesTest {
         assertEquals(false, properties.getOutlierConfig("starlight-provider").getEnabled());
         assertEquals(true, outlierConfig.getEnabled());
         assertEquals(false, config.getEnabled());
-        assertEquals(20, properties.getOutlierConfig("starlight-provider")
-                .getMaxEjectPercent().intValue());
+        assertEquals(20, properties.getOutlierConfig("starlight-provider").getMaxEjectPercent().intValue());
 
         assertEquals(true, properties.getOutlierConfig("starlight-app").getEnabled());
-        assertEquals(20, properties.getOutlierConfig("starlight-app")
-                .getMaxEjectPercent().intValue());
+        assertEquals(20, properties.getOutlierConfig("starlight-app").getMaxEjectPercent().intValue());
     }
 
 }

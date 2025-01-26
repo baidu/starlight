@@ -43,11 +43,10 @@ public class OutlierEjectServerListFilterTest {
     public List<ServiceInstance> serverList() {
         List<ServiceInstance> originalList = new LinkedList<>();
         for (int i = 0; i < 10000; i++) {
-            DefaultServiceInstance serviceInstance = new DefaultServiceInstance("id" + i, "test-app",
-                    "localhost", 1000 + i, true);
-            SingleStarlightClient singleClient =
-                    clientManager.getOrCreateSingleClient(serviceInstance.getHost(), serviceInstance.getPort(),
-                            new TransportConfig());
+            DefaultServiceInstance serviceInstance =
+                new DefaultServiceInstance("id" + i, "test-app", "localhost", 1000 + i, true);
+            SingleStarlightClient singleClient = clientManager.getOrCreateSingleClient(serviceInstance.getHost(),
+                serviceInstance.getPort(), new TransportConfig());
             if (i < 2000) { // mark server as outlier
                 singleClient.updateStatus(new PeerStatus(PeerStatus.Status.OUTLIER, System.currentTimeMillis()));
             }
@@ -80,7 +79,7 @@ public class OutlierEjectServerListFilterTest {
         clientProperties.setConfig(Collections.singletonMap("testApp", clientConfig));
 
         OutlierEjectServerListFilter serverListFilter =
-                new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
+            new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
 
         List<ServiceInstance> originalList = serverList();
         // eject all 2000 OUTLIER
@@ -109,18 +108,15 @@ public class OutlierEjectServerListFilterTest {
 
         clientProperties.setConfig(Collections.singletonMap("testApp", clientConfig));
 
-
         OutlierEjectServerListFilter serverListFilter =
-                new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
+            new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
 
-        DefaultServiceInstance server =
-                new DefaultServiceInstance("id", "test-app", "localhost", 20000, true);
+        DefaultServiceInstance server = new DefaultServiceInstance("id", "test-app", "localhost", 20000, true);
         List<ServiceInstance> originalList = new LinkedList<>();
         originalList.add(server);
-        originalList.add(
-                new DefaultServiceInstance("id", "test-app", "localhost", 10000, true));
+        originalList.add(new DefaultServiceInstance("id", "test-app", "localhost", 10000, true));
         SingleStarlightClient singleClient =
-                clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
+            clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
         singleClient.updateStatus(new PeerStatus(PeerStatus.Status.OUTLIER, System.currentTimeMillis()));
 
         // eject zero OUTLIER

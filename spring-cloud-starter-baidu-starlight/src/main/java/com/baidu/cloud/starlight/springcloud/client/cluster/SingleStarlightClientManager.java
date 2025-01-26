@@ -29,9 +29,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
 
 /**
- * Through this class, you can obtain and manage all the StarlightClient during the runtime.
- * Singleton, can be used any time the program is running
- * Created by liuruisen on 2020/12/1.
+ * Through this class, you can obtain and manage all the StarlightClient during the runtime. Singleton, can be used any
+ * time the program is running Created by liuruisen on 2020/12/1.
  */
 public class SingleStarlightClientManager {
 
@@ -51,6 +50,7 @@ public class SingleStarlightClientManager {
 
     /**
      * Singleton instance
+     * 
      * @return
      */
     public static SingleStarlightClientManager getInstance() {
@@ -65,16 +65,15 @@ public class SingleStarlightClientManager {
     }
 
     /**
-     * Get or create SingleStarlightClient
-     * Thread-safe
+     * Get or create SingleStarlightClient Thread-safe
+     * 
      * @param host
      * @param port
      * @param config
      * @return
      */
-    public SingleStarlightClient getOrCreateSingleClient(String host, Integer port,
-                                                         TransportConfig config,
-                                                         Map<Class<?>, ServiceConfig> serviceConfigs) {
+    public SingleStarlightClient getOrCreateSingleClient(String host, Integer port, TransportConfig config,
+        Map<Class<?>, ServiceConfig> serviceConfigs) {
         SingleStarlightClient client = getAliveSingleClient(host, port);
         if (client != null) {
             if (serviceConfigs != null && serviceConfigs.size() > 0) {
@@ -132,8 +131,7 @@ public class SingleStarlightClientManager {
         }
 
         // 异常实例摘除场景达到最大摘除阈值后，也可返回OUTLIER的实例
-        if (client.getStatus() != null
-                && PeerStatus.Status.OUTLIER.equals(client.getStatus().getStatus())) {
+        if (client.getStatus() != null && PeerStatus.Status.OUTLIER.equals(client.getStatus().getStatus())) {
             return client;
         }
 
@@ -142,14 +140,15 @@ public class SingleStarlightClientManager {
 
     /**
      * Remove offline client, used in clean up Task
+     * 
      * @param host
      * @param port
      */
     public void removeSingleClient(String host, Integer port) {
         SingleStarlightClient client = starlightClients.remove(InstanceUtils.ipPortStr(host, port));
         if (client != null) {
-            LOGGER.info("Remove and destroy inactive SingleStarlightClient from StarlightClientManager, " +
-                    "host {}, port {}, isActive {}", host, port, client.isActive());
+            LOGGER.info("Remove and destroy inactive SingleStarlightClient from StarlightClientManager, "
+                + "host {}, port {}, isActive {}", host, port, client.isActive());
             client.destroy(); // gracefully or not
         }
     }
@@ -157,7 +156,6 @@ public class SingleStarlightClientManager {
     public Map<String, SingleStarlightClient> allSingleClients() {
         return this.starlightClients;
     }
-
 
     /**
      * Destroy all SingleStarlightClients, gracefully shutdown

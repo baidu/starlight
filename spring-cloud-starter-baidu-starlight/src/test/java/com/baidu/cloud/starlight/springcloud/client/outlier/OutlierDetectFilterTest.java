@@ -36,7 +36,6 @@ import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 
-
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -53,18 +52,16 @@ public class OutlierDetectFilterTest {
         ApplicationContext applicationContext = mock(ApplicationContext.class);
         ApplicationContextUtils applicationContextUtils = new ApplicationContextUtils();
         applicationContextUtils.setApplicationContext(applicationContext);
-        when(applicationContext.getBean(SingleStarlightClientManager.class))
-                .thenReturn(singleStarlightClientManager);
+        when(applicationContext.getBean(SingleStarlightClientManager.class)).thenReturn(singleStarlightClientManager);
     }
 
     @Test
     public void filterResponse() {
 
         SingleStarlightClientManager clientManager =
-                ApplicationContextUtils.getBeanByType(SingleStarlightClientManager.class);
+            ApplicationContextUtils.getBeanByType(SingleStarlightClientManager.class);
         clientManager.getOrCreateSingleClient("localhost", 8888, new TransportConfig());
         SingleStarlightClient singleStarlightClient = clientManager.getSingleClient("localhost", 8888);
-
 
         Response response = new RpcResponse();
         Request request = new RpcRequest();
@@ -84,8 +81,7 @@ public class OutlierDetectFilterTest {
         assertEquals(PeerStatus.Status.ACTIVE, singleStarlightClient.getStatus().getStatus());
 
         // statistics is null
-        remoteURI = remoteURI.addParameters(SpringCloudConstants.OUTLIER_DETECT_ENABLED_KEY,
-                String.valueOf(true));
+        remoteURI = remoteURI.addParameters(SpringCloudConstants.OUTLIER_DETECT_ENABLED_KEY, String.valueOf(true));
         request.setRemoteURI(remoteURI);
         outlierDetectFilter.filterResponse(response, request);
         assertEquals(PeerStatus.Status.ACTIVE, singleStarlightClient.getStatus().getStatus());
@@ -97,11 +93,10 @@ public class OutlierDetectFilterTest {
 
         // not reach outlier min request
         remoteURI =
-                remoteURI.addParameters(SpringCloudConstants.OUTLIER_DETECT_MINI_REQUEST_NUM_KEY, String.valueOf(3));
+            remoteURI.addParameters(SpringCloudConstants.OUTLIER_DETECT_MINI_REQUEST_NUM_KEY, String.valueOf(3));
         request.setRemoteURI(remoteURI);
         StarlightStatistics starlightStatistics = StarlightStatsManager.getStats(remoteURI);
-        starlightStatistics.registerStats(SpringCloudConstants.OUTLIER_STATS_KEY,
-                new FixedTimeWindowStats(100));
+        starlightStatistics.registerStats(SpringCloudConstants.OUTLIER_STATS_KEY, new FixedTimeWindowStats(100));
         starlightStatistics.record(request, response);
         outlierDetectFilter.filterResponse(response, request);
         assertEquals(PeerStatus.Status.ACTIVE, singleStarlightClient.getStatus().getStatus());
@@ -113,8 +108,8 @@ public class OutlierDetectFilterTest {
         assertEquals(PeerStatus.Status.ACTIVE, singleStarlightClient.getStatus().getStatus());
 
         // outlier
-        remoteURI = remoteURI.addParameters(SpringCloudConstants.OUTLIER_DETECT_FAIL_PERCENT_THRESHOLD_KEY,
-                String.valueOf(10));
+        remoteURI =
+            remoteURI.addParameters(SpringCloudConstants.OUTLIER_DETECT_FAIL_PERCENT_THRESHOLD_KEY, String.valueOf(10));
         request.setRemoteURI(remoteURI);
         response.setStatus(1004);
         starlightStatistics.record(request, response);

@@ -16,7 +16,6 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster;
 
-
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import org.springframework.cloud.client.ServiceInstance;
 
@@ -25,9 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Metadata and config of the cluster
- * Can selector instance of this cluster
- * Created by liuruisen on 2021/9/6.
+ * Metadata and config of the cluster Can selector instance of this cluster Created by liuruisen on 2021/9/6.
  */
 public abstract class ClusterSelector {
 
@@ -48,11 +45,11 @@ public abstract class ClusterSelector {
 
     /**
      * 筛选本集群服务列表
+     * 
      * @param originList
      * @return
      */
     public abstract List<ServiceInstance> selectorClusterInstances(List<ServiceInstance> originList);
-
 
     public String getClusterName() {
         return clusterName;

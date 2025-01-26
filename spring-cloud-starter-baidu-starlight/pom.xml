@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     
     <parent>
@@ -17,12 +18,12 @@
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>1.8</java.version>
+        <java.version>17</java.version>
         <spring-cloud.version>2022.0.0</spring-cloud.version>
         <!-- plugin versions -->
         <powermock.version>2.0.9</powermock.version>
         <starlight.version>2024.0.2-SNAPSHOT</starlight.version>
-	<git-commit-id-plugin.version>2.2.5</git-commit-id-plugin.version>
+        <git-commit-id-plugin.version>2.2.5</git-commit-id-plugin.version>
     </properties>
     
     <dependencyManagement>
@@ -148,14 +149,14 @@
             <artifactId>reflections</artifactId>
             <version>0.10.2</version>
         </dependency>
-	
-	<dependency>
+        
+        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-actuator</artifactId>
             <scope>test</scope>
         </dependency>
-	
-	<dependency>
+        
+        <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
             <scope>test</scope>
@@ -268,7 +269,7 @@
                     <tagNameFormat>starter-v@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
-            
+            <!--
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
@@ -282,16 +283,28 @@
                     </execution>
                 </executions>
             </plugin>
+            -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>3.6.3</version>
+                <version>3.11.2</version>
+                <configuration>
+                    <source>17</source>
+                    <!-- 指定 JDK 版本 -->
+                    <encoding>UTF-8</encoding>
+                    <!-- 文档的编码 -->
+                    <doclint>none</doclint>
+                    <!-- 禁用文档校验 -->
+                </configuration>
                 <executions>
                     <execution>
-                        <id>attach-javadocs</id>
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <phase>package</phase>
+                        <configuration>
+                            <additionalJOptions>-Xdoclint:none</additionalJOptions>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -323,45 +336,7 @@
                     </execution>
                 </executions>
             </plugin>
-	    <plugin>
-                    <groupId>com.github.os72</groupId>
-                    <artifactId>protoc-jar-maven-plugin</artifactId>
-                    <version>3.6.0.1</version>
-                    <executions>
-                        <execution>
-                            <id>generate-sources</id>
-                            <phase>generate-sources</phase>
-                            <goals>
-                                <goal>run</goal>
-                            </goals>
-                            <configuration>
-                                <protocVersion>2.5.0</protocVersion>
-                                <addSources>none</addSources>
-                                <includeStdTypes>true</includeStdTypes>
-                                <outputDirectory>src/main/java</outputDirectory>
-                                <inputDirectories>
-                                    <include>src/main/proto</include>
-                                </inputDirectories>
-                            </configuration>
-                        </execution>
-                        <execution>
-                            <id>generate-test-sources</id>
-                            <phase>generate-test-sources</phase>
-                            <goals>
-                                <goal>run</goal>
-                            </goals>
-                            <configuration>
-                                <protocVersion>2.5.0</protocVersion>
-                                <includeStdTypes>true</includeStdTypes>
-                                <addSources>none</addSources>
-                                <outputDirectory>src/test/java</outputDirectory>
-                                <inputDirectories>
-                                    <include>src/test/proto</include>
-                                </inputDirectories>
-                            </configuration>
-                        </execution>
-                    </executions>
-                </plugin>
+            
         </plugins>
     </build>
     <url>https://github.com/baidu/starlight</url>
@@ -435,7 +410,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.13</version>
+                        <version>1.6.14</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>

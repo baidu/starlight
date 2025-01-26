@@ -26,6 +26,7 @@ public interface Router extends Comparable<Router> {
 
     /**
      * Route and return subset cluster
+     * 
      * @param request
      * @return subset cluster
      */
@@ -33,6 +34,7 @@ public interface Router extends Comparable<Router> {
 
     /**
      * 每个Router绑定一个serviceId，或者是元信息？
+     * 
      * @return
      */
     default String getServiceId() {
@@ -41,12 +43,14 @@ public interface Router extends Comparable<Router> {
 
     /**
      * 获取路由用的serviceId，用于支持跨注册中心路由场景
+     * 
      * @return
      */
     String getRouteServiceId();
 
     /**
      * 路由优先级，从高优先级到低优先级匹配，匹配到一个Router后返回
+     * 
      * @return
      */
     int getPriority();

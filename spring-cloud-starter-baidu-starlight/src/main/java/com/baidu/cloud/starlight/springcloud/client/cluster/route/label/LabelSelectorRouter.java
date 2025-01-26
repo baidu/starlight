@@ -50,10 +50,8 @@ public class LabelSelectorRouter extends AbstractRouter {
 
     private final StarlightClientProperties clientProperties;
 
-    public LabelSelectorRouter(String serviceId,
-                               StarlightRouteProperties routeProperties,
-                               StarlightClientProperties clientProperties,
-                               LoadBalancer loadBalancer) {
+    public LabelSelectorRouter(String serviceId, StarlightRouteProperties routeProperties,
+        StarlightClientProperties clientProperties, LoadBalancer loadBalancer) {
         this.serviceId = serviceId;
         this.routeProperties = routeProperties;
         this.clientProperties = clientProperties;
@@ -66,10 +64,9 @@ public class LabelSelectorRouter extends AbstractRouter {
         // TODO 后续可考虑用RDS支持label路由
         // 支持海若请求级的label selector选择, 用完删除防止向下传递（ugly实现）
         Map<String, Object> routeContext =
-                (Map<String, Object>) request.getNoneAdditionKv().get(SpringCloudConstants.ROUTE_CONTEXT_KEY);
+            (Map<String, Object>) request.getNoneAdditionKv().get(SpringCloudConstants.ROUTE_CONTEXT_KEY);
         LOGGER.debug("LabelSelectorRouter route context {}", routeContext);
-        String labelSelector =
-                (String) routeContext.get(SpringCloudConstants.REQUEST_LABEL_SELECTOR_ROUTE_KEY);
+        String labelSelector = (String) routeContext.get(SpringCloudConstants.REQUEST_LABEL_SELECTOR_ROUTE_KEY);
         LOGGER.debug("LabelSelectorRouter label selector from route context {}", labelSelector);
         if (StringUtils.isEmpty(labelSelector)) {
             labelSelector = routeProperties.getServiceLabelSelector(getRouteServiceId());
@@ -105,17 +102,15 @@ public class LabelSelectorRouter extends AbstractRouter {
     @Override
     public String getRouteServiceId() {
         // 配置了map映射，使用map指定的value
-        if (routeProperties.getServiceIdMap() != null
-                && routeProperties.getServiceIdMap().containsKey(serviceId)) {
+        if (routeProperties.getServiceIdMap() != null && routeProperties.getServiceIdMap().containsKey(serviceId)) {
             return routeProperties.getServiceIdMap().get(serviceId);
         }
         return this.serviceId;
     }
 
     private void recordRouteMatch(Request request, String labelSelector, long routeStart) {
-        LOGGER.info("[LABEL_ROUTE] Request matched label-selector route: "
-                        + "serviceId {}, req{}, labelSelector {}, cost {}",
-                getServiceId(), RouteUtils.reqMsg(request), labelSelector,
-                System.currentTimeMillis() - routeStart);
+        LOGGER.info(
+            "[LABEL_ROUTE] Request matched label-selector route: " + "serviceId {}, req{}, labelSelector {}, cost {}",
+            getServiceId(), RouteUtils.reqMsg(request), labelSelector, System.currentTimeMillis() - routeStart);
     }
 }

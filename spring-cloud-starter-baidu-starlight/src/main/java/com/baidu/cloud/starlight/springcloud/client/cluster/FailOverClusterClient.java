@@ -36,8 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * FailOverClusterClient: when request failed, will retry another instance
- * Created by liuruisen on 2020/9/21.
+ * FailOverClusterClient: when request failed, will retry another instance Created by liuruisen on 2020/9/21.
  */
 public class FailOverClusterClient extends AbstractClusterClient {
 
@@ -48,13 +47,11 @@ public class FailOverClusterClient extends AbstractClusterClient {
 
     private final Map<Request, Integer> retryTimesMap = new ConcurrentHashMap<>();
 
-    public FailOverClusterClient(String name, StarlightClientProperties properties,
-                                 LoadBalancer loadBalancer, DiscoveryClient discoveryClient,
-                                 SingleStarlightClientManager clientManager,
-                                 Configuration configuration, StarlightRouteProperties routeProperties) {
+    public FailOverClusterClient(String name, StarlightClientProperties properties, LoadBalancer loadBalancer,
+        DiscoveryClient discoveryClient, SingleStarlightClientManager clientManager, Configuration configuration,
+        StarlightRouteProperties routeProperties) {
         super(name, properties, loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
     }
-
 
     @Override
     public void request(Request request, RpcCallback callback) {
@@ -98,7 +95,6 @@ public class FailOverClusterClient extends AbstractClusterClient {
         return false;
     }
 
-
     private boolean isRetryable(RpcException rpcException, Request request) {
 
         String retryErrorCodes = properties.getRetryErrorCodes(getName(), request.getServiceClass().getName());
@@ -132,7 +128,6 @@ public class FailOverClusterClient extends AbstractClusterClient {
         return properties.getRetryDelayTimeUnitMills(getName(), request.getServiceClass().getName());
     }
 
-
     private void clearRetryTimesCache(Request request) {
         retryTimesMap.remove(request);
         remainedRetries.remove(request);
@@ -160,14 +155,12 @@ public class FailOverClusterClient extends AbstractClusterClient {
         public void onResponse(Response response) {
             Integer canRetryTimes = retryTimesMap.get(getRequest());
             AtomicInteger remindRetryTimes = remainedRetries.get(getRequest());
-            if (canRetryTimes != null
-                    && remindRetryTimes != null
-                    && !canRetryTimes.equals(remindRetryTimes.get())) { // 代表经历过retry了，记录重试成功日志
-                LOGGER.info("[FailOver] Request retry success:" +
-                        " serviceName {}, methodName {}, traceId {}, retryCount {}",
-                        getRequest().getServiceName(), getRequest().getMethodName(),
-                        LogUtils.parseTraceIdSpanId(getRequest()).get(LogUtils.TCID),
-                        (canRetryTimes - remindRetryTimes.get()));
+            if (canRetryTimes != null && remindRetryTimes != null && !canRetryTimes.equals(remindRetryTimes.get())) { // 代表经历过retry了，记录重试成功日志
+                LOGGER.info(
+                    "[FailOver] Request retry success:" + " serviceName {}, methodName {}, traceId {}, retryCount {}",
+                    getRequest().getServiceName(), getRequest().getMethodName(),
+                    LogUtils.parseTraceIdSpanId(getRequest()).get(LogUtils.TCID),
+                    (canRetryTimes - remindRetryTimes.get()));
             }
             clearRetryTimesCache(getRequest());
             chainedCallback.onResponse(response);
@@ -202,33 +195,31 @@ public class FailOverClusterClient extends AbstractClusterClient {
             AtomicInteger remindRetryTimes = remainedRetries.get(request);
             // There are no more retries, end the request
             if (remindRetryTimes == null || remindRetryTimes.get() <= 0) {
-                LOGGER.warn("[FailOver] Request failed will not retry, reach the max retry times: "
-                                + "serviceName {}, methodName{}, traceId {}",
-                        request.getServiceName(), request.getMethodName(),
-                        LogUtils.parseTraceIdSpanId(request).get(LogUtils.TCID));
+                LOGGER.warn(
+                    "[FailOver] Request failed will not retry, reach the max retry times: "
+                        + "serviceName {}, methodName{}, traceId {}",
+                    request.getServiceName(), request.getMethodName(),
+                    LogUtils.parseTraceIdSpanId(request).get(LogUtils.TCID));
                 clearRetryTimesCache(request);
                 chainedCallback.onError(e);
                 return;
             }
 
-            LOGGER.warn("[FailOver] Request failed will retry: " +
-                            "errorCode {}, serviceName {}, methodName {}, traceId {}, retryNo {}, exception {}. ",
-                    rpcException.getCode(), request.getServiceName(), request.getMethodName(),
-                    LogUtils.parseTraceIdSpanId(request).get(LogUtils.TCID),
-                    remindRetryTimes.get(),
-                    e.getMessage());
-            LOGGER.debug("[FailOver] Request failed will retry, retryNo {}, route_context: {}",
-                    remindRetryTimes.get(),
-                    request.getNoneAdditionKv().get(SpringCloudConstants.ROUTE_CONTEXT_KEY));
+            LOGGER.warn(
+                "[FailOver] Request failed will retry: "
+                    + "errorCode {}, serviceName {}, methodName {}, traceId {}, retryNo {}, exception {}. ",
+                rpcException.getCode(), request.getServiceName(), request.getMethodName(),
+                LogUtils.parseTraceIdSpanId(request).get(LogUtils.TCID), remindRetryTimes.get(), e.getMessage());
+            LOGGER.debug("[FailOver] Request failed will retry, retryNo {}, route_context: {}", remindRetryTimes.get(),
+                request.getNoneAdditionKv().get(SpringCloudConstants.ROUTE_CONTEXT_KEY));
 
             try {
                 int retryDelayInterval =
-                        retryDelayTimeUnitMills(request)
-                                * (retryTimesMap.get(request) - remindRetryTimes.get());
+                    retryDelayTimeUnitMills(request) * (retryTimesMap.get(request) - remindRetryTimes.get());
                 TimeUnit.MILLISECONDS.sleep(retryDelayInterval);
             } catch (InterruptedException interruptedException) {
                 LOGGER.error("The delay between two retries was interrupted, this should not happen",
-                        interruptedException);
+                    interruptedException);
             }
 
             remindRetryTimes.decrementAndGet(); // decrement retry times
@@ -241,6 +232,5 @@ public class FailOverClusterClient extends AbstractClusterClient {
             chainedCallback.addRpcChannel(rpcChannel);
         }
     }
-
 
 }

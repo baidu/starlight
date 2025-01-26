@@ -48,7 +48,6 @@ public class StarlightRegisterListenerTest {
         properties.setPort(8006);
         properties.setProtocols("brpc");
 
-
         registerListener.applicationContext = Mockito.mock(ApplicationContext.class);
         doReturn(properties).when(registerListener.applicationContext).getBean(StarlightServerProperties.class);
 

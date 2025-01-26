@@ -29,22 +29,13 @@ import org.springframework.test.context.junit4.SpringRunner;
  * Created by liuruisen on 2020/3/26.
  */
 @RunWith(SpringRunner.class)
-@SpringBootTest(value = {
-        "spring.cloud.config.enabled=false",
-        "spring.main.web-application-type=none",
-        "spring.application.name=provider",
-        "starlight.server.port=8006",
-        "starlight.server.enable=true",
-        "spring.cloud.consul.discovery.enabled=false",
-        "spring.cloud.consul.discovery.heartbeat.enabled=false",
-        "spring.cloud.consul.discovery.register=false",
-        "spring.cloud.service-registry.enabled=false",
-        "spring.cloud.service-registry.auto-registration.enabled=false",
-        "starlight.server.name=rpc-provider",
-        "starlight.server.host=0.0.0.0",
-        "spring.cloud.gravity.enabled=false",
-        "spring.cloud.gravity.serverUrl=localhost:7777"
-}, classes = StarlightServerApp.class)
+@SpringBootTest(value = {"spring.cloud.config.enabled=false", "spring.main.web-application-type=none",
+    "spring.application.name=provider", "starlight.server.port=8006", "starlight.server.enable=true",
+    "spring.cloud.consul.discovery.enabled=false", "spring.cloud.consul.discovery.heartbeat.enabled=false",
+    "spring.cloud.consul.discovery.register=false", "spring.cloud.service-registry.enabled=false",
+    "spring.cloud.service-registry.auto-registration.enabled=false", "starlight.server.name=rpc-provider",
+    "starlight.server.host=0.0.0.0", "spring.cloud.gravity.enabled=false",
+    "spring.cloud.gravity.serverUrl=localhost:7777"}, classes = StarlightServerApp.class)
 public class StarlightServerAutoConfigurationTest {
 
     @Autowired

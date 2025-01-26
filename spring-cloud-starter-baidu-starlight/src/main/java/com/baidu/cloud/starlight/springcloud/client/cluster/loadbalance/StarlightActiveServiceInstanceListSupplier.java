@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance;
 
 import com.baidu.cloud.starlight.core.rpc.SingleStarlightClient;
@@ -23,8 +39,8 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 每个下游对应一个ServiceInstanceListSupplier
- * 在此处实现 异常实例摘除、shutdown实例摘除、路由实例筛选逻辑
+ * 每个下游对应一个ServiceInstanceListSupplier 在此处实现 异常实例摘除、shutdown实例摘除、路由实例筛选逻辑
+ * 
  * @Date 2022/12/9 15:13
  * @Created by liuruisen
  */
@@ -50,11 +66,10 @@ public class StarlightActiveServiceInstanceListSupplier extends DelegatingServic
 
     private List<StarlightServerListFilter> serverListFilters;
 
-
     private ScheduledFuture<?> scheduledFuture;
 
     public StarlightActiveServiceInstanceListSupplier(ConfigurableApplicationContext context,
-                                                      ServiceInstanceListSupplier delegate) {
+        ServiceInstanceListSupplier delegate) {
         super(delegate);
         this.clientProperties = context.getBean(StarlightClientProperties.class);
         this.clientManager = context.getBean(SingleStarlightClientManager.class);
@@ -76,7 +91,6 @@ public class StarlightActiveServiceInstanceListSupplier extends DelegatingServic
         return get();
     }
 
-
     @Override
     public void afterPropertiesSet() throws Exception {
         super.afterPropertiesSet();
@@ -85,10 +99,9 @@ public class StarlightActiveServiceInstanceListSupplier extends DelegatingServic
             localStore = new ServiceInstanceLocalStore(getServiceId(), clientProperties);
         }
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
-        scheduledFuture = executorService.scheduleAtFixedRate(new ClientCleanUpTask(),
-                CLEAN_UP_TASK_INIT_DELAY_SECOND, OFFLINE_CLIENT_CLEAN_UP_PERIOD, TimeUnit.SECONDS);
+        scheduledFuture = executorService.scheduleAtFixedRate(new ClientCleanUpTask(), CLEAN_UP_TASK_INIT_DELAY_SECOND,
+            OFFLINE_CLIENT_CLEAN_UP_PERIOD, TimeUnit.SECONDS);
     }
-
 
     @Override
     public void destroy() throws Exception {
@@ -125,7 +138,8 @@ public class StarlightActiveServiceInstanceListSupplier extends DelegatingServic
             return originServers;
         }
 
-        List<ServiceInstance> serverList = new LinkedList<>(originServers); // the original servers is unmodifiable, copy once
+        List<ServiceInstance> serverList = new LinkedList<>(originServers); // the original servers is unmodifiable,
+                                                                            // copy once
         for (StarlightServerListFilter serverListFilter : serverListFilters) {
             serverList = serverListFilter.getFilteredList(serverList);
         }
@@ -135,8 +149,7 @@ public class StarlightActiveServiceInstanceListSupplier extends DelegatingServic
 
     private List<ServiceInstance> updateOrGetCacheServers(List<ServiceInstance> originServers) {
 
-        if (!clientProperties.getLocalCacheEnabled(getServiceId())
-                || localStore == null) {
+        if (!clientProperties.getLocalCacheEnabled(getServiceId()) || localStore == null) {
             return originServers;
         }
 
@@ -165,12 +178,12 @@ public class StarlightActiveServiceInstanceListSupplier extends DelegatingServic
             for (Map.Entry<String, SingleStarlightClient> entry : clientManager.allSingleClients().entrySet()) {
                 if (!entry.getValue().isActive()) {
                     long inactiveDuration =
-                            System.currentTimeMillis() - entry.getValue().getStatus().getStatusRecordTime();
+                        System.currentTimeMillis() - entry.getValue().getStatus().getStatusRecordTime();
                     if (inactiveDuration >= OFFLINE_CLIENT_CLEAN_UP_PERIOD * 1000) {
                         String clientId = entry.getKey();
                         String[] ipPort = clientId.split(":");
                         LOGGER.info("StarlightActiveLoadBalancer detects that remote {} "
-                                + "has not been used for 2h, will remove from ClientManager", clientId);
+                            + "has not been used for 2h, will remove from ClientManager", clientId);
                         clientManager.removeSingleClient(ipPort[0], Integer.valueOf(ipPort[1]));
                         for (StarlightServerListFilter filter : serverListFilters) {
                             if (filter.getServerListFilterTasks() == null) {
@@ -179,7 +192,7 @@ public class StarlightActiveServiceInstanceListSupplier extends DelegatingServic
                             Object timeout = filter.getServerListFilterTasks().get(clientId);
                             if (timeout instanceof Timeout) {
                                 LOGGER.info("StarlightActiveLoadBalancer detects that remote {} "
-                                        + "has not been used for 2h, will cancel the tasks", clientId);
+                                    + "has not been used for 2h, will cancel the tasks", clientId);
                                 ((Timeout) timeout).cancel();
                             }
                         }

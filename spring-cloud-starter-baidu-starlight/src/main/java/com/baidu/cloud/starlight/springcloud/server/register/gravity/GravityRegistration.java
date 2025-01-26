@@ -22,9 +22,8 @@ import java.net.URI;
 import java.util.Map;
 
 /**
- * gravity-spring-cloud-starter support convert Registration to Gravity Endpoint
- * so we implements registration as GravityRegistration
- * Created by liuruisen on 2020/8/13.
+ * gravity-spring-cloud-starter support convert Registration to Gravity Endpoint so we implements registration as
+ * GravityRegistration Created by liuruisen on 2020/8/13.
  */
 public class GravityRegistration implements Registration {
 
