@@ -12,7 +12,7 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     permissions:
       actions: read
       contents: read
@@ -22,6 +22,7 @@ jobs:
       fail-fast: false
       matrix:
         language: [ 'java' ]
+        java: [ '8', '17' ]
 
     steps:
       - name: Checkout repository
@@ -31,7 +32,7 @@ jobs:
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
-          java-version: '8'
+          java-version: ${{ matrix.java }}
 
       # Initializes the CodeQL tools for scanning.
       - name: Initialize CodeQL
@@ -47,9 +48,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
 
-      - name: Build
+      - name: Build starlight
+        if: ${{ matrix.java == '8' }}
         run: |
-          mvn -B clean package -Dmaven.test.skip --file starlight/pom.xml --no-transfer-progress 
+          mvn -B clean package -Dmaven.test.skip --file starlight/pom.xml --no-transfer-progress
+          
+      - name: Build starlight-starter
+        if: ${{ matrix.java == '17' }}  
+        run: |
           mvn -B clean package -Dmaven.test.skip --file spring-cloud-starter-baidu-starlight/pom.xml --no-transfer-progress
 
       - name: Perform CodeQL Analysis
