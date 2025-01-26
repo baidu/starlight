@@ -16,7 +16,6 @@
  
 package com.baidu.cloud.starlight.springcloud.common;
 
-
 import org.springframework.util.ClassUtils;
 
 /**
@@ -25,19 +24,15 @@ import org.springframework.util.ClassUtils;
 public class ClassPresentUtils {
 
     private static final String GRAVITY_DISCOVERY_SERVER_CLASS =
-            "com.baidu.cloud.gravity.discovery.discovery.ribbon.GravityDiscoveryServer";
+        "com.baidu.cloud.gravity.discovery.discovery.ribbon.GravityDiscoveryServer";
 
     private static final boolean GRAVITY_DISCOVERY_SERVER_PRESENT =
-            ClassUtils.isPresent(GRAVITY_DISCOVERY_SERVER_CLASS,
-                    ClassPresentUtils.class.getClassLoader());
+        ClassUtils.isPresent(GRAVITY_DISCOVERY_SERVER_CLASS, ClassPresentUtils.class.getClassLoader());
 
-
-    private static final String CONSUL_SERVER_CLASS =
-            "org.springframework.cloud.consul.discovery.ConsulServer";
+    private static final String CONSUL_SERVER_CLASS = "org.springframework.cloud.consul.discovery.ConsulServer";
 
     private static final boolean CONSUL_SERVER_CLASS_PRESENT =
-            ClassUtils.isPresent(CONSUL_SERVER_CLASS, ClassPresentUtils.class.getClassLoader());
-
+        ClassUtils.isPresent(CONSUL_SERVER_CLASS, ClassPresentUtils.class.getClassLoader());
 
     public static boolean isGravityServerPresent() {
         return GRAVITY_DISCOVERY_SERVER_PRESENT;

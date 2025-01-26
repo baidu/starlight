@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance;
 
 import com.baidu.cloud.starlight.springcloud.client.StarlightClientAutoConfiguration;
@@ -28,16 +44,14 @@ import java.util.List;
 @LoadBalancerClients(defaultConfiguration = StarlightLoadbalancerConfiguration.class)
 public class StarlightLoadBalancerAutoConfiguration {
 
-
     @Bean
     @ConditionalOnMissingBean
     public LoadBalancerClientFactory loadBalancerClientFactory(LoadBalancerClientsProperties properties,
-              ObjectProvider<List<LoadBalancerClientSpecification>> configurations) {
+        ObjectProvider<List<LoadBalancerClientSpecification>> configurations) {
         LoadBalancerClientFactory clientFactory = new StarlightLoadBalancerClientFactory(properties);
         clientFactory.setConfigurations(configurations.getIfAvailable(Collections::emptyList));
         return clientFactory;
     }
-
 
     @Bean
     @ConditionalOnBean(LoadBalancerClientFactory.class)
@@ -46,10 +60,9 @@ public class StarlightLoadBalancerAutoConfiguration {
         return new WeightedBlockLoadBalanceClient(loadBalancerClientFactory);
     }
 
-
     @Bean
     public LoadbalancerNamedContextInitializer allEagerContextInitializer(LoadBalancerClientFactory clientFactory,
-                                                                    LoadBalancerEagerLoadProperties properties) {
+        LoadBalancerEagerLoadProperties properties) {
         return new LoadbalancerNamedContextInitializer(clientFactory, properties);
     }
 }

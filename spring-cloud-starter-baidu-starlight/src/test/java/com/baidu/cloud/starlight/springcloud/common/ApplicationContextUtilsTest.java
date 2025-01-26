@@ -76,7 +76,6 @@ public class ApplicationContextUtilsTest {
         assertEquals(Integer.valueOf(8888), ApplicationContextUtils.getServerPort());
     }
 
-
     @Test
     public void getServerPortFromStarlightProperties() {
         StarlightServerProperties properties = new StarlightServerProperties();
@@ -93,7 +92,6 @@ public class ApplicationContextUtilsTest {
         when(environment.getProperty("spring.main.web-application-type")).thenReturn("servlet");
         ApplicationContextUtils.getServerPort();
     }
-
 
     @Rule
     public final EnvironmentVariables environmentVariables = new EnvironmentVariables();
@@ -112,8 +110,7 @@ public class ApplicationContextUtilsTest {
         environmentVariables.set(SpringCloudConstants.EM_PLATFORM, "em-platform");
         environmentVariables.set(SpringCloudConstants.EM_PRODUCT_LINE, "em-product");
 
-        doReturn(null)
-                .when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
+        doReturn(null).when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
 
         assertEquals("em-name", ApplicationContextUtils.getApplicationName());
     }
@@ -122,11 +119,9 @@ public class ApplicationContextUtilsTest {
     public void getAppNameFromSpringName() {
         environmentVariables.set(SpringCloudConstants.EM_APP, "em-name");
 
-        doReturn(null)
-                .when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
+        doReturn(null).when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
 
-        doReturn("spring-name")
-                .when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
+        doReturn("spring-name").when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
 
         assertEquals("spring-name", ApplicationContextUtils.getApplicationName());
 
@@ -136,11 +131,9 @@ public class ApplicationContextUtilsTest {
     public void getAppNameFromDefault() {
         environmentVariables.set(SpringCloudConstants.EM_APP, null);
 
-        doReturn(null)
-                .when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
+        doReturn(null).when(environment).getProperty(SpringCloudConstants.STARLIGHT_SERVER_NAME_KEY);
 
-        doReturn(null)
-                .when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
+        doReturn(null).when(environment).getProperty(SpringCloudConstants.SPRING_APPLICATION_NAME_KEY);
 
         assertEquals("application", ApplicationContextUtils.getApplicationName());
     }

@@ -66,22 +66,19 @@ public class ClientConfig {
     private String retryErrorCodes; // split by ,
 
     /**
-     * The time unit of the time interval between two retries,
-     * which will be used to calculate the true delay time.
+     * The time unit of the time interval between two retries, which will be used to calculate the true delay time.
      */
     private Integer retryDelayTimeUnitMills; // application level
 
     /**
      * Only used in brpc protocol currently
      *
-     * "pb2-std": metadata proto2, body proto2
-     * "pb2-java": meta proto2, body preserve null
+     * "pb2-std": metadata proto2, body proto2 "pb2-java": meta proto2, body preserve null
      */
     private String serializeMode;
 
     /**
-     * Whether to enable connection keep-alive capability.
-     * Default is false
+     * Whether to enable connection keep-alive capability. Default is false
      */
     private Boolean connectKeepAliveEnable;
 

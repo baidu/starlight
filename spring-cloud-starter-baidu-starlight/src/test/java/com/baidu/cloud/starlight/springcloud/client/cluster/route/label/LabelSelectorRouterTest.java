@@ -43,8 +43,8 @@ public class LabelSelectorRouterTest {
         selector.setGlobalSelector("env=offline");
         selector.setProviderSelector(Collections.singletonMap("app-a", "EM_PLATFORM in (online,onlinenew)"));
         routeProperties.setLabelSelector(selector);
-        LabelSelectorRouter router = new LabelSelectorRouter("app-a",
-                routeProperties, new StarlightClientProperties(), Mockito.mock(LoadBalancer.class));
+        LabelSelectorRouter router = new LabelSelectorRouter("app-a", routeProperties, new StarlightClientProperties(),
+            Mockito.mock(LoadBalancer.class));
 
         RpcRequest request = new RpcRequest();
         request.setServiceName("com.baidu.TestService");
@@ -53,9 +53,8 @@ public class LabelSelectorRouterTest {
         Cluster cluster = router.route(request);
         assertNotNull(cluster);
         assertTrue(cluster.getClusterSelector() instanceof LabelClusterSelector);
-        String labelSelector =
-                ((LabelClusterSelector) cluster.getClusterSelector())
-                        .getMeta().get(SpringCloudConstants.LABEL_SELECTOR_ROUTE_KEY);
+        String labelSelector = ((LabelClusterSelector) cluster.getClusterSelector()).getMeta()
+            .get(SpringCloudConstants.LABEL_SELECTOR_ROUTE_KEY);
         assertTrue(labelSelector.contains("env=offline"));
         assertTrue(labelSelector.contains("EM_PLATFORM in (online,onlinenew)"));
     }

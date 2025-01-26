@@ -34,11 +34,12 @@ public class InstanceUtils {
 
     /**
      * 是否是bns实例
+     * 
      * @param serviceId
      * @return
      */
-    public static boolean isBnsServiceId(String serviceId){
-        if (StringUtils.isEmpty(serviceId)){
+    public static boolean isBnsServiceId(String serviceId) {
+        if (StringUtils.isEmpty(serviceId)) {
             return false;
         }
 
@@ -48,6 +49,7 @@ public class InstanceUtils {
 
     /**
      * 是否是gravity实例
+     * 
      * @param serviceId
      * @return
      */

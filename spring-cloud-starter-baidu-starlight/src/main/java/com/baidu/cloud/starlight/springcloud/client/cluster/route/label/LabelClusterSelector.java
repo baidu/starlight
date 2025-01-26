@@ -56,14 +56,13 @@ public class LabelClusterSelector extends ClusterSelector {
         try {
             LabelSelector selector = labelParser.parse(labelSelector);
             if (selector.getMatchExpressions() != null) {
-                result = originList.stream()
-                        .filter(server -> matchLabels(server, selector.getMatchExpressions()))
-                        .collect(Collectors.toList());
+                result = originList.stream().filter(server -> matchLabels(server, selector.getMatchExpressions()))
+                    .collect(Collectors.toList());
                 recordSelectorResult(labelSelector, originList, result);
             }
         } catch (Throwable e) {
             LOG.error("[LABEL_ROUTE]LabelClusterSelector#selectorClusterInstances failed, service: {}, label: {}",
-                    getServiceId(), labelSelector, e);
+                getServiceId(), labelSelector, e);
         }
 
         if (result == null || result.isEmpty()) {
@@ -93,24 +92,15 @@ public class LabelClusterSelector extends ClusterSelector {
         return expression.labelValueMatch(value);
     }
 
-    private void recordSelectorEmptyResult(String labelSelector,
-                                      List<ServiceInstance> origin) {
-        LOG.info("[LABEL_ROUTE]The filtered servers is empty, serviceId:{}, label:{}, originServers:{}",
-                getServiceId(),
-                labelSelector,
-                origin);
+    private void recordSelectorEmptyResult(String labelSelector, List<ServiceInstance> origin) {
+        LOG.info("[LABEL_ROUTE]The filtered servers is empty, serviceId:{}, label:{}, originServers:{}", getServiceId(),
+            labelSelector, origin);
     }
 
-    private void recordSelectorResult(String labelSelector,
-                                      List<ServiceInstance> origin,
-                                      List<ServiceInstance> result) {
-        LOG.debug("[LABEL_ROUTE]Filter servers of service: {} by label: {}, servers: {}/{}, {}",
-                getServiceId(),
-                labelSelector,
-                origin.size(),
-                result.size(),
-                result.stream()
-                        .map(ServiceInstance::getInstanceId)
-                        .collect(Collectors.joining(",")));
+    private void recordSelectorResult(String labelSelector, List<ServiceInstance> origin,
+        List<ServiceInstance> result) {
+        LOG.debug("[LABEL_ROUTE]Filter servers of service: {} by label: {}, servers: {}/{}, {}", getServiceId(),
+            labelSelector, origin.size(), result.size(),
+            result.stream().map(ServiceInstance::getInstanceId).collect(Collectors.joining(",")));
     }
 }

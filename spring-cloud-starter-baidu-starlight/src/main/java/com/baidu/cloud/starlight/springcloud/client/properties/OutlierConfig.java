@@ -116,6 +116,7 @@ public class OutlierConfig {
 
     /**
      * 合并，传入对象优先级高
+     * 
      * @param outlierConfig
      */
     public void merge(OutlierConfig outlierConfig) {

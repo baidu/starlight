@@ -45,8 +45,7 @@ public class RoutableServerListFilter implements StarlightServerListFilter {
     private final String name;
 
     public RoutableServerListFilter(SingleStarlightClientManager clientManager,
-                                    StarlightRouteProperties routeProperties,
-                                    String name) {
+        StarlightRouteProperties routeProperties, String name) {
         this.clientManager = clientManager;
         this.routeProperties = routeProperties;
         this.name = name;
@@ -74,15 +73,14 @@ public class RoutableServerListFilter implements StarlightServerListFilter {
         try {
             result = clusterSelector.selectorClusterInstances(result);
         } catch (Throwable e) {
-            LOGGER.error("Route select instances for serviceId {} failed, clusterSelector {}.",
-                    name, clusterSelector.getClass().getSimpleName(), e);
+            LOGGER.error("Route select instances for serviceId {} failed, clusterSelector {}.", name,
+                clusterSelector.getClass().getSimpleName(), e);
             return servers;
         }
         // 支持海若请求级的label selector选择, 用完删除防止向下传递（ugly实现）
         RpcContext.getContext().remove(SpringCloudConstants.REQUEST_LABEL_SELECTOR_ROUTE_KEY);
 
-        if ((result == null || result.isEmpty())
-                && InstanceUtils.isBnsServiceId(servers.get(0).getServiceId())) {
+        if ((result == null || result.isEmpty()) && InstanceUtils.isBnsServiceId(servers.get(0).getServiceId())) {
             // bns 服务兜底策略，因为BNS不是标准的Gravity服务但支持了内容路由，需要进行过滤；
             // 但不是所有的bns服务都配置了路由策略
             LOGGER.info("Service {} is bns type, route result is empty will return all", name);

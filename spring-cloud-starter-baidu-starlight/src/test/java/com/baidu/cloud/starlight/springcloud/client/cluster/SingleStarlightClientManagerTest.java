@@ -36,7 +36,6 @@ public class SingleStarlightClientManagerTest {
 
     private final TransportConfig transportConfig;
 
-
     public SingleStarlightClientManagerTest() {
         this.transportConfig = new TransportConfig();
     }

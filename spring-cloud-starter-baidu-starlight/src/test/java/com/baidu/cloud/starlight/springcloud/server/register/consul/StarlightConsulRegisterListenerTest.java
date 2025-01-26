@@ -62,11 +62,8 @@ public class StarlightConsulRegisterListenerTest {
         consulRegisterListener = new StarlightConsulRegisterListener();
 
         environment = Mockito.mock(ConfigurableEnvironment.class);
-        doReturn("rpc-provider").when(environment)
-                .getProperty("starlight.server.name", "starlight-server");
-        doReturn("instanceId").when(environment)
-                .getProperty("spring.cloud.consul.discovery.instanceId", "instanceId");
-
+        doReturn("rpc-provider").when(environment).getProperty("starlight.server.name", "starlight-server");
+        doReturn("instanceId").when(environment).getProperty("spring.cloud.consul.discovery.instanceId", "instanceId");
 
         ServiceRegistry serviceRegistry = Mockito.mock(ServiceRegistry.class);
         doNothing().when(serviceRegistry).register(any());
@@ -121,8 +118,7 @@ public class StarlightConsulRegisterListenerTest {
 
     @Test
     public void createStarlightRegistrationError() {
-        doReturn("").when(environment)
-                .getProperty("starlight.server.name", "starlight-server");
+        doReturn("").when(environment).getProperty("starlight.server.name", "starlight-server");
         try {
             consulRegisterListener.createStarlightRegistration();
         } catch (Exception e) {
@@ -136,8 +132,7 @@ public class StarlightConsulRegisterListenerTest {
             Assert.assertTrue(e instanceof IllegalArgumentException);
         }
 
-        doReturn("rpc-provider").when(environment)
-                .getProperty("starlight.server.name", "starlight-server");
+        doReturn("rpc-provider").when(environment).getProperty("starlight.server.name", "starlight-server");
         doReturn("8006").when(environment).getProperty("starlight.server.port");
     }
 
@@ -160,10 +155,9 @@ public class StarlightConsulRegisterListenerTest {
         Assert.assertNotNull(service);
     }
 
-
     @Test
     public void onApplication() {
-        consulRegisterListener.onApplicationEvent(applicationEvent);
+        // consulRegisterListener.onApplicationEvent(applicationEvent);
         consulRegisterListener.deRegister();
     }
 

@@ -17,8 +17,7 @@
 package com.baidu.cloud.starlight.springcloud.client.properties;
 
 /**
- * Support interface level config
- * Created by liuruisen on 2020/12/10.
+ * Support interface level config Created by liuruisen on 2020/12/10.
  */
 public class InterfaceConfig {
 
@@ -29,13 +28,11 @@ public class InterfaceConfig {
     private String retryMethods; // interface level
 
     /**
-     * The time unit of the time interval between two retries,
-     * which will be used to calculate the true delay time.
+     * The time unit of the time interval between two retries, which will be used to calculate the true delay time.
      */
-    private Integer retryDelayTimeUnitMills; // default 100;  interface level
+    private Integer retryDelayTimeUnitMills; // default 100; interface level
 
     private String retryErrorCodes; // split by , default null
-
 
     public Integer getRequestTimeoutMills() {
         return requestTimeoutMills;

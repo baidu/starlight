@@ -35,9 +35,8 @@ public class StarlightLBRequestTest {
     public void apply() {
         StarlightClient starlightClient = Mockito.mock(StarlightClient.class);
         doNothing().when(starlightClient).request(any(), any());
-        StarlightLBRequest starlightLBRequest =
-                new StarlightLBRequest(starlightClient, new RpcRequest(),
-                        new FutureCallback(new ResultFuture(), new RpcRequest()));
+        StarlightLBRequest starlightLBRequest = new StarlightLBRequest(starlightClient, new RpcRequest(),
+            new FutureCallback(new ResultFuture(), new RpcRequest()));
         try {
             starlightLBRequest.apply(null);
         } catch (Exception e) {

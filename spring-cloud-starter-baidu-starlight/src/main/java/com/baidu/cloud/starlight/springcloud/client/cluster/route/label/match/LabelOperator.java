@@ -21,10 +21,7 @@ package com.baidu.cloud.starlight.springcloud.client.cluster.route.label.match;
  */
 public enum LabelOperator {
 
-    NOT_EQUAL("!="),
-    EQUAL("="),
-    NOT_IN(" not in"),
-    IN(" in");
+    NOT_EQUAL("!="), EQUAL("="), NOT_IN(" not in"), IN(" in");
 
     private String operator;
 

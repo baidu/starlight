@@ -50,11 +50,9 @@ public class StarlightRouteProperties {
     private Selector labelSelector = new Selector();
 
     /**
-     * serviceId名称映射，跨注册中心场景下的内容路由支持
-     * 1. bns服务发现场景下的内容路由,key:bns value:应用名
+     * serviceId名称映射，跨注册中心场景下的内容路由支持 1. bns服务发现场景下的内容路由,key:bns value:应用名
      */
     private Map<String, String> serviceIdMap = new HashMap<>();
-
 
     public Boolean getEnabled() {
         return enabled;
@@ -92,31 +90,25 @@ public class StarlightRouteProperties {
         /**
          * Label selector configs for each service id.
          * <p>
-         * For example, if you want to find only instances of service "hello_service"
-         * which match version 2.0.0 and located at "nj02" region.
+         * For example, if you want to find only instances of service "hello_service" which match version 2.0.0 and
+         * located at "nj02" region.
          * <p>
-         * spring.cloud.gravity:
-         *  discovery:
-         *      provider-selector:
-         *          hello_service: version=2.0.0 && region=nj02
+         * spring.cloud.gravity: discovery: provider-selector: hello_service: version=2.0.0 && region=nj02
          * <p>
-         *  or
+         * or
          * <p>
-         * starlight.client.route:
-         *  selector:
-         *      provider-selector:
-         *          hello_service: version=2.0.0 && region=nj02
+         * starlight.client.route: selector: provider-selector: hello_service: version=2.0.0 && region=nj02
          * </p>
-         * A label selector is an expression combined only by "&&" semantic separator. Each part of the expression
-         * is composed by label + operator + value. Operators "=", "!=", are supported for single value expression,
-         * such as `version=2.0.0`, `region != nj02`. And operators "in", "not in" are supported for set/collection
-         * value expression, such as `region in (nj02, bj01)`.
+         * A label selector is an expression combined only by "&&" semantic separator. Each part of the expression is
+         * composed by label + operator + value. Operators "=", "!=", are supported for single value expression, such as
+         * `version=2.0.0`, `region != nj02`. And operators "in", "not in" are supported for set/collection value
+         * expression, such as `region in (nj02, bj01)`.
          */
         private Map<String, String> providerSelector;
 
         /**
-         * Global label selector applied for all service ids
-         * Selector keys in globalSelector has lower priority than providerSelector
+         * Global label selector applied for all service ids Selector keys in globalSelector has lower priority than
+         * providerSelector
          */
         private String globalSelector;
 
@@ -160,11 +152,11 @@ public class StarlightRouteProperties {
         String selector = labelSelectorCache.computeIfAbsent(serviceId, k -> {
             String labelSelector = "";
             if (this.labelSelector.getEnableProviderSelector() == null
-                    || !this.labelSelector.getEnableProviderSelector()) {
+                || !this.labelSelector.getEnableProviderSelector()) {
                 labelSelector = this.labelSelector.globalSelector;
             } else {
                 labelSelector = mergeSelector(this.labelSelector.globalSelector,
-                        this.labelSelector.providerSelector.get(serviceId));
+                    this.labelSelector.providerSelector.get(serviceId));
             }
             return labelSelector;
         });
@@ -180,35 +172,25 @@ public class StarlightRouteProperties {
             return selector;
         }
         Set<String> uniqueKeys = new HashSet<>();
-        return Stream.of(selector, globalSelector)
-                .map(this::splitSelectorsByKey)
-                .flatMap(Collection::stream)
-                .map(x -> {
-                    if (!uniqueKeys.contains(x[0])) {
-                        uniqueKeys.add(x[0]);
-                        return x[1];
-                    } else {
-                        return null;
-                    }
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.joining(" && "));
+        return Stream.of(selector, globalSelector).map(this::splitSelectorsByKey).flatMap(Collection::stream).map(x -> {
+            if (!uniqueKeys.contains(x[0])) {
+                uniqueKeys.add(x[0]);
+                return x[1];
+            } else {
+                return null;
+            }
+        }).filter(Objects::nonNull).collect(Collectors.joining(" && "));
     }
 
     private List<String[]> splitSelectorsByKey(String selector) {
-        return Stream.of(selector.split("&&"))
-                .map(String::trim)
-                .filter(StringUtils::isNotBlank)
-                .map(x -> {
-                    for (String splitter : new String[]{" not in ", " in ", "!=", "="}) {
-                        int i = x.indexOf(splitter);
-                        if (i != -1) {
-                            return new String[]{x.substring(0, i).trim(), x};
-                        }
-                    }
-                    return null;
-                })
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+        return Stream.of(selector.split("&&")).map(String::trim).filter(StringUtils::isNotBlank).map(x -> {
+            for (String splitter : new String[] {" not in ", " in ", "!=", "="}) {
+                int i = x.indexOf(splitter);
+                if (i != -1) {
+                    return new String[] {x.substring(0, i).trim(), x};
+                }
+            }
+            return null;
+        }).filter(Objects::nonNull).collect(Collectors.toList());
     }
 }

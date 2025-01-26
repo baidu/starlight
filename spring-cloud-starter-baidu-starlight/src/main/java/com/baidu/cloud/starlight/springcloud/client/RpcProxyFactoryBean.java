@@ -76,7 +76,7 @@ public class RpcProxyFactoryBean implements FactoryBean<Object>, InitializingBea
         proxy = getProxy();
     }
 
-    private  <T> T getProxy() {
+    private <T> T getProxy() {
         ProxyFactory proxyFactory = new JDKProxyFactory();
         return (T) proxyFactory.getProxy(type, serviceConfig, client);
     }

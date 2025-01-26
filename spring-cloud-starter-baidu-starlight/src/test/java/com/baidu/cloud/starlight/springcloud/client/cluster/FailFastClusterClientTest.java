@@ -65,9 +65,8 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
         SingleStarlightClient starlightClient = Mockito.mock(SingleStarlightClient.class);
         doReturn(uriBuilder.build()).when(starlightClient).remoteURI();
 
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         clusterClient = Mockito.spy(clusterClient);
         doReturn(starlightClient).when(clusterClient).initSingleClient(anyString(), anyInt());
 
@@ -80,9 +79,8 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
         doReturn(null).when(discoveryClient).getInstances(anyString());
 
         clientManager.destroyAll();
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         clusterClient.init();
         Map<String, SingleStarlightClient> clientMap = clientManager.allSingleClients();
         assertEquals(clientMap.size(), 0);
@@ -90,9 +88,8 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
 
     @Test
     public void refer() throws NoSuchFieldException, IllegalAccessException {
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
 
         ServiceConfig serviceConfig = new ServiceConfig();
         serviceConfig.setProtocol("brpc");
@@ -115,9 +112,8 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
     public void request() throws IOException {
         SingleStarlightClient starlightClient = Mockito.mock(SingleStarlightClient.class);
 
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         ServiceConfig serviceConfig = new ServiceConfig();
         clusterClient.refer(FailFastClusterClient.class, serviceConfig);
         clusterClient = Mockito.spy(clusterClient);
@@ -151,9 +147,8 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
 
         clientManager.destroyAll();
 
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         clusterClient.init();
         ServiceConfig serviceConfig = new ServiceConfig();
         clusterClient.refer(FailFastClusterClient.class, serviceConfig);
@@ -168,8 +163,7 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
             clusterClient.request(request, rpcCallback);
         } catch (Exception e) {
             Assert.assertTrue(e instanceof StarlightRpcException);
-            assertEquals(SpringCloudConstants.NO_INSTANCE_ERROR_CODE,
-                    ((StarlightRpcException) e).getCode());
+            assertEquals(SpringCloudConstants.NO_INSTANCE_ERROR_CODE, ((StarlightRpcException) e).getCode());
         }
 
         doReturn(serviceInstance).when(loadBalancerClient).choose(anyString());
@@ -186,9 +180,8 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
     public void destroy() throws NoSuchFieldException, IllegalAccessException {
         SingleStarlightClient starlightClient = Mockito.mock(SingleStarlightClient.class);
 
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         clusterClient = Mockito.spy(clusterClient);
         doReturn(starlightClient).when(clusterClient).initSingleClient(anyString(), anyInt());
         clusterClient.init();
@@ -199,9 +192,7 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
         serviceConfig.setFilters("");
         clusterClient.refer(TestService.class, serviceConfig);
 
-        Field field2 = clusterClient.getClass()
-                .getSuperclass()
-                .getSuperclass().getDeclaredField("serviceConfigs");
+        Field field2 = clusterClient.getClass().getSuperclass().getSuperclass().getDeclaredField("serviceConfigs");
         field2.setAccessible(true);
         Map<Class<?>, ServiceConfig> serviceConfigMap = (Map<Class<?>, ServiceConfig>) field2.get(clusterClient);
         Assert.assertNotNull(serviceConfigMap);
@@ -216,23 +207,19 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
 
     @Test
     public void destroyWithoutInit() throws NoSuchFieldException, IllegalAccessException {
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         clusterClient.destroy();
-        Field field2 = clusterClient.getClass()
-                .getSuperclass().getDeclaredField("serviceConfigs");
+        Field field2 = clusterClient.getClass().getSuperclass().getDeclaredField("serviceConfigs");
         field2.setAccessible(true);
         Map<Class<?>, ServiceConfig> serviceConfigMap = (Map<Class<?>, ServiceConfig>) field2.get(clusterClient);
         assertEquals(serviceConfigMap.size(), 0);
     }
 
-
     @Test
     public void initSingleClient() throws IOException, NoSuchFieldException, IllegalAccessException {
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         ServiceConfig serviceConfig = new ServiceConfig();
         serviceConfig.setProtocol("brpc");
         serviceConfig.setCompressType("none");
@@ -255,15 +242,14 @@ public class FailFastClusterClientTest extends AbstractClusterClientTest {
 
     @Test
     public void failFastCallback() throws ExecutionException, InterruptedException {
-        FailFastClusterClient clusterClient =
-                new FailFastClusterClient("rpc-provider", properties,
-                        loadBalancer, discoveryClient, clientManager, configuration, routeProperties);
+        FailFastClusterClient clusterClient = new FailFastClusterClient("rpc-provider", properties, loadBalancer,
+            discoveryClient, clientManager, configuration, routeProperties);
         ResultFuture resultFuture = new ResultFuture();
         Request request = new RpcRequest();
         RpcCallback rpcCallback = new FutureCallback(resultFuture, request);
 
         FailFastClusterClient.FailFastClusterCallback failFastClusterCallback =
-                clusterClient.new FailFastClusterCallback(rpcCallback);
+            clusterClient.new FailFastClusterCallback(rpcCallback);
 
         Response response = new RpcResponse();
         response.setStatus(Constants.SUCCESS_CODE);

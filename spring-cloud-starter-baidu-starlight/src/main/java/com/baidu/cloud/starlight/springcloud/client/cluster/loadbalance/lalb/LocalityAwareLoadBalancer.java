@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.lalb;
 
 import com.baidu.cloud.starlight.api.statistics.Stats;
@@ -27,10 +43,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * LALB loadbalancer
- * 耗时目标暂定 20ms内
- * TODO unit test
- * Created by liuruisen on 2020/10/21.
+ * LALB loadbalancer 耗时目标暂定 20ms内 TODO unit test Created by liuruisen on 2020/10/21.
  */
 public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
 
@@ -64,12 +77,11 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
     private ObjectProvider<ServiceInstanceListSupplier> instanceListSupplierObjectProvider;
 
     public LocalityAwareLoadBalancer(ObjectProvider<ServiceInstanceListSupplier> instancesListSupplierProvider,
-                                     String name) {
+        String name) {
         super(instancesListSupplierProvider, name);
         this.weightTree = new WeightTreeNode<>();
         this.instanceListSupplierObjectProvider = instancesListSupplierProvider;
     }
-
 
     @Override
     public Mono<Response<ServiceInstance>> choose(Request request) {
@@ -111,7 +123,6 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
 
     }
 
-
     // 完全二叉权重树的构建
     protected synchronized void updateWeightTree(Request request) {
         try {
@@ -146,7 +157,7 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
             for (ServiceInstance serviceInstance : serviceInstances) {
                 // 没有即创建，没有表示尚未调用到的实例[未调用到、新增实例]
                 StarlightStatistics statistics =
-                        StarlightStatsManager.getOrCreateStatsByHostPort(InstanceUtils.ipPortStr(serviceInstance));
+                    StarlightStatsManager.getOrCreateStatsByHostPort(InstanceUtils.ipPortStr(serviceInstance));
 
                 Stats stats = statistics.discoverStats(LALB_STATS_KEY);
                 if (!(stats instanceof LalbLatencyStats)) {
@@ -159,17 +170,17 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
                     avgLatencies.add(((LalbLatencyStats) stats).avgLatency());
                 } else {
                     // default weight
-                    weightTreeNodes.add(new WeightTreeNode<>(serviceInstanceHashCode(serviceInstance),
-                            DEFAULT_WEIGHT, serviceInstance));
+                    weightTreeNodes.add(new WeightTreeNode<>(serviceInstanceHashCode(serviceInstance), DEFAULT_WEIGHT,
+                        serviceInstance));
                 }
             }
 
             LOGGER.debug("LocalityAwareRule weightTreeNodes#lalbLatencyStatsMap cost {}ms",
-                    System.currentTimeMillis() - startTime);
+                System.currentTimeMillis() - startTime);
 
             // 具有统计信息的server实例数较少，或者未达到一定比重，认为没有统计计算价值
-            if (lalbLatencyStatsMap.size() < MIN_INSTANCE_NUM ||
-                    lalbLatencyStatsMap.size() * 1.0 / serviceInstances.size() < ACTIVE_INSTANCE_RATIO) {
+            if (lalbLatencyStatsMap.size() < MIN_INSTANCE_NUM
+                || lalbLatencyStatsMap.size() * 1.0 / serviceInstances.size() < ACTIVE_INSTANCE_RATIO) {
                 Long execCost = System.currentTimeMillis() - startTime;
                 LOGGER.debug("LocalityAwareRule weightTreeNodes cost {}ms", execCost);
                 if (execCost > 20) {
@@ -183,9 +194,8 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
 
             for (Map.Entry<LalbLatencyStats, ServiceInstance> entry : lalbLatencyStatsMap.entrySet()) {
                 long weight = serviceInstanceWeight(entry.getKey(), predictedMaxLatency);
-                weightTreeNodes.add(
-                        new WeightTreeNode<>(serviceInstanceHashCode(entry.getValue()),
-                                weight, entry.getValue()));
+                weightTreeNodes
+                    .add(new WeightTreeNode<>(serviceInstanceHashCode(entry.getValue()), weight, entry.getValue()));
             }
         }
         Long execCost = System.currentTimeMillis() - startTime;
@@ -198,8 +208,7 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
     }
 
     /**
-     * Calculate the latency90Percentile of all {@link ServiceInstance} below serviceId
-     * 90分位值
+     * Calculate the latency90Percentile of all {@link ServiceInstance} below serviceId 90分位值
      *
      * @param avgLatencies
      * @return
@@ -213,10 +222,8 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
         return avgLatencies.get(percentileIndex);
     }
 
-
     /**
-     * Calculate the serviceInstance's weight.
-     * 归一化为100内的权重
+     * Calculate the serviceInstance's weight. 归一化为100内的权重
      *
      * @param stats
      * @param predictedMaxLatency
@@ -232,9 +239,8 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
         // Avoid instance with a weight of 0 and no chance to access
         long weight = 0;
         if (serviceInstanceWeight > 0) {
-            weight =
-                    serviceInstanceWeight > (maxWeight.get() / 10) ?
-                            serviceInstanceWeight : (maxWeight.get() / 10) + serviceInstanceWeight;
+            weight = serviceInstanceWeight > (maxWeight.get() / 10) ? serviceInstanceWeight
+                : (maxWeight.get() / 10) + serviceInstanceWeight;
         } else {
             weight = maxWeight.get() > 0 ? (maxWeight.get() / 10) : 1;
         }
@@ -255,7 +261,6 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
     protected int serviceInstanceHashCode(ServiceInstance serviceInstance) {
         return Objects.hash(serviceInstance);
     }
-
 
     /**
      * Generate the weight tree
@@ -320,23 +325,23 @@ public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
 
     private void addLalbLatencyStats(ServiceInstance server) {
         StarlightStatistics statistics =
-                StarlightStatsManager.getOrCreateStatsByHostPort(InstanceUtils.ipPortStr(server));
+            StarlightStatsManager.getOrCreateStatsByHostPort(InstanceUtils.ipPortStr(server));
         // putIfAbsent
         statistics.registerStats(LALB_STATS_KEY, new LalbLatencyStats());
     }
 
     /**
      * For test
+     * 
      * @return
      */
     protected WeightTreeNode<ServiceInstance> getWeightTree() {
         return weightTree;
     }
 
-
     private List<ServiceInstance> serviceInstances(Request request) {
         ServiceInstanceListSupplier supplier =
-                instanceListSupplierObjectProvider.getIfAvailable(NoopServiceInstanceListSupplier::new);
+            instanceListSupplierObjectProvider.getIfAvailable(NoopServiceInstanceListSupplier::new);
 
         return supplier.get(request).next().block();
     }

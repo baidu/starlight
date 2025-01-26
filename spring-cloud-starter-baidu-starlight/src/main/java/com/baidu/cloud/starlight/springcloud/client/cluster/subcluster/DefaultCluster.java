@@ -63,9 +63,8 @@ public class DefaultCluster implements Cluster {
     // 客户端集群全局配置
     private StarlightClientProperties globalConfig;
 
-    public DefaultCluster(ClusterSelector clusterSelector,
-                          StarlightClientProperties globalConfig,
-                          LoadBalancer loadBalancer) {
+    public DefaultCluster(ClusterSelector clusterSelector, StarlightClientProperties globalConfig,
+        LoadBalancer loadBalancer) {
         this.clusterSelector = clusterSelector;
         this.serviceRefers = new ConcurrentHashMap<>();
         this.globalConfig = globalConfig;
@@ -76,7 +75,6 @@ public class DefaultCluster implements Cluster {
     public LoadBalancer getLoadBalancer() {
         return loadBalancer;
     }
-
 
     @Override
     public void setServiceRefers(Map<Class<?>, ServiceConfig> referServices) {
@@ -96,8 +94,8 @@ public class DefaultCluster implements Cluster {
         LOGGER.debug("Select instance from ribbon cost: {}", System.currentTimeMillis() - starTime);
         if (instance == null) {
             throw new StarlightRpcException(SpringCloudConstants.NO_INSTANCE_ERROR_CODE,
-                    "No instances available for service " + getClusterSelector().getServiceId()
-                            + ", cluster " + getClusterSelector().getClusterName());
+                "No instances available for service " + getClusterSelector().getServiceId() + ", cluster "
+                    + getClusterSelector().getClusterName());
         }
 
         SingleStarlightClient starlightClient = null;
@@ -115,8 +113,8 @@ public class DefaultCluster implements Cluster {
         ServiceConfig serviceConfig = request.getServiceConfig();
         if (serviceConfig == null) {
             throw new StarlightRpcException(StarlightRpcException.BAD_REQUEST,
-                    "The request service has not been refer, please call refer() before request, "
-                            + "service {" + request.getServiceClass().getName() + "}");
+                "The request service has not been refer, please call refer() before request, " + "service {"
+                    + request.getServiceClass().getName() + "}");
         }
         if (!StringUtils.isEquals(request.getProtocolName(), SpringRestSseProtocol.PROTOCOL_NAME)) {
             String protocolName = requestProtocol(serviceConfig, instance);
@@ -135,22 +133,21 @@ public class DefaultCluster implements Cluster {
             // 有可能无法走到凤睛切面所在的逻辑，导致span信息里无remoteIp，这里设置上
             RpcContext.getContext().setRemoteAddress(instance.getHost(), instance.getPort());
             callback.onError(new StarlightRpcException(StarlightRpcException.INTERNAL_SERVER_ERROR,
-                    "Request failed: " + e.getMessage()));
+                "Request failed: " + e.getMessage()));
         }
     }
 
     /**
-     * Protocol selection
-     * When no protocol is specified, the protocol selection strategy will be adopted.
+     * Protocol selection When no protocol is specified, the protocol selection strategy will be adopted.
      */
     private String requestProtocol(ServiceConfig serviceConfig, ServiceInstance instance) {
         String protocolName = serviceConfig.getProtocol();
         if (StringUtils.isEmpty(protocolName)) {
             if (instance.getMetadata() == null || instance.getMetadata().size() == 0
-                    || StringUtils.isEmpty(instance.getMetadata().get(SpringCloudConstants.PROTOCOLS_KEY))) {
+                || StringUtils.isEmpty(instance.getMetadata().get(SpringCloudConstants.PROTOCOLS_KEY))) {
                 LOGGER.warn("Unable to select protocol for request: "
-                        + "there is nor protocol message in registration message or in configuration."
-                        + "Will use the default protocol brpc");
+                    + "there is nor protocol message in registration message or in configuration."
+                    + "Will use the default protocol brpc");
                 protocolName = Constants.BRPC_VALUE;
             } else {
                 String protocols = instance.getMetadata().get(SpringCloudConstants.PROTOCOLS_KEY);
@@ -175,32 +172,34 @@ public class DefaultCluster implements Cluster {
         }
 
         if (StringUtils.isEmpty(instance.getMetadata().get(SpringCloudConstants.INTERFACES_KEY))) {
-            LOGGER.warn("Request service {} method {} protocol stargate. "
-                            + "There is no interfaces message in registration message, "
-                            + "will use default group[normal] and version[1.0.0]",
-                    request.getServiceName(), request.getMethodName());
+            LOGGER.warn(
+                "Request service {} method {} protocol stargate. "
+                    + "There is no interfaces message in registration message, "
+                    + "will use default group[normal] and version[1.0.0]",
+                request.getServiceName(), request.getMethodName());
             return;
         }
 
         String interfaceStr = instance.getMetadata().get(SpringCloudConstants.INTERFACES_KEY);
         if (!interfaceStr.contains(request.getServiceClass().getName())) {
-            LOGGER.warn("Request service {}, method {}, protocol stargate, interface metadata {}. "
-                            + "The registration interfaces metadata dose not contain the service, "
-                            + "will use default group[normal] and version[1.0.0]. ",
-                    request.getServiceClass().getName(), request.getMethodName(), interfaceStr);
+            LOGGER.warn(
+                "Request service {}, method {}, protocol stargate, interface metadata {}. "
+                    + "The registration interfaces metadata dose not contain the service, "
+                    + "will use default group[normal] and version[1.0.0]. ",
+                request.getServiceClass().getName(), request.getMethodName(), interfaceStr);
             return;
         }
 
         try {
-            List<String> interfaces = JsonSerializer.OBJECT_MAPPER.readValue(interfaceStr,
-                    new TypeReference<List<String>>() {
-                    });
+            List<String> interfaces =
+                JsonSerializer.OBJECT_MAPPER.readValue(interfaceStr, new TypeReference<List<String>>() {});
 
             if (interfaces == null || interfaces.size() == 0) {
-                LOGGER.warn("Request service {}, method {}, protocol stargate, interface metadata {}. "
-                                + "The result of parsing registration interfaces metadata is empty, "
-                                + "will use default group[normal] and version[1.0.0]. ",
-                        request.getServiceClass().getName(), request.getMethodName(), interfaceStr);
+                LOGGER.warn(
+                    "Request service {}, method {}, protocol stargate, interface metadata {}. "
+                        + "The result of parsing registration interfaces metadata is empty, "
+                        + "will use default group[normal] and version[1.0.0]. ",
+                    request.getServiceClass().getName(), request.getMethodName(), interfaceStr);
                 return;
             }
 
@@ -208,70 +207,69 @@ public class DefaultCluster implements Cluster {
                 if (interfaceName.contains(request.getServiceClass().getName())) {
                     String[] metadata = interfaceName.split(":");
                     if (metadata.length != 3) {
-                        LOGGER.warn("Request service {}, method {}, protocol stargate, interface {}. "
-                                        + "The interface info parse from registration metadata is illegal, "
-                                        + "will use default group[normal] and version[1.0.0]. ",
-                                request.getServiceClass().getName(), request.getMethodName(), interfaceName);
+                        LOGGER.warn(
+                            "Request service {}, method {}, protocol stargate, interface {}. "
+                                + "The interface info parse from registration metadata is illegal, "
+                                + "will use default group[normal] and version[1.0.0]. ",
+                            request.getServiceClass().getName(), request.getMethodName(), interfaceName);
                         return;
                     }
                     serviceConfig.setGroup(metadata[0]);
                     serviceConfig.setVersion(metadata[2]);
                     LOGGER.debug("Request service {}, method {} use protocol {}, group is {}, version is {}",
-                            request.getServiceName(), request.getMethodName(), request.getProtocolName(),
-                            serviceConfig.getGroup(), serviceConfig.getVersion());
+                        request.getServiceName(), request.getMethodName(), request.getProtocolName(),
+                        serviceConfig.getGroup(), serviceConfig.getVersion());
                     return;
                 }
             }
 
-            LOGGER.debug("Request service {}, method {}, protocol stargate, interfaces {}. "
-                            + "The interface list parse from metadata do not contain the request service, "
-                            + "will use default group[normal] and version[1.0.0]. ",
-                    request.getServiceClass().getName(), request.getMethodName(), interfaces);
+            LOGGER.debug(
+                "Request service {}, method {}, protocol stargate, interfaces {}. "
+                    + "The interface list parse from metadata do not contain the request service, "
+                    + "will use default group[normal] and version[1.0.0]. ",
+                request.getServiceClass().getName(), request.getMethodName(), interfaces);
         } catch (IOException e) {
-            throw new IllegalStateException("Cannot use stargate to send request, "
-                    + "parse interfaces metadata failed, interface metadata " + interfaceStr
-                    + " please check provider registration metadata");
+            throw new IllegalStateException(
+                "Cannot use stargate to send request, " + "parse interfaces metadata failed, interface metadata "
+                    + interfaceStr + " please check provider registration metadata");
         }
     }
 
-
     /**
      * 可被继承，做些动态修改client配置的操作
+     * 
      * @param host
      * @param port
      * @return
      */
     protected SingleStarlightClient initSingleClient(String host, Integer port) {
-        TransportConfig transportConfig =
-                globalConfig.transportConfig(clusterSelector.getServiceId());
+        TransportConfig transportConfig = globalConfig.transportConfig(clusterSelector.getServiceId());
         transportConfig.setAdditional(clientConfigMap());
         // init
-        return SingleStarlightClientManager.getInstance()
-                .getOrCreateSingleClient(host, port, transportConfig, serviceRefers);
+        return SingleStarlightClientManager.getInstance().getOrCreateSingleClient(host, port, transportConfig,
+            serviceRefers);
     }
 
     /**
-     * 依据配置信息，生成uri中的attachment信息
-     * 可用于动态修改uri中的配置，并为后续流程生效
+     * 依据配置信息，生成uri中的attachment信息 可用于动态修改uri中的配置，并为后续流程生效
+     * 
      * @return
      */
     protected Map<String, String> clientConfigMap() {
         Map<String, String> configAdd = new HashMap<>();
-        OutlierConfig outlierConfig =
-                globalConfig.getOutlierConfig(clusterSelector.getServiceId());
+        OutlierConfig outlierConfig = globalConfig.getOutlierConfig(clusterSelector.getServiceId());
         if (outlierConfig != null) {
-            configAdd.put(SpringCloudConstants.OUTLIER_DETECT_ENABLED_KEY,
-                    String.valueOf(outlierConfig.getEnabled()));
+            configAdd.put(SpringCloudConstants.OUTLIER_DETECT_ENABLED_KEY, String.valueOf(outlierConfig.getEnabled()));
             configAdd.put(SpringCloudConstants.OUTLIER_DETECT_INTERVAL_KEY,
-                    String.valueOf(outlierConfig.getDetectInterval()));
+                String.valueOf(outlierConfig.getDetectInterval()));
             configAdd.put(SpringCloudConstants.OUTLIER_DETECT_MINI_REQUEST_NUM_KEY,
-                    String.valueOf(outlierConfig.getFailurePercentMinRequest()));
+                String.valueOf(outlierConfig.getFailurePercentMinRequest()));
             configAdd.put(SpringCloudConstants.OUTLIER_DETECT_FAIL_PERCENT_THRESHOLD_KEY,
-                    String.valueOf(outlierConfig.getFailurePercentThreshold()));
+                String.valueOf(outlierConfig.getFailurePercentThreshold()));
 
             if (outlierConfig.getFailureCountThreshold() != null) {
                 configAdd.put(SpringCloudConstants.OUTLIER_DETECT_FAIL_COUNT_THRESHOLD_KEY,
-                        String.valueOf(outlierConfig.getFailureCountThreshold()));
+                    String.valueOf(outlierConfig.getFailureCountThreshold()));
             }
         }
 

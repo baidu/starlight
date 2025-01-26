@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance;
 
 import com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.ServiceInstanceLocalStore;
@@ -21,7 +37,6 @@ import static org.junit.Assert.*;
  */
 public class ServiceInstanceLocalStoreTest {
 
-
     @Test
     public void loadLocalCache() {
         File file = new File(getCacheFileName("testApp-load"));
@@ -30,10 +45,9 @@ public class ServiceInstanceLocalStoreTest {
         }
 
         ServiceInstanceLocalStore localStore =
-                new ServiceInstanceLocalStore("testApp-load", new StarlightClientProperties());
+            new ServiceInstanceLocalStore("testApp-load", new StarlightClientProperties());
 
         localStore.loadCachedListOfServers();
-
 
         Class lbClass = localStore.getClass();
 
@@ -64,7 +78,7 @@ public class ServiceInstanceLocalStoreTest {
         }
 
         ServiceInstanceLocalStore localStore =
-                new ServiceInstanceLocalStore("testApp-update", new StarlightClientProperties());
+            new ServiceInstanceLocalStore("testApp-update", new StarlightClientProperties());
 
         try {
             Class lbClass = localStore.getClass();
@@ -72,7 +86,6 @@ public class ServiceInstanceLocalStoreTest {
             cacheField.setAccessible(true);
             Properties localCache = (Properties) cacheField.get(localStore);
             assertEquals(0, localCache.entrySet().size());
-
 
             List<ServiceInstance> servers = getServiceInstanceList(50000);
 
@@ -98,7 +111,7 @@ public class ServiceInstanceLocalStoreTest {
         }
 
         ServiceInstanceLocalStore localStore =
-                new ServiceInstanceLocalStore("testApp-get", new StarlightClientProperties());
+            new ServiceInstanceLocalStore("testApp-get", new StarlightClientProperties());
 
         List serverList = localStore.getCachedListOfServers();
         assertEquals(0, serverList.size());
@@ -114,7 +127,7 @@ public class ServiceInstanceLocalStoreTest {
     @Test
     public void createCacheFile() {
         ServiceInstanceLocalStore localStore =
-                new ServiceInstanceLocalStore("testApp-get", new StarlightClientProperties());
+            new ServiceInstanceLocalStore("testApp-get", new StarlightClientProperties());
 
         String filePath = "starlight/test/cache/cache.txt";
         localStore.createCacheFile(filePath);
@@ -126,7 +139,6 @@ public class ServiceInstanceLocalStoreTest {
         localStore.createCacheFile(filePath2);
         assertTrue(new File(filePath2).getParentFile().exists());
         assertTrue(new File(filePath2).exists());
-
 
     }
 
@@ -152,9 +164,8 @@ public class ServiceInstanceLocalStoreTest {
             labels.put("EM_ENV_TYPE", "ONLINE");
             labels.put("protocols", "brpc,stargate,springrest");
 
-
-            DefaultServiceInstance serviceInstance = new DefaultServiceInstance("test-id-" + i, "test-app",
-                    "localhost", i, true, labels);
+            DefaultServiceInstance serviceInstance =
+                new DefaultServiceInstance("test-id-" + i, "test-app", "localhost", i, true, labels);
 
             servers.add(serviceInstance);
         }

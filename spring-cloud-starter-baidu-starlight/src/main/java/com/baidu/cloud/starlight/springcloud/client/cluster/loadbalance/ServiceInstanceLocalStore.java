@@ -1,3 +1,19 @@
+/*
+ * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+ 
 package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance;
 
 import com.baidu.cloud.starlight.api.rpc.threadpool.NamedThreadFactory;
@@ -49,7 +65,6 @@ public class ServiceInstanceLocalStore {
 
     private ScheduledExecutorService storeCacheExecutor;
 
-
     public ServiceInstanceLocalStore(String clientName, StarlightClientProperties clientProperties) {
         this.clientName = clientName;
         this.starlightProperties = clientProperties;
@@ -57,9 +72,7 @@ public class ServiceInstanceLocalStore {
     }
 
     /**
-     * init local cache
-     * <1> create disk file </1>
-     * <2> load from disk file and store in mem </2>
+     * init local cache <1> create disk file </1> <2> load from disk file and store in mem </2>
      */
     public void initLocalCache() {
         // enable local cache
@@ -72,10 +85,10 @@ public class ServiceInstanceLocalStore {
             loadCachedListOfServers();
 
             // store cache executor
-            storeCacheExecutor = Executors.newSingleThreadScheduledExecutor(
-                    new NamedThreadFactory("StoreLocal-" + clientName));
-            storeCacheExecutor.scheduleWithFixedDelay(this::storeCachedListOfServer,
-                    STORE_LOCAL_CACHE_DELAY, STORE_LOCAL_CACHE_DELAY, TimeUnit.MILLISECONDS);
+            storeCacheExecutor =
+                Executors.newSingleThreadScheduledExecutor(new NamedThreadFactory("StoreLocal-" + clientName));
+            storeCacheExecutor.scheduleWithFixedDelay(this::storeCachedListOfServer, STORE_LOCAL_CACHE_DELAY,
+                STORE_LOCAL_CACHE_DELAY, TimeUnit.MILLISECONDS);
         }
     }
 
@@ -126,8 +139,7 @@ public class ServiceInstanceLocalStore {
                 try {
                     List cachedList = jsonToServerList(serverListJson, Class.forName(serversClassName));
                     cachedServerList.addAll(cachedList);
-                    LOGGER.info("Get server list from local cache success, size {}",
-                            cachedServerList.size());
+                    LOGGER.info("Get server list from local cache success, size {}", cachedServerList.size());
                     break;
                 } catch (ClassNotFoundException e) {
                     LOGGER.warn("Get server list from local cache failed. ", e);
@@ -144,8 +156,7 @@ public class ServiceInstanceLocalStore {
     }
 
     private <T> List<T> jsonToServerList(String json, Class<T> serverClass) {
-        Type type = new TypeToken<ArrayList<JsonObject>>() {
-        }.getType();
+        Type type = new TypeToken<ArrayList<JsonObject>>() {}.getType();
         ArrayList<JsonObject> jsonObjs = GSON.fromJson(json, type);
 
         List<T> serverList = new ArrayList<>();
@@ -180,8 +191,7 @@ public class ServiceInstanceLocalStore {
     }
 
     /**
-     * Store server list to local disk
-     * synchronized 防止退出时更新本地文件与定时任务更新
+     * Store server list to local disk synchronized 防止退出时更新本地文件与定时任务更新
      */
     public synchronized void storeCachedListOfServer() {
         if (cacheFile == null || !cacheFile.exists()) {
@@ -203,7 +213,6 @@ public class ServiceInstanceLocalStore {
         LOGGER.debug("Store CachedListOfServers cost {}ms", storeCost);
     }
 
-
     /**
      * Close local store
      */
@@ -215,7 +224,6 @@ public class ServiceInstanceLocalStore {
         storeCachedListOfServer();
     }
 
-
     private String getCacheFileName() {
         return System.getProperty("java.io.tmpdir") + "/starlight/local-registry/" + clientName + ".cache";
     }
@@ -224,8 +232,8 @@ public class ServiceInstanceLocalStore {
         cacheFile = new File(cacheFilePath);
         if (!cacheFile.getParentFile().exists()) { // dir not exist create
             if (!cacheFile.getParentFile().mkdirs()) {
-                LOGGER.warn("Invalid file cache path " + cacheFilePath
-                        + ", failed to create dirs " + cacheFile.getParentFile());
+                LOGGER.warn("Invalid file cache path " + cacheFilePath + ", failed to create dirs "
+                    + cacheFile.getParentFile());
             } else {
                 try {
                     if (!cacheFile.exists()) {
