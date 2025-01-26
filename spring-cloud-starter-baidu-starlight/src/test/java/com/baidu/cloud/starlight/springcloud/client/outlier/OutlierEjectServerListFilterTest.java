@@ -20,19 +20,18 @@ import com.baidu.cloud.starlight.api.rpc.config.TransportConfig;
 import com.baidu.cloud.starlight.api.transport.PeerStatus;
 import com.baidu.cloud.starlight.core.rpc.SingleStarlightClient;
 import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
-import com.baidu.cloud.starlight.springcloud.client.outlier.OutlierEjectServerListFilter;
 import com.baidu.cloud.starlight.springcloud.client.properties.ClientConfig;
 import com.baidu.cloud.starlight.springcloud.client.properties.OutlierConfig;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
-import com.netflix.loadbalancer.Server;
 import org.junit.Test;
+import org.springframework.cloud.client.DefaultServiceInstance;
+import org.springframework.cloud.client.ServiceInstance;
 
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.*;
 
 /**
  * Created by liuruisen on 2021/4/25.
@@ -41,12 +40,14 @@ public class OutlierEjectServerListFilterTest {
 
     private SingleStarlightClientManager clientManager = SingleStarlightClientManager.getInstance();
 
-    public List<Server> serverList() {
-        List<Server> originalList = new LinkedList<>();
+    public List<ServiceInstance> serverList() {
+        List<ServiceInstance> originalList = new LinkedList<>();
         for (int i = 0; i < 10000; i++) {
-            Server server = new TestServer("localhost", 1000 + i);
+            DefaultServiceInstance serviceInstance = new DefaultServiceInstance("id" + i, "test-app",
+                    "localhost", 1000 + i, true);
             SingleStarlightClient singleClient =
-                clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
+                    clientManager.getOrCreateSingleClient(serviceInstance.getHost(), serviceInstance.getPort(),
+                            new TransportConfig());
             if (i < 2000) { // mark server as outlier
                 singleClient.updateStatus(new PeerStatus(PeerStatus.Status.OUTLIER, System.currentTimeMillis()));
             }
@@ -58,7 +59,7 @@ public class OutlierEjectServerListFilterTest {
             if (i >= 4000) {
                 singleClient.updateStatus(new PeerStatus(PeerStatus.Status.ACTIVE, System.currentTimeMillis()));
             }
-            originalList.add(server);
+            originalList.add(serviceInstance);
         }
 
         return originalList;
@@ -79,17 +80,17 @@ public class OutlierEjectServerListFilterTest {
         clientProperties.setConfig(Collections.singletonMap("testApp", clientConfig));
 
         OutlierEjectServerListFilter serverListFilter =
-            new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
+                new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
 
-        List<Server> originalList = serverList();
+        List<ServiceInstance> originalList = serverList();
         // eject all 2000 OUTLIER
-        List<Server> filteredList = serverListFilter.getFilteredList(originalList);
+        List<ServiceInstance> filteredList = serverListFilter.getFilteredList(originalList);
         assertEquals(8000, filteredList.size());
         assertNotSame(filteredList, originalList);
 
         // eject 1000 OUTLIER
         outlierConfig.setMaxEjectPercent(10);
-        List<Server> filterList2 = serverListFilter.getFilteredList(originalList);
+        List<ServiceInstance> filterList2 = serverListFilter.getFilteredList(originalList);
         assertEquals(9000, filterList2.size());
         assertNotSame(filteredList, originalList);
     }
@@ -108,52 +109,23 @@ public class OutlierEjectServerListFilterTest {
 
         clientProperties.setConfig(Collections.singletonMap("testApp", clientConfig));
 
-        OutlierEjectServerListFilter serverListFilter =
-            new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
 
-        Server server = new TestServer("localhost", 20000);
-        List<Server> originalList = new LinkedList<>();
+        OutlierEjectServerListFilter serverListFilter =
+                new OutlierEjectServerListFilter(clientManager, clientProperties, "testApp");
+
+        DefaultServiceInstance server =
+                new DefaultServiceInstance("id", "test-app", "localhost", 20000, true);
+        List<ServiceInstance> originalList = new LinkedList<>();
         originalList.add(server);
-        originalList.add(new Server("localhost", 10000));
+        originalList.add(
+                new DefaultServiceInstance("id", "test-app", "localhost", 10000, true));
         SingleStarlightClient singleClient =
-            clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
+                clientManager.getOrCreateSingleClient(server.getHost(), server.getPort(), new TransportConfig());
         singleClient.updateStatus(new PeerStatus(PeerStatus.Status.OUTLIER, System.currentTimeMillis()));
 
         // eject zero OUTLIER
-        List<Server> filteredList = serverListFilter.getFilteredList(originalList);
+        List<ServiceInstance> filteredList = serverListFilter.getFilteredList(originalList);
         assertEquals(1, filteredList.size());
         assertNotSame(filteredList, originalList);
-    }
-
-    private class TestServer extends Server {
-
-        public TestServer(String host, int port) {
-            super(host, port);
-        }
-
-        @Override
-        public MetaInfo getMetaInfo() {
-            return new MetaInfo() {
-                @Override
-                public String getAppName() {
-                    return "testApp";
-                }
-
-                @Override
-                public String getServerGroup() {
-                    return null;
-                }
-
-                @Override
-                public String getServiceIdForDiscovery() {
-                    return null;
-                }
-
-                @Override
-                public String getInstanceId() {
-                    return "testInstanceId";
-                }
-            };
-        }
     }
 }

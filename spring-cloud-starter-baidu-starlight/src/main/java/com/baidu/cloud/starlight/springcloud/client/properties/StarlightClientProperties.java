@@ -25,7 +25,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Global configuration for all RpcProxies Created by liuruisen on 2019-07-10.
+ * Global configuration for all RpcProxies
+ * Created by liuruisen on 2019-07-10.
  */
 @ConfigurationProperties(prefix = StarlightClientProperties.PREFIX)
 public class StarlightClientProperties {
@@ -118,6 +119,7 @@ public class StarlightClientProperties {
     public Integer getConnectTimeoutMills(String clientName) {
         ClientConfig globalConfig = config.get(defaultConfig);
         ClientConfig clientConfig = config.get(clientName);
+
 
         if (clientConfig != null && clientConfig.getConnectTimeoutMills() != null) {
             return clientConfig.getConnectTimeoutMills();
@@ -264,6 +266,7 @@ public class StarlightClientProperties {
         return SpringCloudConstants.DEFAULT_CLUSTER_MODEL;
     }
 
+
     public Integer getMaxConnections(String clientName) {
         ClientConfig globalConfig = config.get(defaultConfig);
         ClientConfig clientConfig = config.get(clientName);
@@ -321,7 +324,7 @@ public class StarlightClientProperties {
             return globalConfig.getProtocol();
         }
 
-        return Constants.BRPC_VALUE;
+        return null; // protocol select logic will select a protocol
     }
 
     public String getCompressType(String clientName) {
@@ -344,13 +347,15 @@ public class StarlightClientProperties {
         ClientConfig clientConfig = config.get(clientName);
 
         if (clientConfig != null && clientConfig.getFilters() != null) {
-            return SpringCloudConstants.DEFAULT_CLIENT_FILTERS + Constants.FILTER_NAME_SPLIT_KEY
-                + clientConfig.getFilters();
+            return SpringCloudConstants.DEFAULT_CLIENT_FILTERS
+                    + Constants.FILTER_NAME_SPLIT_KEY
+                    + clientConfig.getFilters();
         }
 
         if (globalConfig != null && globalConfig.getFilters() != null) {
-            return SpringCloudConstants.DEFAULT_CLIENT_FILTERS + Constants.FILTER_NAME_SPLIT_KEY
-                + globalConfig.getFilters();
+            return SpringCloudConstants.DEFAULT_CLIENT_FILTERS
+                    + Constants.FILTER_NAME_SPLIT_KEY
+                    + globalConfig.getFilters();
         }
 
         return SpringCloudConstants.DEFAULT_CLIENT_FILTERS;
@@ -444,7 +449,6 @@ public class StarlightClientProperties {
 
     /**
      * Get outlier config for the specificed client
-     * 
      * @param clientName
      * @return
      */

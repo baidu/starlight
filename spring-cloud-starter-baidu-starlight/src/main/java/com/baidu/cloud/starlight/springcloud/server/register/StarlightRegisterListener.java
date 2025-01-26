@@ -16,6 +16,22 @@
  
 package com.baidu.cloud.starlight.springcloud.server.register;
 
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.cloud.client.serviceregistry.Registration;
+import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
+import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
+
 import com.baidu.cloud.starlight.api.heartbeat.HeartbeatService;
 import com.baidu.cloud.starlight.api.rpc.ServiceInvoker;
 import com.baidu.cloud.starlight.api.rpc.threadpool.NamedThreadFactory;
@@ -26,28 +42,12 @@ import com.baidu.cloud.starlight.springcloud.common.ApplicationContextUtils;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
 import com.baidu.cloud.thirdparty.jackson.core.JsonProcessingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationStartedEvent;
-import org.springframework.cloud.client.serviceregistry.Registration;
-import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationListener;
-import org.springframework.core.env.Environment;
-
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 /**
- * Listen to ApplicationStartedEvent and perform service registration Created by liuruisen on 2020/3/2.
+ * Listen to ApplicationStartedEvent and perform service registration
+ * Created by liuruisen on 2020/3/2.
  */
-public abstract class StarlightRegisterListener implements ApplicationListener<ApplicationStartedEvent> {
+public abstract class StarlightRegisterListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(StarlightRegisterListener.class);
 
@@ -61,20 +61,19 @@ public abstract class StarlightRegisterListener implements ApplicationListener<A
 
     protected static final String RPC_TYPE = "rpc";
 
+    private ExecutorService registerExecutor = Executors.newSingleThreadExecutor(
+            new NamedThreadFactory("StarlightRegisterWorker"));
+
     /**
      * Register and deregister thread pool, single
      */
-    private final ExecutorService registerExecutor =
-        Executors.newSingleThreadExecutor(new NamedThreadFactory("StarlightRegisterWorker"));
+    public void restartRegisterExecutor() {
+        this.registerExecutor = Executors.newSingleThreadExecutor(
+                new NamedThreadFactory("StarlightRegisterWorker"));
+    }
 
-    /**
-     * 进行服务注册
-     *
-     * @param event
-     */
-    @Override
-    public void onApplicationEvent(ApplicationStartedEvent event) {
-        this.applicationContext = event.getApplicationContext();
+    public void register(ApplicationContext applicationContext) {
+        this.applicationContext = applicationContext;
         this.serviceRegistry = applicationContext.getBean(ServiceRegistry.class);
         this.serverProperties = applicationContext.getBean(StarlightServerProperties.class);
         Integer registerDelay = serverProperties.getRegisterDelay();
@@ -91,24 +90,65 @@ public abstract class StarlightRegisterListener implements ApplicationListener<A
         registerExecutor.execute(() -> {
             try {
                 LOGGER.info("Register starlight server instance {}:{} start",
-                    registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
-                    registration.getPort());
+                        registration.getHost(), registration.getPort());
                 serviceRegistry.register(registration);
                 LOGGER.info("Register starlight server instance {}:{} success",
-                    registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
-                    registration.getPort());
+                        registration.getHost(), registration.getPort());
             } catch (Throwable e) {
-                LOGGER.warn("Register server instance {}:{} failed, cause by ", registration.getHost(),
-                    registration.getPort(), e);
+                LOGGER.warn("Register server instance {}:{} failed, cause by ",
+                        registration.getHost(), registration.getPort(), e);
             }
         });
+    }
 
+    /**
+     * CRaC Restore 之后, 基于新实例的相关信息, 进行 RPC 注册
+     * 和 register() 的主要区别: 更新了 registration.port
+     *
+     * @param port
+     */
+    public void reRegister(ApplicationContext applicationContext, Integer port) {
+        this.applicationContext = applicationContext;
+        this.serviceRegistry = applicationContext.getBean(ServiceRegistry.class);
+        this.serverProperties = applicationContext.getBean(StarlightServerProperties.class);
+        Integer registerDelay = serverProperties.getRegisterDelay();
+        if (registerDelay != null && registerDelay > 0) {
+            try {
+                TimeUnit.SECONDS.sleep(registerDelay);
+            } catch (InterruptedException e) {
+                LOGGER.warn("Exception occur when delay before register, cause by {}", e.getMessage());
+            }
+        }
+
+        registration = updateStarlightRegistration(registration, port);
+
+        // register StarlightRegistration
+        registerExecutor.execute(() -> {
+            try {
+                LOGGER.info("Register starlight server instance {}:{} start",
+                        registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
+                        registration.getPort());
+                serviceRegistry.register(registration);
+                LOGGER.info("Register starlight server instance {}:{} success",
+                        registration.getHost() == null ? NetUriUtils.getLocalHost() : registration.getHost(),
+                        registration.getPort());
+            } catch (Throwable e) {
+                LOGGER.warn("Register server instance {}:{} failed, cause by ",
+                        registration.getHost(), registration.getPort(), e);
+            }
+        });
     }
 
     protected abstract Registration createStarlightRegistration();
 
+    protected Registration updateStarlightRegistration(
+            Registration oldRegistration, Integer port) {
+        return null;
+    }
+
     /**
-     * Get starlight app name AppName will serve as the service discovery name for SpringCloud
+     * Get starlight app name
+     * AppName will serve as the service discovery name for SpringCloud
      *
      * @param env
      * @return
@@ -164,11 +204,11 @@ public abstract class StarlightRegisterListener implements ApplicationListener<A
         if (registration != null) {
             registerExecutor.execute(() -> {
                 try {
-                    LOGGER.info("Deregister server instance {}:{} start", registration.getHost(),
-                        registration.getPort());
+                    LOGGER.info("Deregister server instance {}:{} start",
+                            registration.getHost(), registration.getPort());
                     serviceRegistry.deregister(registration);
-                    LOGGER.info("Deregister server instance {}:{} success", registration.getHost(),
-                        registration.getPort());
+                    LOGGER.info("Deregister server instance {}:{} success",
+                            registration.getHost(), registration.getPort());
                 } catch (Exception e) {
                     LOGGER.warn("Deregister server instance failed, cause by: ", e);
                 }
@@ -183,7 +223,7 @@ public abstract class StarlightRegisterListener implements ApplicationListener<A
         try {
             List<String> interfaces = getInterfaces(); // interfaces meta
             starlightMetas.put(SpringCloudConstants.INTERFACES_KEY,
-                JsonSerializer.OBJECT_MAPPER.writeValueAsString(interfaces));
+                    JsonSerializer.OBJECT_MAPPER.writeValueAsString(interfaces));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("Add interfaces to register meta failed.", e);
         }

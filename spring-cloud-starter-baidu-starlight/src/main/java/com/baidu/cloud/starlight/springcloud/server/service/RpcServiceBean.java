@@ -16,21 +16,22 @@
  
 package com.baidu.cloud.starlight.springcloud.server.service;
 
+import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.util.StringUtils;
+
 import com.baidu.cloud.starlight.api.common.Constants;
 import com.baidu.cloud.starlight.api.rpc.StarlightServer;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.server.annotation.RpcService;
 import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
-import org.springframework.beans.factory.InitializingBean;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.StringUtils;
 
 /**
  * Created by liuruisen on 2019-05-23.
  */
-public class RpcServiceBean implements InitializingBean {
 
+public class RpcServiceBean implements InitializingBean {
     private StarlightServer starlightServer;
 
     private Object target;

@@ -18,11 +18,11 @@ package com.baidu.cloud.starlight.springcloud.client;
 
 import com.baidu.cloud.starlight.api.rpc.StarlightClient;
 import com.baidu.cloud.starlight.api.rpc.config.ServiceConfig;
-import com.baidu.cloud.starlight.api.rpc.proxy.ProxyFactory;
-import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.starlight.core.rpc.proxy.JDKProxyFactory;
+import com.baidu.cloud.starlight.api.rpc.proxy.ProxyFactory;
 import com.baidu.cloud.starlight.springcloud.client.annotation.RpcProxy;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
+import com.baidu.cloud.starlight.api.utils.StringUtils;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 
@@ -38,6 +38,8 @@ public class RpcProxyFactoryBean implements FactoryBean<Object>, InitializingBea
     private Object proxy;
 
     private RpcProxy annotationInfos;
+
+    private String clientName;
 
     private StarlightClient client;
 
@@ -74,7 +76,7 @@ public class RpcProxyFactoryBean implements FactoryBean<Object>, InitializingBea
         proxy = getProxy();
     }
 
-    private <T> T getProxy() {
+    private  <T> T getProxy() {
         ProxyFactory proxyFactory = new JDKProxyFactory();
         return (T) proxyFactory.getProxy(type, serviceConfig, client);
     }
@@ -100,22 +102,30 @@ public class RpcProxyFactoryBean implements FactoryBean<Object>, InitializingBea
             return annotationInfos.protocol();
         }
 
-        return clientProperties.getProtocol(annotationInfos.name());
+        return clientProperties.getProtocol(clientName);
     }
 
     private String getCompressType() {
-        return clientProperties.getCompressType(annotationInfos.name());
+        return clientProperties.getCompressType(clientName);
     }
 
     private String getFilters() {
-        return clientProperties.getFilters(annotationInfos.name());
+        return clientProperties.getFilters(clientName);
     }
 
     private Integer getRequestTimeout() {
-        return clientProperties.getRequestTimeoutMills(annotationInfos.name(), type.getName());
+        return clientProperties.getRequestTimeoutMills(clientName, type.getName());
     }
 
     private String serializeMode() {
-        return clientProperties.getSerializeMode(annotationInfos.name());
+        return clientProperties.getSerializeMode(clientName);
+    }
+
+    public String getClientName() {
+        return clientName;
+    }
+
+    public void setClientName(String clientName) {
+        this.clientName = clientName;
     }
 }

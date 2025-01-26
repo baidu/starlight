@@ -1,26 +1,10 @@
-/*
- * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
- 
-package com.baidu.cloud.starlight.springcloud.client.ribbon;
+package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance;
 
+import com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.ServiceInstanceLocalStore;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
-import com.baidu.cloud.starlight.springcloud.client.ribbon.RibbonServerLocalStore;
-import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightRibbonServer;
-import com.netflix.loadbalancer.Server;
 import org.junit.Test;
+import org.springframework.cloud.client.DefaultServiceInstance;
+import org.springframework.cloud.client.ServiceInstance;
 
 import java.io.File;
 import java.lang.reflect.Field;
@@ -30,14 +14,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * Created by liuruisen on 2021/7/27.
  */
-public class RibbonServerLocalStoreTest {
+public class ServiceInstanceLocalStoreTest {
+
 
     @Test
     public void loadLocalCache() {
@@ -46,9 +29,11 @@ public class RibbonServerLocalStoreTest {
             file.delete();
         }
 
-        RibbonServerLocalStore localStore = new RibbonServerLocalStore("testApp-load", new StarlightClientProperties());
+        ServiceInstanceLocalStore localStore =
+                new ServiceInstanceLocalStore("testApp-load", new StarlightClientProperties());
 
         localStore.loadCachedListOfServers();
+
 
         Class lbClass = localStore.getClass();
 
@@ -78,8 +63,8 @@ public class RibbonServerLocalStoreTest {
             file.delete();
         }
 
-        RibbonServerLocalStore localStore =
-            new RibbonServerLocalStore("testApp-update", new StarlightClientProperties());
+        ServiceInstanceLocalStore localStore =
+                new ServiceInstanceLocalStore("testApp-update", new StarlightClientProperties());
 
         try {
             Class lbClass = localStore.getClass();
@@ -88,7 +73,8 @@ public class RibbonServerLocalStoreTest {
             Properties localCache = (Properties) cacheField.get(localStore);
             assertEquals(0, localCache.entrySet().size());
 
-            List<Server> servers = getServerList(50000);
+
+            List<ServiceInstance> servers = getServiceInstanceList(50000);
 
             localStore.updateCachedListOfServers(servers);
 
@@ -111,11 +97,12 @@ public class RibbonServerLocalStoreTest {
             file.delete();
         }
 
-        RibbonServerLocalStore localStore = new RibbonServerLocalStore("testApp-get", new StarlightClientProperties());
+        ServiceInstanceLocalStore localStore =
+                new ServiceInstanceLocalStore("testApp-get", new StarlightClientProperties());
 
         List serverList = localStore.getCachedListOfServers();
         assertEquals(0, serverList.size());
-        List<Server> servers = getServerList(50000);
+        List<ServiceInstance> servers = getServiceInstanceList(50000);
         localStore.updateCachedListOfServers(servers);
 
         List serverList2 = localStore.getCachedListOfServers();
@@ -126,7 +113,8 @@ public class RibbonServerLocalStoreTest {
 
     @Test
     public void createCacheFile() {
-        RibbonServerLocalStore localStore = new RibbonServerLocalStore("testApp-get", new StarlightClientProperties());
+        ServiceInstanceLocalStore localStore =
+                new ServiceInstanceLocalStore("testApp-get", new StarlightClientProperties());
 
         String filePath = "starlight/test/cache/cache.txt";
         localStore.createCacheFile(filePath);
@@ -139,33 +127,36 @@ public class RibbonServerLocalStoreTest {
         assertTrue(new File(filePath2).getParentFile().exists());
         assertTrue(new File(filePath2).exists());
 
+
     }
 
     private String getCacheFileName(String clientName) {
         return System.getProperty("java.io.tmpdir") + "/starlight/local-registry/" + clientName + ".cache";
     }
 
-    private List<Server> getServerList(int size) {
-        List<Server> servers = new ArrayList<>();
+    private List<ServiceInstance> getServiceInstanceList(int size) {
+        List<ServiceInstance> servers = new ArrayList<>();
         for (int i = 0; i < size; i++) {
 
             Map<String, String> labels = new HashMap<>();
             labels.put("EM_PHY_IDC", "yq01");
-            labels.put("EM_HOST_NAME", "localhost");
-            labels.put("EM_INSTANCE_ID", "instance.test");
+            labels.put("EM_HOST_NAME", "yq01-ecom-fengchao-emsin7.yq01.baidu.com");
+            labels.put("EM_INSTANCE_ID", "2.opera-online-starlightProvider-000-yq.FENGCHAO.yq01");
             labels.put("EM_PLATFORM", "online");
             labels.put("env", "online");
             labels.put("GRAVITY_CLIENT_VERSION", "2020.0.2-SNAPSHOT");
             labels.put("EM_LOGIC_IDC", "yq");
             labels.put("EM_PRODUCT_LINE", "cpdinf");
-            labels.put("MATRIX_HOST_IP", "127.0.0.1");
+            labels.put("MATRIX_HOST_IP", "10.102.118.45");
             labels.put("EPOCH", "1619676145691");
             labels.put("EM_ENV_TYPE", "ONLINE");
             labels.put("protocols", "brpc,stargate,springrest");
 
-            StarlightRibbonServer ribbonServer = new StarlightRibbonServer("localhost", i);
-            ribbonServer.setMetadata(labels);
-            servers.add(ribbonServer);
+
+            DefaultServiceInstance serviceInstance = new DefaultServiceInstance("test-id-" + i, "test-app",
+                    "localhost", i, true, labels);
+
+            servers.add(serviceInstance);
         }
 
         return servers;

@@ -24,9 +24,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.boot.context.event.ApplicationStartedEvent;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.cloud.client.serviceregistry.ServiceRegistry;
@@ -38,19 +36,15 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 
 import java.lang.reflect.Field;
-import java.util.LinkedList;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
 
 /**
  * Created by liuruisen on 2020/3/26.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(ConsulAutoRegistration.class)
+@RunWith(MockitoJUnitRunner.class)
 public class StarlightConsulRegisterListenerTest {
 
     private StarlightConsulRegisterListener consulRegisterListener;
@@ -65,16 +59,14 @@ public class StarlightConsulRegisterListenerTest {
 
     @Before
     public void before() throws NoSuchFieldException, IllegalAccessException {
-        PowerMockito.mockStatic(ConsulAutoRegistration.class);
-        List<String> tags = new LinkedList<>();
-        tags.add("123");
-        when(ConsulAutoRegistration.createTags(any())).thenReturn(tags);
-
         consulRegisterListener = new StarlightConsulRegisterListener();
 
         environment = Mockito.mock(ConfigurableEnvironment.class);
-        doReturn("rpc-provider").when(environment).getProperty("starlight.server.name", "starlight-server");
-        doReturn("instanceId").when(environment).getProperty("spring.cloud.consul.discovery.instanceId", "instanceId");
+        doReturn("rpc-provider").when(environment)
+                .getProperty("starlight.server.name", "starlight-server");
+        doReturn("instanceId").when(environment)
+                .getProperty("spring.cloud.consul.discovery.instanceId", "instanceId");
+
 
         ServiceRegistry serviceRegistry = Mockito.mock(ServiceRegistry.class);
         doNothing().when(serviceRegistry).register(any());
@@ -129,7 +121,8 @@ public class StarlightConsulRegisterListenerTest {
 
     @Test
     public void createStarlightRegistrationError() {
-        doReturn("").when(environment).getProperty("starlight.server.name", "starlight-server");
+        doReturn("").when(environment)
+                .getProperty("starlight.server.name", "starlight-server");
         try {
             consulRegisterListener.createStarlightRegistration();
         } catch (Exception e) {
@@ -143,7 +136,8 @@ public class StarlightConsulRegisterListenerTest {
             Assert.assertTrue(e instanceof IllegalArgumentException);
         }
 
-        doReturn("rpc-provider").when(environment).getProperty("starlight.server.name", "starlight-server");
+        doReturn("rpc-provider").when(environment)
+                .getProperty("starlight.server.name", "starlight-server");
         doReturn("8006").when(environment).getProperty("starlight.server.port");
     }
 
@@ -165,6 +159,7 @@ public class StarlightConsulRegisterListenerTest {
         NewService service = consulRegistration.getService();
         Assert.assertNotNull(service);
     }
+
 
     @Test
     public void onApplication() {

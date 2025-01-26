@@ -19,10 +19,12 @@ package com.baidu.cloud.starlight.springcloud.client.cluster.route;
 import com.baidu.cloud.starlight.springcloud.configuration.ConfigChangeEvent;
 import com.baidu.cloud.starlight.springcloud.configuration.ConfigListener;
 
+
 /**
  * Created by liuruisen on 2021/10/25.
  */
 public abstract class DynamicRouter extends AbstractRouter implements ConfigListener {
+
 
     @Override
     public void onConfigChange(ConfigChangeEvent event) {
@@ -31,14 +33,14 @@ public abstract class DynamicRouter extends AbstractRouter implements ConfigList
             Object configContent = event.getConfigContent();
             updateConfig(configContent);
         } catch (Throwable e) {
-            LOGGER.warn("[XDS_ROUTE] Update dynamic route configs failed, serviceId{}, configEvent {}", getServiceId(),
-                event, e);
+            LOGGER.warn("[XDS_ROUTE] Update dynamic route configs failed, serviceId{}, configEvent {}",
+                    getServiceId(), event, e);
         }
     }
 
     /**
-     * Update route config 与route方法的执行间有同步问题，需加锁
-     * 
+     * Update route config
+     * 与route方法的执行间有同步问题，需加锁
      * @param routeConfig
      */
     public abstract void updateConfig(Object routeConfig);

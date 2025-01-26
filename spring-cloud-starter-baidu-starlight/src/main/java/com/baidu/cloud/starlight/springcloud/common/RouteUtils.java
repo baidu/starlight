@@ -40,6 +40,7 @@ public class RouteUtils {
         return String.format(CONVERTED_INSTANCE_FORMAT, metaInfos[0], platformInfos[1], platformInfos[4]);
     }
 
+
     public static String reqMsg(Request request) {
         return request.getId() + "#" + request.getServiceName() + "#" + request.getMethodName();
     }

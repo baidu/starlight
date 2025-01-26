@@ -33,23 +33,23 @@ import org.springframework.context.annotation.Configuration;
  */
 @Configuration
 @AutoConfigureAfter(name = {"com.baidu.cloud.starlight.springcloud.server.StarlightServerAutoConfiguration",
-    "org.springframework.cloud.consul.serviceregistry.ConsulServiceRegistryAutoConfiguration",
-    "com.baidu.formula.discovery.serviceregistry.FormulaServiceRegistryAutoConfiguration",
-    "com.baidu.cloud.gravity.discovery.registry.GravityAutoServiceRegistrationAutoConfiguration"})
+        "org.springframework.cloud.consul.serviceregistry.ConsulServiceRegistryAutoConfiguration",
+        "com.baidu.formula.discovery.serviceregistry.FormulaServiceRegistryAutoConfiguration",
+        "com.baidu.cloud.gravity.discovery.registry.GravityAutoServiceRegistrationAutoConfiguration"})
 @ConditionalOnClass(name = "org.springframework.cloud.client.discovery.DiscoveryClient")
 @ConditionalOnProperty(name = "spring.cloud.discovery.enabled", matchIfMissing = true)
 @ConditionalOnBean(StarlightServer.class)
 public class StarlightRegisterAutoConfiguration {
 
     @Configuration
-    @ConditionalOnClass(
-        name = "com.baidu.cloud.gravity.discovery.registry.GravityAutoServiceRegistrationAutoConfiguration")
+    @ConditionalOnClass(name =
+            "com.baidu.cloud.gravity.discovery.registry.GravityAutoServiceRegistrationAutoConfiguration")
     protected static class StarlightGravityRegisterAutoConfiguration {
 
         @Bean(destroyMethod = "destroy")
         @ConditionalOnMissingBean
-        @ConditionalOnBean(
-            type = "com.baidu.cloud.gravity.discovery.registry.GravityAutoServiceRegistrationAutoConfiguration")
+        @ConditionalOnBean(type =
+                "com.baidu.cloud.gravity.discovery.registry.GravityAutoServiceRegistrationAutoConfiguration")
         public StarlightGravityRegisterListener starlightGravityRegisterListener() {
             return new StarlightGravityRegisterListener();
         }

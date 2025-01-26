@@ -19,14 +19,19 @@ package com.baidu.cloud.starlight.springcloud.server;
 import com.baidu.cloud.starlight.api.rpc.StarlightServer;
 import com.baidu.cloud.starlight.core.rpc.DefaultStarlightServer;
 import com.baidu.cloud.starlight.springcloud.common.ApplicationContextUtils;
+import com.baidu.cloud.starlight.springcloud.common.ConstantUtils;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.server.annotation.RpcService;
 import com.baidu.cloud.starlight.springcloud.server.properties.StarlightServerProperties;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import java.util.concurrent.ThreadFactory;
 
 /**
  * Created by liuruisen on 2020/3/5.
@@ -37,10 +42,14 @@ import org.springframework.context.annotation.Configuration;
 @ConditionalOnProperty(value = "starlight.server.enable")
 public class StarlightServerAutoConfiguration {
 
+
     @Bean(name = SpringCloudConstants.STARLIGHT_SERVER_NAME)
-    public StarlightServer starlightServer(StarlightServerProperties serverProperties) {
-        StarlightServer starlightServer = new DefaultStarlightServer(serverProperties.getHost(),
-            ApplicationContextUtils.getServerPort(), serverProperties.transportConfig());
+    public StarlightServer starlightServer(StarlightServerProperties serverProperties,
+             @Qualifier(value = ConstantUtils.STARLIGHT_NETTY_SERVER_FACTORY)
+                     ObjectProvider<ThreadFactory> threadFactoryProvider)  {
+        StarlightServer starlightServer = new DefaultStarlightServer(null, serverProperties.getHost(),
+                ApplicationContextUtils.getServerPort(), serverProperties.transportConfig(),
+                threadFactoryProvider.getIfAvailable());
         starlightServer.init();
         starlightServer.serve();
         return starlightServer;

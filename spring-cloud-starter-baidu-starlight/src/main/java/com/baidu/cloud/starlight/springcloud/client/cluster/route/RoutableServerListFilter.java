@@ -17,14 +17,15 @@
 package com.baidu.cloud.starlight.springcloud.client.cluster.route;
 
 import com.baidu.cloud.starlight.api.rpc.RpcContext;
+import com.baidu.cloud.starlight.api.utils.StringUtils;
 import com.baidu.cloud.starlight.springcloud.client.cluster.ClusterSelector;
 import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightRouteProperties;
-import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightRibbonServer;
-import com.baidu.cloud.starlight.springcloud.client.ribbon.StarlightServerListFilter;
+import com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.StarlightServerListFilter;
+import com.baidu.cloud.starlight.springcloud.common.InstanceUtils;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.thirdparty.netty.util.Timeout;
-import com.netflix.loadbalancer.Server;
+import org.springframework.cloud.client.ServiceInstance;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +36,7 @@ import static com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants.
 /**
  * Created by liuruisen on 2021/11/3.
  */
-public class RoutableServerListFilter implements StarlightServerListFilter<Server> {
+public class RoutableServerListFilter implements StarlightServerListFilter {
 
     private final SingleStarlightClientManager clientManager;
 
@@ -44,14 +45,15 @@ public class RoutableServerListFilter implements StarlightServerListFilter<Serve
     private final String name;
 
     public RoutableServerListFilter(SingleStarlightClientManager clientManager,
-        StarlightRouteProperties routeProperties, String name) {
+                                    StarlightRouteProperties routeProperties,
+                                    String name) {
         this.clientManager = clientManager;
         this.routeProperties = routeProperties;
         this.name = name;
     }
 
     @Override
-    public List<Server> getFilteredList(List<Server> servers) {
+    public List<ServiceInstance> getFilteredList(List<ServiceInstance> servers) {
 
         if (!routeProperties.getEnabled()) {
             return servers;
@@ -65,23 +67,27 @@ public class RoutableServerListFilter implements StarlightServerListFilter<Serve
         if (!(obj instanceof ClusterSelector)) {
             return servers;
         }
-        // 类型不对，则返回，防止误判
-        if (!(servers.get(0) instanceof StarlightRibbonServer)) {
-            return servers;
-        }
 
         ClusterSelector clusterSelector = (ClusterSelector) obj;
 
-        List<Server> result = new ArrayList<>(servers);
+        List<ServiceInstance> result = new ArrayList<>(servers);
         try {
             result = clusterSelector.selectorClusterInstances(result);
         } catch (Throwable e) {
-            LOGGER.error("Route select instances for serviceId {} failed, clusterSelector {}.", name,
-                clusterSelector.getClass().getSimpleName(), e);
+            LOGGER.error("Route select instances for serviceId {} failed, clusterSelector {}.",
+                    name, clusterSelector.getClass().getSimpleName(), e);
             return servers;
         }
         // 支持海若请求级的label selector选择, 用完删除防止向下传递（ugly实现）
         RpcContext.getContext().remove(SpringCloudConstants.REQUEST_LABEL_SELECTOR_ROUTE_KEY);
+
+        if ((result == null || result.isEmpty())
+                && InstanceUtils.isBnsServiceId(servers.get(0).getServiceId())) {
+            // bns 服务兜底策略，因为BNS不是标准的Gravity服务但支持了内容路由，需要进行过滤；
+            // 但不是所有的bns服务都配置了路由策略
+            LOGGER.info("Service {} is bns type, route result is empty will return all", name);
+            return servers;
+        }
 
         return result;
     }
@@ -92,7 +98,7 @@ public class RoutableServerListFilter implements StarlightServerListFilter<Serve
     }
 
     @Override
-    public void submitTimerTask(Server server, Integer execDelay) {
+    public void submitTimerTask(ServiceInstance server, Integer execDelay) {
         // do nothing
     }
 
@@ -110,4 +116,5 @@ public class RoutableServerListFilter implements StarlightServerListFilter<Serve
     public int getOrder() {
         return ROUTE_SERVER_LIST_FILTER_ORDER;
     }
+
 }

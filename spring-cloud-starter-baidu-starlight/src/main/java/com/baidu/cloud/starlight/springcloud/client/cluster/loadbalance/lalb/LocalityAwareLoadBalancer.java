@@ -1,30 +1,20 @@
-/*
- * Copyright (c) 2019 Baidu, Inc. All Rights Reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
- 
-package com.baidu.cloud.starlight.springcloud.client.ribbon.lalb;
+package com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.lalb;
 
 import com.baidu.cloud.starlight.api.statistics.Stats;
 import com.baidu.cloud.starlight.core.statistics.StarlightStatistics;
 import com.baidu.cloud.starlight.core.statistics.StarlightStatsManager;
-import com.netflix.loadbalancer.ILoadBalancer;
-import com.netflix.loadbalancer.RandomRule;
-import com.netflix.loadbalancer.Server;
+import com.baidu.cloud.starlight.springcloud.common.InstanceUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.loadbalancer.DefaultResponse;
+import org.springframework.cloud.client.loadbalancer.Request;
+import org.springframework.cloud.client.loadbalancer.Response;
+import org.springframework.cloud.loadbalancer.core.NoopServiceInstanceListSupplier;
+import org.springframework.cloud.loadbalancer.core.RoundRobinLoadBalancer;
+import org.springframework.cloud.loadbalancer.core.ServiceInstanceListSupplier;
+import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,11 +27,14 @@ import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * LALB loadbalancer 耗时目标暂定 20ms内 Created by liuruisen on 2020/10/21.
+ * LALB loadbalancer
+ * 耗时目标暂定 20ms内
+ * TODO unit test
+ * Created by liuruisen on 2020/10/21.
  */
-public class LocalityAwareRule extends RandomRule {
+public class LocalityAwareLoadBalancer extends RoundRobinLoadBalancer {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(LocalityAwareRule.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalityAwareLoadBalancer.class);
 
     public static final String LALB_STATS_KEY = "lalb_latency_stats";
 
@@ -59,7 +52,7 @@ public class LocalityAwareRule extends RandomRule {
 
     private static final int MIN_LATENCY_WINDOW = 3;
 
-    private WeightTreeNode<Server> weightTree;
+    private WeightTreeNode<ServiceInstance> weightTree;
 
     /**
      * Estimate suitable weight when calculate weight <= 0
@@ -68,32 +61,36 @@ public class LocalityAwareRule extends RandomRule {
      */
     private AtomicLong maxWeight = new AtomicLong(0L);
 
-    public LocalityAwareRule() {
+    private ObjectProvider<ServiceInstanceListSupplier> instanceListSupplierObjectProvider;
+
+    public LocalityAwareLoadBalancer(ObjectProvider<ServiceInstanceListSupplier> instancesListSupplierProvider,
+                                     String name) {
+        super(instancesListSupplierProvider, name);
         this.weightTree = new WeightTreeNode<>();
+        this.instanceListSupplierObjectProvider = instancesListSupplierProvider;
     }
 
-    @Override
-    public void setLoadBalancer(ILoadBalancer lb) {
-        super.setLoadBalancer(lb);
-    }
 
     @Override
-    public Server choose(Object key) {
+    public Mono<Response<ServiceInstance>> choose(Request request) {
         // 经测试1000台实例耗时可维持在10ms内，先不进行异步处理
-        updateWeightTree();
+        updateWeightTree(request);
         // 第一次请求 weight为0
         if (weightTree.getWeight() == 0) {
-            Server result = super.choose(key);
-            addLalbLatencyStats(result);
-            return result;
+            Mono<Response<ServiceInstance>> monResponse = super.choose(request);
+            Response<ServiceInstance> loadBalancerResponse = monResponse.block();
+            if (loadBalancerResponse != null) {
+                addLalbLatencyStats(loadBalancerResponse.getServer());
+            }
+            return monResponse;
         }
 
         long totalWeight = weightTree.getWeight();
         long randomWeight = ThreadLocalRandom.current().nextLong(totalWeight);
-        WeightTreeNode<Server> choseNode = searchNode(weightTree, randomWeight);
-        Server result = choseNode.getNodeEntity();
+        WeightTreeNode<ServiceInstance> choseNode = searchNode(weightTree, randomWeight);
+        ServiceInstance result = choseNode.getNodeEntity();
         addLalbLatencyStats(result);
-        return result;
+        return Mono.just(new DefaultResponse(result));
     }
 
     protected <T> WeightTreeNode<T> searchNode(WeightTreeNode<T> weightTree, long weight) {
@@ -114,10 +111,11 @@ public class LocalityAwareRule extends RandomRule {
 
     }
 
+
     // 完全二叉权重树的构建
-    protected synchronized void updateWeightTree() {
+    protected synchronized void updateWeightTree(Request request) {
         try {
-            List<Server> servers = getLoadBalancer().getAllServers();
+            List<ServiceInstance> servers = serviceInstances(request);
             if (servers != null && servers.size() > 0) {
                 // calculate
                 this.weightTree = generateWeightTreeByNodes(weightTreeNodes(servers));
@@ -135,20 +133,20 @@ public class LocalityAwareRule extends RandomRule {
      * @param serviceInstances
      * @return
      */
-    protected Queue<WeightTreeNode<Server>> weightTreeNodes(List<Server> serviceInstances) {
-        Queue<WeightTreeNode<Server>> weightTreeNodes = new LinkedList<>();
+    protected Queue<WeightTreeNode<ServiceInstance>> weightTreeNodes(List<ServiceInstance> serviceInstances) {
+        Queue<WeightTreeNode<ServiceInstance>> weightTreeNodes = new LinkedList<>();
 
         long startTime = System.currentTimeMillis();
 
         if (serviceInstances != null) {
-            Map<LalbLatencyStats, Server> lalbLatencyStatsMap = new HashMap<>();
+            Map<LalbLatencyStats, ServiceInstance> lalbLatencyStatsMap = new HashMap<>();
             List<Long> avgLatencies = new LinkedList<>();
 
             // get all serviceInstanceStats, include requested and unrequested instances
-            for (Server serviceInstance : serviceInstances) {
+            for (ServiceInstance serviceInstance : serviceInstances) {
                 // 没有即创建，没有表示尚未调用到的实例[未调用到、新增实例]
                 StarlightStatistics statistics =
-                    StarlightStatsManager.getOrCreateStatsByHostPort(serviceInstance.getHostPort());
+                        StarlightStatsManager.getOrCreateStatsByHostPort(InstanceUtils.ipPortStr(serviceInstance));
 
                 Stats stats = statistics.discoverStats(LALB_STATS_KEY);
                 if (!(stats instanceof LalbLatencyStats)) {
@@ -161,17 +159,17 @@ public class LocalityAwareRule extends RandomRule {
                     avgLatencies.add(((LalbLatencyStats) stats).avgLatency());
                 } else {
                     // default weight
-                    weightTreeNodes.add(new WeightTreeNode<>(serviceInstanceHashCode(serviceInstance), DEFAULT_WEIGHT,
-                        serviceInstance));
+                    weightTreeNodes.add(new WeightTreeNode<>(serviceInstanceHashCode(serviceInstance),
+                            DEFAULT_WEIGHT, serviceInstance));
                 }
             }
 
             LOGGER.debug("LocalityAwareRule weightTreeNodes#lalbLatencyStatsMap cost {}ms",
-                System.currentTimeMillis() - startTime);
+                    System.currentTimeMillis() - startTime);
 
             // 具有统计信息的server实例数较少，或者未达到一定比重，认为没有统计计算价值
-            if (lalbLatencyStatsMap.size() < MIN_INSTANCE_NUM
-                || lalbLatencyStatsMap.size() * 1.0 / serviceInstances.size() < ACTIVE_INSTANCE_RATIO) {
+            if (lalbLatencyStatsMap.size() < MIN_INSTANCE_NUM ||
+                    lalbLatencyStatsMap.size() * 1.0 / serviceInstances.size() < ACTIVE_INSTANCE_RATIO) {
                 Long execCost = System.currentTimeMillis() - startTime;
                 LOGGER.debug("LocalityAwareRule weightTreeNodes cost {}ms", execCost);
                 if (execCost > 20) {
@@ -183,10 +181,11 @@ public class LocalityAwareRule extends RandomRule {
             // calculate the avg latency of all service instance as a benchmark
             Long predictedMaxLatency = latency90Percentile(avgLatencies);
 
-            for (Map.Entry<LalbLatencyStats, Server> entry : lalbLatencyStatsMap.entrySet()) {
+            for (Map.Entry<LalbLatencyStats, ServiceInstance> entry : lalbLatencyStatsMap.entrySet()) {
                 long weight = serviceInstanceWeight(entry.getKey(), predictedMaxLatency);
-                weightTreeNodes
-                    .add(new WeightTreeNode<>(serviceInstanceHashCode(entry.getValue()), weight, entry.getValue()));
+                weightTreeNodes.add(
+                        new WeightTreeNode<>(serviceInstanceHashCode(entry.getValue()),
+                                weight, entry.getValue()));
             }
         }
         Long execCost = System.currentTimeMillis() - startTime;
@@ -199,13 +198,14 @@ public class LocalityAwareRule extends RandomRule {
     }
 
     /**
-     * Calculate the latency90Percentile of all {@link ServiceInstance} below serviceId 90分位值
+     * Calculate the latency90Percentile of all {@link ServiceInstance} below serviceId
+     * 90分位值
      *
      * @param avgLatencies
      * @return
      */
     protected Long latency90Percentile(List<Long> avgLatencies) {
-        int percentileIndex = new Double(avgLatencies.size() * 0.9).intValue() - 1;
+        int percentileIndex = Double.valueOf(avgLatencies.size() * 0.9).intValue() - 1;
         if (percentileIndex < 0) {
             percentileIndex = 0;
         }
@@ -213,8 +213,10 @@ public class LocalityAwareRule extends RandomRule {
         return avgLatencies.get(percentileIndex);
     }
 
+
     /**
-     * Calculate the serviceInstance's weight. 归一化为100内的权重
+     * Calculate the serviceInstance's weight.
+     * 归一化为100内的权重
      *
      * @param stats
      * @param predictedMaxLatency
@@ -230,8 +232,9 @@ public class LocalityAwareRule extends RandomRule {
         // Avoid instance with a weight of 0 and no chance to access
         long weight = 0;
         if (serviceInstanceWeight > 0) {
-            weight = serviceInstanceWeight > (maxWeight.get() / 10) ? serviceInstanceWeight
-                : (maxWeight.get() / 10) + serviceInstanceWeight;
+            weight =
+                    serviceInstanceWeight > (maxWeight.get() / 10) ?
+                            serviceInstanceWeight : (maxWeight.get() / 10) + serviceInstanceWeight;
         } else {
             weight = maxWeight.get() > 0 ? (maxWeight.get() / 10) : 1;
         }
@@ -249,9 +252,10 @@ public class LocalityAwareRule extends RandomRule {
      * @param serviceInstance
      * @return
      */
-    protected int serviceInstanceHashCode(Server serviceInstance) {
+    protected int serviceInstanceHashCode(ServiceInstance serviceInstance) {
         return Objects.hash(serviceInstance);
     }
+
 
     /**
      * Generate the weight tree
@@ -314,18 +318,26 @@ public class LocalityAwareRule extends RandomRule {
         return rootNode;
     }
 
-    private void addLalbLatencyStats(Server server) {
-        StarlightStatistics statistics = StarlightStatsManager.getOrCreateStatsByHostPort(server.getHostPort());
+    private void addLalbLatencyStats(ServiceInstance server) {
+        StarlightStatistics statistics =
+                StarlightStatsManager.getOrCreateStatsByHostPort(InstanceUtils.ipPortStr(server));
         // putIfAbsent
         statistics.registerStats(LALB_STATS_KEY, new LalbLatencyStats());
     }
 
     /**
      * For test
-     * 
      * @return
      */
-    protected WeightTreeNode<Server> getWeightTree() {
+    protected WeightTreeNode<ServiceInstance> getWeightTree() {
         return weightTree;
+    }
+
+
+    private List<ServiceInstance> serviceInstances(Request request) {
+        ServiceInstanceListSupplier supplier =
+                instanceListSupplierObjectProvider.getIfAvailable(NoopServiceInstanceListSupplier::new);
+
+        return supplier.get(request).next().block();
     }
 }

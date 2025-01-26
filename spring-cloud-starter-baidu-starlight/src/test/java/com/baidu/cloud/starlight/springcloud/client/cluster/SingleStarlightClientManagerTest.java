@@ -18,12 +18,10 @@ package com.baidu.cloud.starlight.springcloud.client.cluster;
 
 import com.baidu.cloud.starlight.api.rpc.config.TransportConfig;
 import com.baidu.cloud.starlight.core.rpc.SingleStarlightClient;
-import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
 import org.junit.Test;
 import org.mockito.Mockito;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 
@@ -37,6 +35,7 @@ public class SingleStarlightClientManagerTest {
     private static final Integer PORT = 55555;
 
     private final TransportConfig transportConfig;
+
 
     public SingleStarlightClientManagerTest() {
         this.transportConfig = new TransportConfig();
@@ -53,7 +52,6 @@ public class SingleStarlightClientManagerTest {
     @Test
     public void getOrCreateSingleClient() {
         SingleStarlightClientManager clientManager = SingleStarlightClientManager.getInstance();
-        clientManager.destroyAll();
         SingleStarlightClientManager starlightClientManager = Mockito.spy(clientManager);
         SingleStarlightClient singleStarlightClient = Mockito.mock(SingleStarlightClient.class);
         doReturn(singleStarlightClient).when(starlightClientManager).createSingleClient(HOST, PORT, transportConfig);
@@ -66,7 +64,6 @@ public class SingleStarlightClientManagerTest {
     @Test
     public void destroyAll() {
         SingleStarlightClientManager clientManager = SingleStarlightClientManager.getInstance();
-        clientManager.destroyAll();
         SingleStarlightClientManager starlightClientManager = Mockito.spy(clientManager);
 
         SingleStarlightClient singleStarlightClient = Mockito.mock(SingleStarlightClient.class);

@@ -32,7 +32,8 @@ import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import static com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants.REQUEST_ROUTE_KEY;
 
 /**
- * Springcloud implementation of {@link LoadBalancer}, use {@link LoadBalancerClient} to execute load balancing logic
+ * Springcloud implementation of {@link LoadBalancer},
+ * use {@link LoadBalancerClient} to execute load balancing logic
  * Created by liuruisen on 2021/9/26.
  */
 public class SpringCloudLoadbalancer implements LoadBalancer {
@@ -55,27 +56,33 @@ public class SpringCloudLoadbalancer implements LoadBalancer {
         RpcContext.getContext().set(REQUEST_ROUTE_KEY, clusterSelector);
         ServiceInstance instance = loadBalancerClient.choose(clusterSelector.getServiceId());
         RpcContext.getContext().remove(REQUEST_ROUTE_KEY);
-        LOGGER.debug("Spring cloud loadblancer choose instance for {} cost {}", clusterSelector.getServiceId(),
-            System.currentTimeMillis() - chooseStart);
+        LOGGER.debug("Spring cloud loadblancer choose instance for {} cost {}",
+                clusterSelector.getServiceId(), System.currentTimeMillis() - chooseStart);
         return instance;
     }
 
+
     @Override
     public void execute(ClusterSelector clusterSelector, SingleStarlightClient starlightClient,
-        ServiceInstance instance, Request request, RpcCallback callback) {
+                        ServiceInstance instance,
+                        Request request, RpcCallback callback) {
         try {
             loadBalancerClient.execute(clusterSelector.getServiceId(), instance,
-                new StarlightLBRequest(starlightClient, request, callback));
+                    new StarlightLBRequest(starlightClient, request, callback));
         } catch (Throwable e) {
-            throw new StarlightRpcException("Failed to execute request in loadbalancer, " + "instance "
-                + instance.getHost() + ":" + instance.getPort(), e);
+            throw new StarlightRpcException("Failed to execute request in loadbalancer, "
+                    + "instance " + instance.getHost() + ":" + instance.getPort(), e);
         }
     }
 
     /**
-     * TODO: 可后续可实现动态更新负载均衡算法的逻辑 LoadBalancer的Spring cloud实现更新负载均衡规则时，
-     * 不能直接替换LoadBalancer实现，需changeLoadBalanceRule方法在内部进行更改 注意，考虑change时的并发保护 public void changeLoadBalanceRule(String
-     * ruleName) { // do nothing }
+     * TODO: 可后续可实现动态更新负载均衡算法的逻辑
+     * LoadBalancer的Spring cloud实现更新负载均衡规则时，
+     * 不能直接替换LoadBalancer实现，需changeLoadBalanceRule方法在内部进行更改
+     * 注意，考虑change时的并发保护
+     * public void changeLoadBalanceRule(String ruleName) {
+     *         // do nothing
+     * }
      */
 
 }

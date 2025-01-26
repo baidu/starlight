@@ -16,8 +16,6 @@
  
 package com.baidu.cloud.starlight.springcloud.client.cluster;
 
-import com.baidu.cloud.starlight.springcloud.client.cluster.LoadBalancer;
-import com.baidu.cloud.starlight.springcloud.client.cluster.SingleStarlightClientManager;
 import com.baidu.cloud.starlight.springcloud.client.cluster.loadbalance.SpringCloudLoadbalancer;
 import com.baidu.cloud.starlight.springcloud.client.properties.ClientConfig;
 import com.baidu.cloud.starlight.springcloud.client.properties.StarlightClientProperties;
@@ -26,15 +24,12 @@ import com.baidu.cloud.starlight.springcloud.common.ApplicationContextUtils;
 import com.baidu.cloud.starlight.springcloud.common.SpringCloudConstants;
 import com.baidu.cloud.starlight.springcloud.configuration.Configuration;
 import org.junit.Before;
-import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mockito;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
-import org.springframework.cloud.netflix.ribbon.RibbonLoadBalancerClient;
+
+import org.springframework.cloud.client.loadbalancer.LoadBalancerClient;
 import org.springframework.context.ApplicationContext;
 
 import java.io.IOException;
@@ -45,15 +40,16 @@ import java.util.Map;
 
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 /**
  * Created by liuruisen on 2020/9/21.
  */
-@RunWith(PowerMockRunner.class)
-@PrepareForTest(value = {ApplicationContextUtils.class})
+@RunWith(MockitoJUnitRunner.class)
 public class AbstractClusterClientTest {
 
-    protected RibbonLoadBalancerClient loadBalancerClient;
+    protected LoadBalancerClient loadBalancerClient;
 
     protected LoadBalancer loadBalancer;
 
@@ -91,6 +87,7 @@ public class AbstractClusterClientTest {
         appConfig.setWarmUpCount(1);
         appConfig.setWarmUpRatio(100);
         appConfig.setFilters("");
+
 
         Map<String, ClientConfig> configs = new HashMap();
         configs.put(properties.getDefaultConfig(), defaultConfig);
@@ -134,27 +131,23 @@ public class AbstractClusterClientTest {
         };
         serviceInstances.add(serviceInstance);
 
-        loadBalancerClient = Mockito.mock(RibbonLoadBalancerClient.class);
+        loadBalancerClient = mock(LoadBalancerClient.class);
         loadBalancer = new SpringCloudLoadbalancer(loadBalancerClient);
         // doReturn(serviceInstance).when(loadBalancerClient).choose(anyString());
 
-        discoveryClient = Mockito.mock(DiscoveryClient.class);
+        discoveryClient = mock(DiscoveryClient.class);
         doReturn(serviceInstances).when(discoveryClient).getInstances(anyString());
 
         clientManager = SingleStarlightClientManager.getInstance();
 
-        configuration = Mockito.mock(Configuration.class);
+        configuration = mock(Configuration.class);
         routeProperties = new StarlightRouteProperties();
 
-        ApplicationContext applicationContext = PowerMockito.mock(ApplicationContext.class);
+        ApplicationContext applicationContext = mock(ApplicationContext.class);
         ApplicationContextUtils applicationContextUtils = new ApplicationContextUtils();
         applicationContextUtils.setApplicationContext(applicationContext);
-        PowerMockito.when(applicationContext.getBean(RibbonLoadBalancerClient.class)).thenReturn(loadBalancerClient);
-
-    }
-
-    @Test
-    public void test() {
+        when(applicationContext.getBean(LoadBalancerClient.class))
+                .thenReturn(loadBalancerClient);
 
     }
 }

@@ -16,10 +16,9 @@
  
 package com.baidu.cloud.starlight.springcloud.client.properties;
 
-import com.baidu.cloud.starlight.springcloud.client.properties.OutlierConfig;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * Created by liuruisen on 2021/9/13.

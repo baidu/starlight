@@ -21,17 +21,18 @@ import com.ecwid.consul.v1.agent.model.NewService;
 import org.springframework.cloud.client.serviceregistry.Registration;
 import org.springframework.cloud.consul.discovery.ConsulDiscoveryProperties;
 import org.springframework.cloud.consul.discovery.HeartbeatProperties;
-import org.springframework.cloud.consul.serviceregistry.ConsulAutoRegistration;
 import org.springframework.cloud.consul.serviceregistry.ConsulRegistration;
 import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
 import java.util.Map;
 
+
 /**
- * Register Starlight Service to Consul Created by liuruisen on 2020/3/2.
+ * Register Starlight Service to Consul
+ * Created by liuruisen on 2020/3/2.
  */
 public class StarlightConsulRegisterListener extends StarlightRegisterListener {
 
@@ -55,32 +56,22 @@ public class StarlightConsulRegisterListener extends StarlightRegisterListener {
 
         service.setPort(getPort(applicationContext.getEnvironment())); // port
 
-        service.setTags(ConsulAutoRegistration.createTags(discoveryProperties));
-        // add starlight meta to tags
-        List<String> tags = service.getTags();
-        if (tags == null) {
-            tags = new LinkedList<>();
-        }
-        Map<String, String> starlightMetas = starlightMetas();
-        for (Map.Entry<String, String> entry : starlightMetas.entrySet()) {
-            tags.add(entry.getKey() + "=" + entry.getValue());
-        }
-
+        service.setMeta(getMetadata(discoveryProperties));
         service.setCheck(createCheck(service.getPort(), heartbeatProperties, discoveryProperties)); // rpc check
 
         return new ConsulRegistration(service, discoveryProperties);
     }
 
+
     /***
      * Rpc service Check
-     * 
      * @return
      */
     public static NewService.Check createCheck(Integer port, HeartbeatProperties ttlConfig,
-        ConsulDiscoveryProperties properties) {
+                                               ConsulDiscoveryProperties properties) {
         NewService.Check check = new NewService.Check();
         if (ttlConfig.isEnabled()) {
-            check.setTtl(ttlConfig.getTtl());
+            check.setTtl(ttlConfig.getTtl().getSeconds() + "s");
             // Note. Default timeout to deregister services critical for longer than timeout (e.g. 3m).
             check.setDeregisterCriticalServiceAfter("3m");
             if (StringUtils.hasText(properties.getHealthCheckCriticalTimeout())) {
@@ -102,6 +93,31 @@ public class StarlightConsulRegisterListener extends StarlightRegisterListener {
         }
         check.setTlsSkipVerify(properties.getHealthCheckTlsSkipVerify());
         return check;
+    }
+
+
+    private Map<String, String> getMetadata(ConsulDiscoveryProperties properties) {
+        Map<String, String> metadata = new HashMap<>();
+        if (!CollectionUtils.isEmpty(properties.getMetadata())) {
+            metadata.putAll(properties.getMetadata());
+        }
+
+        // add metadata from other properties. See createTags above.
+        if (!StringUtils.hasLength(properties.getInstanceZone())) {
+            metadata.put(properties.getDefaultZoneMetadataName(), properties.getInstanceZone());
+        }
+        if (!StringUtils.hasLength(properties.getInstanceGroup())) {
+            metadata.put("group", properties.getInstanceGroup());
+        }
+
+        // store the secure flag in the tags so that clients will be able to figure
+        // out whether to use http or https automatically
+        metadata.put("secure", Boolean.toString(properties.getScheme().equalsIgnoreCase("https")));
+
+        // add starlight metadata
+        metadata.putAll(starlightMetas());
+
+        return metadata;
     }
 
 }
